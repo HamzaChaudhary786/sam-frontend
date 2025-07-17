@@ -48,7 +48,7 @@ const EnumSelect = ({
 };
 
 // Image upload component
-const ImageUpload = ({ onImageChange, imagePreview }) => {
+const ImageUpload = ({ onImageChange, imagePreview, profile }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -68,9 +68,9 @@ const ImageUpload = ({ onImageChange, imagePreview }) => {
 
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">
-          {imagePreview ? (
+          {imagePreview || profile ? (
             <img
-              src={imagePreview}
+              src={imagePreview || profile}
               alt="Employee preview"
               className="h-24 w-24 rounded-full object-cover border-2 border-gray-300"
             />
@@ -272,6 +272,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [designationEnum, setDesignationEnum] = useState({});
   const [gradeEnum, setGradeEnum] = useState({});
   const [weaponEnum, setWeaponEnum] = useState({});
+  const [profile, setProfile] = useState(null);
 
   const [formData, setFormData] = useState({
     pnumber: "",
@@ -319,14 +320,16 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           location: editData.location || "",
         });
         setWeapons(
-        editData.assets?.map((weapon, index) => ({
-          id: Date.now() + index, // ensures unique ID for UI rendering
-          weaponType: weapon._id || "", // weapon._id maps to weaponEnum option
-          weaponNumber: weapon.weaponNumber || "",
-          pistolNumber: weapon.pistolNumber || "",
-          assignedRounds: editData.assignedRounds || "", // assuming global in editData
-          consumedRounds: editData.consumedRounds || "", // same as above
-        })) || [])
+          editData.assets?.map((weapon, index) => ({
+            id: Date.now() + index, // ensures unique ID for UI rendering
+            weaponType: weapon._id || "", // weapon._id maps to weaponEnum option
+            weaponNumber: weapon.weaponNumber || "",
+            pistolNumber: weapon.pistolNumber || "",
+            assignedRounds: editData.assignedRounds || "", // assuming global in editData
+            consumedRounds: editData.consumedRounds || "", // same as above
+          })) || []
+        );
+        setProfile(editData.profileUrl || "");
       } else {
         // Empty form for new employee
         setFormData({
@@ -550,6 +553,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       <ImageUpload
         onImageChange={handleImageChange}
         imagePreview={imagePreview}
+        profile={profile}
       />
 
       {/* Personal Information */}
@@ -807,7 +811,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         >
           Cancel
         </button>
-        <button
+          <button
           type="submit"
           disabled={loading || uploading}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -815,8 +819,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           {uploading
             ? "Uploading Photo..."
             : loading
-            ? "Adding..."
-            : "Add Employee"}
+            ? (isEdit ? "Updating..." : "Adding...")
+            : (isEdit ? "Update Employee" : "Add Employee")}
         </button>
       </div>
     </form>

@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EmployeePage from './pages/EmployeeList';
 import AddEmployeeForm from './pages/AddEmployee';
+import StationsPage from './pages/StationList';
+import AssetsPage from './pages/AssetList';
 
 function App() {
   return (
@@ -14,8 +16,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/employees" element={<EmployeePage />} />
           <Route path="/employee" element={<AddEmployeeForm />} />
-
-
+          <Route path="/stations" element={<StationsPage />} />
+           <Route path="/assets" element={<AssetsPage />} />
 
         </Routes>
       </div>

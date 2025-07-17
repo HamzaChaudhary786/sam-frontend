@@ -12,21 +12,17 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// Get all employees with optional filters
-export const getEmployees = async (filters = {}) => {
+// Get all stations with optional filters
+export const getStations = async (filters = {}) => {
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
     if (filters.name) queryParams.append('name', filters.name);
+    if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
     if (filters.city) queryParams.append('city', filters.city);
-    if (filters.status) queryParams.append('status', filters.status);
-    if (filters.designation) queryParams.append('designation', filters.designation);
-    if (filters.grade) queryParams.append('grade', filters.grade);
-    if (filters.pnumber) queryParams.append('pnumber', filters.pnumber);
-    if (filters.cnic) queryParams.append('cnic', filters.cnic);
     
     const queryString = queryParams.toString();
-    const url = `${API_URL}/employee${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_URL}/stations${queryString ? `?${queryString}` : ''}`;
     
     const response = await axios.get(url, {
       headers: getAuthHeaders()
@@ -35,30 +31,30 @@ export const getEmployees = async (filters = {}) => {
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch employees'
+      error: error.response?.data?.message || 'Failed to fetch stations'
     };
   }
 };
 
-// Get single employee by ID
-export const getEmployee = async (id) => {
+// Get single station by ID
+export const getStation = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/employee/${id}`, {
+    const response = await axios.get(`${API_URL}/stations/${id}`, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch employee'
+      error: error.response?.data?.message || 'Failed to fetch station'
     };
   }
 };
 
-// Add new employee
-export const addEmployee = async (employeeData) => {
+// Add new station
+export const addStation = async (stationData) => {
   try {
-    const response = await axios.post(`${API_URL}/employee`, employeeData, {
+    const response = await axios.post(`${API_URL}/stations`, stationData, {
       headers: {
         ...getAuthHeaders(),
         'Content-Type': 'application/json'
@@ -68,37 +64,37 @@ export const addEmployee = async (employeeData) => {
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to add employee'
+      error: error.response?.data?.message || 'Failed to add station'
     };
   }
 };
 
-// Update employee
-export const updateEmployee = async (employeeData, id) => {
+// Update station
+export const updateStation = async (stationData, id) => {
   try {
-    const response = await axios.put(`${API_URL}/employee/${id}`, employeeData, {
+    const response = await axios.put(`${API_URL}/stations/${id}`, stationData, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to update employee'
+      error: error.response?.data?.message || 'Failed to update station'
     };
   }
 };
 
-// Delete employee
-export const deleteEmployee = async (id) => {
+// Delete station
+export const deleteStation = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/employee/${id}`, {
+    const response = await axios.delete(`${API_URL}/stations/${id}`, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to delete employee'
+      error: error.response?.data?.message || 'Failed to delete station'
     };
   }
 };
