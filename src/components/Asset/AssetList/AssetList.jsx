@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAssets } from "../AssetHook.js";
 import AssetModal from "../AddAsset/AddAsset.jsx";
+import AssetViewModal from "../ViewAsset/ViewAsset.jsx";
 import { ASSET_TYPE_DISPLAY, ASSET_TYPE_OPTIONS } from "../AssetConstants.js";
 
 const AssetsList = () => {
@@ -10,6 +11,10 @@ const AssetsList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editData, setEditData] = useState(null);
+
+  // View Modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
   // Filter state
   const [filterForm, setFilterForm] = useState({
@@ -39,6 +44,17 @@ const AssetsList = () => {
     setIsModalOpen(false);
     setIsEditMode(false);
     setEditData(null);
+  };
+
+  // Handle view asset details
+  const handleView = (asset) => {
+    setSelectedAsset(asset);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedAsset(null);
   };
 
   const handleFilterChange = (e) => {
@@ -213,6 +229,12 @@ const AssetsList = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
+                    onClick={() => handleView(asset)}
+                    className="text-green-600 hover:text-green-900 mr-3"
+                  >
+                    View
+                  </button>
+                  <button
                     onClick={() => handleEdit(asset)}
                     className="text-blue-600 hover:text-blue-900 mr-3"
                   >
@@ -237,12 +259,19 @@ const AssetsList = () => {
         )}
       </div>
 
-      {/* Asset Modal */}
+      {/* Add/Edit Asset Modal */}
       <AssetModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         isEdit={isEditMode}
         editData={editData}
+      />
+
+      {/* View Asset Modal */}
+      <AssetViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        asset={selectedAsset}
       />
     </div>
   );
