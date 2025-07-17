@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+import { BACKEND_URL } from '../../../constants/api.js'; 
+const API_URL = BACKEND_URL;
 
 // Helper function to get token from localStorage
 const getToken = () => localStorage.getItem('authToken');

@@ -4,7 +4,8 @@ import axios from 'axios';
 axios.defaults.withCredentials = true;
 
 // Fixed API URL to match your backend
-const API_URL = 'http://localhost:5000/api';
+import { BACKEND_URL } from "../../constants/api.js";
+const API_URL = BACKEND_URL;
 
 export const loginUser = async (email, password) => {
   try {
