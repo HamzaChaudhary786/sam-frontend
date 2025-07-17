@@ -10,6 +10,8 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
+    weaponNumber: "",
+    pistolNumber: "",
     additionalInfo: "",
   });
 
@@ -19,6 +21,8 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
       setFormData({
         name: editData.name || "",
         type: editData.type || "",
+        weaponNumber: editData.weaponNumber || "",
+        pistolNumber: editData.pistolNumber || "",
         additionalInfo: editData.additionalInfo || "",
       });
     } else {
@@ -60,6 +64,8 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
         setFormData({
           name: "",
           type: "",
+          weaponNumber: "",
+          pistolNumber: "",
           additionalInfo: "",
         });
       } else {
@@ -138,6 +144,37 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
                   </option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Weapon/Equipment Numbers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Weapon Number
+              </label>
+              <input
+                type="text"
+                name="weaponNumber"
+                value={formData.weaponNumber}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., dk-1223"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pistol Number
+              </label>
+              <input
+                type="text"
+                name="pistolNumber"
+                value={formData.pistolNumber}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., fk-1237"
+              />
             </div>
           </div>
 
