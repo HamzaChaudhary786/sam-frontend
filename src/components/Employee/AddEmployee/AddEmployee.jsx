@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../EmployeeHook";
-import {
-  STATUS_ENUM,
-  DESIGNATION_ENUM,
-  GRADE_ENUM,
-  CAST_ENUM,
-  WEAPON_ENUM,
-} from "./EmployeeConstants";
+import { STATUS_ENUM } from "./EmployeeConstants";
 import { useLocationEnum } from "./LocationHook";
 import { uploadToCloudinary } from "./Cloudinary";
 import { updateEmployee } from "../EmployeeApi";
+import { getCastsWithEnum } from "./Cast";
+import { getDesignationsWithEnum } from "./Designation";
+import { getGradesWithEnum } from "./Grades";
+import { getWeaponsWithEnum } from "./Weapons";
+import { addEmployee } from "../EmployeeApi";
 
 // Reusable enum select component
 const EnumSelect = ({
@@ -38,9 +37,9 @@ const EnumSelect = ({
         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="">{placeholder}</option>
-        {Object.entries(safeEnumObject).map(([key, value]) => (
-          <option key={key} value={value}>
-            {value}
+        {Object.entries(safeEnumObject).map(([id, itemName]) => (
+          <option key={id} value={id}>
+            {itemName}
           </option>
         ))}
       </select>
@@ -109,7 +108,7 @@ const ImageUpload = ({ onImageChange, imagePreview }) => {
 };
 
 // Multiple Weapons Component
-const MultipleWeapons = ({ weapons, onWeaponsChange }) => {
+const MultipleWeapons = ({ weapons, onWeaponsChange, weaponEnum }) => {
   const addWeapon = () => {
     const newWeapon = {
       id: Date.now(),
@@ -184,7 +183,7 @@ const MultipleWeapons = ({ weapons, onWeaponsChange }) => {
                     onChange={(e) =>
                       updateWeapon(weapon.id, "weaponType", e.target.value)
                     }
-                    enumObject={WEAPON_ENUM}
+                    enumObject={weaponEnum}
                     required={false}
                     placeholder="Select weapon type"
                   />
@@ -269,6 +268,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [weapons, setWeapons] = useState([]);
+  const [castEnum, setCastEnum] = useState({});
+  const [designationEnum, setDesignationEnum] = useState({});
+  const [gradeEnum, setGradeEnum] = useState({});
+  const [weaponEnum, setWeaponEnum] = useState({});
 
   const [formData, setFormData] = useState({
     pnumber: "",
@@ -300,12 +303,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           srnumber: editData.srnumber || "",
           firstName: editData.firstName || "",
           lastName: editData.lastName || "",
-          cast: editData.cast || "",
+          cast: editData.cast?._id || "",
           cnic: editData.cnic || "",
           status: editData.status || STATUS_ENUM.ACTIVE,
-          designation: editData.designation || "",
+          designation: editData.designation?._id || "",
           mobileNumber: editData.mobileNumber || "",
-          grade: editData.grade || "",
+          grade: editData.grade?._id || "",
           achievements: editData.achievements || "",
           address: {
             line1: editData.address?.line1 || "",
@@ -315,6 +318,15 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           dateOfBirth: editData.dateOfBirth || "",
           location: editData.location || "",
         });
+        setWeapons(
+        editData.assets?.map((weapon, index) => ({
+          id: Date.now() + index, // ensures unique ID for UI rendering
+          weaponType: weapon._id || "", // weapon._id maps to weaponEnum option
+          weaponNumber: weapon.weaponNumber || "",
+          pistolNumber: weapon.pistolNumber || "",
+          assignedRounds: editData.assignedRounds || "", // assuming global in editData
+          consumedRounds: editData.consumedRounds || "", // same as above
+        })) || [])
       } else {
         // Empty form for new employee
         setFormData({
@@ -339,8 +351,30 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         });
       }
     };
+    const fetchEnums = async () => {
+      const [castRes, desigRes, gradeRes, weaponRes] = await Promise.all([
+        getCastsWithEnum(),
+        getDesignationsWithEnum(),
+        getGradesWithEnum(),
+        getWeaponsWithEnum(),
+      ]);
+
+      console.log("🧪 weaponRes from backend:", weaponRes);
+
+      if (castRes.success) {
+        console.log("🎭 castRes.data:", castRes.data);
+        setCastEnum(castRes.data);
+      }
+      if (desigRes.success) setDesignationEnum(desigRes.data);
+      if (gradeRes.success) setGradeEnum(gradeRes.data);
+      if (weaponRes.success) {
+        console.log("🧪 weaponRes.data:", weaponRes.data);
+        setWeaponEnum(weaponRes.data);
+      }
+    };
 
     addEmployeeData();
+    fetchEnums();
   }, [editData, isEdit]);
 
   const [validationErrors, setValidationErrors] = useState({});
@@ -475,15 +509,18 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           photoUrl ||
           `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
       };
+      let result;
+
       if (isEdit) {
-        const result = await updateEmployee(submitData, editData._id);
+        result = await updateEmployee(submitData, editData._id);
       } else {
-        const result = await createEmployee(submitData);
+        result = await addEmployee(submitData);
       }
-      if (result.success) {
+
+      if (result?.success) {
         navigate("/employees");
       } else {
-        throw new Error(result.error);
+        throw new Error(result?.error || "Unknown error occurred");
       }
     } catch (error) {
       setError(error.message);
@@ -492,6 +529,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       setUploading(false);
     }
   };
+  console.log("🔥 weaponEnum inside form:", weaponEnum);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -578,7 +616,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             name="cast"
             value={formData.cast}
             onChange={handleChange}
-            enumObject={CAST_ENUM}
+            enumObject={castEnum}
             required={false}
             placeholder="Select cast"
           />
@@ -653,7 +691,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           name="designation"
           value={formData.designation}
           onChange={handleChange}
-          enumObject={DESIGNATION_ENUM}
+          enumObject={designationEnum}
           required={true}
           placeholder="Select designation"
         />
@@ -663,7 +701,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           name="grade"
           value={formData.grade}
           onChange={handleChange}
-          enumObject={GRADE_ENUM}
+          enumObject={gradeEnum}
           required={false}
           placeholder="Select grade"
         />
@@ -742,6 +780,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         <MultipleWeapons
           weapons={weapons}
           onWeaponsChange={handleWeaponsChange}
+          weaponEnum={weaponEnum}
         />
       </div>
 

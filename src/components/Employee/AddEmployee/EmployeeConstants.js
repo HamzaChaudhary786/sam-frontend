@@ -1,9 +1,9 @@
 // Define your enums
 export const STATUS_ENUM = {
-  ACTIVE: 'active',
-  RETIRED: 'retired',
-  TERMINATED: 'terminated',
-  DISMISSED: 'dismissed'
+  active: 'active',
+  retired: 'retired',
+  terminated: 'terminated',
+  dismissed: 'dismissed'
 };
 
 export const DESIGNATION_ENUM = {
