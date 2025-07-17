@@ -7,13 +7,19 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
+  
+  // Define initial form state to ensure all fields are always defined
+  const initialFormState = {
     name: "",
     type: "",
     weaponNumber: "",
     pistolNumber: "",
+    assignedRounds: "",
+    consumedRounds: "",
     additionalInfo: "",
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialFormState);
 
   // Initialize form data for editing
   useEffect(() => {
@@ -23,15 +29,13 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
         type: editData.type || "",
         weaponNumber: editData.weaponNumber || "",
         pistolNumber: editData.pistolNumber || "",
+        assignedRounds: editData.assignedRounds || "",
+        consumedRounds: editData.consumedRounds || "",
         additionalInfo: editData.additionalInfo || "",
       });
     } else {
-      // Reset form for new asset
-      setFormData({
-        name: "",
-        type: "",
-        additionalInfo: "",
-      });
+      // Reset form for new asset - ensure ALL fields are defined
+      setFormData(initialFormState);
     }
     setError("");
   }, [isEdit, editData, isOpen]);
@@ -44,6 +48,22 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
     }));
   };
 
+  // Handle type change - clear weapon fields when switching to vehicles
+  const handleTypeChange = (e) => {
+    const newType = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      type: newType,
+      // Clear weapon-specific fields if switching to vehicles
+      ...(newType === "vehicles" && {
+        weaponNumber: "",
+        pistolNumber: "",
+        assignedRounds: "",
+        consumedRounds: "",
+      }),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -52,22 +72,25 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
     try {
       let result;
       
+      // Prepare data - exclude weapon fields for vehicles
+      const submitData = { ...formData };
+      if (formData.type === "vehicles") {
+        delete submitData.weaponNumber;
+        delete submitData.pistolNumber;
+        delete submitData.assignedRounds;
+        delete submitData.consumedRounds;
+      }
+      
       if (isEdit) {
-        result = await modifyAsset(editData._id, formData);
+        result = await modifyAsset(editData._id, submitData);
       } else {
-        result = await createAsset(formData);
+        result = await createAsset(submitData);
       }
 
       if (result.success) {
         onClose();
-        // Reset form
-        setFormData({
-          name: "",
-          type: "",
-          weaponNumber: "",
-          pistolNumber: "",
-          additionalInfo: "",
-        });
+        // Reset form with all fields defined
+        setFormData(initialFormState);
       } else {
         setError(result.error || "An error occurred while saving the asset");
       }
@@ -80,8 +103,13 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
 
   const handleClose = () => {
     setError("");
+    // Reset form when closing
+    setFormData(initialFormState);
     onClose();
   };
+
+  // Check if current type is weapons
+  const isWeaponType = formData.type === "weapons";
 
   if (!isOpen) return null;
 
@@ -133,7 +161,7 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
               <select
                 name="type"
                 value={formData.type}
-                onChange={handleChange}
+                onChange={handleTypeChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -147,39 +175,80 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
             </div>
           </div>
 
-          {/* Weapon/Equipment Numbers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Weapon Number
-              </label>
-              <input
-                type="text"
-                name="weaponNumber"
-                value={formData.weaponNumber}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., dk-1223"
-              />
-            </div>
+          {/* Weapon-specific fields - Only show when type is "weapons" */}
+          {isWeaponType && (
+            <>
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium text-red-800 mb-4">
+                   Weapon Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-red-700 mb-1">
+                      Weapon Number
+                    </label>
+                    <input
+                      type="text"
+                      name="weaponNumber"
+                      value={formData.weaponNumber}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="e.g., WPN-00123"
+                    />
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Pistol Number
-              </label>
-              <input
-                type="text"
-                name="pistolNumber"
-                value={formData.pistolNumber}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., fk-1237"
-              />
-            </div>
-          </div>
+                  <div>
+                    <label className="block text-sm font-medium text-red-700 mb-1">
+                      Pistol Number
+                    </label>
+                    <input
+                      type="text"
+                      name="pistolNumber"
+                      value={formData.pistolNumber}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="e.g., PST-44444"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-red-700 mb-1">
+                      Assigned Rounds
+                    </label>
+                    <input
+                      type="number"
+                      name="assignedRounds"
+                      value={formData.assignedRounds}
+                      onChange={handleChange}
+                      min="0"
+                      className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="150"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-red-700 mb-1">
+                      Consumed Rounds
+                    </label>
+                    <input
+                      type="number"
+                      name="consumedRounds"
+                      value={formData.consumedRounds}
+                      onChange={handleChange}
+                      min="0"
+                      className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="120"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
 
           {/* Additional Information */}
-          <div>
+          <div className={formData.type ? "border-t pt-4" : ""}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Additional Information
             </label>
@@ -189,7 +258,11 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
               onChange={handleChange}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Multi-role military helicopter used for troop transport"
+              placeholder={
+                isWeaponType 
+                  ? "e.g., Fully automatic rifle for field operations"
+                  : "e.g., Off-road patrol vehicle for mountainous terrain"
+              }
             />
           </div>
 

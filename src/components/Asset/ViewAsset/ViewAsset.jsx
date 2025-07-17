@@ -85,6 +85,61 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
             </div>
           </div>
 
+          {/* Weapon/Equipment Numbers Section - Only show if weaponNumber or pistolNumber exists */}
+          {(asset.weaponNumber || asset.pistolNumber || asset.assignedRounds || asset.consumedRounds) && (
+            <div className="border-t pt-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Weapon Details</h4>
+              <div className="bg-red-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {asset.weaponNumber && (
+                    <div>
+                      <label className="block text-sm font-medium text-red-700">Weapon Number</label>
+                      <p className="text-sm text-red-900 font-mono">{asset.weaponNumber}</p>
+                    </div>
+                  )}
+                  {asset.pistolNumber && (
+                    <div>
+                      <label className="block text-sm font-medium text-red-700">Pistol Number</label>
+                      <p className="text-sm text-red-900 font-mono">{asset.pistolNumber}</p>
+                    </div>
+                  )}
+                  {asset.assignedRounds && (
+                    <div>
+                      <label className="block text-sm font-medium text-red-700">Assigned Rounds</label>
+                      <p className="text-sm text-red-900">{asset.assignedRounds}</p>
+                    </div>
+                  )}
+                  {asset.consumedRounds && (
+                    <div>
+                      <label className="block text-sm font-medium text-red-700">Consumed Rounds</label>
+                      <p className="text-sm text-red-900">{asset.consumedRounds}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Ammunition Status Bar */}
+                {asset.assignedRounds && asset.consumedRounds && (
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-red-700">Ammunition Status</label>
+                      <span className="text-sm text-red-700">
+                        {asset.assignedRounds - asset.consumedRounds} / {asset.assignedRounds} remaining
+                      </span>
+                    </div>
+                    <div className="w-full bg-red-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-red-600 h-2.5 rounded-full" 
+                        style={{
+                          width: `${((asset.assignedRounds - asset.consumedRounds) / asset.assignedRounds) * 100}%`
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Additional Information */}
           <div className="border-t pt-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h4>

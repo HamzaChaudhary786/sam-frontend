@@ -8,8 +8,11 @@ import { updateEmployee } from "../EmployeeApi";
 import { getCastsWithEnum } from "./Cast";
 import { getDesignationsWithEnum } from "./Designation";
 import { getGradesWithEnum } from "./Grades";
-import { getWeaponsWithEnum } from "./Weapons";
+import { getWeaponsWithEnum, getAssetById } from "./Weapons";
 import { addEmployee } from "../EmployeeApi";
+import { BACKEND_URL } from "../../../constants/api.js";
+
+const API_URL = BACKEND_URL;
 
 // Reusable enum select component
 const EnumSelect = ({
@@ -21,7 +24,6 @@ const EnumSelect = ({
   required = false,
   placeholder = "Select an option",
 }) => {
-  // Handle null/undefined enumObject
   const safeEnumObject = enumObject || {};
 
   return (
@@ -107,146 +109,307 @@ const ImageUpload = ({ onImageChange, imagePreview, profile }) => {
   );
 };
 
-// Multiple Weapons Component
-const MultipleWeapons = ({ weapons, onWeaponsChange, weaponEnum }) => {
-  const addWeapon = () => {
-    const newWeapon = {
+// Enhanced Multiple Assets Component (handles both weapons and vehicles)
+const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) => {
+  // Auto-populate asset details when asset type is selected
+  const handleAssetTypeChange = (assetId, newAssetType) => {
+    console.log(`🔄 Asset type changed to: ${newAssetType}`);
+
+    if (newAssetType && isWeaponAsset(newAssetType)) {
+      // Find the asset details from the full assets data
+      const assetDetails = allAssetsData.find(asset => asset._id === newAssetType);
+      
+      if (assetDetails) {
+        console.log(`🔫 Auto-populating weapon details from cache:`, assetDetails);
+
+        // Update asset with found details
+        onAssetsChange((prevAssets) =>
+          prevAssets.map((asset) =>
+            asset.id === assetId
+              ? {
+                  ...asset,
+                  assetType: newAssetType,
+                  weaponNumber: assetDetails.weaponNumber || "",
+                  pistolNumber: assetDetails.pistolNumber || "",
+                  assignedRounds: assetDetails.assignedRounds || "",
+                  consumedRounds: assetDetails.consumedRounds || "",
+                }
+              : asset
+          )
+        );
+      } else {
+        console.log(`⚠️ No cached data found for asset: ${newAssetType}`);
+        // Fallback: Try API call
+        handleAssetTypeChangeWithAPI(assetId, newAssetType);
+      }
+    } else {
+      // For vehicles or when clearing selection
+      console.log(`🚗 Vehicle or empty selection, no auto-population needed`);
+      updateAsset(assetId, "assetType", newAssetType);
+    }
+  };
+
+  // Fallback API call if cached data not available
+  const handleAssetTypeChangeWithAPI = async (assetId, newAssetType) => {
+    try {
+      console.log(`📥 Fallback: Fetching asset details via API for: ${newAssetType}`);
+      
+      // Use your existing API function
+      const result = await getAssetById(newAssetType);
+      
+      console.log("🔍 API Response:", result);
+
+      if (result.success && result.asset) {
+        const assetDetails = result.asset;
+        console.log(`🔫 Auto-populating weapon details from API:`, assetDetails);
+
+        // Update asset with fetched details
+        onAssetsChange((prevAssets) =>
+          prevAssets.map((asset) =>
+            asset.id === assetId
+              ? {
+                  ...asset,
+                  assetType: newAssetType,
+                  weaponNumber: assetDetails.weaponNumber || "",
+                  pistolNumber: assetDetails.pistolNumber || "",
+                  assignedRounds: assetDetails.assignedRounds || "",
+                  consumedRounds: assetDetails.consumedRounds || "",
+                }
+              : asset
+          )
+        );
+      } else {
+        console.log(`❌ Failed to fetch asset details via API:`, result.error);
+        // Just update the asset type
+        updateAsset(assetId, "assetType", newAssetType);
+      }
+    } catch (error) {
+      console.error("Error fetching asset details via API:", error);
+      // Just update the asset type
+      updateAsset(assetId, "assetType", newAssetType);
+    }
+  };
+
+  const addAsset = () => {
+    const newAsset = {
       id: Date.now(),
-      weaponType: "",
+      assetType: "",
       weaponNumber: "",
       pistolNumber: "",
       assignedRounds: "",
       consumedRounds: "",
     };
-    onWeaponsChange([...weapons, newWeapon]);
+    onAssetsChange([...assets, newAsset]);
   };
 
-  const removeWeapon = (weaponId) => {
-    onWeaponsChange(weapons.filter((weapon) => weapon.id !== weaponId));
+  const removeAsset = (assetId) => {
+    onAssetsChange(assets.filter((asset) => asset.id !== assetId));
   };
 
-  const updateWeapon = (weaponId, field, value) => {
-    onWeaponsChange(
-      weapons.map((weapon) =>
-        weapon.id === weaponId ? { ...weapon, [field]: value } : weapon
+  const updateAsset = (assetId, field, value) => {
+    console.log(`🔄 Updating asset ${assetId}, field: ${field}, value: ${value}`);
+    onAssetsChange(
+      assets.map((asset) =>
+        asset.id === assetId ? { ...asset, [field]: value } : asset
       )
     );
+  };
+
+  // Get asset name from allAssetsData instead of enum
+  const getAssetName = (assetId) => {
+    if (!assetId || !allAssetsData || !Array.isArray(allAssetsData)) {
+      return "Unknown Asset";
+    }
+    
+    const assetDetails = allAssetsData.find(asset => asset._id === assetId);
+    return assetDetails?.name || "Unknown Asset";
+  };
+
+  // Data-driven weapon detection using the type field
+  const isWeaponAsset = (assetId) => {
+    if (!assetId || !allAssetsData || !Array.isArray(allAssetsData)) {
+      return false;
+    }
+
+    // Find the asset details from the full assets data
+    const assetDetails = allAssetsData.find(asset => asset._id === assetId);
+    
+    // Check if the asset type is "weapons"
+    return assetDetails?.type === "weapons";
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">
-          Weapon Information
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900">Asset Information</h3>
         <button
           type="button"
-          onClick={addWeapon}
+          onClick={addAsset}
           className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
         >
-          + Add Weapon
+          + Add Asset
         </button>
       </div>
 
-      {weapons.length === 0 ? (
+      {assets.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <p>No weapons assigned. Click "Add Weapon" to add one.</p>
+          <p>No assets assigned. Click "Add Asset" to add one.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {weapons.map((weapon, index) => (
-            <div
-              key={weapon.id}
-              className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-            >
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="text-md font-medium text-gray-800">
-                  Weapon {index + 1}
-                </h4>
-                {weapons.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeWeapon(weapon.id)}
-                    className="text-red-600 hover:text-red-800 text-sm"
+          {assets.map((asset, index) => {
+            const isWeapon = asset.assetType ? isWeaponAsset(asset.assetType) : false;
+
+            return (
+              <div
+                key={asset.id}
+                className={`border rounded-lg p-4 ${
+                  isWeapon
+                    ? "border-red-200 bg-red-50"
+                    : "border-blue-200 bg-blue-50"
+                }`}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <h4
+                    className={`text-md font-medium ${
+                      isWeapon ? "text-red-800" : "text-blue-800"
+                    }`}
                   >
-                    ✕ Remove
-                  </button>
-                )}
+                    <div className="flex items-center">
+                      {isWeapon ? (
+                        <svg
+                          className="h-4 w-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-4 w-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                      )}
+                      Asset {index + 1}
+                      {asset.assetType && (
+                        <span className="text-sm text-gray-600 ml-2">
+                          ({getAssetName(asset.assetType)})
+                        </span>
+                      )}
+                    </div>
+                  </h4>
+                  {assets.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAsset(asset.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      ✕ Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <EnumSelect
+                      label="Asset Type"
+                      name={`asset_${asset.id}`}
+                      value={asset.assetType}
+                      onChange={(e) => {
+                        const newAssetType = e.target.value;
+                        handleAssetTypeChange(asset.id, newAssetType);
+                      }}
+                      enumObject={assetEnum}
+                      required={false}
+                      placeholder="Select asset type"
+                    />
+                  </div>
+                  
+                  {/* Weapon-specific fields */}
+                  {isWeapon && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 mb-1">
+                          Weapon Number
+                        </label>
+                        <input
+                          type="text"
+                          value={asset.weaponNumber || ""}
+                          onChange={(e) =>
+                            updateAsset(asset.id, "weaponNumber", e.target.value)
+                          }
+                          placeholder="Enter weapon serial number"
+                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 mb-1">
+                          Pistol Number
+                        </label>
+                        <input
+                          type="text"
+                          value={asset.pistolNumber || ""}
+                          onChange={(e) =>
+                            updateAsset(asset.id, "pistolNumber", e.target.value)
+                          }
+                          placeholder="Enter pistol number"
+                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 mb-1">
+                          Assigned Rounds
+                        </label>
+                        <input
+                          type="number"
+                          value={asset.assignedRounds || ""}
+                          onChange={(e) =>
+                            updateAsset(asset.id, "assignedRounds", e.target.value)
+                          }
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 mb-1">
+                          Consumed Rounds
+                        </label>
+                        <input
+                          type="number"
+                          value={asset.consumedRounds || ""}
+                          onChange={(e) =>
+                            updateAsset(asset.id, "consumedRounds", e.target.value)
+                          }
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <EnumSelect
-                    label="Weapon Type"
-                    name={`weapon_${weapon.id}`}
-                    value={weapon.weaponType}
-                    onChange={(e) =>
-                      updateWeapon(weapon.id, "weaponType", e.target.value)
-                    }
-                    enumObject={weaponEnum}
-                    required={false}
-                    placeholder="Select weapon type"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Weapon Number
-                  </label>
-                  <input
-                    type="text"
-                    value={weapon.weaponNumber}
-                    onChange={(e) =>
-                      updateWeapon(weapon.id, "weaponNumber", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Pistol Number
-                  </label>
-                  <input
-                    type="text"
-                    value={weapon.pistolNumber}
-                    onChange={(e) =>
-                      updateWeapon(weapon.id, "pistolNumber", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Assigned Rounds
-                  </label>
-                  <input
-                    type="number"
-                    value={weapon.assignedRounds}
-                    onChange={(e) =>
-                      updateWeapon(weapon.id, "assignedRounds", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Consumed Rounds
-                  </label>
-                  <input
-                    type="number"
-                    value={weapon.consumedRounds}
-                    onChange={(e) =>
-                      updateWeapon(weapon.id, "consumedRounds", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -267,12 +430,14 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [error, setError] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [weapons, setWeapons] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [castEnum, setCastEnum] = useState({});
   const [designationEnum, setDesignationEnum] = useState({});
   const [gradeEnum, setGradeEnum] = useState({});
-  const [weaponEnum, setWeaponEnum] = useState({});
+  const [assetEnum, setAssetEnum] = useState({});
+  const [allAssetsData, setAllAssetsData] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const [formData, setFormData] = useState({
     pnumber: "",
@@ -294,8 +459,27 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     dateOfBirth: "",
     location: "",
   });
-  console.log(isEdit, editData, "hahahahahahahahahahahahhaahhahahahahaha");
+
   useEffect(() => {
+    // Helper function to format date for input[type="date"]
+    const formatDateForInput = (dateString) => {
+      if (!dateString) return "";
+
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "";
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return "";
+      }
+    };
+
     const addEmployeeData = () => {
       if (editData && isEdit) {
         // Prefill form from editData
@@ -316,19 +500,25 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             line2: editData.address?.line2 || "",
             city: editData.address?.city || "",
           },
-          dateOfBirth: editData.dateOfBirth || "",
+          dateOfBirth: formatDateForInput(editData.dateOfBirth),
           location: editData.location || "",
         });
-        setWeapons(
-          editData.assets?.map((weapon, index) => ({
-            id: Date.now() + index, // ensures unique ID for UI rendering
-            weaponType: weapon._id || "", // weapon._id maps to weaponEnum option
-            weaponNumber: weapon.weaponNumber || "",
-            pistolNumber: weapon.pistolNumber || "",
-            assignedRounds: editData.assignedRounds || "", // assuming global in editData
-            consumedRounds: editData.consumedRounds || "", // same as above
-          })) || []
-        );
+
+        // Handle ALL assets (weapons AND vehicles) properly for edit mode
+        if (editData.assets && editData.assets.length > 0) {
+          const assetsFromData = editData.assets.map((asset, index) => ({
+            id: Date.now() + index,
+            assetType: asset._id || "",
+            weaponNumber: asset.weaponNumber || "",
+            pistolNumber: asset.pistolNumber || "",
+            assignedRounds: asset.assignedRounds || "",
+            consumedRounds: asset.consumedRounds || "",
+          }));
+          setAssets(assetsFromData);
+        } else {
+          setAssets([]);
+        }
+
         setProfile(editData.profileUrl || "");
       } else {
         // Empty form for new employee
@@ -352,35 +542,51 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           dateOfBirth: "",
           location: "",
         });
+        setAssets([]);
       }
     };
+
     const fetchEnums = async () => {
-      const [castRes, desigRes, gradeRes, weaponRes] = await Promise.all([
-        getCastsWithEnum(),
-        getDesignationsWithEnum(),
-        getGradesWithEnum(),
-        getWeaponsWithEnum(),
-      ]);
+      try {
+        const [castRes, desigRes, gradeRes, assetRes] = await Promise.all([
+          getCastsWithEnum(),
+          getDesignationsWithEnum(),
+          getGradesWithEnum(),
+          getWeaponsWithEnum(),
+        ]);
 
-      console.log("🧪 weaponRes from backend:", weaponRes);
+        console.log("🧪 assetRes from backend:", assetRes);
 
-      if (castRes.success) {
-        console.log("🎭 castRes.data:", castRes.data);
-        setCastEnum(castRes.data);
-      }
-      if (desigRes.success) setDesignationEnum(desigRes.data);
-      if (gradeRes.success) setGradeEnum(gradeRes.data);
-      if (weaponRes.success) {
-        console.log("🧪 weaponRes.data:", weaponRes.data);
-        setWeaponEnum(weaponRes.data);
+        if (castRes.success) {
+          setCastEnum(castRes.data);
+        }
+        if (desigRes.success) setDesignationEnum(desigRes.data);
+        if (gradeRes.success) setGradeEnum(gradeRes.data);
+        if (assetRes.success) {
+          setAssetEnum(assetRes.data);
+          
+          // Fetch the full asset data for auto-population
+          try {
+            const fullAssetsResponse = await fetch(`${API_URL}/assets`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+              }
+            });
+            const fullAssetsData = await fullAssetsResponse.json();
+            console.log("📦 Full assets data:", fullAssetsData);
+            setAllAssetsData(fullAssetsData);
+          } catch (error) {
+            console.error("❌ Error fetching full assets data:", error);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error in fetchEnums:", error);
       }
     };
 
     addEmployeeData();
     fetchEnums();
   }, [editData, isEdit]);
-
-  const [validationErrors, setValidationErrors] = useState({});
 
   // CNIC validation function
   const validateCNIC = (cnic) => {
@@ -465,14 +671,15 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     setImagePreview(preview);
   };
 
-  const handleWeaponsChange = (newWeapons) => {
-    setWeapons(newWeapons);
+  const handleAssetsChange = (newAssets) => {
+    setAssets(newAssets);
   };
 
   const handleCancel = () => {
     navigate("/employees");
   };
 
+  // Enhanced handleSubmit to properly format asset data
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -504,14 +711,24 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         }
       }
 
-      // Create JSON object with photo URL
+      // Extract only asset IDs from assets array (both weapons and vehicles)
+      const assetIds = assets
+        .filter((asset) => asset.assetType)
+        .map((asset) => asset.assetType);
+
+      // Create JSON object with asset IDs array
       const submitData = {
         ...formData,
-        weapons: weapons,
+        assets: assetIds,
         profileUrl:
           photoUrl ||
+          profile ||
           `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
       };
+
+      console.log("📤 Submitting data:", submitData);
+      console.log("🔧 Asset IDs being sent:", assetIds);
+
       let result;
 
       if (isEdit) {
@@ -532,7 +749,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       setUploading(false);
     }
   };
-  console.log("🔥 weaponEnum inside form:", weaponEnum);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -779,12 +995,13 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         </div>
       </div>
 
-      {/* Multiple Weapons Section */}
+      {/* Multiple Assets Section */}
       <div className="border-t pt-4">
-        <MultipleWeapons
-          weapons={weapons}
-          onWeaponsChange={handleWeaponsChange}
-          weaponEnum={weaponEnum}
+        <MultipleAssets
+          assets={assets}
+          onAssetsChange={handleAssetsChange}
+          assetEnum={assetEnum}
+          allAssetsData={allAssetsData}
         />
       </div>
 
@@ -797,6 +1014,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             value={formData.achievements}
             onChange={handleChange}
             rows={3}
+            placeholder="Enter any achievements, awards, or notable accomplishments..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -807,20 +1025,24 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         <button
           type="button"
           onClick={handleCancel}
-          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
         >
           Cancel
         </button>
-          <button
+        <button
           type="submit"
           disabled={loading || uploading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {uploading
             ? "Uploading Photo..."
             : loading
-            ? (isEdit ? "Updating..." : "Adding...")
-            : (isEdit ? "Update Employee" : "Add Employee")}
+            ? isEdit
+              ? "Updating..."
+              : "Adding..."
+            : isEdit
+            ? "Update Employee"
+            : "Add Employee"}
         </button>
       </div>
     </form>

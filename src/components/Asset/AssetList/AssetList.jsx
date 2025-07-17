@@ -25,6 +25,7 @@ const AssetsList = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this asset?")) {
       await removeAsset(id);
+
     }
   };
 
@@ -44,6 +45,7 @@ const AssetsList = () => {
     setIsModalOpen(false);
     setIsEditMode(false);
     setEditData(null);
+
   };
 
   // Handle view asset details
