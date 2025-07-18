@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useStations } from "../StationHook";
 
-const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
-  const { createStation, modifyStation } = useStations();
+const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
+  const mapRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const markerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
@@ -14,7 +19,32 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
       line2: "",
       city: "",
     },
+    coordinates: {
+      lat: null,
+      lng: null,
+    },
   });
+
+  // Load Google Maps API
+  useEffect(() => {
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setMapLoaded(true);
+      document.head.appendChild(script);
+    } else {
+      setMapLoaded(true);
+    }
+  }, []);
+
+  // Initialize map and autocomplete
+  useEffect(() => {
+    if (mapLoaded && isOpen && mapRef.current) {
+      initializeMap();
+    }
+  }, [mapLoaded, isOpen]);
 
   // Initialize form data for editing
   useEffect(() => {
@@ -27,7 +57,19 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
           line2: editData.address?.line2 || "",
           city: editData.address?.city || "",
         },
+        coordinates: {
+          lat: editData.coordinates?.lat || null,
+          lng: editData.coordinates?.lng || null,
+        },
       });
+      
+      // Set selected location if coordinates exist
+      if (editData.coordinates?.lat && editData.coordinates?.lng) {
+        setSelectedLocation({
+          lat: editData.coordinates.lat,
+          lng: editData.coordinates.lng,
+        });
+      }
     } else {
       // Reset form for new station
       setFormData({
@@ -38,10 +80,176 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
           line2: "",
           city: "",
         },
+        coordinates: {
+          lat: null,
+          lng: null,
+        },
       });
+      setSelectedLocation(null);
     }
     setError("");
   }, [isEdit, editData, isOpen]);
+
+  const initializeMap = () => {
+    if (!window.google || !mapRef.current) return;
+
+    // Default location (Pakistan center)
+    const defaultLocation = { lat: 30.3753, lng: 69.3451 };
+    const initialLocation = selectedLocation || defaultLocation;
+
+    // Initialize map
+    const map = new window.google.maps.Map(mapRef.current, {
+      zoom: selectedLocation ? 15 : 6,
+      center: initialLocation,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+    });
+
+    mapInstanceRef.current = map;
+
+    // Initialize autocomplete
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      autocompleteRef.current,
+      {
+        componentRestrictions: { country: "pk" }, // Restrict to Pakistan
+        fields: ["address_components", "formatted_address", "geometry", "name"],
+        types: ["establishment", "geocode"],
+      }
+    );
+
+    // Handle autocomplete place selection
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const location = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        };
+        
+        updateLocationOnMap(location, place);
+        fillAddressFields(place);
+      }
+    });
+
+    // Handle map click
+    map.addListener("click", (event) => {
+      const location = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng(),
+      };
+      
+      updateLocationOnMap(location);
+      reverseGeocode(location);
+    });
+
+    // Add existing marker if editing
+    if (selectedLocation) {
+      addMarker(selectedLocation);
+    }
+  };
+
+  const updateLocationOnMap = (location, place = null) => {
+    if (!mapInstanceRef.current) return;
+
+    setSelectedLocation(location);
+    
+    // Update coordinates in form data
+    setFormData(prev => ({
+      ...prev,
+      coordinates: location,
+    }));
+
+    // Center map on location
+    mapInstanceRef.current.setCenter(location);
+    mapInstanceRef.current.setZoom(15);
+
+    // Add/update marker
+    addMarker(location);
+  };
+
+  const addMarker = (location) => {
+    if (!mapInstanceRef.current) return;
+
+    // Remove existing marker
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+    }
+
+    // Add new marker
+    markerRef.current = new window.google.maps.Marker({
+      position: location,
+      map: mapInstanceRef.current,
+      draggable: true,
+      title: "Station Location",
+    });
+
+    // Handle marker drag
+    markerRef.current.addListener("dragend", (event) => {
+      const location = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng(),
+      };
+      
+      setSelectedLocation(location);
+      setFormData(prev => ({
+        ...prev,
+        coordinates: location,
+      }));
+      
+      reverseGeocode(location);
+    });
+  };
+
+  const reverseGeocode = (location) => {
+    if (!window.google) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode(
+      { location: location },
+      (results, status) => {
+        if (status === "OK" && results[0]) {
+          fillAddressFields(results[0]);
+        }
+      }
+    );
+  };
+
+  const fillAddressFields = (place) => {
+    const addressComponents = place.address_components || [];
+    let line1 = "";
+    let city = "";
+
+    // Extract address components
+    for (const component of addressComponents) {
+      const types = component.types;
+      
+      if (types.includes("street_number")) {
+        line1 = component.long_name + " ";
+      } else if (types.includes("route")) {
+        line1 += component.long_name;
+      } else if (types.includes("sublocality_level_1") || types.includes("neighborhood")) {
+        if (!line1) line1 = component.long_name;
+      } else if (types.includes("locality") || types.includes("administrative_area_level_2")) {
+        city = component.long_name;
+      }
+    }
+
+    // Update form data with extracted address
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        line1: line1 || place.formatted_address?.split(",")[0] || "",
+        city: city || "",
+      },
+    }));
+
+    // Update autocomplete input
+    if (autocompleteRef.current) {
+      autocompleteRef.current.value = place.formatted_address || "";
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,6 +276,13 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
     setLoading(true);
     setError("");
 
+    // Validate location selection
+    // if (!formData.coordinates.lat || !formData.coordinates.lng) {
+    //   setError("Please select a location on the map");
+    //   setLoading(false);
+    //   return;
+    // }
+
     try {
       let result;
 
@@ -88,7 +303,15 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
             line2: "",
             city: "",
           },
+          coordinates: {
+            lat: null,
+            lng: null,
+          },
         });
+        setSelectedLocation(null);
+        if (autocompleteRef.current) {
+          autocompleteRef.current.value = "";
+        }
       } else {
         setError(result.error || "An error occurred while saving the station");
       }
@@ -104,11 +327,32 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
     onClose();
   };
 
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          updateLocationOnMap(location);
+          reverseGeocode(location);
+        },
+        (error) => {
+          console.error("Error getting current location:", error);
+          setError("Unable to get current location. Please select manually.");
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by this browser.");
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">
@@ -221,6 +465,55 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Location Selection
+              </h3>
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Use Current Location
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search Location
+              </label>
+              <input
+                ref={autocompleteRef}
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search for a location..."
+              />
+            </div>
+
+            <div className="border border-gray-300 rounded-md overflow-hidden">
+              <div
+                ref={mapRef}
+                style={{ height: "300px", width: "100%" }}
+                className="bg-gray-200"
+              >
+                {!mapLoaded && (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Loading map...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedLocation && (
+              <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800">
+                  Selected Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Modal Footer */}

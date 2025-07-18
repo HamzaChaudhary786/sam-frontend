@@ -4,7 +4,7 @@ import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
 
 const StationList = () => {
-  const { stations, loading, error, removeStation, updateFilters, clearFilters, filters } = useStations();
+  const { stations, loading, error, removeStation, updateFilters, clearFilters, filters, createStation, modifyStation } = useStations();
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -284,6 +284,8 @@ const StationList = () => {
         onClose={handleCloseModal}
         isEdit={isEditMode}
         editData={editData}
+        createStation={createStation} 
+        modifyStation={modifyStation} 
       />
 
       {/* View Station Modal */}

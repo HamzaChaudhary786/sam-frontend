@@ -33,8 +33,7 @@ export const useStations = (initialFilters = {}) => {
     const result = await addStation(stationData);
     
     if (result.success) {
-      // Add the new station to the list
-      setStations(prev => Array.isArray(prev) ? [...prev, result.data] : [result.data]);
+       await fetchStations();
       return { success: true };
     } else {
       setError(result.error);
@@ -49,10 +48,7 @@ export const useStations = (initialFilters = {}) => {
     const result = await updateStation(stationData, id);
     
     if (result.success) {
-      // Update the station in the list
-      setStations(prev =>
-        Array.isArray(prev) ? prev.map(station => station._id === id ? result.data : station) : []
-      );
+      await fetchStations();
       return { success: true };
     } else {
       setError(result.error);
@@ -67,8 +63,7 @@ export const useStations = (initialFilters = {}) => {
     const result = await deleteStation(id);
     
     if (result.success) {
-      // Remove the station from the list
-      setStations(prev => Array.isArray(prev) ? prev.filter(station => station._id !== id) : []);
+       await fetchStations();
       return { success: true };
     } else {
       setError(result.error);
