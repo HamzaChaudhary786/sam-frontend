@@ -350,6 +350,7 @@ const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) =>
                         <input
                           type="text"
                           value={asset.weaponNumber || ""}
+                          readOnly
                           onChange={(e) =>
                             updateAsset(asset.id, "weaponNumber", e.target.value)
                           }
@@ -365,6 +366,7 @@ const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) =>
                         <input
                           type="text"
                           value={asset.pistolNumber || ""}
+                          readOnly
                           onChange={(e) =>
                             updateAsset(asset.id, "pistolNumber", e.target.value)
                           }
@@ -380,6 +382,7 @@ const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) =>
                         <input
                           type="number"
                           value={asset.assignedRounds || ""}
+                          readOnly
                           onChange={(e) =>
                             updateAsset(asset.id, "assignedRounds", e.target.value)
                           }
@@ -396,6 +399,7 @@ const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) =>
                         <input
                           type="number"
                           value={asset.consumedRounds || ""}
+                          readOnly
                           onChange={(e) =>
                             updateAsset(asset.id, "consumedRounds", e.target.value)
                           }
@@ -961,6 +965,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               type="text"
               name="address.line1"
               value={formData.address.line1}
+              readOnly
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -975,6 +980,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               type="text"
               name="address.line2"
               value={formData.address.line2}
+              readOnly
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -988,6 +994,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               type="text"
               name="address.city"
               value={formData.address.city}
+              readOnly
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

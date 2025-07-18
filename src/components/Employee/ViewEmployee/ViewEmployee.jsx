@@ -3,7 +3,6 @@ import React from "react";
 const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
   if (!isOpen || !employee) return null;
 
-
   console.log(employee,"hahahahahahahahahahhahahahahhahahahahhaahhaahah")
 
   return (
@@ -118,19 +117,19 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Station Name</label>
-                <p className="text-sm text-gray-900">{employee.stations.name || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{employee.stations?.name || 'N/A'}</p>
               </div>
                <div>
                 <label className="block text-sm font-medium text-gray-700">Address Line 1</label>
-                <p className="text-sm text-gray-900">{employee.stations.address?.line1 || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{employee.stations?.address?.line1 || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Address Line 2</label>
-                <p className="text-sm text-gray-900">{employee.stations.address?.line2 || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{employee.stations?.address?.line2 || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">City</label>
-                <p className="text-sm text-gray-900">{employee.stations.address?.city || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{employee.stations?.address?.city || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -256,7 +255,7 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
           )}
 
           {/* Stations Information */}
-          {employee.stations && employee.stations.length > 0 && (
+          {employee.stations && Array.isArray(employee.stations) && employee.stations.length > 0 && (
             <div className="border-t pt-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Assigned Stations</h4>
               <div className="space-y-3">

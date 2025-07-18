@@ -5,7 +5,7 @@ import AssetViewModal from "../ViewAsset/ViewAsset.jsx";
 import { ASSET_TYPE_DISPLAY, ASSET_TYPE_OPTIONS } from "../AssetConstants.js";
 
 const AssetsList = () => {
-  const { assets, loading, error, removeAsset, updateFilters, clearFilters, filters } = useAssets();
+  const { assets, loading, error, removeAsset, updateFilters, clearFilters, filters,  fetchAssets} = useAssets();
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -267,6 +267,8 @@ const AssetsList = () => {
         onClose={handleCloseModal}
         isEdit={isEditMode}
         editData={editData}
+        onSuccess={fetchAssets} // NEW LINE
+
       />
 
       {/* View Asset Modal */}

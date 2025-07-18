@@ -57,6 +57,15 @@ const EmployeeList = () => {
   const handleAddEmployee = () => {
     navigate("/employee");
   };
+    const handleHistory = async (data) => {
+    setEditData(data);
+    navigate("/employeehistory", {
+      state: {
+        isEdit: true,
+        editData: data,
+      },
+    });
+  };
 
   const handleEdit = async (data) => {
     setEditData(data);
@@ -329,18 +338,18 @@ const EmployeeList = () => {
                     {employee.mobileNumber}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {employee.stations.address?.line1}, {employee.stations.address?.city}
+                    {employee.stations?.address?.line1 || 'N/A'}, {employee.stations?.address?.city || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {employee.designation?.name}
+                    {employee.designation?.name || 'N/A'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    Grade: {employee.grade?.name}
+                    Grade: {employee.grade?.name || 'N/A'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    Cast: {employee.cast?.name}
+                    Cast: {employee.cast?.name || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -370,6 +379,12 @@ const EmployeeList = () => {
                     className="text-blue-600 hover:text-blue-900 mr-3"
                   >
                     Edit
+                  </button>
+                    <button
+                    onClick={() => handleHistory(employee)}
+                    className="text-yellow-500 hover:text-red-900 mr-3"
+                  >
+                    History
                   </button>
                   <button
                     onClick={() => handleDelete(employee._id)}

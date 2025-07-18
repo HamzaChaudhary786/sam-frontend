@@ -2,12 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useAssets } from "../AssetHook.js";
 import { ASSET_TYPE_OPTIONS } from "../AssetConstants.js";
 
-const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
+const AssetModal = ({
+  isOpen,
+  onClose,
+  isEdit = false,
+  editData = null,
+  onSuccess,
+}) => {
   const { createAsset, modifyAsset } = useAssets();
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Define initial form state to ensure all fields are always defined
   const initialFormState = {
     name: "",
@@ -18,7 +24,7 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
     consumedRounds: "",
     additionalInfo: "",
   };
-  
+
   const [formData, setFormData] = useState(initialFormState);
 
   // Initialize form data for editing
@@ -71,7 +77,7 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
 
     try {
       let result;
-      
+
       // Prepare data - exclude weapon fields for vehicles
       const submitData = { ...formData };
       if (formData.type === "vehicles") {
@@ -80,7 +86,7 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
         delete submitData.assignedRounds;
         delete submitData.consumedRounds;
       }
-      
+
       if (isEdit) {
         result = await modifyAsset(editData._id, submitData);
       } else {
@@ -88,9 +94,11 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
       }
 
       if (result.success) {
-        onClose();
-        // Reset form with all fields defined
+        if (typeof onSuccess === "function") {
+          await onSuccess(); // refetch data
+        }
         setFormData(initialFormState);
+        onClose(); // close after reload
       } else {
         setError(result.error || "An error occurred while saving the asset");
       }
@@ -180,9 +188,9 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
             <>
               <div className="border-t pt-4">
                 <h3 className="text-lg font-medium text-red-800 mb-4">
-                   Weapon Information
+                  Weapon Information
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-red-700 mb-1">
@@ -246,7 +254,6 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
             </>
           )}
 
-
           {/* Additional Information */}
           <div className={formData.type ? "border-t pt-4" : ""}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -259,7 +266,7 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={
-                isWeaponType 
+                isWeaponType
                   ? "e.g., Fully automatic rifle for field operations"
                   : "e.g., Off-road patrol vehicle for mountainous terrain"
               }
@@ -280,10 +287,13 @@ const AssetModal = ({ isOpen, onClose, isEdit = false, editData = null }) => {
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading 
-                ? (isEdit ? "Updating..." : "Adding...") 
-                : (isEdit ? "Update Asset" : "Add Asset")
-              }
+              {loading
+                ? isEdit
+                  ? "Updating..."
+                  : "Adding..."
+                : isEdit
+                ? "Update Asset"
+                : "Add Asset"}
             </button>
           </div>
         </form>
