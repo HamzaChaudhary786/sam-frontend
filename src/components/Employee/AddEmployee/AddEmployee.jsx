@@ -457,7 +457,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       city: "",
     },
     dateOfBirth: "",
-    location: "",
+    stations: "",
   });
 
   useEffect(() => {
@@ -501,9 +501,9 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             city: editData.address?.city || "",
           },
           dateOfBirth: formatDateForInput(editData.dateOfBirth),
-          location: editData.location || "",
+          stations: editData.stations?._id || "",
         });
-
+                console.log(formData, "My form data ")
         // Handle ALL assets (weapons AND vehicles) properly for edit mode
         if (editData.assets && editData.assets.length > 0) {
           const assetsFromData = editData.assets.map((asset, index) => ({
@@ -540,7 +540,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             city: "",
           },
           dateOfBirth: "",
-          location: "",
+          stations: "",
         });
         setAssets([]);
       }
@@ -637,7 +637,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     // Update location in formData
     setFormData((prev) => ({
       ...prev,
-      location: selectedStationId,
+      stations: selectedStationId,
     }));
 
     // Auto-fill address if station is selected
@@ -938,8 +938,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               Location
             </label>
             <select
-              name="location"
-              value={formData.location}
+              name="stations"
+              value={formData.stations}
               onChange={handleLocationChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >

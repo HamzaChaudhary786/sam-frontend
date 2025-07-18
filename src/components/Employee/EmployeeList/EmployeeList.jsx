@@ -329,7 +329,7 @@ const EmployeeList = () => {
                     {employee.mobileNumber}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {employee.address?.line1}, {employee.address?.city}
+                    {employee.stations.address?.line1}, {employee.stations.address?.city}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
