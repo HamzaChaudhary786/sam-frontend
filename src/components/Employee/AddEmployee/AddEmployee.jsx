@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../EmployeeHook";
-import { STATUS_ENUM } from "./EmployeeConstants";
 import { useLocationEnum } from "./LocationHook";
 import { uploadToCloudinary } from "./Cloudinary";
 import { updateEmployee } from "../EmployeeApi";
 import { getCastsWithEnum } from "./Cast";
 import { getDesignationsWithEnum } from "./Designation";
 import { getGradesWithEnum } from "./Grades";
-import { getWeaponsWithEnum, getAssetById } from "./Weapons";
 import { addEmployee } from "../EmployeeApi";
 import { BACKEND_URL } from "../../../constants/api.js";
-
+import { getStatusWithEnum } from "./Status.js";
 const API_URL = BACKEND_URL;
 
 // Reusable enum select component
@@ -23,6 +21,7 @@ const EnumSelect = ({
   enumObject,
   required = false,
   placeholder = "Select an option",
+  readOnly = false, // Add readOnly prop
 }) => {
   const safeEnumObject = enumObject || {};
 
@@ -36,11 +35,14 @@ const EnumSelect = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        disabled={readOnly} // Use disabled instead of readOnly for select elements
+        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          readOnly ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
+        }`}
       >
         <option value="">{placeholder}</option>
         {Object.entries(safeEnumObject).map(([id, itemName]) => (
-          <option key={id} value={id}>
+          <option key={id} value={itemName}>
             {itemName}
           </option>
         ))}
@@ -49,373 +51,102 @@ const EnumSelect = ({
   );
 };
 
-// Image upload component
-const ImageUpload = ({ onImageChange, imagePreview, profile }) => {
+// Fixed Multiple Image upload component
+const ImageUpload = ({ onImageChange, imagePreviews, profileUrls }) => {
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onImageChange(file, reader.result);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    const newFiles = [];
+    const newPreviews = [];
+
+    files.forEach((file) => {
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result);
+          if (newPreviews.length === files.length) {
+            // Pass the new files and updated previews
+            onImageChange([...newFiles], [...imagePreviews, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+        newFiles.push(file);
+      }
+    });
+  };
+
+  const removeImage = (index) => {
+    const existingUrlsCount = (profileUrls || []).length;
+
+    if (index < existingUrlsCount) {
+      // Removing an existing profile URL
+      const newProfileUrls = profileUrls.filter((_, i) => i !== index);
+      // Call parent component's update function to update profileUrls
+      onImageChange([], imagePreviews, newProfileUrls);
+    } else {
+      // Removing a new preview image
+      const previewIndex = index - existingUrlsCount;
+      const newPreviews = imagePreviews.filter((_, i) => i !== previewIndex);
+      onImageChange([], newPreviews, profileUrls);
     }
   };
+
+  const displayImages = [...(profileUrls || []), ...imagePreviews];
 
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        Employee Photo
+        Employee Photos
       </label>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0">
-          {imagePreview || profile ? (
+      <div className="flex flex-wrap gap-4 mb-4">
+        {displayImages.map((image, index) => (
+          <div key={index} className="relative">
             <img
-              src={imagePreview || profile}
-              alt="Employee preview"
-              className="h-24 w-24 rounded-full object-cover border-2 border-gray-300"
+              src={image}
+              alt={`Employee photo ${index + 1}`}
+              className="h-24 w-24 rounded-lg object-cover border-2 border-gray-300"
             />
-          ) : (
-            <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-              <svg
-                className="h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        ))}
 
-        <div className="flex-1">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-          <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Enhanced Multiple Assets Component (handles both weapons and vehicles)
-const MultipleAssets = ({ assets, onAssetsChange, assetEnum, allAssetsData }) => {
-  // Auto-populate asset details when asset type is selected
-  const handleAssetTypeChange = (assetId, newAssetType) => {
-    console.log(`🔄 Asset type changed to: ${newAssetType}`);
-
-    if (newAssetType && isWeaponAsset(newAssetType)) {
-      // Find the asset details from the full assets data
-      const assetDetails = allAssetsData.find(asset => asset._id === newAssetType);
-      
-      if (assetDetails) {
-        console.log(`🔫 Auto-populating weapon details from cache:`, assetDetails);
-
-        // Update asset with found details
-        onAssetsChange((prevAssets) =>
-          prevAssets.map((asset) =>
-            asset.id === assetId
-              ? {
-                  ...asset,
-                  assetType: newAssetType,
-                  weaponNumber: assetDetails.weaponNumber || "",
-                  pistolNumber: assetDetails.pistolNumber || "",
-                  assignedRounds: assetDetails.assignedRounds || "",
-                  consumedRounds: assetDetails.consumedRounds || "",
-                }
-              : asset
-          )
-        );
-      } else {
-        console.log(`⚠️ No cached data found for asset: ${newAssetType}`);
-        // Fallback: Try API call
-        handleAssetTypeChangeWithAPI(assetId, newAssetType);
-      }
-    } else {
-      // For vehicles or when clearing selection
-      console.log(`🚗 Vehicle or empty selection, no auto-population needed`);
-      updateAsset(assetId, "assetType", newAssetType);
-    }
-  };
-
-  // Fallback API call if cached data not available
-  const handleAssetTypeChangeWithAPI = async (assetId, newAssetType) => {
-    try {
-      console.log(`📥 Fallback: Fetching asset details via API for: ${newAssetType}`);
-      
-      // Use your existing API function
-      const result = await getAssetById(newAssetType);
-      
-      console.log("🔍 API Response:", result);
-
-      if (result.success && result.asset) {
-        const assetDetails = result.asset;
-        console.log(`🔫 Auto-populating weapon details from API:`, assetDetails);
-
-        // Update asset with fetched details
-        onAssetsChange((prevAssets) =>
-          prevAssets.map((asset) =>
-            asset.id === assetId
-              ? {
-                  ...asset,
-                  assetType: newAssetType,
-                  weaponNumber: assetDetails.weaponNumber || "",
-                  pistolNumber: assetDetails.pistolNumber || "",
-                  assignedRounds: assetDetails.assignedRounds || "",
-                  consumedRounds: assetDetails.consumedRounds || "",
-                }
-              : asset
-          )
-        );
-      } else {
-        console.log(`❌ Failed to fetch asset details via API:`, result.error);
-        // Just update the asset type
-        updateAsset(assetId, "assetType", newAssetType);
-      }
-    } catch (error) {
-      console.error("Error fetching asset details via API:", error);
-      // Just update the asset type
-      updateAsset(assetId, "assetType", newAssetType);
-    }
-  };
-
-  const addAsset = () => {
-    const newAsset = {
-      id: Date.now(),
-      assetType: "",
-      weaponNumber: "",
-      pistolNumber: "",
-      assignedRounds: "",
-      consumedRounds: "",
-    };
-    onAssetsChange([...assets, newAsset]);
-  };
-
-  const removeAsset = (assetId) => {
-    onAssetsChange(assets.filter((asset) => asset.id !== assetId));
-  };
-
-  const updateAsset = (assetId, field, value) => {
-    console.log(`🔄 Updating asset ${assetId}, field: ${field}, value: ${value}`);
-    onAssetsChange(
-      assets.map((asset) =>
-        asset.id === assetId ? { ...asset, [field]: value } : asset
-      )
-    );
-  };
-
-  // Get asset name from allAssetsData instead of enum
-  const getAssetName = (assetId) => {
-    if (!assetId || !allAssetsData || !Array.isArray(allAssetsData)) {
-      return "Unknown Asset";
-    }
-    
-    const assetDetails = allAssetsData.find(asset => asset._id === assetId);
-    return assetDetails?.name || "Unknown Asset";
-  };
-
-  // Data-driven weapon detection using the type field
-  const isWeaponAsset = (assetId) => {
-    if (!assetId || !allAssetsData || !Array.isArray(allAssetsData)) {
-      return false;
-    }
-
-    // Find the asset details from the full assets data
-    const assetDetails = allAssetsData.find(asset => asset._id === assetId);
-    
-    // Check if the asset type is "weapons"
-    return assetDetails?.type === "weapons";
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Asset Information</h3>
-        <button
-          type="button"
-          onClick={addAsset}
-          className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
-        >
-          + Add Asset
-        </button>
+        {displayImages.length === 0 && (
+          <div className="h-24 w-24 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+            <svg
+              className="h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+        )}
       </div>
 
-      {assets.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No assets assigned. Click "Add Asset" to add one.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {assets.map((asset, index) => {
-            const isWeapon = asset.assetType ? isWeaponAsset(asset.assetType) : false;
-
-            return (
-              <div
-                key={asset.id}
-                className={`border rounded-lg p-4 ${
-                  isWeapon
-                    ? "border-red-200 bg-red-50"
-                    : "border-blue-200 bg-blue-50"
-                }`}
-              >
-                <div className="flex justify-between items-center mb-3">
-                  <h4
-                    className={`text-md font-medium ${
-                      isWeapon ? "text-red-800" : "text-blue-800"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      {isWeapon ? (
-                        <svg
-                          className="h-4 w-4 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="h-4 w-4 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                      )}
-                      Asset {index + 1}
-                      {asset.assetType && (
-                        <span className="text-sm text-gray-600 ml-2">
-                          ({getAssetName(asset.assetType)})
-                        </span>
-                      )}
-                    </div>
-                  </h4>
-                  {assets.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => removeAsset(asset.id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      ✕ Remove
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <EnumSelect
-                      label="Asset Type"
-                      name={`asset_${asset.id}`}
-                      value={asset.assetType}
-                      onChange={(e) => {
-                        const newAssetType = e.target.value;
-                        handleAssetTypeChange(asset.id, newAssetType);
-                      }}
-                      enumObject={assetEnum}
-                      required={false}
-                      placeholder="Select asset type"
-                    />
-                  </div>
-                  
-                  {/* Weapon-specific fields */}
-                  {isWeapon && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-red-700 mb-1">
-                          Weapon Number
-                        </label>
-                        <input
-                          type="text"
-                          value={asset.weaponNumber || ""}
-                          readOnly
-                          onChange={(e) =>
-                            updateAsset(asset.id, "weaponNumber", e.target.value)
-                          }
-                          placeholder="Enter weapon serial number"
-                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-red-700 mb-1">
-                          Pistol Number
-                        </label>
-                        <input
-                          type="text"
-                          value={asset.pistolNumber || ""}
-                          readOnly
-                          onChange={(e) =>
-                            updateAsset(asset.id, "pistolNumber", e.target.value)
-                          }
-                          placeholder="Enter pistol number"
-                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-red-700 mb-1">
-                          Assigned Rounds
-                        </label>
-                        <input
-                          type="number"
-                          value={asset.assignedRounds || ""}
-                          readOnly
-                          onChange={(e) =>
-                            updateAsset(asset.id, "assignedRounds", e.target.value)
-                          }
-                          placeholder="0"
-                          min="0"
-                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-red-700 mb-1">
-                          Consumed Rounds
-                        </label>
-                        <input
-                          type="number"
-                          value={asset.consumedRounds || ""}
-                          readOnly
-                          onChange={(e) =>
-                            updateAsset(asset.id, "consumedRounds", e.target.value)
-                          }
-                          placeholder="0"
-                          min="0"
-                          className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          PNG, JPG, GIF up to 5MB each. You can select multiple images.
+        </p>
+      </div>
     </div>
   );
 };
@@ -432,39 +163,105 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [assets, setAssets] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [castEnum, setCastEnum] = useState({});
   const [designationEnum, setDesignationEnum] = useState({});
+  const [statusEnum, setStatusEnum] = useState({});
   const [gradeEnum, setGradeEnum] = useState({});
-  const [assetEnum, setAssetEnum] = useState({});
-  const [allAssetsData, setAllAssetsData] = useState([]);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
+  const [enumsLoaded, setEnumsLoaded] = useState(false);
+
+  // Separate state for station address (for display only)
+  const [stationAddress, setStationAddress] = useState({
+    line1: "",
+    line2: "",
+    city: "",
+  });
 
   const [formData, setFormData] = useState({
-    pnumber: "",
-    srnumber: "",
+    personalNumber: "",
     firstName: "",
     lastName: "",
+    fatherFirstName: "",
+    fatherLastName: "",
     cast: "",
     cnic: "",
-    status: STATUS_ENUM.ACTIVE,
+    status: "active",
+    statusDescription: "", // New field for status description
     designation: "",
     mobileNumber: "",
     grade: "",
-    achievements: "",
+    serviceType: "federal",
     address: {
       line1: "",
       line2: "",
-      city: "",
+      muhala: "",
+      tehsil: "",
     },
     dateOfBirth: "",
     stations: "",
   });
 
+  // Helper function to determine if stations field should be read-only
+  const isStationsReadOnly = () => {
+    if (!isEdit) return false; // Never read-only in add mode
+    
+    // Check if stations data exists and is not null/empty
+    const stationsValue = editData?.stations;
+    return stationsValue && 
+           (typeof stationsValue === 'string' ? stationsValue.trim() !== '' : 
+            typeof stationsValue === 'object' ? stationsValue._id : false);
+  };
+
+  // Helper function to determine if status field should be read-only
+  const isStatusReadOnly = () => {
+    if (!isEdit) return false; // Never read-only in add mode
+    
+    // Check if status data exists and is not null/empty
+    const statusValue = editData?.status;
+    return statusValue && 
+           (typeof statusValue === 'string' ? statusValue.trim() !== '' : 
+            typeof statusValue === 'object' ? statusValue._id : false);
+  };
+
+  function addToObjectAssign(obj, key, value) {
+    return Object.assign({}, obj, { [key]: value });
+  }
+  
   useEffect(() => {
+    // First, fetch the enums
+    const fetchEnums = async () => {
+      try {
+        const [castRes, desigRes, gradeRes, statusRes] = await Promise.all([
+          getCastsWithEnum(),
+          getDesignationsWithEnum(),
+          getGradesWithEnum(),
+          getStatusWithEnum(),
+        ]);
+
+        if (castRes.success) {
+          setCastEnum(castRes.data);
+        }
+        if (desigRes.success) setDesignationEnum(desigRes.data);
+        if (gradeRes.success) setGradeEnum(gradeRes.data);
+        if (statusRes.success) setStatusEnum(statusRes.data);
+
+        setEnumsLoaded(true);
+      } catch (error) {
+        console.error("❌ Error in fetchEnums:", error);
+        setEnumsLoaded(true); // Set to true even on error to avoid infinite loading
+      }
+    };
+
+    fetchEnums();
+  }, []);
+  
+  useEffect(() => {
+    // Only set form data after enums are loaded
+    if (!enumsLoaded) return;
+
     // Helper function to format date for input[type="date"]
     const formatDateForInput = (dateString) => {
       if (!dateString) return "";
@@ -484,117 +281,94 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       }
     };
 
-    const addEmployeeData = () => {
-      if (editData && isEdit) {
-        // Prefill form from editData
-        setFormData({
-          pnumber: editData.pnumber || "",
-          srnumber: editData.srnumber || "",
-          firstName: editData.firstName || "",
-          lastName: editData.lastName || "",
-          cast: editData.cast?._id || "",
-          cnic: editData.cnic || "",
-          status: editData.status || STATUS_ENUM.ACTIVE,
-          designation: editData.designation?._id || "",
-          mobileNumber: editData.mobileNumber || "",
-          grade: editData.grade?._id || "",
-          achievements: editData.achievements || "",
-          address: {
-            line1: editData.address?.line1 || "",
-            line2: editData.address?.line2 || "",
-            city: editData.address?.city || "",
-          },
-          dateOfBirth: formatDateForInput(editData.dateOfBirth),
-          stations: editData.stations?._id || "",
-        });
-                console.log(formData, "My form data ")
-        // Handle ALL assets (weapons AND vehicles) properly for edit mode
-        if (editData.assets && editData.assets.length > 0) {
-          const assetsFromData = editData.assets.map((asset, index) => ({
-            id: Date.now() + index,
-            assetType: asset._id || "",
-            weaponNumber: asset.weaponNumber || "",
-            pistolNumber: asset.pistolNumber || "",
-            assignedRounds: asset.assignedRounds || "",
-            consumedRounds: asset.consumedRounds || "",
-          }));
-          setAssets(assetsFromData);
-        } else {
-          setAssets([]);
-        }
+    if (editData && isEdit) {
+      // Prefill form from editData
+      const formattedDate = formatDateForInput(editData.dateOfBirth);
 
-        setProfile(editData.profileUrl || "");
-      } else {
-        // Empty form for new employee
-        setFormData({
-          pnumber: "",
-          srnumber: "",
-          firstName: "",
-          lastName: "",
-          cast: "",
-          cnic: "",
-          status: STATUS_ENUM.ACTIVE,
-          designation: "",
-          mobileNumber: "",
-          grade: "",
-          achievements: "",
-          address: {
-            line1: "",
-            line2: "",
-            city: "",
-          },
-          dateOfBirth: "",
-          stations: "",
-        });
-        setAssets([]);
-      }
-    };
+      setFormData({
+        personalNumber: editData.personalNumber || "",
+        firstName: editData.firstName || "",
+        lastName: editData.lastName || "",
+        fatherFirstName: editData.fatherFirstName || "",
+        fatherLastName: editData.fatherLastName || "",
+        cast:
+          typeof editData.cast === "object"
+            ? editData.cast?._id
+            : editData.cast || "",
+        cnic: editData.cnic || "",
+        status:
+          typeof editData.status === "object"
+            ? editData.status?._id
+            : editData.status || "",
+        statusDescription: editData.statusDescription || "",
+        designation:
+          typeof editData.designation === "object"
+            ? editData.designation?._id
+            : editData.designation || "",
+        mobileNumber: editData.mobileNumber || "",
+        grade:
+          typeof editData.grade === "object"
+            ? editData.grade?._id
+            : editData.grade || "",
+        serviceType: editData.serviceType || "federal",
+        address: {
+          line1: editData.address?.line1 || "",
+          line2: editData.address?.line2 || "",
+          muhala: editData.address?.muhala || "",
+          tehsil: editData.address?.tehsil || "",
+        },
+        dateOfBirth: formattedDate,
+        stations:
+          typeof editData.stations === "object"
+            ? editData.stations?._id
+            : editData.stations || "",
+      });
 
-    const fetchEnums = async () => {
-      try {
-        const [castRes, desigRes, gradeRes, assetRes] = await Promise.all([
-          getCastsWithEnum(),
-          getDesignationsWithEnum(),
-          getGradesWithEnum(),
-          getWeaponsWithEnum(),
-        ]);
-
-        console.log("🧪 assetRes from backend:", assetRes);
-
-        if (castRes.success) {
-          setCastEnum(castRes.data);
-        }
-        if (desigRes.success) setDesignationEnum(desigRes.data);
-        if (gradeRes.success) setGradeEnum(gradeRes.data);
-        if (assetRes.success) {
-          setAssetEnum(assetRes.data);
-          
-          // Fetch the full asset data for auto-population
-          try {
-            const fullAssetsResponse = await fetch(`${API_URL}/assets`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-              }
-            });
-            const fullAssetsData = await fullAssetsResponse.json();
-            console.log("📦 Full assets data:", fullAssetsData);
-            setAllAssetsData(fullAssetsData);
-          } catch (error) {
-            console.error("❌ Error fetching full assets data:", error);
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error in fetchEnums:", error);
-      }
-    };
-
-    addEmployeeData();
-    fetchEnums();
-  }, [editData, isEdit]);
+      // Set station address for display (separate from personal address)
+      setStationAddress({
+        line1: editData.stations?.address?.line1 || "",
+        line2: editData.stations?.address?.line2 || "",
+        city: editData.stations?.address?.city || "",
+      });
+      setProfile(editData.profileUrl || []);
+    } else {
+      // Empty form for new employee
+      setFormData({
+        personalNumber: "",
+        firstName: "",
+        lastName: "",
+        fatherFirstName: "",
+        fatherLastName: "",
+        cast: "",
+        cnic: "",
+        status: "",
+        statusDescription: "",
+        designation: "",
+        mobileNumber: "",
+        grade: "",
+        serviceType: "federal",
+        address: {
+          line1: "",
+          line2: "",
+          muhala: "",
+          tehsil: "",
+        },
+        dateOfBirth: "",
+        age: "",
+        stations: "",
+      });
+      setStationAddress({
+        line1: "",
+        line2: "",
+        city: "",
+      });
+    }
+  }, [editData, isEdit, enumsLoaded]);
 
   // CNIC validation function
   const validateCNIC = (cnic) => {
-    const cnicPattern = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+    // Check if CNIC is exactly 13 digits with no hyphens
+    const cnicPattern = /^[0-9]{13}$/;
     return cnicPattern.test(cnic);
   };
 
@@ -611,30 +385,41 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
     if (name.includes("address.")) {
       const addressField = name.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        address: {
-          ...prev.address,
-          [addressField]: value,
-        },
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          address: {
+            ...prev.address,
+            [addressField]: value,
+          },
+        };
+        return newData;
+      });
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          [name]: value,
+        };
+
+        // Clear status description if status is changed to active
+        if (name === "status" && value === "active") {
+          newData.statusDescription = "";
+        }
+        return newData;
+      });
 
       // Real-time CNIC validation
       if (name === "cnic" && value && !validateCNIC(value)) {
         setValidationErrors((prev) => ({
           ...prev,
-          cnic: "CNIC must follow the pattern: 12345-6789012-3",
+          cnic: "CNIC must be exactly 13 digits with no hyphens (e.g., 3520212345671)",
         }));
       }
     }
   };
 
-  // Handle location change with auto-fill address
+  // Handle location change with auto-fill station address (separate from personal address)
   const handleLocationChange = (e) => {
     const selectedStationId = e.target.value;
 
@@ -644,46 +429,42 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       stations: selectedStationId,
     }));
 
-    // Auto-fill address if station is selected
+    // Auto-fill STATION address (not personal address)
     if (selectedStationId) {
-      const stationAddress = getStationAddress(selectedStationId);
-      if (stationAddress) {
-        setFormData((prev) => ({
-          ...prev,
-          address: {
-            line1: stationAddress.line1,
-            line2: stationAddress.line2,
-            city: stationAddress.city,
-          },
-        }));
+      const stationAddressData = getStationAddress(selectedStationId);
+      if (stationAddressData) {
+        setStationAddress({
+          line1: stationAddressData.line1,
+          line2: stationAddressData.line2,
+          city: stationAddressData.city,
+        });
       }
     } else {
-      // Clear address if no station selected
-      setFormData((prev) => ({
-        ...prev,
-        address: {
-          line1: "",
-          line2: "",
-          city: "",
-        },
-      }));
+      // Clear station address if no station selected
+      setStationAddress({
+        line1: "",
+        line2: "",
+        city: "",
+      });
     }
   };
 
-  const handleImageChange = (file, preview) => {
-    setImageFile(file);
-    setImagePreview(preview);
-  };
+  // Updated handleImageChange to handle profile URL updates
+  const handleImageChange = (files, previews, updatedProfileUrls = null) => {
+    setImageFiles(files);
+    setImagePreviews(previews);
 
-  const handleAssetsChange = (newAssets) => {
-    setAssets(newAssets);
+    // If updatedProfileUrls is provided, update the profile state
+    if (updatedProfileUrls !== null) {
+      setProfile(updatedProfileUrls);
+    }
   };
 
   const handleCancel = () => {
     navigate("/employees");
   };
 
-  // Enhanced handleSubmit to properly format asset data
+  // Enhanced handleSubmit to properly format data
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -694,45 +475,41 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       // Validate CNIC before submission
       if (formData.cnic && !validateCNIC(formData.cnic)) {
         setValidationErrors({
-          cnic: "CNIC must follow the pattern: 12345-6789012-3",
+          cnic: "CNIC must be exactly 13 digits with no hyphens (e.g., 3520212345671)",
         });
         setLoading(false);
         return;
       }
 
-      let photoUrl = null;
+      let photoUrls = [...(profile || [])]; // Start with existing profile URLs
 
-      // Upload photo to Cloudinary first if present
-      if (imageFile) {
+      // Upload new photos to Cloudinary if present
+      if (imageFiles && imageFiles.length > 0) {
         setUploading(true);
-        const uploadResult = await uploadToCloudinary(imageFile);
-        setUploading(false);
 
-        if (uploadResult.success) {
-          photoUrl = uploadResult.url;
-        } else {
-          throw new Error(`Photo upload failed: ${uploadResult.error}`);
+        for (const file of imageFiles) {
+          const uploadResult = await uploadToCloudinary(file);
+          if (uploadResult.success) {
+            photoUrls.push(uploadResult.url);
+          } else {
+            throw new Error(`Photo upload failed: ${uploadResult.error}`);
+          }
         }
+        setUploading(false);
       }
 
-      // Extract only asset IDs from assets array (both weapons and vehicles)
-      const assetIds = assets
-        .filter((asset) => asset.assetType)
-        .map((asset) => asset.assetType);
+      // Ensure we have at least one photo URL (fallback to avatar)
+      if (photoUrls.length === 0) {
+        photoUrls = [
+          `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
+        ];
+      }
 
-      // Create JSON object with asset IDs array
+      // Create JSON object with proper format - match your backend API structure
       const submitData = {
         ...formData,
-        assets: assetIds,
-        profileUrl:
-          photoUrl ||
-          profile ||
-          `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
+        profileUrl: photoUrls,
       };
-
-      console.log("📤 Submitting data:", submitData);
-      console.log("🔧 Asset IDs being sent:", assetIds);
-
       let result;
 
       if (isEdit) {
@@ -772,38 +549,40 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
       <ImageUpload
         onImageChange={handleImageChange}
-        imagePreview={imagePreview}
-        profile={profile}
+        imagePreviews={imagePreviews}
+        profileUrls={profile}
       />
 
-      {/* Personal Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Police Number *
+            Personal Number *
           </label>
           <input
             type="text"
-            name="pnumber"
-            value={formData.pnumber}
+            name="personalNumber"
+            value={formData.personalNumber}
             onChange={handleChange}
             required
+            placeholder="EMP-12345"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Serial Number *
+            Service Type *
           </label>
-          <input
-            type="text"
-            name="srnumber"
-            value={formData.srnumber}
+          <select
+            name="serviceType"
+            value={formData.serviceType}
             onChange={handleChange}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          >
+            <option value="federal">Federal</option>
+            <option value="provincial">Provincial</option>
+          </select>
         </div>
 
         <div>
@@ -835,6 +614,34 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Father's First Name *
+          </label>
+          <input
+            type="text"
+            name="fatherFirstName"
+            value={formData.fatherFirstName}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Father's Last Name *
+          </label>
+          <input
+            type="text"
+            name="fatherLastName"
+            value={formData.fatherLastName}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
           <EnumSelect
             label="Cast"
             name="cast"
@@ -856,9 +663,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             value={formData.cnic}
             onChange={handleChange}
             required
-            placeholder="12345-6789012-3"
-            pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}"
-            title="CNIC must follow the pattern: 12345-6789012-3"
+            placeholder="3520212345671"
+            pattern="[0-9]{13}"
+            title="CNIC must be exactly 13 digits with no hyphens"
+            maxLength="13"
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               validationErrors.cnic
                 ? "border-red-300 focus:border-red-500"
@@ -900,15 +708,23 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
       {/* Enum Dropdowns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <EnumSelect
-          label="Status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          enumObject={STATUS_ENUM}
-          required={true}
-          placeholder="Select status"
-        />
+        <div>
+          <EnumSelect
+            label="Status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            enumObject={statusEnum}
+            required={true}
+            placeholder="Select status"
+            readOnly={isStatusReadOnly()} // Use the helper function for status
+          />
+          {isStatusReadOnly() && (
+            <p className="mt-1 text-xs text-gray-500">
+              Status field is read-only because a status is already assigned
+            </p>
+          )}
+        </div>
 
         <EnumSelect
           label="Designation"
@@ -931,32 +747,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         />
       </div>
 
-      {/* Place of Posting */}
+      {/* Personal Address Section */}
       <div className="border-t pt-4">
         <h3 className="text-lg font-medium text-gray-900 mb-3">
-          Place of Posting
+          Personal Address
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location
-            </label>
-            <select
-              name="stations"
-              value={formData.stations}
-              onChange={handleLocationChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">
-                {locationLoading ? "Loading locations..." : "Select location"}
-              </option>
-              {Object.entries(locationEnum).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Address Line 1
@@ -965,13 +761,11 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               type="text"
               name="address.line1"
               value={formData.address.line1}
-              readOnly
               onChange={handleChange}
+              placeholder="House #123"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Address Line 2
@@ -980,50 +774,115 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               type="text"
               name="address.line2"
               value={formData.address.line2}
-              readOnly
               onChange={handleChange}
+              placeholder="Street 5, Sector A"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
+              Muhala
             </label>
             <input
               type="text"
-              name="address.city"
-              value={formData.address.city}
-              readOnly
+              name="address.muhala"
+              value={formData.address.muhala}
               onChange={handleChange}
+              placeholder="Satellite Town"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tehsil
+            </label>
+            <input
+              type="text"
+              name="address.tehsil"
+              value={formData.address.tehsil}
+              onChange={handleChange}
+              placeholder="Rawalpindi"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
       </div>
 
-      {/* Multiple Assets Section */}
+      {/* Place of Posting Section */}
       <div className="border-t pt-4">
-        <MultipleAssets
-          assets={assets}
-          onAssetsChange={handleAssetsChange}
-          assetEnum={assetEnum}
-          allAssetsData={allAssetsData}
-        />
-      </div>
-
-      {/* Achievements Section */}
-      <div className="border-t pt-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Achievements</h3>
-        <div className="mt-4">
-          <textarea
-            name="achievements"
-            value={formData.achievements}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Enter any achievements, awards, or notable accomplishments..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <h3 className="text-lg font-medium text-gray-900 mb-3">
+          Place of Posting
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station *
+            </label>
+            <select
+              name="stations"
+              value={formData.stations}
+              onChange={handleLocationChange}
+              required
+              disabled={isStationsReadOnly()} // Use the helper function
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isStationsReadOnly() ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
+              }`}
+            >
+              <option value="">
+                {locationLoading ? "Loading stations..." : "Select station"}
+              </option>
+              {Object.entries(locationEnum).map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            {isStationsReadOnly() && (
+              <p className="mt-1 text-xs text-gray-500">
+                Station field is read-only because a station is already assigned
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station Address Line 1
+            </label>
+            <input
+              type="text"
+              value={stationAddress.line1}
+              readOnly
+              placeholder="Station address will appear here"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station Address Line 2
+            </label>
+            <input
+              type="text"
+              value={stationAddress.line2}
+              readOnly
+              placeholder="Station address line 2"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station City
+            </label>
+            <input
+              type="text"
+              value={stationAddress.city}
+              readOnly
+              placeholder="Station city"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
         </div>
       </div>
 

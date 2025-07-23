@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStations } from "../StationHook";
+import { getStationLocationsWithEnum } from "../lookUp.js"; // Import the service
 
 const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
   const mapRef = useRef(null);
@@ -11,6 +12,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
   const [error, setError] = useState("");
   const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [stationLocations, setStationLocations] = useState({}); // State for station locations
+  const [loadingLocations, setLoadingLocations] = useState(false); // Loading state for locations
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
@@ -23,6 +26,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
       lat: null,
       lng: null,
     },
+    pictures: [], // Added pictures field
   });
 
   // Load Google Maps API
@@ -38,6 +42,32 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
       setMapLoaded(true);
     }
   }, []);
+
+  // Fetch station locations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchStationLocations();
+    }
+  }, [isOpen]);
+
+  // Fetch station locations from API
+  const fetchStationLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const result = await getStationLocationsWithEnum();
+      if (result.success) {
+        setStationLocations(result.data);
+      } else {
+        setError("Failed to load station locations");
+        console.error("Error fetching station locations:", result.error);
+      }
+    } catch (error) {
+      setError("Failed to load station locations");
+      console.error("Error fetching station locations:", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
 
   // Initialize map and autocomplete
   useEffect(() => {
@@ -61,6 +91,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
           lat: editData.coordinates?.lat || null,
           lng: editData.coordinates?.lng || null,
         },
+        pictures: editData.pictures || editData.stationImageUrl || [], // Support both field names
       });
       
       // Set selected location if coordinates exist
@@ -84,6 +115,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
           lat: null,
           lng: null,
         },
+        pictures: [],
       });
       setSelectedLocation(null);
     }
@@ -271,25 +303,71 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   };
 
+  // Handle picture upload
+  const handlePicturesChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      pictures: files,
+    }));
+  };
+
+  // Remove a specific picture
+  const removePicture = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      pictures: prev.pictures.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Validate location selection
-    // if (!formData.coordinates.lat || !formData.coordinates.lng) {
-    //   setError("Please select a location on the map");
-    //   setLoading(false);
-    //   return;
-    // }
-
     try {
+      let uploadedUrls = [];
+
+      // Upload pictures to Cloudinary if any
+      if (formData.pictures.length > 0) {
+        for (const pic of formData.pictures) {
+          if (typeof pic === "string") {
+            // Existing URL (for edit mode)
+            uploadedUrls.push(pic);
+          } else {
+            // New file to upload
+            const data = new FormData();
+            data.append("file", pic);
+            data.append("upload_preset", "Stations"); // Replace with your actual preset name
+            
+            const res = await fetch(
+              "https://api.cloudinary.com/v1_1/dxisw0kcc/image/upload", // Replace with your actual cloud name
+              { method: "POST", body: data }
+            );
+            
+            const result = await res.json();
+            if (result.secure_url) {
+              uploadedUrls.push(result.secure_url);
+            } else if (result.error) {
+              throw new Error(`Upload failed: ${result.error.message}`);
+            }
+          }
+        }
+      }
+
+      // Prepare submission data
+      const submitData = {
+        ...formData,
+        stationImageUrl: uploadedUrls, // Use stationImageUrl to match your backend
+        pictures: undefined, // Remove the pictures field
+      };
+
       let result;
 
       if (isEdit) {
-        result = await modifyStation(editData._id, formData);
+        result = await modifyStation(editData._id, submitData);
       } else {
-        result = await createStation(formData);
+        result = await createStation(submitData);
       }
 
       if (result.success) {
@@ -307,6 +385,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             lat: null,
             lng: null,
           },
+          pictures: [],
         });
         setSelectedLocation(null);
         if (autocompleteRef.current) {
@@ -400,16 +479,78 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
                 value={formData.tehsil}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loadingLocations}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="" disabled>
-                  Select Tehsil
+                  {loadingLocations ? "Loading locations..." : "Select Tehsil"}
                 </option>
-                <option value="Dera Bugti">Dera Bugti</option>
-                <option value="Sui">Sui</option>
-                <option value="Pehlawagh">Pehlawagh</option>
+                {Object.entries(stationLocations).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
               </select>
+              {loadingLocations && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Loading station locations...
+                </p>
+              )}
             </div>
+          </div>
+
+          {/* Station Pictures Upload */}
+          <div className="border-t pt-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Station Pictures
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Station Pictures
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePicturesChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                You can select multiple images. Supported formats: JPG, PNG, WEBP
+              </p>
+            </div>
+
+            {/* Picture Preview */}
+            {formData.pictures.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Selected Pictures ({formData.pictures.length})
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {formData.pictures.map((pic, index) => (
+                    <div
+                      key={index}
+                      className="relative w-full h-24 overflow-hidden rounded-md border border-gray-200 group"
+                    >
+                      <img
+                        src={typeof pic === "string" ? pic : URL.createObjectURL(pic)}
+                        alt={`Station preview ${index + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePicture(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        title="Remove image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Address Information */}
@@ -467,6 +608,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             </div>
           </div>
 
+          {/* Location Selection */}
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-gray-900">
@@ -527,7 +669,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingLocations}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading

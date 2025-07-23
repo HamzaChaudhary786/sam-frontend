@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { BACKEND_URL } from "../../constants/api.js";
+import { toast } from 'react-toastify';
 
 const API_URL = BACKEND_URL;
 
@@ -12,11 +13,13 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// Get all employees with optional filters
+// Get all employees with optional filters and pagination
 export const getEmployees = async (filters = {}) => {
   try {
-    // Build query string from filters
+    // Build query string from filters and pagination
     const queryParams = new URLSearchParams();
+    
+    // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.city) queryParams.append('city', filters.city);
     if (filters.status) queryParams.append('status', filters.status);
@@ -25,17 +28,24 @@ export const getEmployees = async (filters = {}) => {
     if (filters.pnumber) queryParams.append('pnumber', filters.pnumber);
     if (filters.cnic) queryParams.append('cnic', filters.cnic);
     
+    // Add pagination parameters
+    if (filters.page) queryParams.append('page', filters.page);
+    if (filters.limit) queryParams.append('limit', filters.limit);
+    
     const queryString = queryParams.toString();
     const url = `${API_URL}/employee${queryString ? `?${queryString}` : ''}`;
     
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
+    
     return { success: true, data: response.data };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
+    // toast.error(`Error fetching employees: ${errorMessage}`);
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch employees'
+      error: errorMessage
     };
   }
 };
@@ -46,11 +56,14 @@ export const getEmployee = async (id) => {
     const response = await axios.get(`${API_URL}/employee/${id}`, {
       headers: getAuthHeaders()
     });
+    
     return { success: true, data: response.data };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to fetch employee';
+    // toast.error(`Error fetching employee: ${errorMessage}`);
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch employee'
+      error: errorMessage
     };
   }
 };
@@ -64,11 +77,18 @@ export const addEmployee = async (employeeData) => {
         'Content-Type': 'application/json'
       }
     });
+    
+    // Success toast with employee name if available
+    const employeeName = `${employeeData.firstName || 'New'} ${employeeData.lastName || 'Employee'}`.trim();
+    toast.success(`Employee "${employeeName}" created successfully!`);
+    
     return { success: true, data: response.data };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to add employee';
+    toast.error(`Failed to create employee: ${errorMessage}`);
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to add employee'
+      error: errorMessage
     };
   }
 };
@@ -79,11 +99,18 @@ export const updateEmployee = async (employeeData, id) => {
     const response = await axios.put(`${API_URL}/employee/${id}`, employeeData, {
       headers: getAuthHeaders()
     });
+    
+    // Success toast with employee name if available
+    const employeeName = `${employeeData.firstName || 'Employee'} ${employeeData.lastName || ''}`.trim();
+    toast.success(`Employee "${employeeName}" updated successfully!`);
+    
     return { success: true, data: response.data };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to update employee';
+    toast.error(`Failed to update employee: ${errorMessage}`);
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to update employee'
+      error: errorMessage
     };
   }
 };
@@ -94,11 +121,48 @@ export const deleteEmployee = async (id) => {
     const response = await axios.delete(`${API_URL}/employee/${id}`, {
       headers: getAuthHeaders()
     });
+    
+    toast.success("Employee deleted successfully!");
+    
     return { success: true, data: response.data };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to delete employee';
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to delete employee'
+      error: errorMessage
+    };
+  }
+};
+
+// Optional: Get employees with custom pagination (if you want a separate method)
+export const getEmployeesWithPagination = async (page = 1, limit = 10, filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination first
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
+    
+    // Add filter parameters
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+    
+    const url = `${API_URL}/employee?${queryParams.toString()}`;
+    
+    const response = await axios.get(url, {
+      headers: getAuthHeaders()
+    });
+    
+    return { success: true, data: response.data };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
+    // toast.error(`Error fetching employees: ${errorMessage}`);
+    return {
+      success: false,
+      error: errorMessage
     };
   }
 };
