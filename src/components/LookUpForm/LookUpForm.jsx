@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { createLookup, updateLookup, getUniqueLookupTypes } from './LookUpApi.js';
 
-const LookupModal = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  isEdit = false, 
-  initialData = null 
+const LookupModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  isEdit = false,
+  initialData = null
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -29,16 +29,14 @@ const LookupModal = ({
       } else {
         // Fallback to hardcoded types if API fails
         setLookupTypes([
-          "cast", "employeeServicesStatus", "deductionType", "appreciationType",
-          "grades", "stationLocation", "assetTypes", "designation", "payscale"
+          "cast", "employeeServicesStatus", "deductionType", "appreciationType", "grades", "stationLocation", "assetTypes", "designation", "payscale", "vehicle", "achievementType", "assetStatus"
         ]);
       }
     } catch (error) {
       console.error('Error fetching lookup types:', error);
       // Fallback to hardcoded types
       setLookupTypes([
-        "cast", "employeeServicesStatus", "deductionType", "appreciationType",
-        "grades", "stationLocation", "assetTypes", "designation", "payscale"
+        "cast", "employeeServicesStatus", "deductionType", "appreciationType", "grades", "stationLocation", "assetTypes", "designation", "payscale", "vehicle", "achievementType", "assetStatus"
       ]);
     } finally {
       setTypesLoading(false);
@@ -49,7 +47,7 @@ const LookupModal = ({
   useEffect(() => {
     if (isOpen) {
       fetchLookupTypes();
-      
+
       if (isEdit && initialData) {
         setFormData({
           name: initialData.name || '',
@@ -79,7 +77,7 @@ const LookupModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name.trim()) {
       setError('Name is required');
@@ -95,7 +93,7 @@ const LookupModal = ({
 
     try {
       let response;
-      
+
       if (isEdit && initialData?._id) {
         response = await updateLookup(initialData._id, formData);
       } else {
@@ -105,7 +103,7 @@ const LookupModal = ({
       if (response && response.success) {
         // Reset form
         setFormData({ name: '', lookupType: '', isActive: true });
-        
+
         // Close modal and notify parent
         onClose();
         if (onSuccess) {
@@ -117,8 +115,8 @@ const LookupModal = ({
     } catch (error) {
       console.error('Error submitting form:', error);
       setError(
-        error.response?.data?.message || 
-        error.message || 
+        error.response?.data?.message ||
+        error.message ||
         `Failed to ${isEdit ? 'update' : 'create'} lookup`
       );
     } finally {

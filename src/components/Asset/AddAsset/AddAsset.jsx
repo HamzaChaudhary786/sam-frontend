@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAssets } from "../AssetHook.js";
-import { useLookupOptions } from "../../../services/LookUp.js";
+import { useLookupAssetStatusOption, useLookupOptions } from "../../../services/LookUp.js";
 
 const AssetModal = ({
   isOpen,
@@ -11,6 +11,8 @@ const AssetModal = ({
 }) => {
   const { createAsset, modifyAsset } = useAssets();
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
+  const { options: assetStatusOptions } = useLookupAssetStatusOption("assetStatus");
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,21 +28,26 @@ const AssetModal = ({
     vehicleNumber: "",
     registerNumber: "",
     chassiNumber: "",
+    condition: "",
     engineNumber: "",
     model: "",
     make: "",
     color: "",
+    assetStatus: "",
+    purchaseDate: "",
+    supplier: "",
+    cost: "",
     // Weapon round fields
     numberOfRounds: "",
     weaponName: "",
-    availableQuantity:"",
+    availableQuantity: "",
     // Common fields
     additionalInfo: "",
     pictures: [],
   };
 
   const [formData, setFormData] = useState(initialFormState);
-       console.log(editData,"hahahahahahahahaha this is edit data")
+  console.log(editData, "hahahahahahahahaha this is edit data")
   useEffect(() => {
     if (isEdit && editData) {
       setFormData({
@@ -52,6 +59,11 @@ const AssetModal = ({
         registerNumber: editData.registerNumber || "",
         chassiNumber: editData.chassiNumber || "",
         engineNumber: editData.engineNumber || "",
+        purchaseDate: editData.purchaseDate || "",
+        condition: editData.condition || "",
+        assetStatus: editData.assetStatus || "",
+        cost: editData.cost || "",
+        supplier: editData.supplier || "",
         model: editData.model || "",
         make: editData.make || "",
         color: editData.color || "",
@@ -201,8 +213,14 @@ const AssetModal = ({
     onClose();
   };
 
+  const handleMetenance = () => {
+    alert("under construction")
+  }
+
   const renderTypeSpecificFields = () => {
     switch (formData.type) {
+
+
       case "weapons":
         return (
           <div className="border-t pt-4">
@@ -221,20 +239,20 @@ const AssetModal = ({
                 placeholder="Enter weapon number"
               />
             </div>
-              <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">
-                  Available Quantity 
-                </label>
-                <input
-                  type="number"
-                  name="availableQuantity"
-                  value={formData.availableQuantity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-green-300 rounded-md"
-                  placeholder="Enter stock quantity"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-green-700 mb-1">
+                Available Quantity
+              </label>
+              <input
+                type="number"
+                name="availableQuantity"
+                value={formData.availableQuantity}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-green-300 rounded-md"
+                placeholder="Enter stock quantity"
+              />
+            </div>
           </div>
         );
 
@@ -256,20 +274,20 @@ const AssetModal = ({
                 placeholder="Enter pistol number"
               />
             </div>
-              <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">
-                  Available Quantity 
-                </label>
-                <input
-                  type="number"
-                  name="availableQuantity"
-                  value={formData.availableQuantity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-green-300 rounded-md"
-                  placeholder="Enter stock quantity"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-green-700 mb-1">
+                Available Quantity
+              </label>
+              <input
+                type="number"
+                name="availableQuantity"
+                value={formData.availableQuantity}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-green-300 rounded-md"
+                placeholder="Enter stock quantity"
+              />
+            </div>
           </div>
         );
 
@@ -414,9 +432,9 @@ const AssetModal = ({
                   placeholder="Enter weapon name"
                 />
               </div>
-               <div>
+              <div>
                 <label className="block text-sm font-medium text-green-700 mb-1">
-                  Available Quantity 
+                  Available Quantity
                 </label>
                 <input
                   type="number"
@@ -428,7 +446,7 @@ const AssetModal = ({
                   placeholder="Enter stock quantity"
                 />
               </div>
-              
+
             </div>
           </div>
         );
@@ -454,6 +472,8 @@ const AssetModal = ({
   };
 
   if (!isOpen) return null;
+
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -514,6 +534,7 @@ const AssetModal = ({
             </div>
           </div>
 
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Upload Asset Pictures
@@ -542,8 +563,98 @@ const AssetModal = ({
               </div>
             )}
           </div>
+          <div className=" flex flex-row gap-2">
+            <div className="w-full">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Condition *
+                </label>
+                <input
+                  type="text"
+                  name="condition"
+                  value={formData.condition}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="e.g., Black Hawk"
+                />
+              </div>
+            </div>
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Asset Status *
+              </label>
+              <select
+                name="assetStatus"
+                value={formData.assetStatus}
+                onChange={handleTypeChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select asset type</option>
+                {assetStatusOptions?.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className=" flex flex-row gap-2">
+            <div className="w-full">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Purchase Date *
+                </label>
+                <input
+                  type="text"
+                  name="purchaseDate"
+                  value={formData.purchaseDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="e.g., Black Hawk"
+                />
+              </div>
+            </div>
+
+            <div className="w-full">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cost *
+                </label>
+                <input
+                  type="text"
+                  name="cost"
+                  value={formData.cost}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="e.g., Black Hawk"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Supplier *
+              </label>
+              <input
+                type="text"
+                name="supplier"
+                value={formData.supplier}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="e.g., Black Hawk"
+              />
+            </div>
+          </div>
+
+
 
           {renderTypeSpecificFields()}
+
+
+
 
           <div className={formData.type ? "border-t pt-4" : ""}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -562,6 +673,14 @@ const AssetModal = ({
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <button
               type="button"
+              onClick={handleMetenance}
+              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Maintenance History
+            </button>
+
+            <button
+              type="button"
               onClick={handleClose}
               className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
             >
@@ -577,13 +696,13 @@ const AssetModal = ({
                   ? "Updating..."
                   : "Adding..."
                 : isEdit
-                ? "Update Asset"
-                : "Add Asset"}
+                  ? "Update Asset"
+                  : "Add Asset"}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

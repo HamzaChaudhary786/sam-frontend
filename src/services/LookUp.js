@@ -436,6 +436,152 @@ export const useLookupOptions = (lookupType, options = {}) => {
   };
 };
 
+
+export const useLookupAssetStatusOption = (lookupType, options = {}) => {
+  const [lookupStatusOptions, setLookupStatusOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  
+  // Configuration options
+  const {
+    valueField = 'name', // 'name' or '_id' or any other field
+    labelField = 'name',
+    includeInactive = false,
+    limit = 100, // Get more items for dropdowns
+    sortBy = 'name',
+    sortOrder = 'asc'
+  } = options;
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      if (!lookupType) {
+        setLookupStatusOptions([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+      
+      try {
+        // Build query parameters for paginated API
+        const queryParams = new URLSearchParams({
+          lookupType,
+          limit: limit.toString(),
+          page: '1', // We'll fetch all pages if needed
+          sortBy,
+          sortOrder
+        });
+
+        // Only filter by active status if includeInactive is false
+        if (!includeInactive) {
+          queryParams.set('isActive', 'true');
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/api/lookup?${queryParams}`
+        );
+        
+        // Check if response is ok
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response');
+        }
+
+        const data = await response.json();
+
+        if (!data?.success) {
+          throw new Error(data?.message || "Failed to fetch lookup options");
+        }
+
+        let allResults = data.result || [];
+
+        // If there are multiple pages and we want all options for a dropdown
+        if (data.totalPages > 1 && limit >= data.totalItems) {
+          allResults = await fetchAllPages(lookupType, data.totalPages, {
+            includeInactive,
+            sortBy,
+            sortOrder
+          });
+        }
+
+        // Filter and format the options
+        const filteredData = allResults.filter(item => {
+          const typeMatches = item.lookupType === lookupType;
+          const statusMatches = includeInactive || item.isActive;
+          return typeMatches && statusMatches;
+        });
+
+        const formatted = filteredData.map((item) => ({
+          label: item[labelField] || item.name,
+          value: item[valueField] || item.name,
+          ...item // Include original item data for advanced use cases
+        }));
+
+        setLookupStatusOptions(formatted);
+      } catch (err) {
+        console.error('Lookup fetch error:', err);
+        setError(err.message || "Failed to load lookup options");
+        setLookupStatusOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOptions();
+  }, [lookupType, valueField, labelField, includeInactive, limit, sortBy, sortOrder]);
+
+  // Helper function to fetch all pages if needed
+  const fetchAllPages = async (type, totalPages, config) => {
+    const allResults = [];
+    const fetchPromises = [];
+
+    for (let page = 1; page <= totalPages; page++) {
+      const queryParams = new URLSearchParams({
+        lookupType: type,
+        limit: '100',
+        page: page.toString(),
+        sortBy: config.sortBy,
+        sortOrder: config.sortOrder
+      });
+
+      if (!config.includeInactive) {
+        queryParams.set('isActive', 'true');
+      }
+
+      const promise = fetch(`http://localhost:5000/api/lookup?${queryParams}`)
+        .then(res => res.json())
+        .then(data => data.success ? data.result : [])
+        .catch(err => {
+          console.error(`Error fetching page ${page}:`, err);
+          return [];
+        });
+
+      fetchPromises.push(promise);
+    }
+
+    const results = await Promise.all(fetchPromises);
+    results.forEach(pageResults => allResults.push(...pageResults));
+    
+    return allResults;
+  };
+
+  return { 
+    options: lookupStatusOptions, 
+    loading, 
+    error,
+    refresh: () => {
+      setError("");
+      // Trigger useEffect by updating a dependency
+    }
+  };
+};
+
 // Enhanced hook with caching for better performance
 export const useLookupOptionsWithCache = (lookupType, options = {}) => {
   const [cache, setCache] = useState(new Map());

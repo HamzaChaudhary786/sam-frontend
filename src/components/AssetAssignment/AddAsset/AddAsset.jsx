@@ -20,6 +20,9 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState([]);
 
+
+  console.log(employee, "all employee data are here");
+
   // Reset form
   const resetForm = () => {
     setFormData({
@@ -114,8 +117,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
 
       if (result.success) {
         toast.success(
-          `Asset assignment ${
-            editingAsset ? "updated" : "created"
+          `Asset assignment ${editingAsset ? "updated" : "created"
           } successfully`
         );
         resetForm();
@@ -251,13 +253,12 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                               {asset.name}
                             </span>
                             <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                asset.type === "weapons"
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.type === "weapons"
                                   ? "bg-red-100 text-red-800"
                                   : asset.type === "round" || asset.type === "weaponRound"
-                                  ? "bg-orange-100 text-orange-800"
-                                  : "bg-blue-100 text-blue-800"
-                              }`}
+                                    ? "bg-orange-100 text-orange-800"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
                             >
                               {asset.type}
                             </span>
@@ -369,6 +370,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                                     rows={2}
                                     className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
                                   />
+
                                 </div>
                               </div>
                             </div>
@@ -405,8 +407,8 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                   ? "Updating..."
                   : "Assigning..."
                 : editingAsset
-                ? "Update Assignment"
-                : "Assign Assets"}
+                  ? "Update Assignment"
+                  : "Assign Assets"}
             </button>
           </div>
         </form>
