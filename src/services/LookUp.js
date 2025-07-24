@@ -9,6 +9,7 @@ import {
   deleteLookup,
   getUniqueLookupTypes
 } from '../components/LookUpForm/LookUpApi.js';
+import { BACKEND_URL } from "../constants/api.js";
 
 // Main hook for lookup management (for the main lookup page)
 export const useLookups = () => {
@@ -333,7 +334,7 @@ export const useLookupOptions = (lookupType, options = {}) => {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/lookup?${queryParams}`
+          `${BACKEND_URL}/lookup?${queryParams}`
         );
         
         // Check if response is ok
@@ -408,7 +409,7 @@ export const useLookupOptions = (lookupType, options = {}) => {
         queryParams.set('isActive', 'true');
       }
 
-      const promise = fetch(`http://localhost:5000/api/lookup?${queryParams}`)
+      const promise = fetch(`${BACKEND_URL}/lookup?${queryParams}`)
         .then(res => res.json())
         .then(data => data.success ? data.result : [])
         .catch(err => {
@@ -479,7 +480,7 @@ export const useLookupAssetStatusOption = (lookupType, options = {}) => {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/lookup?${queryParams}`
+          `${BACKEND_URL}/lookup?${queryParams}`
         );
         
         // Check if response is ok
@@ -554,7 +555,7 @@ export const useLookupAssetStatusOption = (lookupType, options = {}) => {
         queryParams.set('isActive', 'true');
       }
 
-      const promise = fetch(`http://localhost:5000/api/lookup?${queryParams}`)
+      const promise = fetch(`${BACKEND_URL}/lookup?${queryParams}`)
         .then(res => res.json())
         .then(data => data.success ? data.result : [])
         .catch(err => {
@@ -653,7 +654,7 @@ export const fetchLookupOptions = async (lookupType, options = {}) => {
     queryParams.set('isActive', 'true');
   }
 
-  const response = await fetch(`http://localhost:5000/api/lookup?${queryParams}`);
+  const response = await fetch(`${BACKEND_URL}/lookup?${queryParams}`);
   
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -672,7 +673,7 @@ export const fetchLookupOptions = async (lookupType, options = {}) => {
     const promises = [];
     for (let page = 2; page <= data.totalPages; page++) {
       queryParams.set('page', page.toString());
-      const promise = fetch(`http://localhost:5000/api/lookup?${queryParams}`)
+      const promise = fetch(`${BACKEND_URL}/lookup?${queryParams}`)
         .then(res => res.json())
         .then(pageData => pageData.success ? pageData.result : []);
       promises.push(promise);

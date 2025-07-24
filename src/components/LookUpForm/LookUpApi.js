@@ -1,8 +1,9 @@
 // src/components/LookUpForm/LookUpApi.js - FIXED VERSION
 import axios from 'axios';
 import { lookupEnum } from '../../constants/Enum';
+import { BACKEND_URL } from '../../constants/api';
 
-const BASE_URL = 'http://localhost:5000/api/lookup';
+const BASE_URL = `${BACKEND_URL}/lookup`;
 
 // Create new lookup
 export const createLookup = async (data) => {
