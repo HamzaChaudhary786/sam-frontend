@@ -63,7 +63,7 @@ const LoginForm = () => {
         });
         
         // Navigate to dashboard
-        navigate('/employees');
+        navigate('/dashboard');
       } else {
         setError(result.error);
         toast.error(`Login failed: ${result.error}`);

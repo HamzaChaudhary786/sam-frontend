@@ -486,7 +486,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
                   {loadingLocations ? "Loading locations..." : "Select Tehsil"}
                 </option>
                 {Object.entries(stationLocations).map(([id, name]) => (
-                  <option key={id} value={id}>
+                  <option key={id} value={name}>
                     {name}
                   </option>
                 ))}

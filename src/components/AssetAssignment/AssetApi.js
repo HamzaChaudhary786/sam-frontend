@@ -49,7 +49,6 @@ export const getAllAssetAssignments = async (filters = {}) => {
 };
 
 // Get all available assets (for dropdown)
-// Get all available assets (for dropdown)
 export const getAllAssets = async () => {
   try {
     const response = await fetch(`${API_URL}/asset-history/unassigned-asset`, {

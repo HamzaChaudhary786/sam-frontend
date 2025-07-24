@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAssets } from "../AssetHook.js";
-import { useLookupAssetStatusOption, useLookupOptions } from "../../../services/LookUp.js";
+import {
+  useLookupAssetStatusOption,
+  useLookupOptions,
+} from "../../../services/LookUp.js";
 
 const AssetModal = ({
   isOpen,
@@ -11,7 +14,8 @@ const AssetModal = ({
 }) => {
   const { createAsset, modifyAsset } = useAssets();
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
-  const { options: assetStatusOptions } = useLookupAssetStatusOption("assetStatus");
+  const { options: assetStatusOptions } =
+    useLookupAssetStatusOption("assetStatus");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,10 +50,20 @@ const AssetModal = ({
   };
 
   const [formData, setFormData] = useState(initialFormState);
-  console.log(editData, "hahahahahahahahaha this is edit data")
-  
+  console.log(editData, "hahahahahahahahaha this is edit data");
+
   useEffect(() => {
     if (isEdit && editData) {
+      // Helper function to format date for HTML date input
+      const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        // Check if date is valid
+        if (isNaN(date.getTime())) return "";
+        // Format as YYYY-MM-DD
+        return date.toISOString().split("T")[0];
+      };
+
       setFormData({
         name: editData.name || "",
         type: editData.type || "",
@@ -59,7 +73,7 @@ const AssetModal = ({
         registerNumber: editData.registerNumber || "",
         chassiNumber: editData.chassiNumber || "",
         engineNumber: editData.engineNumber || "",
-        purchaseDate: editData.purchaseDate || "",
+        purchaseDate: formatDateForInput(editData.purchaseDate),
         condition: editData.condition || "",
         assetStatus: editData.assetStatus || "",
         cost: editData.cost || "",
@@ -221,15 +235,17 @@ const AssetModal = ({
   };
 
   const handleMetenance = () => {
-    alert("under construction")
-  }
+    alert("under construction");
+  };
 
   const renderTypeSpecificFields = () => {
     switch (formData.type) {
       case "weapons":
         return (
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-red-800 mb-4">Weapon Information</h3>
+            <h3 className="text-lg font-medium text-red-800 mb-4">
+              Weapon Information
+            </h3>
             <div>
               <label className="block text-sm font-medium text-red-700 mb-1">
                 Weapon Number *
@@ -264,7 +280,9 @@ const AssetModal = ({
       case "pistol":
         return (
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-orange-800 mb-4">Pistol Information</h3>
+            <h3 className="text-lg font-medium text-orange-800 mb-4">
+              Pistol Information
+            </h3>
             <div>
               <label className="block text-sm font-medium text-orange-700 mb-1">
                 Pistol Number *
@@ -299,7 +317,9 @@ const AssetModal = ({
       case "vehicle":
         return (
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-blue-800 mb-4">Vehicle Information</h3>
+            <h3 className="text-lg font-medium text-blue-800 mb-4">
+              Vehicle Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-blue-700 mb-1">
@@ -406,7 +426,10 @@ const AssetModal = ({
       case "round":
         return (
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-green-800 mb-4"> Round Information</h3>
+            <h3 className="text-lg font-medium text-green-800 mb-4">
+              {" "}
+              Round Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-green-700 mb-1">
@@ -555,7 +578,9 @@ const AssetModal = ({
                     className="w-full h-20 overflow-hidden rounded-md border"
                   >
                     <img
-                      src={typeof pic === "string" ? pic : URL.createObjectURL(pic)}
+                      src={
+                        typeof pic === "string" ? pic : URL.createObjectURL(pic)
+                      }
                       alt={`preview-${index}`}
                       className="object-cover w-full h-full"
                     />
@@ -683,8 +708,8 @@ const AssetModal = ({
                   ? "Updating..."
                   : "Adding..."
                 : isEdit
-                  ? "Update Asset"
-                  : "Add Asset"}
+                ? "Update Asset"
+                : "Add Asset"}
             </button>
           </div>
         </form>

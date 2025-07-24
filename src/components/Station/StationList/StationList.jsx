@@ -5,7 +5,7 @@ import StationViewModal from "../ViewStation/ViewStation.jsx";
 import DrillUpPage from "../DrillUp/DrillUp.jsx";
 import DrillDownPage from "../DrillDown/DrillDown.jsx";
 import { getStationLocationsWithEnum } from "../lookUp.js";
-import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 
 const StationList = () => {
   const {
@@ -44,7 +44,7 @@ const StationList = () => {
   });
 
   // Drill pages state
-  const [currentView, setCurrentView] = useState('list'); // 'list', 'drillUp', 'drillDown'
+  const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
   const [drillUpData, setDrillUpData] = useState(null);
   const [drillDownData, setDrillDownData] = useState(null);
 
@@ -107,22 +107,22 @@ const StationList = () => {
   const handleDrillUp = (station) => {
     setDrillUpData({
       stationId: station._id,
-      stationName: station.name
+      stationName: station.name,
     });
-    setCurrentView('drillUp');
+    setCurrentView("drillUp");
   };
 
   // Drill Down - Show stations by tehsil
   const handleDrillDown = (station) => {
     setDrillDownData({
-      tehsil: station.tehsil
+      tehsil: station.tehsil,
     });
-    setCurrentView('drillDown');
+    setCurrentView("drillDown");
   };
 
   // Back to main list
   const handleBackToList = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setDrillUpData(null);
     setDrillDownData(null);
   };
@@ -178,7 +178,7 @@ const StationList = () => {
   const safeStations = Array.isArray(stations) ? stations : [];
 
   // Render drill up page
-  if (currentView === 'drillUp' && drillUpData) {
+  if (currentView === "drillUp" && drillUpData) {
     return (
       <DrillUpPage
         stationId={drillUpData.stationId}
@@ -189,12 +189,9 @@ const StationList = () => {
   }
 
   // Render drill down page
-  if (currentView === 'drillDown' && drillDownData) {
+  if (currentView === "drillDown" && drillDownData) {
     return (
-      <DrillDownPage
-        tehsil={drillDownData.tehsil}
-        onBack={handleBackToList}
-      />
+      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} />
     );
   }
 
@@ -404,9 +401,6 @@ const StationList = () => {
                       <div className="text-sm font-medium text-gray-900">
                         {station.name}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        ID: {station._id}
-                      </div>
                     </div>
                   </div>
                 </td>
@@ -429,19 +423,19 @@ const StationList = () => {
                   <div className="flex flex-col space-y-2">
                     <button
                       onClick={() => handleDrillUp(station)}
-                      className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-                      title="View employees at this station"
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Drill Up
-                    </button>
-                    <button
-                      onClick={() => handleDrillDown(station)}
                       className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
-                      title="View all stations in this tehsil"
+                      title="View employees at this station"
                     >
                       <TrendingDown className="h-3 w-3 mr-1" />
                       Drill Down
+                    </button>
+                    <button
+                      onClick={() => handleDrillDown(station)}
+                      className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                      title="View all stations in this tehsil"
+                    >
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      Drill Up
                     </button>
                   </div>
                 </td>
@@ -493,7 +487,7 @@ const StationList = () => {
         onClose={handleCloseViewModal}
         station={selectedStation}
       />
-      
+
       {/* Image Modal */}
       {imageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
