@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Building, MapPin, Phone, Calendar } from 'lucide-react';
+import { BACKEND_URL } from '../../../constants/api';
 
 const DrillUpPage = ({ stationId, stationName, onBack }) => {
   const [data, setData] = useState(null);
@@ -15,7 +16,7 @@ const DrillUpPage = ({ stationId, stationName, onBack }) => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/employee/by-stationId?stationId=${stationId}`, {
+      const response = await fetch(`${BACKEND_URL}/employee/by-stationId?stationId=${stationId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`, // Adjust based on your auth
