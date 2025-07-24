@@ -1,5 +1,6 @@
 // AchievementAPI.js - Updated with Approval Functionality
 import { BACKEND_URL } from "../../constants/api.js";
+import { role_admin } from "../../constants/Enum.js";
 
 const API_URL = BACKEND_URL;
 
@@ -72,7 +73,7 @@ export const createAchievement = async (achievementData) => {
 // Update achievement
 export const updateAchievement = async (achievementId, achievementData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     console.log(isAdmin, "this is my boolean value for achievement");
     
     const body = JSON.stringify({

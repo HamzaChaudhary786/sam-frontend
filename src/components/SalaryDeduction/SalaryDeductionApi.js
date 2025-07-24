@@ -1,5 +1,6 @@
 // SalaryDeductionAPI.js
 import { BACKEND_URL } from "../../constants/api.js";
+import { role_admin } from "../../constants/Enum.js";
 
 const API_URL = BACKEND_URL;
 
@@ -81,7 +82,7 @@ export const createSalaryDeduction = async (deductionData) => {
 // Update salary deduction
 export const updateSalaryDeduction = async (deductionId, deductionData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     console.log(isAdmin,"this is my boolean value")
     const body = JSON.stringify({
       ...deductionData,

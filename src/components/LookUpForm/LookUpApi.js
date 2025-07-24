@@ -1,5 +1,6 @@
 // src/components/LookUpForm/LookUpApi.js - FIXED VERSION
 import axios from 'axios';
+import { lookupEnum } from '../../constants/Enum';
 
 const BASE_URL = 'http://localhost:5000/api/lookup';
 
@@ -189,10 +190,7 @@ export const getUniqueLookupTypes = async () => {
     // Fallback to hardcoded types
     return {
       success: false,
-      types: [
-        "cast", "employeeServicesStatus", "deductionType", "appreciationType",
-        "grades", "stationLocation", "assetTypes", "designation", "payscale"
-      ]
+      types: lookupEnum
     };
   }
 };

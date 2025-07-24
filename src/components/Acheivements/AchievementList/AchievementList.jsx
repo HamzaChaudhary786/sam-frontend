@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllAchievements, deleteAchievement, approveAchievement } from "../AchievementsApi.js";
 import { getStatusWithEnum } from "../LookUp.js";
+import { role_admin } from "../../../constants/Enum.js";
 
 const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
   const [achievements, setAchievements] = useState([]);
@@ -445,7 +446,7 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                       </span>
                       {achievement?.isApproved && achievement?.isApprovedBy && (
                         <div className="ml-2 text-xs text-gray-500">
-                          by {achievement.isApprovedBy.name || achievement.isApprovedBy.firstName || "Admin"}
+                          by {achievement.isApprovedBy.name || achievement.isApprovedBy.firstName || role_admin}
                         </div>
                       )}
                     </div>

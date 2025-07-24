@@ -1,5 +1,6 @@
 // StatusAssignmentApi.js
 import { BACKEND_URL } from "../../constants/api.js";
+import { role_admin } from "../../constants/Enum.js";
 
 const API_URL = BACKEND_URL;
 
@@ -80,7 +81,7 @@ export const getEmployeeCurrentStatus = async (employeeId) => {
 // Create status assignment
 export const createStatusAssignment = async (statusData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     
     const response = await fetch(`${API_URL}/employee-status-history`, {
       method: "POST",
@@ -120,7 +121,7 @@ export const createStatusAssignment = async (statusData) => {
 // Update status assignment
 export const updateStatusAssignment = async (statusId, statusData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     
     const body = JSON.stringify({
       ...statusData,

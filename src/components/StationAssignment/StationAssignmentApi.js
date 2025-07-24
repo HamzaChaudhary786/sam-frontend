@@ -1,5 +1,6 @@
 // StationAssignmentApi.js
 import { BACKEND_URL } from "../../constants/api.js";
+import { role_admin } from "../../constants/Enum.js";
 
 const API_URL = BACKEND_URL;
 
@@ -80,7 +81,7 @@ export const getEmployeeCurrentStation = async (employeeId) => {
 // Create station assignment
 export const createStationAssignment = async (assignmentData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     
     const response = await fetch(`${API_URL}/station-history`, {
       method: "POST",
@@ -120,7 +121,7 @@ export const createStationAssignment = async (assignmentData) => {
 // Update station assignment
 export const updateStationAssignment = async (assignmentId, assignmentData) => {
   try {
-    const isAdmin = getCurrentUserType() === "admin";
+    const isAdmin = getCurrentUserType() === role_admin;
     
     const body = JSON.stringify({
       ...assignmentData,

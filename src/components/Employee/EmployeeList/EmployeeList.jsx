@@ -8,6 +8,7 @@ import { getGradesWithEnum } from "../AddEmployee/Grades.js";
 import EmployeeViewModal from "../ViewEmployee/ViewEmployee.jsx";
 import Pagination from "../Pagination.jsx";
 import { toast } from "react-toastify";
+import { role_admin } from "../../../constants/Enum.js";
 
 const EmployeeList = () => {
   const {
@@ -71,7 +72,7 @@ const EmployeeList = () => {
           storedUserType || parsedUserData?.userType || "";
 
         setUserType(currentUserType);
-        setIsAdmin(currentUserType === "admin");
+        setIsAdmin(currentUserType === role_admin);
       } catch (error) {
         console.error("Error checking user role:", error);
         setUserType("");

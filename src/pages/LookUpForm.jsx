@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useLookups } from "../services/LookUp.js";
 import LookupModal from "../components/LookUpForm/LookUpForm.jsx";
+import { lookupEnum } from "../constants/Enum.js";
 
 const LookupPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -330,7 +331,7 @@ const LookupPage = () => {
                 <option value="">
                   {typesLoading ? 'Loading types from all pages...' : 'All Types'}
                 </option>
-                {uniqueTypes.map((type) => (
+                {lookupEnum.map((type) => (
                   <option key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </option>
