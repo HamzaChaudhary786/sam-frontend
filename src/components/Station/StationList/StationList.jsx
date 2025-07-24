@@ -1,11 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useStations } from "../StationHook.js";
 import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
+import DrillUpPage from "../DrillUp/DrillUp.jsx";
+import DrillDownPage from "../DrillDown/DrillDown.jsx";
+import { getStationLocationsWithEnum } from "../lookUp.js";
+import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 
 const StationList = () => {
-  const { stations, loading, error, removeStation, updateFilters, clearFilters, filters, createStation, modifyStation } = useStations();
-  
+  const {
+    stations,
+    loading,
+    error,
+    removeStation,
+    updateFilters,
+    clearFilters,
+    filters,
+    createStation,
+    modifyStation,
+  } = useStations();
+
+  const [imageIndexes, setImageIndexes] = useState({});
+  const [imageModal, setImageModal] = useState(null);
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -15,6 +32,10 @@ const StationList = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null);
 
+  // Station locations state
+  const [stationLocations, setStationLocations] = useState({});
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
   // Filter state
   const [filterForm, setFilterForm] = useState({
     name: filters.name || "",
@@ -22,10 +43,35 @@ const StationList = () => {
     city: filters.city || "",
   });
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this station?")) {
-      await removeStation(id);
+  // Drill pages state
+  const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
+  const [drillUpData, setDrillUpData] = useState(null);
+  const [drillDownData, setDrillDownData] = useState(null);
+
+  // Fetch station locations on component mount
+  useEffect(() => {
+    fetchStationLocations();
+  }, []);
+
+  // Fetch station locations from API
+  const fetchStationLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const result = await getStationLocationsWithEnum();
+      if (result.success) {
+        setStationLocations(result.data);
+      } else {
+        console.error("Error fetching station locations:", result.error);
+      }
+    } catch (error) {
+      console.error("Error fetching station locations:", error);
+    } finally {
+      setLoadingLocations(false);
     }
+  };
+
+  const handleDelete = async (id) => {
+    await removeStation(id);
   };
 
   const handleAddStation = () => {
@@ -57,18 +103,43 @@ const StationList = () => {
     setSelectedStation(null);
   };
 
+  // Drill Up - Show employees by station ID
+  const handleDrillUp = (station) => {
+    setDrillUpData({
+      stationId: station._id,
+      stationName: station.name,
+    });
+    setCurrentView("drillUp");
+  };
+
+  // Drill Down - Show stations by tehsil
+  const handleDrillDown = (station) => {
+    setDrillDownData({
+      tehsil: station.tehsil,
+    });
+    setCurrentView("drillDown");
+  };
+
+  // Back to main list
+  const handleBackToList = () => {
+    setCurrentView("list");
+    setDrillUpData(null);
+    setDrillDownData(null);
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilterForm(prev => ({
+    setFilterForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleApplyFilters = () => {
     const activeFilters = {};
     if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.tehsil.trim()) activeFilters.tehsil = filterForm.tehsil.trim();
+    if (filterForm.tehsil.trim())
+      activeFilters.tehsil = filterForm.tehsil.trim();
     if (filterForm.city.trim()) activeFilters.city = filterForm.city.trim();
     updateFilters(activeFilters);
   };
@@ -78,8 +149,51 @@ const StationList = () => {
     clearFilters();
   };
 
+  const handlePrevImage = (stationId, imagesLength) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [stationId]:
+        (prev[stationId] ?? 0) === 0
+          ? imagesLength - 1
+          : (prev[stationId] ?? 0) - 1,
+    }));
+  };
+
+  const handleNextImage = (stationId, imagesLength) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [stationId]:
+        (prev[stationId] ?? 0) === imagesLength - 1
+          ? 0
+          : (prev[stationId] ?? 0) + 1,
+    }));
+  };
+
+  // Helper function to get station location name by ID
+  const getStationLocationName = (locationId) => {
+    return stationLocations[locationId] || locationId;
+  };
+
   // Safety check for stations
   const safeStations = Array.isArray(stations) ? stations : [];
+
+  // Render drill up page
+  if (currentView === "drillUp" && drillUpData) {
+    return (
+      <DrillUpPage
+        stationId={drillUpData.stationId}
+        stationName={drillUpData.stationName}
+        onBack={handleBackToList}
+      />
+    );
+  }
+
+  // Render drill down page
+  if (currentView === "drillDown" && drillDownData) {
+    return (
+      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} />
+    );
+  }
 
   if (loading) {
     return (
@@ -92,9 +206,7 @@ const StationList = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Station Management
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Station Management</h1>
         <button
           onClick={handleAddStation}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
@@ -111,7 +223,9 @@ const StationList = () => {
 
       {/* Filter Section */}
       <div className="bg-white shadow-md rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Filter Stations</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Filter Stations
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -126,7 +240,7 @@ const StationList = () => {
               placeholder="e.g., Gulshan"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tehsil
@@ -135,15 +249,25 @@ const StationList = () => {
               name="tehsil"
               value={filterForm.tehsil}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingLocations}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              <option value="">All Tehsils</option>
-              <option value="Dera Bugti">Dera Bugti</option>
-              <option value="Sui">Sui</option>
-              <option value="Pehlawagh">Pehlawagh</option>
+              <option value="">
+                {loadingLocations ? "Loading..." : "All Tehsils"}
+              </option>
+              {Object.entries(stationLocations).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
             </select>
+            {loadingLocations && (
+              <p className="text-xs text-gray-500 mt-1">
+                Loading station locations...
+              </p>
+            )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               City
@@ -157,7 +281,7 @@ const StationList = () => {
               placeholder="e.g., Karachi"
             />
           </div>
-          
+
           <div className="flex items-end space-x-2">
             <button
               onClick={handleApplyFilters}
@@ -190,6 +314,9 @@ const StationList = () => {
                 Address
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Drill Actions
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -198,8 +325,55 @@ const StationList = () => {
             {safeStations.map((station) => (
               <tr key={station._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
+                  <div className="flex flex-col items-start space-y-2">
+                    {/* Show main image if available */}
+                    {station.stationImageUrl &&
+                    station.stationImageUrl.length > 0 ? (
+                      <div className="relative">
+                        <img
+                          src={
+                            station.stationImageUrl[
+                              imageIndexes[station._id] ?? 0
+                            ]
+                          }
+                          alt="Station"
+                          onClick={() =>
+                            setImageModal(
+                              station.stationImageUrl[
+                                imageIndexes[station._id] ?? 0
+                              ]
+                            )
+                          }
+                          className="h-16 w-16 rounded border object-cover cursor-pointer hover:scale-105 transition"
+                        />
+                        {station.stationImageUrl.length > 1 && (
+                          <>
+                            <button
+                              onClick={() =>
+                                handlePrevImage(
+                                  station._id,
+                                  station.stationImageUrl.length
+                                )
+                              }
+                              className="absolute top-1/2 -left-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                            >
+                              ‹
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleNextImage(
+                                  station._id,
+                                  station.stationImageUrl.length
+                                )
+                              }
+                              className="absolute top-1/2 -right-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                            >
+                              ›
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
                       <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
                         <svg
                           className="h-5 w-5 text-green-600"
@@ -221,20 +395,19 @@ const StationList = () => {
                           />
                         </svg>
                       </div>
-                    </div>
-                    <div className="ml-4">
+                    )}
+
+                    <div className="pt-2">
                       <div className="text-sm font-medium text-gray-900">
                         {station.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        ID: {station._id}
                       </div>
                     </div>
                   </div>
                 </td>
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {station.tehsil}
+                    {getStationLocationName(station.tehsil)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -244,6 +417,26 @@ const StationList = () => {
                   <div className="text-sm text-gray-500">
                     {station.address?.line2 && `${station.address.line2}, `}
                     {station.address?.city}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-col space-y-2">
+                    <button
+                      onClick={() => handleDrillUp(station)}
+                      className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                      title="View employees at this station"
+                    >
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                      Drill Down
+                    </button>
+                    <button
+                      onClick={() => handleDrillDown(station)}
+                      className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                      title="View all stations in this tehsil"
+                    >
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      Drill Up
+                    </button>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -284,8 +477,8 @@ const StationList = () => {
         onClose={handleCloseModal}
         isEdit={isEditMode}
         editData={editData}
-        createStation={createStation} 
-        modifyStation={modifyStation} 
+        createStation={createStation}
+        modifyStation={modifyStation}
       />
 
       {/* View Station Modal */}
@@ -294,6 +487,25 @@ const StationList = () => {
         onClose={handleCloseViewModal}
         station={selectedStation}
       />
+
+      {/* Image Modal */}
+      {imageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="relative">
+            <img
+              src={imageModal}
+              alt="Full View"
+              className="max-w-full max-h-screen rounded shadow-lg"
+            />
+            <button
+              onClick={() => setImageModal(null)}
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-60 px-3 py-1 rounded hover:bg-opacity-90"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

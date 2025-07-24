@@ -6,6 +6,15 @@ export const STATUS_ENUM = {
   dismissed: 'dismissed'
 };
 
+export const deductionTypes = {
+   providentFund: 'Provident Fund',
+   loanDeduction: 'Loan Deduction',
+    lateComming: 'Late Comming',
+    absentDays: 'Absent Days',
+    fine:'Fine'
+};
+
+
 export const DESIGNATION_ENUM = {
   CONSTABLE: 'Constable',
   HEAD_CONSTABLE: 'Head Constable',
