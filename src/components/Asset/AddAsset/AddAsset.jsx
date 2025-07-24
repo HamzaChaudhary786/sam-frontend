@@ -13,7 +13,6 @@ const AssetModal = ({
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
   const { options: assetStatusOptions } = useLookupAssetStatusOption("assetStatus");
 
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,6 +47,7 @@ const AssetModal = ({
 
   const [formData, setFormData] = useState(initialFormState);
   console.log(editData, "hahahahahahahahaha this is edit data")
+  
   useEffect(() => {
     if (isEdit && editData) {
       setFormData({
@@ -94,6 +94,11 @@ const AssetModal = ({
       ...initialFormState,
       name: prev.name,
       type: newType,
+      assetStatus: prev.assetStatus, // Preserve asset status
+      condition: prev.condition,
+      purchaseDate: prev.purchaseDate,
+      supplier: prev.supplier,
+      cost: prev.cost,
       additionalInfo: prev.additionalInfo,
       pictures: prev.pictures,
     }));
@@ -138,6 +143,11 @@ const AssetModal = ({
       const submitData = {
         name: formData.name,
         type: formData.type,
+        condition: formData.condition,
+        assetStatus: formData.assetStatus,
+        purchaseDate: formData.purchaseDate,
+        supplier: formData.supplier,
+        cost: formData.cost,
         additionalInfo: formData.additionalInfo,
         assetImageUrl: uploadedUrls,
       };
@@ -150,7 +160,6 @@ const AssetModal = ({
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           submitData.availableQuantity = formData.availableQuantity;
-
           break;
         case "pistol":
           submitData.pistolNumber = formData.pistolNumber;
@@ -158,7 +167,6 @@ const AssetModal = ({
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           submitData.availableQuantity = formData.availableQuantity;
-
           break;
         case "vehicle":
           submitData.vehicleNumber = formData.vehicleNumber;
@@ -182,7 +190,6 @@ const AssetModal = ({
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           submitData.availableQuantity = formData.availableQuantity;
-
           break;
       }
 
@@ -219,8 +226,6 @@ const AssetModal = ({
 
   const renderTypeSpecificFields = () => {
     switch (formData.type) {
-
-
       case "weapons":
         return (
           <div className="border-t pt-4">
@@ -446,7 +451,6 @@ const AssetModal = ({
                   placeholder="Enter stock quantity"
                 />
               </div>
-
             </div>
           </div>
         );
@@ -472,8 +476,6 @@ const AssetModal = ({
   };
 
   if (!isOpen) return null;
-
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -534,7 +536,6 @@ const AssetModal = ({
             </div>
           </div>
 
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Upload Asset Pictures
@@ -563,21 +564,20 @@ const AssetModal = ({
               </div>
             )}
           </div>
-          <div className=" flex flex-row gap-2">
+
+          <div className="flex flex-row gap-2">
             <div className="w-full">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Condition *
-                </label>
-                <input
-                  type="text"
-                  name="condition"
-                  value={formData.condition}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Black Hawk"
-                />
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Condition *
+              </label>
+              <input
+                type="text"
+                name="condition"
+                value={formData.condition}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="e.g., Good, Fair, Excellent"
+              />
             </div>
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -586,11 +586,11 @@ const AssetModal = ({
               <select
                 name="assetStatus"
                 value={formData.assetStatus}
-                onChange={handleTypeChange}
+                onChange={handleChange} // Changed from handleTypeChange to handleChange
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="">Select asset type</option>
+                <option value="">Select asset status</option>
                 {assetStatusOptions?.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -599,62 +599,50 @@ const AssetModal = ({
               </select>
             </div>
           </div>
-          <div className=" flex flex-row gap-2">
-            <div className="w-full">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Purchase Date *
-                </label>
-                <input
-                  type="text"
-                  name="purchaseDate"
-                  value={formData.purchaseDate}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Black Hawk"
-                />
-              </div>
-            </div>
 
+          <div className="flex flex-row gap-2">
             <div className="w-full">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cost *
-                </label>
-                <input
-                  type="text"
-                  name="cost"
-                  value={formData.cost}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Black Hawk"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full">
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Supplier *
+                Purchase Date *
               </label>
               <input
-                type="text"
-                name="supplier"
-                value={formData.supplier}
+                type="date"
+                name="purchaseDate"
+                value={formData.purchaseDate}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="e.g., Black Hawk"
+              />
+            </div>
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cost *
+              </label>
+              <input
+                type="number"
+                name="cost"
+                value={formData.cost}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Enter cost amount"
               />
             </div>
           </div>
 
-
+          <div className="w-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Supplier *
+            </label>
+            <input
+              type="text"
+              name="supplier"
+              value={formData.supplier}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Enter supplier name"
+            />
+          </div>
 
           {renderTypeSpecificFields()}
-
-
-
 
           <div className={formData.type ? "border-t pt-4" : ""}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -678,7 +666,6 @@ const AssetModal = ({
             >
               Maintenance History
             </button>
-
             <button
               type="button"
               onClick={handleClose}
@@ -701,8 +688,8 @@ const AssetModal = ({
             </button>
           </div>
         </form>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 
