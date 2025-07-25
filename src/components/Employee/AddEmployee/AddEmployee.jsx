@@ -10,6 +10,7 @@ import { getGradesWithEnum } from "./Grades";
 import { addEmployee } from "../EmployeeApi";
 import { BACKEND_URL } from "../../../constants/api.js";
 import { getStatusWithEnum } from "./Status.js";
+import { getRanksWithEnum } from "./Rank.js";
 const API_URL = BACKEND_URL;
 
 // Reusable enum select component
@@ -37,7 +38,7 @@ const EnumSelect = ({
         required={required}
         disabled={readOnly} // Use disabled instead of readOnly for select elements
         className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          readOnly ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
+          readOnly ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
         }`}
       >
         <option value="">{placeholder}</option>
@@ -157,6 +158,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const {
     locationEnum,
     getStationAddress,
+    getStationDistrict,
     loading: locationLoading,
     error: locationError,
   } = useLocationEnum();
@@ -169,6 +171,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [designationEnum, setDesignationEnum] = useState({});
   const [statusEnum, setStatusEnum] = useState({});
   const [gradeEnum, setGradeEnum] = useState({});
+  const [rankEnum, setRankEnum] = useState({});
   const [profile, setProfile] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
   const [enumsLoaded, setEnumsLoaded] = useState(false);
@@ -178,6 +181,9 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     line1: "",
     line2: "",
     city: "",
+  });
+  const [stationDistrict, setStationDistrict] = useState({
+    district: "",
   });
 
   const [formData, setFormData] = useState({
@@ -191,9 +197,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     status: "active",
     statusDescription: "", // New field for status description
     designation: "",
+    rank: "",
     mobileNumber: "",
     grade: "",
-    serviceType: "federal",
+    serviceType: "provincial",
     address: {
       line1: "",
       line2: "",
@@ -207,39 +214,51 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   // Helper function to determine if stations field should be read-only
   const isStationsReadOnly = () => {
     if (!isEdit) return false; // Never read-only in add mode
-    
+
     // Check if stations data exists and is not null/empty
     const stationsValue = editData?.stations;
-    return stationsValue && 
-           (typeof stationsValue === 'string' ? stationsValue.trim() !== '' : 
-            typeof stationsValue === 'object' ? stationsValue._id : false);
+    return (
+      stationsValue &&
+      (typeof stationsValue === "string"
+        ? stationsValue.trim() !== ""
+        : typeof stationsValue === "object"
+        ? stationsValue._id
+        : false)
+    );
   };
 
   // Helper function to determine if status field should be read-only
   const isStatusReadOnly = () => {
     if (!isEdit) return false; // Never read-only in add mode
-    
+
     // Check if status data exists and is not null/empty
     const statusValue = editData?.status;
-    return statusValue && 
-           (typeof statusValue === 'string' ? statusValue.trim() !== '' : 
-            typeof statusValue === 'object' ? statusValue._id : false);
+    return (
+      statusValue &&
+      (typeof statusValue === "string"
+        ? statusValue.trim() !== ""
+        : typeof statusValue === "object"
+        ? statusValue._id
+        : false)
+    );
   };
 
   function addToObjectAssign(obj, key, value) {
     return Object.assign({}, obj, { [key]: value });
   }
-  
+
   useEffect(() => {
     // First, fetch the enums
     const fetchEnums = async () => {
       try {
-        const [castRes, desigRes, gradeRes, statusRes] = await Promise.all([
-          getCastsWithEnum(),
-          getDesignationsWithEnum(),
-          getGradesWithEnum(),
-          getStatusWithEnum(),
-        ]);
+        const [castRes, desigRes, gradeRes, statusRes, Rank] =
+          await Promise.all([
+            getCastsWithEnum(),
+            getDesignationsWithEnum(),
+            getGradesWithEnum(),
+            getStatusWithEnum(),
+            getRanksWithEnum(),
+          ]);
 
         if (castRes.success) {
           setCastEnum(castRes.data);
@@ -247,6 +266,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         if (desigRes.success) setDesignationEnum(desigRes.data);
         if (gradeRes.success) setGradeEnum(gradeRes.data);
         if (statusRes.success) setStatusEnum(statusRes.data);
+        if (Rank.success) setRankEnum(Rank.data);
 
         setEnumsLoaded(true);
       } catch (error) {
@@ -257,7 +277,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
     fetchEnums();
   }, []);
-  
+
   useEffect(() => {
     // Only set form data after enums are loaded
     if (!enumsLoaded) return;
@@ -305,6 +325,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           typeof editData.designation === "object"
             ? editData.designation?._id
             : editData.designation || "",
+        rank:
+          typeof editData.rank === "object"
+            ? editData.rank?._id
+            : editData.rank || "",
         mobileNumber: editData.mobileNumber || "",
         grade:
           typeof editData.grade === "object"
@@ -330,6 +354,9 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line2: editData.stations?.address?.line2 || "",
         city: editData.stations?.address?.city || "",
       });
+      setStationDistrict({
+        district: editData.stations?.district || "",
+      });
       setProfile(editData.profileUrl || []);
     } else {
       // Empty form for new employee
@@ -346,7 +373,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         designation: "",
         mobileNumber: "",
         grade: "",
-        serviceType: "federal",
+        rank: "",
+        serviceType: "provincial",
         address: {
           line1: "",
           line2: "",
@@ -361,6 +389,9 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line1: "",
         line2: "",
         city: "",
+      });
+      setStationDistrict({
+        district: "",
       });
     }
   }, [editData, isEdit, enumsLoaded]);
@@ -432,6 +463,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     // Auto-fill STATION address (not personal address)
     if (selectedStationId) {
       const stationAddressData = getStationAddress(selectedStationId);
+      const stationDistrictData = getStationDistrict(selectedStationId); // ADD THIS
+
       if (stationAddressData) {
         setStationAddress({
           line1: stationAddressData.line1,
@@ -439,12 +472,18 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           city: stationAddressData.city,
         });
       }
+      setStationDistrict({
+        district: stationDistrictData,
+      });
     } else {
       // Clear station address if no station selected
       setStationAddress({
         line1: "",
         line2: "",
         city: "",
+      });
+      setStationDistrict({
+        district: "",
       });
     }
   };
@@ -580,8 +619,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="federal">Federal</option>
             <option value="provincial">Provincial</option>
+            <option value="federal">Federal</option>
           </select>
         </div>
 
@@ -745,6 +784,15 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           required={false}
           placeholder="Select grade"
         />
+        <EnumSelect
+          label="Rank"
+          name="rank"
+          value={formData.rank}
+          onChange={handleChange}
+          enumObject={rankEnum}
+          required={false}
+          placeholder="Select rank"
+        />
       </div>
 
       {/* Personal Address Section */}
@@ -827,7 +875,9 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               required
               disabled={isStationsReadOnly()} // Use the helper function
               className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isStationsReadOnly() ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
+                isStationsReadOnly()
+                  ? "bg-gray-50 text-gray-600 cursor-not-allowed"
+                  : ""
               }`}
             >
               <option value="">
@@ -880,6 +930,18 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               value={stationAddress.city}
               readOnly
               placeholder="Station city"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station district
+            </label>
+            <input
+              type="text"
+              value={stationDistrict.district}
+              readOnly
+              placeholder="Station district"
               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
             />
           </div>

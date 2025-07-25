@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStations } from "../StationHook";
-import { getStationLocationsWithEnum } from "../lookUp.js"; // Import the service
+import { getStationLocationsWithEnum } from "../lookUp.js"; // Import both services
+import { getStationDistrictWithEnum } from "../District.js";
 
 const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
   const mapRef = useRef(null);
@@ -13,10 +14,12 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
   const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [stationLocations, setStationLocations] = useState({}); // State for station locations
+  const [districtLocations, setDistrictLocations] = useState({}); // State for district locations
   const [loadingLocations, setLoadingLocations] = useState(false); // Loading state for locations
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
+    district: "", // Added district field
     address: {
       line1: "",
       line2: "",
@@ -43,10 +46,11 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   }, []);
 
-  // Fetch station locations when modal opens
+  // Fetch station and district locations when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchStationLocations();
+      fetchDistrictLocations();
     }
   }, [isOpen]);
 
@@ -69,6 +73,22 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   };
 
+  // Fetch district locations from API
+  const fetchDistrictLocations = async () => {
+    try {
+      const result = await getStationDistrictWithEnum();
+      if (result.success) {
+        setDistrictLocations(result.data);
+      } else {
+        console.error("Error fetching district locations:", result.error);
+        // Don't set error here as it's not critical - user can still proceed
+      }
+    } catch (error) {
+      console.error("Error fetching district locations:", error);
+      // Don't set error here as it's not critical - user can still proceed
+    }
+  };
+
   // Initialize map and autocomplete
   useEffect(() => {
     if (mapLoaded && isOpen && mapRef.current) {
@@ -82,6 +102,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
       setFormData({
         name: editData.name || "",
         tehsil: editData.tehsil || "",
+        district: editData.district || "", // Added district for edit mode
         address: {
           line1: editData.address?.line1 || "",
           line2: editData.address?.line2 || "",
@@ -106,6 +127,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
       setFormData({
         name: "",
         tehsil: "",
+        district: "", // Reset district field
         address: {
           line1: "",
           line2: "",
@@ -376,6 +398,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         setFormData({
           name: "",
           tehsil: "",
+          district: "", // Reset district field
           address: {
             line1: "",
             line2: "",
@@ -454,7 +477,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
           )}
 
           {/* Station Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Station Name *
@@ -496,6 +519,28 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
                   Loading station locations...
                 </p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                District *
+              </label>
+              <select
+                name="district"
+                value={formData.district}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="" disabled>
+                  Select District
+                </option>
+                {Object.entries(districtLocations).map(([id, name]) => (
+                  <option key={id} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

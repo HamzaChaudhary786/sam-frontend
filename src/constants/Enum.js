@@ -11,6 +11,8 @@ export const lookupEnum = [
   "vehicle",
   "achievementType",
   "assetStatus",
+  "rank",
+  "stationDistrict"
 ];
 
 

@@ -237,7 +237,9 @@ const EmployeeList = () => {
       },
     });
   };
-
+  const handleBulkStationAssignment = () => {
+    navigate("/bulk-station-assignment");
+  };
   const handleView = (employee) => {
     setSelectedEmployee(employee);
     setIsViewModalOpen(true);
@@ -272,10 +274,10 @@ const EmployeeList = () => {
   const handleAssets = (employee) => {
     navigate("/assetassignment", { state: { employee } });
   };
-    const handlePosting = (employee) => {
+  const handlePosting = (employee) => {
     navigate("/stationassignment", { state: { employee } });
   };
-   const handleStatus = (employee) => {
+  const handleStatus = (employee) => {
     navigate("/statusassignment", { state: { employee } });
   };
 
@@ -362,6 +364,25 @@ const EmployeeList = () => {
             onClick={handleAddAsset}
           >
             Assets
+          </button>
+          <button
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium flex items-center"
+            onClick={handleBulkStationAssignment}
+          >
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+            Bulk Station Assignment
           </button>
         </div>
       </div>
@@ -594,8 +615,8 @@ const EmployeeList = () => {
                               : employee.status === "terminated"
                               ? "bg-red-100 text-red-800"
                               : "bg-gray-100 text-gray-800"
-                          }`}>
-                        
+                          }`}
+                        >
                           {employee.status}
                         </div>
                       </td>
@@ -616,7 +637,7 @@ const EmployeeList = () => {
                       <td className=" px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex flex-col space-y-2">
                           <div className="flex flex-wrap gap-2">
-                             <button
+                            <button
                               onClick={() => handleView(employee)}
                               className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
                             >
@@ -628,7 +649,7 @@ const EmployeeList = () => {
                             >
                               Edit
                             </button>
-                             {isAdmin ? (
+                            {isAdmin ? (
                               <button
                                 onClick={() => handleDelete(employee._id)}
                                 className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
@@ -643,7 +664,7 @@ const EmployeeList = () => {
                                 Delete
                               </button>
                             )}
-                              <button
+                            <button
                               onClick={() => handleAssets(employee)}
                               className="px-3 py-1 text-xs rounded-md bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
                             >
@@ -669,7 +690,7 @@ const EmployeeList = () => {
                             >
                               Achievements
                             </button>
-                              <button
+                            <button
                               onClick={() => handleDeductions(employee)}
                               className="px-3 py-1 text-xs rounded-md bg-pink-100 text-pink-700 hover:bg-pink-200 transition"
                             >
