@@ -155,6 +155,10 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
                   <p className="text-sm text-gray-900">{station.tehsil}</p>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">District</label>
+                  <p className="text-sm text-gray-900">{station.district}</p>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Created Date</label>
                   <p className="text-sm text-gray-900">
                     {station.createdAt ? new Date(station.createdAt).toLocaleDateString() : 'N/A'}

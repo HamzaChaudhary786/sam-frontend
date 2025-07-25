@@ -26,7 +26,7 @@ export const getStationsWithDetails = async () => {
     if (response.data.stations && Array.isArray(response.data.stations)) {
       response.data.stations.forEach(station => {
         // For dropdown enum
-        const formattedName = `${station.name} (${station.tehsil})`;
+        const formattedName = `${station.name} ( Tehsil: ${station.tehsil}) (District: ${station.district})`;
         stationsEnum[station._id] = formattedName;
         
         // For address auto-fill
@@ -34,6 +34,7 @@ export const getStationsWithDetails = async () => {
           id: station._id,
           name: station.name,
           tehsil: station.tehsil,
+          district: station.district,
           address: {
             line1: station.address.line1,
             line2: station.address.line2,

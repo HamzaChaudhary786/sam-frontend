@@ -16,6 +16,7 @@ import Achievements from './pages/Achievements.jsx'
 import Assetassignment from './pages/AssetAssignment.jsx'
 import Stationassignment from './pages/StationAssignment.jsx';
 import StatusAssignment from './pages/StatusAssignment.jsx';
+import BulkStationAssignment from './components/BulkStation/BulkStation.jsx';
 // Authentication utility functions
 const isAuthenticated = () => {
   try {
@@ -211,6 +212,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <StatusAssignment />
+            </ProtectedRoute>
+          } 
+        />
+         <Route 
+          path="/bulk-station-assignment" 
+          element={
+            <ProtectedRoute>
+              <BulkStationAssignment />
             </ProtectedRoute>
           } 
         />

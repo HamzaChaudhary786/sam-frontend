@@ -122,6 +122,8 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
   // Don't render if modal is not open
   if (!isOpen) return null;
 
+  console.log(locationEnum,"hahahahahah location")
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"

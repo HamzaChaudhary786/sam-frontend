@@ -1,11 +1,13 @@
-// Complete LookupPage with proper search filtering and pagination
+// Complete LookupPage with bulk add functionality
 import React, { useState, useEffect, useCallback } from "react";
 import { useLookups } from "../services/LookUp.js";
 import LookupModal from "../components/LookUpForm/LookUpForm.jsx";
+import BulkLookupModal from "../components/LookUpForm/BulkLookup.jsx";
 import { lookupEnum } from "../constants/Enum.js";
 
 const LookupPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editData, setEditData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,6 +66,10 @@ const LookupPage = () => {
     setIsModalOpen(true);
   };
 
+  const handleBulkAddClick = () => {
+    setIsBulkModalOpen(true);
+  };
+
   const handleEditClick = (lookup) => {
     setEditData(lookup);
     setIsEdit(true);
@@ -86,10 +92,20 @@ const LookupPage = () => {
     setEditData(null);
   };
 
+  const handleBulkModalSuccess = async (response) => {
+    setIsBulkModalOpen(false);
+    // Refresh the lookups list after bulk creation
+    fetchLookups();
+  };
+
   const handleModalClose = () => {
     setIsModalOpen(false);
     setIsEdit(false);
     setEditData(null);
+  };
+
+  const handleBulkModalClose = () => {
+    setIsBulkModalOpen(false);
   };
 
   const handleSearch = (value) => {
@@ -257,15 +273,26 @@ const LookupPage = () => {
             <h1 className="text-3xl font-bold text-gray-900">Lookup Management</h1>
             <p className="text-gray-600 mt-1">Manage system lookup values and configurations</p>
           </div>
-          <button
-            onClick={handleAddClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors duration-200 flex items-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Add New Lookup</span>
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleBulkAddClick}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span>Bulk Add</span>
+            </button>
+            <button
+              onClick={handleAddClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Add New Lookup</span>
+            </button>
+          </div>
         </div>
 
         {/* Error Display */}
@@ -483,13 +510,19 @@ const LookupPage = () => {
           <Pagination />
         </div>
 
-        {/* Modal */}
+        {/* Modals */}
         <LookupModal
           isOpen={isModalOpen}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
           isEdit={isEdit}
           initialData={editData}
+        />
+
+        <BulkLookupModal
+          isOpen={isBulkModalOpen}
+          onClose={handleBulkModalClose}
+          onSuccess={handleBulkModalSuccess}
         />
       </div>
     </div>
