@@ -10,9 +10,9 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export const getStationLocationsWithEnum = async () => {
+export const getStationStatusWithEnum = async () => {
   try {
-    const response = await axios.get(`${API_URL}/lookup?lookupType=stationTehsil`, {
+    const response = await axios.get(`${API_URL}/lookup?lookupType=stationStatus`, {
       headers: getAuthHeaders(),
     });
 

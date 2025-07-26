@@ -6,6 +6,7 @@ import {
   getUniqueLookupTypes,
 } from "./LookUpApi.js";
 import { lookupEnum } from "../../constants/Enum.js";
+import { EnumSelect } from "../SearchableDropdown.jsx";
 
 const LookupModal = ({
   isOpen,
@@ -19,44 +20,56 @@ const LookupModal = ({
     lookupType: "",
     isActive: true,
   });
-  const [lookupTypes, setLookupTypes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [typesLoading, setTypesLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // FIXED: Fetch ALL lookup types from all pages
-  const fetchLookupTypes = async () => {
-    setTypesLoading(true);
-    try {
-              setLookupTypes(lookupEnum);
-
-      // const response = await getUniqueLookupTypes();
-      // if (response.success && Array.isArray(response.lookupType)) {
-      //   setLookupTypes(response.lookupType);
-      // } else {
-      //   // Fallback to hardcoded types if API fails
-      //   setLookupTypes(lookupEnum);
-      // }
-    } catch (error) {
-      console.error("Error fetching lookup types:", error);
-      // Fallback to hardcoded types
-      setLookupTypes(lookupEnum);
-    } finally {
-      setTypesLoading(false);
+  // Helper function to get enum value from key/index (same as BulkLookupModal)
+  const getEnumValue = (keyOrValue) => {
+    // If it's already a valid enum value, return it
+    if (Object.values(lookupEnum).includes(keyOrValue)) {
+      return keyOrValue;
     }
+    
+    // If it's a key, get the corresponding value
+    if (lookupEnum[keyOrValue]) {
+      return lookupEnum[keyOrValue];
+    }
+    
+    // If it's an index (number), get the value at that index
+    if (typeof keyOrValue === 'number' || !isNaN(keyOrValue)) {
+      const enumValues = Object.values(lookupEnum);
+      const index = parseInt(keyOrValue);
+      if (index >= 0 && index < enumValues.length) {
+        return enumValues[index];
+      }
+    }
+    
+    // Return as-is if we can't determine the correct value
+    return keyOrValue;
+  };
+
+  // Helper function to get enum key from value (for displaying in EnumSelect)
+  const getEnumKeyFromValue = (enumValue) => {
+    // Find the key that corresponds to this value
+    const enumKey = Object.keys(lookupEnum).find(key => lookupEnum[key] === enumValue);
+    return enumKey || enumValue;
   };
 
   // Initialize form data when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
-      fetchLookupTypes();
-
       if (isEdit && initialData) {
+        // When editing, convert the enum value back to the key/format that EnumSelect expects
+        const displayLookupType = getEnumKeyFromValue(initialData.lookupType);
+        
         setFormData({
           name: initialData.name || "",
-          lookupType: initialData.lookupType || "",
+          lookupType: displayLookupType || initialData.lookupType || "",
           isActive: initialData.isActive !== false,
         });
+        
+        console.log("Edit mode - initialData.lookupType:", initialData.lookupType);
+        console.log("Edit mode - displayLookupType for EnumSelect:", displayLookupType);
       } else {
         setFormData({
           name: "",
@@ -91,16 +104,37 @@ const LookupModal = ({
       return;
     }
 
+    // Convert lookupType to proper enum value
+    const properEnumValue = getEnumValue(formData.lookupType);
+    
+    // Validate that we have a proper enum value
+    if (!Object.values(lookupEnum).includes(properEnumValue)) {
+      setError("Invalid lookup type selected. Please select a valid option.");
+      return;
+    }
+
+    console.log("Form lookupType:", formData.lookupType);
+    console.log("Converted enum value:", properEnumValue);
+    console.log("Valid enum values:", Object.values(lookupEnum));
+
     setLoading(true);
     setError("");
 
     try {
       let response;
 
+      // Prepare data with converted enum value
+      const submitData = {
+        ...formData,
+        lookupType: properEnumValue // Use the converted enum value
+      };
+
+      console.log("Submitting data:", submitData);
+
       if (isEdit && initialData?._id) {
-        response = await updateLookup(initialData._id, formData);
+        response = await updateLookup(initialData._id, submitData);
       } else {
-        response = await createLookup(formData);
+        response = await createLookup(submitData);
       }
 
       if (response && response.success) {
@@ -117,11 +151,21 @@ const LookupModal = ({
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          `Failed to ${isEdit ? "update" : "create"} lookup`
-      );
+      
+      // Enhanced error handling
+      let errorMessage = `Failed to ${isEdit ? "update" : "create"} lookup`;
+      
+      if (error.message.includes("validation failed")) {
+        errorMessage = "Validation error: Please check that all values are correct and the lookup type is valid.";
+      } else if (error.message.includes("enum value")) {
+        errorMessage = "Invalid lookup type. Please select a different lookup type and try again.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -184,31 +228,16 @@ const LookupModal = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Lookup Type Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Lookup Type <span className="text-red-500">*</span>
-              </label>
-              <select
+              <EnumSelect
+                label="Lookup Type"
                 name="lookupType"
                 value={formData.lookupType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                required
-                disabled={loading || typesLoading}
-              >
-                <option value="">
-                  {typesLoading ? "Loading all types..." : "Select lookup type"}
-                </option>
-                {lookupTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </option>
-                ))}
-              </select>
-              {typesLoading && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Loading lookup types from all pages...
-                </p>
-              )}
+                enumObject={lookupEnum}
+                required={true}
+                placeholder="Search and select lookup type"
+                disabled={loading}
+              />
             </div>
 
             {/* Name Field */}
