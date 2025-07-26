@@ -4,6 +4,7 @@ import {
   useLookupAssetStatusOption,
   useLookupOptions,
 } from "../../../services/LookUp.js";
+import { EnumSelect } from "../../SearchableDropdown.jsx";
 
 const AssetModal = ({
   isOpen,
@@ -51,6 +52,23 @@ const AssetModal = ({
 
   const [formData, setFormData] = useState(initialFormState);
   console.log(editData, "hahahahahahahahaha this is edit data");
+
+  // Convert options arrays to enum objects for EnumSelect
+  const assetTypeEnum = React.useMemo(() => {
+    const enumObj = {};
+    assetTypeOptions?.forEach(option => {
+      enumObj[option.value] = option.label;
+    });
+    return enumObj;
+  }, [assetTypeOptions]);
+
+  const assetStatusEnum = React.useMemo(() => {
+    const enumObj = {};
+    assetStatusOptions?.forEach(option => {
+      enumObj[option.value] = option.label;
+    });
+    return enumObj;
+  }, [assetStatusOptions]);
 
   useEffect(() => {
     if (isEdit && editData) {
@@ -539,23 +557,15 @@ const AssetModal = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Asset Type *
-              </label>
-              <select
+              <EnumSelect
+                label="Asset Type"
                 name="type"
                 value={formData.type}
                 onChange={handleTypeChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Select asset type</option>
-                {assetTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                enumObject={assetTypeEnum}
+                required={true}
+                placeholder="Search and select asset type..."
+              />
             </div>
           </div>
 
@@ -605,23 +615,15 @@ const AssetModal = ({
               />
             </div>
             <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Asset Status *
-              </label>
-              <select
+              <EnumSelect
+                label="Asset Status"
                 name="assetStatus"
                 value={formData.assetStatus}
-                onChange={handleChange} // Changed from handleTypeChange to handleChange
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Select asset status</option>
-                {assetStatusOptions?.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={handleChange}
+                enumObject={assetStatusEnum}
+                required={true}
+                placeholder="Search and select asset status..."
+              />
             </div>
           </div>
 

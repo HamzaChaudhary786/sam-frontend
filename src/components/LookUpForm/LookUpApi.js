@@ -4,6 +4,8 @@ import { lookupEnum } from '../../constants/Enum';
 import { BACKEND_URL } from '../../constants/api';
 
 const BASE_URL = `${BACKEND_URL}/lookup`;
+const BASE_URL_SEARCH = `${BACKEND_URL}/lookup/page`;
+
 
 // Create new lookup
 export const createLookup = async (data) => {
@@ -19,8 +21,8 @@ export const createLookup = async (data) => {
 // FIXED: Get all lookups with pagination and filtering support
 export const getAllLookups = async (queryString = '') => {
   try {
-    console.log('API call URL:', `${BASE_URL}${queryString}`);
-    const response = await axios.get(`${BASE_URL}${queryString}`);
+    console.log('API call URL:', `${BASE_URL_SEARCH}${queryString}`);
+    const response = await axios.get(`${BASE_URL_SEARCH}${queryString}`);
     console.log('API response:', response.data);
     return response.data;
   } catch (error) {
@@ -57,7 +59,7 @@ export const getLookupsWithFilters = async (filters = {}) => {
     if (filters.sortOrder) queryParams.set('sortOrder', filters.sortOrder);
     
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    const fullUrl = `${BASE_URL}${queryString}`;
+    const fullUrl = `${BASE_URL_SEARCH}${queryString}`;
     
     console.log('🌐 Final API URL:', fullUrl);
     console.log('📊 Query parameters:', Object.fromEntries(queryParams));
@@ -95,7 +97,7 @@ export const searchLookups = async (searchTerm, page = 1, limit = 10) => {
       queryParams.set('search', searchTerm.trim());
     }
     
-    const url = `${BASE_URL}?${queryParams.toString()}`;
+    const url = `${BASE_URL_SEARCH}?${queryParams.toString()}`;
     console.log('Direct search URL:', url);
     
     const response = await axios.get(url);
@@ -115,7 +117,7 @@ export const testSearchApi = async (searchTerm) => {
     console.log('Testing search term:', searchTerm);
     
     // Test 1: Direct axios call
-    const testUrl = `${BASE_URL}?search=${encodeURIComponent(searchTerm)}&page=1&limit=10`;
+    const testUrl = `${BASE_URL_SEARCH}?search=${encodeURIComponent(searchTerm)}&page=1&limit=10`;
     console.log('Test URL:', testUrl);
     
     const response = await axios.get(testUrl);
@@ -134,7 +136,7 @@ export const testSearchApi = async (searchTerm) => {
 export const getLookupTypes = async () => {
   try {
     // First, get the first page to know total pages
-    const firstPageResponse = await axios.get(`${BASE_URL}?page=1&limit=100`);
+    const firstPageResponse = await axios.get(`${BASE_URL_SEARCH}?page=1&limit=100`);
     
     if (!firstPageResponse.data.success) {
       throw new Error('Failed to fetch lookup types');
@@ -149,7 +151,7 @@ export const getLookupTypes = async () => {
       
       for (let page = 2; page <= totalPages; page++) {
         pagePromises.push(
-          axios.get(`${BASE_URL}?page=${page}&limit=100`)
+          axios.get(`${BASE_URL_SEARCH}?page=${page}&limit=100`)
             .then(response => response.data.success ? response.data.result : [])
             .catch(error => {
               console.error(`Error fetching page ${page}:`, error);
@@ -199,7 +201,7 @@ export const getUniqueLookupTypes = async () => {
 // Get lookups by type with pagination support
 export const getLookupsByType = async (lookupType, page = 1, limit = 10) => {
   try {
-    const response = await axios.get(`${BASE_URL}?lookupType=${lookupType}&page=${page}&limit=${limit}`);
+    const response = await axios.get(`${BASE_URL_SEARCH}?lookupType=${lookupType}&page=${page}&limit=${limit}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching lookups by type:', error.response?.data || error.message);

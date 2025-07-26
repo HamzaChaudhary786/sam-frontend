@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useStations } from "../StationHook";
 import { getStationLocationsWithEnum } from "../lookUp.js"; // Import both services
 import { getStationDistrictWithEnum } from "../District.js";
+import { EnumSelect } from "../../SearchableDropdown.jsx"; 
 
 const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
   const mapRef = useRef(null);
@@ -493,55 +494,28 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tehsil *
-              </label>
-              <select
-                name="tehsil"
-                value={formData.tehsil}
-                onChange={handleChange}
-                required
-                disabled={loadingLocations}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="" disabled>
-                  {loadingLocations ? "Loading locations..." : "Select Tehsil"}
-                </option>
-                {Object.entries(stationLocations).map(([id, name]) => (
-                  <option key={id} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-              {loadingLocations && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Loading station locations...
-                </p>
-              )}
-            </div>
+            {/* Replace regular select with EnumSelect for Tehsil */}
+            <EnumSelect
+              label="Tehsil"
+              name="tehsil"
+              value={formData.tehsil}
+              onChange={handleChange}
+              enumObject={stationLocations}
+              required={true}
+              placeholder={loadingLocations ? "Loading locations..." : "Search and select tehsil..."}
+              readOnly={loadingLocations}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                District *
-              </label>
-              <select
-                name="district"
-                value={formData.district}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="" disabled>
-                  Select District
-                </option>
-                {Object.entries(districtLocations).map(([id, name]) => (
-                  <option key={id} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Replace regular select with EnumSelect for District */}
+            <EnumSelect
+              label="District"
+              name="district"
+              value={formData.district}
+              onChange={handleChange}
+              enumObject={districtLocations}
+              required={true}
+              placeholder="Search and select district..."
+            />
           </div>
 
           {/* Station Pictures Upload */}
@@ -622,7 +596,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Line 2
+                  Mohalla
                 </label>
                 <input
                   type="text"

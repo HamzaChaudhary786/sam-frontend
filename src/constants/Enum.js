@@ -1,18 +1,17 @@
 export const lookupEnum = [
   "cast",
   "employeeServicesStatus",
-  "deductionType",
-  "appreciationType",
   "grades",
-  "stationLocation",
-  "assetTypes",
+  "rank",
   "designation",
   "payscale",
-  "vehicle",
+  "stationTehsil",
+  "stationDistrict",
+  "deductionType",
   "achievementType",
   "assetStatus",
-  "rank",
-  "stationDistrict"
+  "assetTypes"
+
 ];
 
 

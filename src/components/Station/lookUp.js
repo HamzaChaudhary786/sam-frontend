@@ -12,7 +12,7 @@ const getAuthHeaders = () => {
 
 export const getStationLocationsWithEnum = async () => {
   try {
-    const response = await axios.get(`${API_URL}/lookup?lookupType=stationLocation`, {
+    const response = await axios.get(`${API_URL}/lookup?lookupType=stationTehsil`, {
       headers: getAuthHeaders(),
     });
 
