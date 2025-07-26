@@ -3,6 +3,8 @@ import { useStations } from "../StationHook";
 import { getStationLocationsWithEnum } from "../lookUp.js"; // Import both services
 import { getStationDistrictWithEnum } from "../District.js";
 import { EnumSelect } from "../../SearchableDropdown.jsx"; 
+import { getStationFacilitiesWithEnum } from "../statusfacilities.js";
+import { getStationStatusWithEnum } from "../stationstatus.js";
 
 const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
   const mapRef = useRef(null);
@@ -21,6 +23,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     name: "",
     tehsil: "",
     district: "", // Added district field
+    stationStatus: "", // Added station status field
+    stationFacilities: [], // Added station facilities field (multi-select)
     address: {
       line1: "",
       line2: "",
@@ -32,6 +36,36 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     },
     pictures: [], // Added pictures field
   });
+
+  // Station status options
+  const stationStatusOptions = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "under_construction", label: "Under Construction" },
+    { value: "maintenance", label: "Under Maintenance" },
+    { value: "planned", label: "Planned" },
+  ];
+
+  // Station facilities options
+  const stationFacilitiesOptions = [
+    { value: "parking", label: "Parking" },
+    { value: "restroom", label: "Restroom" },
+    { value: "waiting_area", label: "Waiting Area" },
+    { value: "ticket_counter", label: "Ticket Counter" },
+    { value: "food_court", label: "Food Court" },
+    { value: "atm", label: "ATM" },
+    { value: "wifi", label: "Free WiFi" },
+    { value: "security", label: "Security" },
+    { value: "cctv", label: "CCTV Surveillance" },
+    { value: "wheelchair_access", label: "Wheelchair Access" },
+    { value: "elevator", label: "Elevator" },
+    { value: "escalator", label: "Escalator" },
+    { value: "shops", label: "Shops" },
+    { value: "pharmacy", label: "Pharmacy" },
+    { value: "first_aid", label: "First Aid" },
+    { value: "lost_found", label: "Lost & Found" },
+    { value: "information_desk", label: "Information Desk" },
+  ];
 
   // Load Google Maps API
   useEffect(() => {
@@ -104,14 +138,16 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         name: editData.name || "",
         tehsil: editData.tehsil || "",
         district: editData.district || "", // Added district for edit mode
+        stationStatus: editData.status || "", // Added station status for edit mode
+        stationFacilities: editData.facilities || [], // Added station facilities for edit mode
         address: {
           line1: editData.address?.line1 || "",
           line2: editData.address?.line2 || "",
           city: editData.address?.city || "",
         },
         coordinates: {
-          lat: editData.coordinates?.lat || null,
-          lng: editData.coordinates?.lng || null,
+          lat: editData.latitude || null,
+          lng: editData.longitude || null,
         },
         pictures: editData.pictures || editData.stationImageUrl || [], // Support both field names
       });
@@ -129,6 +165,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         name: "",
         tehsil: "",
         district: "", // Reset district field
+        stationStatus: "", // Reset station status field
+        stationFacilities: [], // Reset station facilities field
         address: {
           line1: "",
           line2: "",
@@ -326,6 +364,61 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   };
 
+  // Handle manual coordinate input
+  const handleCoordinateChange = (e) => {
+    const { name, value } = e.target;
+    const numValue = parseFloat(value);
+    
+    if (isNaN(numValue) && value !== "") return; // Only allow numbers
+
+    setFormData(prev => ({
+      ...prev,
+      coordinates: {
+        ...prev.coordinates,
+        [name]: value === "" ? null : numValue,
+      }
+    }));
+
+    // Update map if both coordinates are valid
+    if (name === "lat" && formData.coordinates.lng !== null && !isNaN(numValue)) {
+      const newLocation = { lat: numValue, lng: formData.coordinates.lng };
+      setSelectedLocation(newLocation);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter(newLocation);
+        addMarker(newLocation);
+      }
+    } else if (name === "lng" && formData.coordinates.lat !== null && !isNaN(numValue)) {
+      const newLocation = { lat: formData.coordinates.lat, lng: numValue };
+      setSelectedLocation(newLocation);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter(newLocation);
+        addMarker(newLocation);
+      }
+    }
+  };
+
+  // Handle facilities multi-select
+  const handleFacilitiesChange = (facilityValue) => {
+    setFormData(prev => {
+      const currentFacilities = prev.stationFacilities || [];
+      const isSelected = currentFacilities.includes(facilityValue);
+      
+      if (isSelected) {
+        // Remove facility
+        return {
+          ...prev,
+          stationFacilities: currentFacilities.filter(f => f !== facilityValue)
+        };
+      } else {
+        // Add facility
+        return {
+          ...prev,
+          stationFacilities: [...currentFacilities, facilityValue]
+        };
+      }
+    });
+  };
+
   // Handle picture upload
   const handlePicturesChange = (e) => {
     const files = Array.from(e.target.files);
@@ -400,6 +493,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
           name: "",
           tehsil: "",
           district: "", // Reset district field
+          stationStatus: "", // Reset station status field
+          stationFacilities: [], // Reset station facilities field
           address: {
             line1: "",
             line2: "",
@@ -516,6 +611,96 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
               required={true}
               placeholder="Search and select district..."
             />
+          </div>
+
+          {/* Station Status and Facilities */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Station Status Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station Status *
+              </label>
+              <select
+                name="stationStatus"
+                value={formData.stationStatus}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select station status...</option>
+                {stationStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Station Facilities Multi-Select */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station Facilities
+              </label>
+              <div className="relative">
+                <div className="w-full min-h-[42px] px-3 py-2 border border-gray-300 rounded-md focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 bg-white">
+                  {/* Selected Facilities Display */}
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {formData.stationFacilities.map((facilityValue) => {
+                      const facility = stationFacilitiesOptions.find(f => f.value === facilityValue);
+                      return (
+                        <span
+                          key={facilityValue}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {facility?.label}
+                          <button
+                            type="button"
+                            onClick={() => handleFacilitiesChange(facilityValue)}
+                            className="ml-1 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Dropdown for selecting facilities */}
+                  <details className="relative">
+                    <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 list-none">
+                      {formData.stationFacilities.length === 0 
+                        ? "Select facilities..." 
+                        : `Add more facilities... (${formData.stationFacilities.length} selected)`}
+                      <span className="float-right">▼</span>
+                    </summary>
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                      {stationFacilitiesOptions.map((facility) => {
+                        const isSelected = formData.stationFacilities.includes(facility.value);
+                        return (
+                          <label
+                            key={facility.value}
+                            className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+                              isSelected ? 'bg-blue-50 text-blue-800' : ''
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleFacilitiesChange(facility.value)}
+                              className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm">{facility.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Select multiple facilities available at this station
+              </p>
+            </div>
           </div>
 
           {/* Station Pictures Upload */}
@@ -640,6 +825,39 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
               >
                 Use Current Location
               </button>
+            </div>
+
+            {/* Manual Coordinate Input */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  name="lat"
+                  value={formData.coordinates.lat || ""}
+                  onChange={handleCoordinateChange}
+                  step="any"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 31.5204"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  name="lng"
+                  value={formData.coordinates.lng || ""}
+                  onChange={handleCoordinateChange}
+                  step="any"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 74.3587"
+                />
+              </div>
             </div>
 
             <div className="mb-4">

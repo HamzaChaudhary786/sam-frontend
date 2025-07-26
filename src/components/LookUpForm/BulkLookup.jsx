@@ -2,11 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { lookupEnum } from "../../constants/Enum.js";
 import { BACKEND_URL } from "../../constants/api.js";
-const BulkLookupModal = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
+import { EnumSelect } from "../SearchableDropdown.jsx";
+
+const BulkLookupModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     lookupType: "",
     values: "",
@@ -27,13 +25,54 @@ const BulkLookupModal = ({
     }
   }, [isOpen]);
 
+  // Helper function to get enum value from key/index
+  const getEnumValue = (keyOrValue) => {
+    // If it's already a valid enum value, return it
+    if (Object.values(lookupEnum).includes(keyOrValue)) {
+      return keyOrValue;
+    }
+    
+    // If it's a key, get the corresponding value
+    if (lookupEnum[keyOrValue]) {
+      return lookupEnum[keyOrValue];
+    }
+    
+    // If it's an index (number), get the value at that index
+    if (typeof keyOrValue === 'number' || !isNaN(keyOrValue)) {
+      const enumValues = Object.values(lookupEnum);
+      const index = parseInt(keyOrValue);
+      if (index >= 0 && index < enumValues.length) {
+        return enumValues[index];
+      }
+    }
+    
+    // Return as-is if we can't determine the correct value
+    return keyOrValue;
+  };
+
+  // Helper function to get enum display name for preview
+  const getEnumDisplayName = (keyOrValue) => {
+    const enumValue = getEnumValue(keyOrValue);
+    
+    // Find the key that corresponds to this value for display
+    const enumKey = Object.keys(lookupEnum).find(key => lookupEnum[key] === enumValue);
+    
+    // Return a formatted display name (replace underscores with spaces, capitalize)
+    if (enumKey) {
+      return enumKey.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
+    return enumValue;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (error) setError("");
 
@@ -49,34 +88,39 @@ const BulkLookupModal = ({
 
   const generatePreview = (valuesText, type) => {
     const lines = valuesText
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
     const preview = lines.map((name, index) => ({
       id: `preview-${index}`,
       name,
       lookupType: type,
-      isActive: true
+      lookupTypeDisplay: getEnumDisplayName(type),
+      isActive: true,
     }));
-    
+
     setPreviewLookups(preview);
   };
 
   const bulkCreateLookup = async (lookups) => {
     try {
+      // Debug logging
+      console.log("Sending bulk lookup request with data:", lookups);
+      
       const response = await fetch(`${BACKEND_URL}/lookup/bulk-lookup`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ lookups })
+        body: JSON.stringify({ lookups }),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create bulk lookups");
+        console.error("API Error Response:", data);
+        throw new Error(data.message || `Server error: ${response.status}`);
       }
 
       return data;
@@ -94,16 +138,16 @@ const BulkLookupModal = ({
       setError("Lookup type is required");
       return;
     }
-    
+
     if (!formData.values.trim()) {
       setError("At least one lookup value is required");
       return;
     }
 
     const lines = formData.values
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
 
     if (lines.length === 0) {
       setError("Please enter at least one valid lookup name");
@@ -117,15 +161,30 @@ const BulkLookupModal = ({
       return;
     }
 
+    // Convert lookupType to proper enum value
+    const properEnumValue = getEnumValue(formData.lookupType);
+    
+    // Validate that we have a proper enum value
+    if (!Object.values(lookupEnum).includes(properEnumValue)) {
+      setError("Invalid lookup type selected. Please select a valid option.");
+      return;
+    }
+
+    console.log("Form lookupType:", formData.lookupType);
+    console.log("Converted enum value:", properEnumValue);
+    console.log("Valid enum values:", Object.values(lookupEnum));
+
     setLoading(true);
     setError("");
 
     try {
-      const lookups = uniqueLines.map(name => ({
+      const lookups = uniqueLines.map((name) => ({
         name,
-        lookupType: formData.lookupType,
-        isActive: true
+        lookupType: properEnumValue, // Use the converted enum value
+        isActive: true,
       }));
+
+      console.log("Prepared lookups for API:", lookups);
 
       const response = await bulkCreateLookup(lookups);
 
@@ -144,11 +203,21 @@ const BulkLookupModal = ({
       }
     } catch (error) {
       console.error("Error submitting bulk form:", error);
-      setError(
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to create bulk lookups"
-      );
+      
+      // Enhanced error handling
+      let errorMessage = "Failed to create bulk lookups";
+      
+      if (error.message.includes("validation failed")) {
+        errorMessage = "Validation error: Please check that all values are correct and the lookup type is valid.";
+      } else if (error.message.includes("enum value")) {
+        errorMessage = "Invalid lookup type. Please select a different lookup type and try again.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -164,7 +233,7 @@ const BulkLookupModal = ({
   };
 
   const handleClearValues = () => {
-    setFormData(prev => ({ ...prev, values: "" }));
+    setFormData((prev) => ({ ...prev, values: "" }));
     setPreviewLookups([]);
   };
 
@@ -225,31 +294,23 @@ const BulkLookupModal = ({
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Lookup Type Field */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lookup Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
+                  <EnumSelect
+                    label="Lookup Type"
                     name="lookupType"
                     value={formData.lookupType}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Select lookup type</option>
-                    {lookupEnum.map((type) => (
-                      <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                    enumObject={lookupEnum}
+                    required={true}
+                    placeholder="Search and select lookups"
+                  />
                 </div>
 
                 {/* Values Field */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-sm font-medium text-gray-700">
-                      Enter values line by line <span className="text-red-500">*</span>
+                      Enter values line by line{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     {formData.values && (
                       <button
@@ -276,10 +337,16 @@ Delta cast
 ...up to n`}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Enter each lookup name on a separate line. 
+                    Enter each lookup name on a separate line.
                     {formData.values && (
                       <span className="ml-1 text-blue-600">
-                        ({formData.values.split('\n').filter(line => line.trim()).length} entries)
+                        (
+                        {
+                          formData.values
+                            .split("\n")
+                            .filter((line) => line.trim()).length
+                        }{" "}
+                        entries)
                       </span>
                     )}
                   </p>
@@ -291,13 +358,28 @@ Delta cast
             <div>
               <div className="bg-gray-50 rounded-lg p-4 h-full">
                 <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                   Preview ({previewLookups.length} items)
                 </h3>
-                
+
                 {previewLookups.length > 0 ? (
                   <div className="max-h-80 overflow-y-auto space-y-2">
                     {previewLookups.map((lookup, index) => (
@@ -310,7 +392,7 @@ Delta cast
                             {lookup.name}
                           </span>
                           <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                            {lookup.lookupType}
+                            {lookup.lookupTypeDisplay || lookup.lookupType}
                           </span>
                         </div>
                       </div>
@@ -318,11 +400,23 @@ Delta cast
                   </div>
                 ) : (
                   <div className="text-center text-gray-500 py-8">
-                    <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <svg
+                      className="mx-auto h-8 w-8 text-gray-400 mb-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
                     </svg>
                     <p className="text-sm">Preview will appear here</p>
-                    <p className="text-xs text-gray-400">Select a type and enter values</p>
+                    <p className="text-xs text-gray-400">
+                      Select a type and enter values
+                    </p>
                   </div>
                 )}
               </div>
@@ -334,7 +428,10 @@ Delta cast
         <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
           <div className="text-sm text-gray-600">
             {previewLookups.length > 0 && (
-              <span>Ready to create {previewLookups.length} lookup{previewLookups.length !== 1 ? 's' : ''}</span>
+              <span>
+                Ready to create {previewLookups.length} lookup
+                {previewLookups.length !== 1 ? "s" : ""}
+              </span>
             )}
           </div>
           <div className="flex space-x-3">
@@ -348,7 +445,12 @@ Delta cast
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading || !formData.lookupType || !formData.values.trim() || previewLookups.length === 0}
+              disabled={
+                loading ||
+                !formData.lookupType ||
+                !formData.values.trim() ||
+                previewLookups.length === 0
+              }
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -375,7 +477,9 @@ Delta cast
                   Creating {previewLookups.length} lookups...
                 </span>
               ) : (
-                `Save ${previewLookups.length} Lookup${previewLookups.length !== 1 ? 's' : ''}`
+                `Save ${previewLookups.length} Lookup${
+                  previewLookups.length !== 1 ? "s" : ""
+                }`
               )}
             </button>
           </div>

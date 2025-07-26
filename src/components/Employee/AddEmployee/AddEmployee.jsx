@@ -14,45 +14,6 @@ import { getRanksWithEnum } from "./Rank.js";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 const API_URL = BACKEND_URL;
 
-// Reusable enum select component
-// const EnumSelect = ({
-//   label,
-//   name,
-//   value,
-//   onChange,
-//   enumObject,
-//   required = false,
-//   placeholder = "Select an option",
-//   readOnly = false, // Add readOnly prop
-// }) => {
-//   const safeEnumObject = enumObject || {};
-
-//   return (
-//     <div>
-//       <label className="block text-sm font-medium text-gray-700 mb-1">
-//         {label} {required && <span className="text-red-500">*</span>}
-//       </label>
-//       <select
-//         name={name}
-//         value={value}
-//         onChange={onChange}
-//         required={required}
-//         disabled={readOnly} // Use disabled instead of readOnly for select elements
-//         className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-//           readOnly ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
-//         }`}
-//       >
-//         <option value="">{placeholder}</option>
-//         {Object.entries(safeEnumObject).map(([id, itemName]) => (
-//           <option key={id} value={itemName}>
-//             {itemName}
-//           </option>
-//         ))}
-//       </select>
-//     </div>
-//   );
-// };
-
 // Fixed Multiple Image upload component
 const ImageUpload = ({ onImageChange, imagePreviews, profileUrls }) => {
   const handleFileChange = (e) => {
@@ -627,7 +588,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            First Name *
+            Full Name *
           </label>
           <input
             type="text"
@@ -635,27 +596,14 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             value={formData.firstName}
             onChange={handleChange}
             required
+            placeholder="Enter employee's complete name"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Last Name *
-          </label>
-          <input
-            type="text"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Father's First Name *
+            Father's Full Name *
           </label>
           <input
             type="text"
@@ -663,20 +611,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             value={formData.fatherFirstName}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Father's Last Name *
-          </label>
-          <input
-            type="text"
-            name="fatherLastName"
-            value={formData.fatherLastName}
-            onChange={handleChange}
-            required
+            placeholder="Enter father's full name"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

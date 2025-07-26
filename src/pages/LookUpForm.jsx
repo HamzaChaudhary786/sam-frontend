@@ -1,9 +1,10 @@
-// Complete LookupPage with bulk add functionality
+// Complete LookupPage with bulk add functionality and searchable filter
 import React, { useState, useEffect, useCallback } from "react";
 import { useLookups } from "../services/LookUp.js";
 import LookupModal from "../components/LookUpForm/LookUpForm.jsx";
 import BulkLookupModal from "../components/LookUpForm/BulkLookup.jsx";
 import { lookupEnum } from "../constants/Enum.js";
+import { EnumSelect } from "../components/SearchableDropdown.jsx";
 
 const LookupPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +38,31 @@ const LookupPage = () => {
 
   // Debounced search to avoid too many API calls
   const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
+
+  // Helper function to get enum value from key/index (same as modals)
+  const getEnumValue = (keyOrValue) => {
+    // If it's already a valid enum value, return it
+    if (Object.values(lookupEnum).includes(keyOrValue)) {
+      return keyOrValue;
+    }
+    
+    // If it's a key, get the corresponding value
+    if (lookupEnum[keyOrValue]) {
+      return lookupEnum[keyOrValue];
+    }
+    
+    // If it's an index (number), get the value at that index
+    if (typeof keyOrValue === 'number' || !isNaN(keyOrValue)) {
+      const enumValues = Object.values(lookupEnum);
+      const index = parseInt(keyOrValue);
+      if (index >= 0 && index < enumValues.length) {
+        return enumValues[index];
+      }
+    }
+    
+    // Return as-is if we can't determine the correct value
+    return keyOrValue;
+  };
 
   const debouncedSearch = useCallback((value) => {
     if (searchDebounceTimer) {
@@ -122,10 +148,16 @@ const LookupPage = () => {
     }
   };
 
-  const handleFilterChange = (value) => {
-    console.log('Filter type changed:', value);
-    setFilterType(value);
-    filterByType(value);
+  const handleFilterChange = (e) => {
+    const { value } = e.target;
+    console.log('Filter type changed (raw value):', value);
+    
+    // Convert enum key/index to proper enum value
+    const enumValue = getEnumValue(value);
+    console.log('Filter type converted to enum value:', enumValue);
+    
+    setFilterType(value); // Store the display value for UI
+    filterByType(enumValue); // Use the enum value for filtering
   };
 
   const clearAllFilters = () => {
@@ -345,25 +377,22 @@ const LookupPage = () => {
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Filter by Type 
-                {typesLoading && <span className="text-xs text-gray-500 ml-2">(Loading all types...)</span>}
-              </label>
-              <select
+              <EnumSelect
+                label="Filter by Type"
+                name="filterType"
                 value={filterType}
-                onChange={(e) => handleFilterChange(e.target.value)}
+                onChange={handleFilterChange}
+                enumObject={lookupEnum}
+                required={false}
+                placeholder="Search and select type to filter"
                 disabled={typesLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              >
-                <option value="">
-                  {typesLoading ? 'Loading types from all pages...' : 'All Types'}
-                </option>
-                {lookupEnum.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </option>
-                ))}
-              </select>
+                allowClear={true}
+              />
+              {typesLoading && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Loading types from all pages...
+                </p>
+              )}
             </div>
           </div>
           
@@ -466,7 +495,7 @@ const LookupPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          filterType === item.lookupType 
+                          getEnumValue(filterType) === item.lookupType 
                             ? 'bg-blue-200 text-blue-900 ring-2 ring-blue-300' 
                             : 'bg-blue-100 text-blue-800'
                         }`}>
