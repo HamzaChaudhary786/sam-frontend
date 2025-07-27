@@ -10,7 +10,7 @@ const EmployeePage = () => {
           <div className="py-6">
             <h1 className="text-2xl font-bold text-gray-900">Employee Management</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Manage your police force employees, add new officers, and track their information.
+              Manage Balochistan Levies force employees, add new officers, and track their information.
             </p>
           </div>
         </div>
