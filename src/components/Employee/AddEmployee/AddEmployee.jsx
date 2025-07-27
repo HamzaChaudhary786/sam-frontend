@@ -12,6 +12,8 @@ import { BACKEND_URL } from "../../../constants/api.js";
 import { getStatusWithEnum } from "./Status.js";
 import { getRanksWithEnum } from "./Rank.js";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
+import { getStationDistrictWithEnum } from "../../Station/District.js";
+import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
 const API_URL = BACKEND_URL;
 
 // Fixed Multiple Image upload component
@@ -143,10 +145,15 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     line1: "",
     line2: "",
     city: "",
+    tehsil: "",
   });
-  const [stationDistrict, setStationDistrict] = useState({
-    district: "",
-  });
+  // const [stationDistrict, setStationDistrict] = useState({
+  //   district: "",
+  // });
+
+  const [stationLocations, setStationLocations] = useState({}); // State for station locations
+  const [districtLocations, setDistrictLocations] = useState({}); // State for district locations
+  const [loadingLocations, setLoadingLocations] = useState(false); // Loading state for locations
 
   const [formData, setFormData] = useState({
     personalNumber: "",
@@ -173,6 +180,46 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     stations: "",
   });
 
+
+  useEffect(() => {
+    fetchStationLocations();
+    fetchDistrictLocations();
+  }, []);
+
+  const fetchStationLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const result = await getStationLocationsWithEnum();
+      if (result.success) {
+        setStationLocations(result.data);
+      } else {
+        setError("Failed to load station locations");
+        console.error("Error fetching station locations:", result.error);
+      }
+    } catch (error) {
+      setError("Failed to load station locations");
+      console.error("Error fetching station locations:", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
+  // Fetch district locations from API
+  const fetchDistrictLocations = async () => {
+    try {
+      const result = await getStationDistrictWithEnum();
+      if (result.success) {
+        setDistrictLocations(result.data);
+      } else {
+        console.error("Error fetching district locations:", result.error);
+        // Don't set error here as it's not critical - user can still proceed
+      }
+    } catch (error) {
+      console.error("Error fetching district locations:", error);
+      // Don't set error here as it's not critical - user can still proceed
+    }
+  };
+
   // Helper function to determine if stations field should be read-only
   const isStationsReadOnly = () => {
     if (!isEdit) return false; // Never read-only in add mode
@@ -184,8 +231,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof stationsValue === "string"
         ? stationsValue.trim() !== ""
         : typeof stationsValue === "object"
-        ? stationsValue._id
-        : false)
+          ? stationsValue._id
+          : false)
     );
   };
 
@@ -200,8 +247,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof statusValue === "string"
         ? statusValue.trim() !== ""
         : typeof statusValue === "object"
-        ? statusValue._id
-        : false)
+          ? statusValue._id
+          : false)
     );
   };
 
@@ -315,10 +362,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line1: editData.stations?.address?.line1 || "",
         line2: editData.stations?.address?.line2 || "",
         city: editData.stations?.address?.city || "",
+        tehsil: editData.stations?.address?.tehsil || "",
+
       });
-      setStationDistrict({
-        district: editData.stations?.district || "",
-      });
+      // setStationDistrict({
+      //   district: editData.stations?.district || "",
+      // });
       setProfile(editData.profileUrl || []);
     } else {
       // Empty form for new employee
@@ -339,7 +388,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         serviceType: "provincial",
         address: {
           line1: "",
-          line2: "",
+          line2: "",   // this is district 
           muhala: "",
           tehsil: "",
         },
@@ -351,12 +400,16 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line1: "",
         line2: "",
         city: "",
+        tehsil: ""
       });
-      setStationDistrict({
-        district: "",
-      });
+      // setStationDistrict({
+      //   district: "",
+      // });
     }
   }, [editData, isEdit, enumsLoaded]);
+
+
+
 
   // CNIC validation function
   const validateCNIC = (cnic) => {
@@ -432,21 +485,24 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           line1: stationAddressData.line1,
           line2: stationAddressData.line2,
           city: stationAddressData.city,
+          tehsil: stationAddressData.tehsil,
         });
       }
-      setStationDistrict({
-        district: stationDistrictData,
-      });
+      // setStationDistrict({
+      //   district: stationDistrictData,
+      // });
     } else {
       // Clear station address if no station selected
       setStationAddress({
         line1: "",
         line2: "",
         city: "",
-      });
-      setStationDistrict({
         district: "",
+        tehsil: ""
       });
+      // setStationDistrict({
+      //   district: "",
+      // });
     }
   };
 
@@ -505,6 +561,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
         ];
       }
+
 
       // Create JSON object with proper format - match your backend API structure
       const submitData = {
@@ -642,11 +699,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             pattern="[0-9]{13}"
             title="CNIC must be exactly 13 digits with no hyphens"
             maxLength="13"
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              validationErrors.cnic
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-300 focus:border-blue-500"
-            }`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.cnic
+              ? "border-red-300 focus:border-red-500"
+              : "border-gray-300 focus:border-blue-500"
+              }`}
           />
           {validationErrors.cnic && (
             <p className="mt-1 text-sm text-red-600">{validationErrors.cnic}</p>
@@ -682,7 +738,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       </div>
 
       {/* Enum Dropdowns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <EnumSelect
             label="Status"
@@ -736,35 +792,25 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         <h3 className="text-lg font-medium text-gray-900 mb-3">
           Personal Address
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 ">
+          <div className="w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address Line 1
+              Address
             </label>
-            <input
-              type="text"
+            <textarea
+              rows={3}
+
+              // type="text"
               name="address.line1"
               value={formData.address.line1}
               onChange={handleChange}
-              placeholder="House #123"
+              placeholder="Full Address Of Employee..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address Line 2
-            </label>
-            <input
-              type="text"
-              name="address.line2"
-              value={formData.address.line2}
-              onChange={handleChange}
-              placeholder="Street 5, Sector A"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Mohalla
@@ -778,17 +824,27 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tehsil
-            </label>
-            <input
-              type="text"
+          <div className=" grid grid-cols-1 md:grid-cols-2 gap-4">
+            <EnumSelect
+              label="Tehsil"
               name="address.tehsil"
               value={formData.address.tehsil}
               onChange={handleChange}
-              placeholder="Rawalpindi"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              enumObject={stationLocations}
+              required={true}
+              placeholder={loadingLocations ? "Loading locations..." : "Search and select tehsil..."}
+              readOnly={loadingLocations}
+            />
+
+            {/* Replace regular select with EnumSelect for District */}
+            <EnumSelect
+              label="District"
+              name="address.line2"
+              value={formData.address.line2}
+              onChange={handleChange}
+              enumObject={districtLocations}
+              required={true}
+              placeholder="Search and select district..."
             />
           </div>
         </div>
@@ -810,11 +866,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               onChange={handleLocationChange}
               required
               disabled={isStationsReadOnly()} // Use the helper function
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isStationsReadOnly()
-                  ? "bg-gray-50 text-gray-600 cursor-not-allowed"
-                  : ""
-              }`}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isStationsReadOnly()
+                ? "bg-gray-50 text-gray-600 cursor-not-allowed"
+                : ""
+                }`}
             >
               <option value="">
                 {locationLoading ? "Loading stations..." : "Select station"}
@@ -833,7 +888,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station Address Line 1
+              Station Address
             </label>
             <input
               type="text"
@@ -847,7 +902,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station Address Line 2
+              Station Address Mohalla
             </label>
             <input
               type="text"
@@ -859,25 +914,13 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station City
+              Station City & Tehsil
             </label>
             <input
               type="text"
-              value={stationAddress.city}
+              value={`${stationAddress.city} - ${stationAddress.tehsil}`}
               readOnly
               placeholder="Station city"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station district
-            </label>
-            <input
-              type="text"
-              value={stationDistrict.district}
-              readOnly
-              placeholder="Station district"
               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
             />
           </div>
@@ -901,12 +944,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           {uploading
             ? "Uploading Photo..."
             : loading
-            ? isEdit
-              ? "Updating..."
-              : "Adding..."
-            : isEdit
-            ? "Update Employee"
-            : "Add Employee"}
+              ? isEdit
+                ? "Updating..."
+                : "Adding..."
+              : isEdit
+                ? "Update Employee"
+                : "Add Employee"}
         </button>
       </div>
     </form>
