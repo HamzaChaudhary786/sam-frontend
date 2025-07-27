@@ -45,13 +45,16 @@ export const useLocationEnum = () => {
   const getStationAddress = (stationId) => {
     return stationDetails[stationId]?.address || null;
   };
-
+  const getStationDistrict = (stationId) => {
+    return stationDetails[stationId]?.district || '';
+  };
   return {
     locationEnum,
     stationDetails,
     loading,
     error,
     getStationAddress,
+    getStationDistrict,
     refetchStationsData: fetchStationsData
   };
 };

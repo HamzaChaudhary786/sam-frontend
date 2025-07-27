@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from './Login.js';
+import { toast } from 'react-toastify';
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -24,16 +25,54 @@ const LoginForm = () => {
     setIsLoading(true);
     setError('');
 
-    const result = await loginUser(formData.email, formData.password);
+    try {
+      const result = await loginUser(formData.email, formData.password);
 
-    if (result.success) {
-      // Store token if needed
-      if (result.data.token) {
-        localStorage.setItem('authToken', result.data.token);
+      if (result.success) {
+        // Store all login information in localStorage
+        const loginData = result.data;
+        
+        // Store token
+        if (loginData.token) {
+          localStorage.setItem('authToken', loginData.token);
+        }
+        
+        // Store user information
+        if (loginData.user) {
+          localStorage.setItem('userData', JSON.stringify(loginData.user));
+          localStorage.setItem('userId', loginData.user._id);
+          localStorage.setItem('userEmail', loginData.user.email);
+          localStorage.setItem('userType', loginData.user.userType);
+          
+          // Store profile if available
+          if (loginData.user.profile) {
+            localStorage.setItem('userProfile', loginData.user.profile);
+          }
+        }
+        
+        // Store the complete login response (optional, for easy access)
+        localStorage.setItem('loginResponse', JSON.stringify(loginData));
+        
+        // Success toast with user info
+        toast.success(`Welcome back, ${loginData.user?.email || 'User'}! Login successful.`);
+        
+        console.log('✅ Login successful, stored data:', {
+          token: loginData.token ? 'Token stored' : 'No token',
+          user: loginData.user ? 'User data stored' : 'No user data',
+          userType: loginData.user?.userType || 'Unknown'
+        });
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        setError(result.error);
+        toast.error(`Login failed: ${result.error}`);
       }
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    } catch (error) {
+      const errorMessage = error.message || 'An unexpected error occurred during login';
+      setError(errorMessage);
+      toast.error(`Login error: ${errorMessage}`);
+      console.error('Login error:', error);
     }
 
     setIsLoading(false);

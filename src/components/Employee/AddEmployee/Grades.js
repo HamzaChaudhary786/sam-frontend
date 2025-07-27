@@ -10,12 +10,13 @@ const getAuthHeaders = () => {
 
 export const getGradesWithEnum = async () => {
   try {
-    const response = await axios.get(`${API_URL}/grade`, {
-      headers: getAuthHeaders(),
+    const response = await axios.get(`${API_URL}/lookup?lookupType=grades`, {
+      // headers: getAuthHeaders(),
     });
 
-    const gradeList = Array.isArray(response.data) ? response.data : [];
-
+    const gradeList = Array.isArray(response.data.result) ? response.data.result : [];
+      console.log(response,"my response hahahahahahahahaahahhaahhaah")
+      console.log(gradeList,"my list hahahahahahahahhaahhahahahhaahhaahhaha")
     const gradeEnum = {};
     gradeList.forEach((item) => {
       gradeEnum[item._id] = item.name;

@@ -10,11 +10,11 @@ const getAuthHeaders = () => {
 
 export const getDesignationsWithEnum = async () => {
   try {
-    const response = await axios.get(`${API_URL}/designation`, {
+    const response = await axios.get(`${API_URL}/lookup?lookupType=designation`, {
       headers: getAuthHeaders(),
     });
 
-    const designationList = Array.isArray(response.data) ? response.data : [];
+    const designationList = Array.isArray(response.data.result) ? response.data.result : [];
 
     const designationEnum = {};
     designationList.forEach((item) => {

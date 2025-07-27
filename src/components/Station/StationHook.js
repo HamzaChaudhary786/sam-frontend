@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getStations, addStation, updateStation, deleteStation } from './StationApi.js';
+import { toast } from 'react-toastify';
 
 export const useStations = (initialFilters = {}) => {
   const [stations, setStations] = useState([]);
@@ -12,15 +13,23 @@ export const useStations = (initialFilters = {}) => {
     setLoading(true);
     setError('');
     
-    const result = await getStations(currentFilters);
-    
-    if (result.success) {
-      // Handle the case where data has a 'stations' property
-      const stationsData = result.data.stations || result.data;
-      setStations(Array.isArray(stationsData) ? stationsData : []);
-    } else {
-      setError(result.error);
+    try {
+      const result = await getStations(currentFilters);
+      
+      if (result.success) {
+        // Handle the case where data has a 'stations' property
+        const stationsData = result.data.stations || result.data;
+        setStations(Array.isArray(stationsData) ? stationsData : []);
+      } else {
+        setError(result.error);
+        setStations([]);
+        toast.error(`Failed to fetch stations: ${result.error}`);
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error occurred while fetching stations';
+      setError(errorMessage);
       setStations([]);
+      toast.error(`Error fetching stations: ${errorMessage}`);
     }
     
     setLoading(false);
@@ -30,15 +39,23 @@ export const useStations = (initialFilters = {}) => {
   const createStation = async (stationData) => {
     setError('');
     
-    const result = await addStation(stationData);
-    
-    if (result.success) {
-      // Add the new station to the list
-      setStations(prev => Array.isArray(prev) ? [...prev, result.data] : [result.data]);
-      return { success: true };
-    } else {
-      setError(result.error);
-      return { success: false, error: result.error };
+    try {
+      const result = await addStation(stationData);
+      
+      if (result.success) {
+        await fetchStations();
+        toast.success(`Station "${stationData.name || 'New Station'}" created successfully!`);
+        return { success: true };
+      } else {
+        setError(result.error);
+        toast.error(`Failed to create station: ${result.error}`);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error occurred while creating station';
+      setError(errorMessage);
+      toast.error(`Error creating station: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -46,17 +63,23 @@ export const useStations = (initialFilters = {}) => {
   const modifyStation = async (id, stationData) => {
     setError('');
     
-    const result = await updateStation(stationData, id);
-    
-    if (result.success) {
-      // Update the station in the list
-      setStations(prev =>
-        Array.isArray(prev) ? prev.map(station => station._id === id ? result.data : station) : []
-      );
-      return { success: true };
-    } else {
-      setError(result.error);
-      return { success: false, error: result.error };
+    try {
+      const result = await updateStation(stationData, id);
+      
+      if (result.success) {
+        await fetchStations();
+        toast.success(`Station "${stationData.name || 'Station'}" updated successfully!`);
+        return { success: true };
+      } else {
+        setError(result.error);
+        toast.error(`Failed to update station: ${result.error}`);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error occurred while updating station';
+      setError(errorMessage);
+      toast.error(`Error updating station: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -64,15 +87,23 @@ export const useStations = (initialFilters = {}) => {
   const removeStation = async (id) => {
     setError('');
     
-    const result = await deleteStation(id);
-    
-    if (result.success) {
-      // Remove the station from the list
-      setStations(prev => Array.isArray(prev) ? prev.filter(station => station._id !== id) : []);
-      return { success: true };
-    } else {
-      setError(result.error);
-      return { success: false, error: result.error };
+    try {
+      const result = await deleteStation(id);
+      
+      if (result.success) {
+        await fetchStations();
+        toast.success("Station deleted successfully!");
+        return { success: true };
+      } else {
+        setError(result.error);
+        toast.error(`Failed to delete station: ${result.error}`);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error occurred while deleting station';
+      setError(errorMessage);
+      toast.error(`Error deleting station: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   };
 

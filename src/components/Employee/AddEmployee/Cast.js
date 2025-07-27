@@ -10,11 +10,11 @@ const getAuthHeaders = () => {
 
 export const getCastsWithEnum = async () => {
   try {
-    const response = await axios.get(`${API_URL}/cast`, {
+    const response = await axios.get(`${API_URL}/lookup?lookupType=cast`, {
       headers: getAuthHeaders(),
     });
 
-    const castList = Array.isArray(response.data) ? response.data : [];
+    const castList = Array.isArray(response.data.result) ? response.data.result : [];
 
     const castEnum = {};
     castList.forEach((cast) => {
