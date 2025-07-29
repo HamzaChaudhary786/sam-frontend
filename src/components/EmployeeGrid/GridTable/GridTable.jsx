@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import { deleteEmployee } from "../../Employee/EmployeeApi";
+import { AlertTriangle, X } from "lucide-react";
 
 const EmployeeGridTable = ({
   employees,
@@ -22,7 +24,8 @@ const EmployeeGridTable = ({
 }) => {
   // State to track which employees are in edit mode
   const [editableEmployees, setEditableEmployees] = React.useState(new Set());
-
+  const [confirmPopup, setConfirmPopup] = useState(false)
+  const [deleteId, setDeleteId] = useState(null)
   const toggleEditMode = (employeeId) => {
     const newEditableEmployees = new Set(editableEmployees);
     if (newEditableEmployees.has(employeeId)) {
@@ -41,12 +44,12 @@ const EmployeeGridTable = ({
   const handleCancelEditing = (employee) => {
     onCancelEditing(employee._id);
   };
-  
+
   // Helper functions
   const getEnumDisplayName = (enumKey, valueId) => {
     if (!valueId) return "N/A";
     if (typeof valueId === "object" && valueId?.name) return valueId.name;
-    
+
     const enumData = enums[enumKey];
     if (Array.isArray(enumData)) {
       const item = enumData.find(item => item._id === valueId);
@@ -78,12 +81,12 @@ const EmployeeGridTable = ({
   // Helper function to get nested value (for address fields)
   const getNestedValue = (employee, fieldPath, editingData) => {
     const employeeEditingData = editingData[employee._id] || {};
-    
+
     // Check if we have editing data for this field
     if (employeeEditingData[fieldPath] !== undefined) {
       return employeeEditingData[fieldPath];
     }
-    
+
     // Get the original value
     const pathParts = fieldPath.split('.');
     let value = employee;
@@ -97,7 +100,7 @@ const EmployeeGridTable = ({
   const renderEditingCell = (employee, fieldKey, fieldType, enumType) => {
     // Get the editing data for this specific employee
     const employeeEditingData = editingData[employee._id] || {};
-    
+
     let value;
     if (fieldKey.includes('.')) {
       // Handle nested fields like address.line1
@@ -124,7 +127,7 @@ const EmployeeGridTable = ({
             ))}
           </select>
         );
-      
+
       case 'serviceType':
         return (
           <select
@@ -137,7 +140,7 @@ const EmployeeGridTable = ({
             <option value="provincial">Provincial</option>
           </select>
         );
-      
+
       case 'date':
         let dateValue = '';
         if (value) {
@@ -150,7 +153,7 @@ const EmployeeGridTable = ({
             console.error('Date formatting error:', error);
           }
         }
-        
+
         return (
           <input
             type="date"
@@ -171,7 +174,7 @@ const EmployeeGridTable = ({
             rows={2}
           />
         );
-      
+
       default:
         return (
           <input
@@ -203,12 +206,11 @@ const EmployeeGridTable = ({
         if (fieldKey === 'status') {
           const displayName = getEnumDisplayName(enumType, value);
           return (
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              value === "active" ? "bg-green-100 text-green-800" :
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${value === "active" ? "bg-green-100 text-green-800" :
               value === "retired" ? "bg-blue-100 text-blue-800" :
-              value === "terminated" ? "bg-red-100 text-red-800" :
-              "bg-gray-100 text-gray-800"
-            }`}>
+                value === "terminated" ? "bg-red-100 text-red-800" :
+                  "bg-gray-100 text-gray-800"
+              }`}>
               {displayName}
             </span>
           );
@@ -225,7 +227,7 @@ const EmployeeGridTable = ({
   const renderCell = (employee, fieldKey, fieldType, enumType = null) => {
     const isEditing = editingCell?.rowId === employee._id && editingCell?.fieldName === fieldKey;
     const isEditable = editableEmployees.has(employee._id);
-    
+
     // For nested fields, get the current value properly
     let currentValue;
     if (fieldKey.includes('.')) {
@@ -233,21 +235,20 @@ const EmployeeGridTable = ({
     } else {
       currentValue = employee[fieldKey];
     }
-    
+
     return (
       <td className="px-3 py-2 text-xs">
         {isEditing ? (
           renderEditingCell(employee, fieldKey, fieldType, enumType)
         ) : (
-          <div 
-            className={`p-1 rounded min-h-6 flex items-center ${
-              isAdmin && isEditable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
-            }`}
+          <div
+            className={`p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
+              }`}
             onDoubleClick={() => isAdmin && isEditable && onStartEditing(employee._id, fieldKey, currentValue)}
             title={
-              !isAdmin ? "Read-only" : 
-              !isEditable ? "Click Edit button to enable editing" : 
-              "Double-click to edit"
+              !isAdmin ? "Read-only" :
+                !isEditable ? "Click Edit button to enable editing" :
+                  "Double-click to edit"
             }
           >
             <div className="max-w-32 truncate" title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}>
@@ -275,7 +276,7 @@ const EmployeeGridTable = ({
             alt={`${employee.firstName} ${employee.lastName}`}
             onClick={() => onImageClick({ image: currentImage, employee })}
           />
-          
+
           {totalImages > 1 && (
             <>
               <button
@@ -346,7 +347,7 @@ const EmployeeGridTable = ({
 
   // Sortable header component
   const SortableHeader = ({ sortKey, children, className = "" }) => (
-    <th 
+    <th
       className={`px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${className}`}
       onClick={() => onSort(sortKey)}
     >
@@ -356,6 +357,33 @@ const EmployeeGridTable = ({
       )}
     </th>
   );
+
+
+  // const handleDelete = async (id) => {
+
+  //   await deleteEmployee(id)
+
+  // }
+
+
+  const handleDelete = (id) => {
+
+    setDeleteId(id)
+    setConfirmPopup(true)
+
+  }
+
+  const handleYes = async () => {
+    // Add your delete logic here
+    console.log("Deleting all employee data...");
+    await deleteEmployee(deleteId)
+    window.location.reload();
+    setConfirmPopup(false);
+  };
+
+  const handleNo = () => {
+    setConfirmPopup(false);
+  };
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -372,6 +400,7 @@ const EmployeeGridTable = ({
               <SortableHeader sortKey="cnic">CNIC</SortableHeader>
               <SortableHeader sortKey="mobileNumber">Mobile</SortableHeader>
               <SortableHeader sortKey="designation">Designation</SortableHeader>
+              
               <SortableHeader sortKey="grade">Grade</SortableHeader>
               <SortableHeader sortKey="rank">Rank</SortableHeader>
               <SortableHeader sortKey="cast">Cast</SortableHeader>
@@ -397,7 +426,7 @@ const EmployeeGridTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {employees.map((employee) => {
+            {employees?.map((employee) => {
               const isEditing = editingCell?.rowId === employee._id;
               const isEditable = editableEmployees.has(employee._id);
 
@@ -451,16 +480,22 @@ const EmployeeGridTable = ({
                             <>
                               <button
                                 onClick={() => toggleEditMode(employee._id)}
-                                className={`px-2 py-1 text-xs rounded transition-colors ${
-                                  isEditable
-                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
+                                className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
+                                  ? 'bg-orange-600 text-white hover:bg-orange-700'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
                                 title={isEditable ? "Disable editing" : "Enable editing"}
                               >
                                 {isEditable ? 'Disable Edit' : 'Edit'}
                               </button>
-                              
+
+                              <button
+                                onClick={() => { handleDelete(employee?._id) }}
+                                className="bg-red-500 py-1 px-2 text-xs text-white rounded"
+                              >
+                                Delete
+                              </button>
+
                               {/* Show Save All button if employee has pending changes */}
                               {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
                                 <button
@@ -482,6 +517,56 @@ const EmployeeGridTable = ({
             })}
           </tbody>
         </table>
+      </div>
+
+      <div>
+        {confirmPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Confirm Deletion</h2>
+                </div>
+                <button
+                  onClick={handleNo}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <p className="text-gray-700 text-base leading-relaxed mb-2">
+                  Are you sure you want to delete employee ?
+                </p>
+                <p className="text-sm text-red-600 font-medium">
+                  This action cannot be undone.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 p-6 bg-gray-50 justify-end">
+                <button
+                  onClick={handleNo}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleYes}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                >
+                  Delete Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {employees.length === 0 && (
