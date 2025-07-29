@@ -18,6 +18,7 @@ import Stationassignment from './pages/StationAssignment.jsx';
 import StatusAssignment from './pages/StatusAssignment.jsx';
 import BulkStationAssignment from './components/BulkStation/BulkStation.jsx';
 import EmployeeImport from './pages/EmployeeImport.jsx'
+import StationMap from './pages/StationMap.jsx';
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -121,6 +122,15 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/station-map"
+          element={
+            <ProtectedRoute>
+              <StationMap />
             </ProtectedRoute>
           }
         />

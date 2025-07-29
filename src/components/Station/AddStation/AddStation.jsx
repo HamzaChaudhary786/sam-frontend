@@ -6,6 +6,7 @@ import { EnumSelect } from "../../SearchableDropdown.jsx";
 import { getStationFacilitiesWithEnum } from "../statusfacilities.js";
 import { getStationStatusWithEnum } from "../stationstatus.js";
 import { MultiEnumSelect } from "../../Multiselect.jsx";
+import MapLocation from "../../Dashboard/MapComponent/MapLocation.jsx";
 
 const StationModal = ({
   isOpen,
@@ -27,6 +28,8 @@ const StationModal = ({
   const [stationLocations, setStationLocations] = useState({}); // State for station locations
   const [districtLocations, setDistrictLocations] = useState({}); // State for district locations
   const [loadingLocations, setLoadingLocations] = useState(false); // Loading state for locations
+  const [position, setPosition] = useState({ lat: null, lng: null });
+  const [hideLocationPanels, setHideLocationPanels] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
@@ -582,6 +585,18 @@ const StationModal = ({
     }
   };
 
+  useEffect(() => {
+    if (position.lat && position.lng) {
+      setFormData((prev) => ({
+        ...prev,
+        coordinates: {
+          lat: position.lat.toFixed(6),
+          lng: position.lng.toFixed(6),
+        },
+      }));
+    }
+  }, [position]);
+
   if (!isOpen) return null;
 
   return (
@@ -807,13 +822,13 @@ const StationModal = ({
               <h3 className="text-lg font-medium text-gray-900">
                 Location Selection
               </h3>
-              <button
+              {/* <button
                 type="button"
                 onClick={getCurrentLocation}
                 className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
                 Use Current Location
-              </button>
+              </button> */}
             </div>
 
             {/* Manual Coordinate Input */}
@@ -833,6 +848,8 @@ const StationModal = ({
                 />
               </div>
 
+
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Longitude
@@ -849,7 +866,12 @@ const StationModal = ({
               </div>
             </div>
 
-            <div className="mb-4">
+
+            <div className="pt-10">
+              <MapLocation onPositionChange={setPosition} hidePanels={hideLocationPanels} />
+            </div>
+
+            {/* <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Location
               </label>
@@ -882,7 +904,7 @@ const StationModal = ({
                   {selectedLocation.lng.toFixed(6)}
                 </p>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Modal Footer */}
@@ -904,8 +926,8 @@ const StationModal = ({
                   ? "Updating..."
                   : "Adding..."
                 : isEdit
-                ? "Update Station"
-                : "Add Station"}
+                  ? "Update Station"
+                  : "Add Station"}
             </button>
           </div>
         </form>
