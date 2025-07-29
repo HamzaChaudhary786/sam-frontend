@@ -3,11 +3,16 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { createStatusAssignment, updateStatusAssignment } from "../StatusAssignmentApi.js";
 import { getStatusWithEnum } from "../../Employee/AddEmployee/Status.js";
+import { role_admin } from "../../../constants/Enum.js";
 
 const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCancel }) => {
   // State for dynamic status options
   const [statusOptions, setStatusOptions] = useState({});
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
+
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [formData, setFormData] = useState({
     currentStatus: "",
@@ -17,8 +22,31 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
     description: "",
     isApproved: false,
     approvalComment: "",
+    disciplinaryAction: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        console.error("Error checking user role:", error);
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   // Fetch status options from API
   const fetchStatusOptions = async () => {
@@ -50,6 +78,7 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
       description: "",
       isApproved: false,
       approvalComment: "",
+      disciplinaryAction: false,
     });
   };
 
@@ -75,8 +104,9 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
         from: formData.from ? new Date(formData.from).toISOString() : new Date().toISOString(),
         to: formData.to ? new Date(formData.to).toISOString() : null,
         description: formData.description,
-        // Only include approval fields when editing
-        ...(editingStatus && {
+        disciplinaryAction: formData.disciplinaryAction,
+        // Only include approval fields when editing and user is admin
+        ...(editingStatus && isAdmin && {
           isApproved: formData.isApproved,
           approvalComment: formData.approvalComment,
         }),
@@ -133,6 +163,7 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
         description: editingStatus.description || "",
         isApproved: editingStatus.isApproved || false,
         approvalComment: editingStatus.approvalComment || "",
+        disciplinaryAction: editingStatus.disciplinaryAction || false,
       });
     } else {
       resetForm();
@@ -175,6 +206,11 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
             </p>
+            {editingStatus && !isAdmin && (
+              <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
+                Note: Only administrators can modify approval settings
+              </p>
+            )}
           </div>
           <button
             onClick={handleCancel}
@@ -267,6 +303,25 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
             )}
           </div>
 
+          {/* Disciplinary Action Checkbox */}
+          <div className="flex flex-row gap-2 items-start">
+            <input
+              type="checkbox"
+              name="disciplinaryAction"
+              checked={formData.disciplinaryAction}
+              onChange={handleChange}
+              className="w-5 h-5 text-red-500 border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors mt-0.5"
+            />
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium text-gray-700">
+                Disciplinary Action
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Check this if the status change is due to disciplinary action
+              </p>
+            </div>
+          </div>
+
           {/* From Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -321,21 +376,23 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
             </p>
           </div>
 
-          {/* Approval Fields - Only show when editing */}
-          {editingStatus && (
+          {/* Approval Fields - Only show when editing and user is admin */}
+          {editingStatus && isAdmin && (
             <>
               {/* Approval Checkbox */}
-              <div className="flex flex-row gap-2 items-center">
-                <input
-                  type="checkbox"
-                  name="isApproved"
-                  checked={formData.isApproved}
-                  onChange={handleChange}
-                  className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                />
-                <label className="block text-sm font-medium text-gray-700">
-                  Approved
-                </label>
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex flex-row gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    name="isApproved"
+                    checked={formData.isApproved}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Approved
+                  </label>
+                </div>
               </div>
 
               {/* Approval Comment */}
@@ -359,23 +416,77 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
             </>
           )}
 
+          {/* Non-Admin Approval Info - Show when editing but user is not admin */}
+          {editingStatus && !isAdmin && (
+            <div className="border-t border-gray-200 pt-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-1">
+                      Current Approval Status
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Status:</span>{" "}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        editingStatus.isApproved 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {editingStatus.isApproved ? 'Approved' : 'Pending Approval'}
+                      </span>
+                    </p>
+                    {editingStatus.approvalComment && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        <span className="font-medium">Admin Comment:</span> {editingStatus.approvalComment}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Contact an administrator to modify approval settings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Info Note */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+          <div className={`border rounded-md p-3 ${
+            formData.disciplinaryAction 
+              ? 'bg-red-50 border-red-200' 
+              : 'bg-yellow-50 border-yellow-200'
+          }`}>
             <div className="flex">
-              <svg className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg 
+                className={`w-5 h-5 mr-2 flex-shrink-0 ${
+                  formData.disciplinaryAction ? 'text-red-400' : 'text-yellow-400'
+                }`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               <div>
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Status Assignment Process
+                <h3 className={`text-sm font-medium ${
+                  formData.disciplinaryAction ? 'text-red-800' : 'text-yellow-800'
+                }`}>
+                  {formData.disciplinaryAction ? 'Disciplinary Action Notice' : 'Status Assignment Process'}
                 </h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  {editingStatus 
-                    ? (formData.isApproved 
-                        ? "This status assignment will be updated as approved and will be active immediately."
-                        : "This status assignment will be updated as pending approval and will need to be approved before becoming active.")
-                    : "This status assignment will be created as pending approval and will need to be approved before becoming active."
-                  }
+                <p className={`text-sm mt-1 ${
+                  formData.disciplinaryAction ? 'text-red-700' : 'text-yellow-700'
+                }`}>
+                  {formData.disciplinaryAction ? (
+                    "This status assignment is marked as a disciplinary action and will require special approval procedures."
+                  ) : (
+                    editingStatus 
+                      ? (isAdmin && formData.isApproved 
+                          ? "This status assignment will be updated as approved and will be active immediately."
+                          : "This status assignment will be updated and may require administrator approval before becoming active.")
+                      : "This status assignment will be created as pending approval and will need to be approved before becoming active."
+                  )}
                 </p>
               </div>
             </div>
@@ -399,7 +510,7 @@ const StatusAssignmentForm = ({ employee, editingStatus, isOpen, onSuccess, onCa
                 !formData.currentStatus || 
                 !formData.from || 
                 !formData.description ||
-                (editingStatus && !formData.approvalComment) // Only require approval comment when editing
+                (editingStatus && isAdmin && !formData.approvalComment) // Only require approval comment when editing as admin
               }
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
