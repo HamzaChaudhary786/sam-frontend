@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStations } from "../StationHook";
-import { getStationLocationsWithEnum } from "../lookUp.js"; // Import both services
+import { getStationLocationsWithEnum } from "../lookUp.js";
 import { getStationDistrictWithEnum } from "../District.js";
-import { EnumSelect } from "../../SearchableDropdown.jsx"; 
+import { EnumSelect } from "../../SearchableDropdown.jsx";
 import { getStationFacilitiesWithEnum } from "../statusfacilities.js";
 import { getStationStatusWithEnum } from "../stationstatus.js";
+import { MultiEnumSelect } from "../../Multiselect.jsx";
 
-const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, createStation, modifyStation  }) => {
+const StationModal = ({
+  isOpen,
+  onClose,
+  isEdit = false,
+  editData = null,
+  createStation,
+  modifyStation,
+}) => {
   const mapRef = useRef(null);
   const autocompleteRef = useRef(null);
   const markerRef = useRef(null);
@@ -37,41 +45,16 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     pictures: [], // Added pictures field
   });
 
-  // Station status options
-  const stationStatusOptions = [
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-    { value: "under_construction", label: "Under Construction" },
-    { value: "maintenance", label: "Under Maintenance" },
-    { value: "planned", label: "Planned" },
-  ];
-
-  // Station facilities options
-  const stationFacilitiesOptions = [
-    { value: "parking", label: "Parking" },
-    { value: "restroom", label: "Restroom" },
-    { value: "waiting_area", label: "Waiting Area" },
-    { value: "ticket_counter", label: "Ticket Counter" },
-    { value: "food_court", label: "Food Court" },
-    { value: "atm", label: "ATM" },
-    { value: "wifi", label: "Free WiFi" },
-    { value: "security", label: "Security" },
-    { value: "cctv", label: "CCTV Surveillance" },
-    { value: "wheelchair_access", label: "Wheelchair Access" },
-    { value: "elevator", label: "Elevator" },
-    { value: "escalator", label: "Escalator" },
-    { value: "shops", label: "Shops" },
-    { value: "pharmacy", label: "Pharmacy" },
-    { value: "first_aid", label: "First Aid" },
-    { value: "lost_found", label: "Lost & Found" },
-    { value: "information_desk", label: "Information Desk" },
-  ];
+  const [stationStatusOptions, setStationStatusOptions] = useState({});
+  const [stationFacilitiesOptions, setStationFacilitiesOptions] = useState({});
 
   // Load Google Maps API
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${
+        import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+      }&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = () => setMapLoaded(true);
@@ -81,46 +64,102 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   }, []);
 
-  // Fetch station and district locations when modal opens
+  // Fetch all enum data when modal opens
   useEffect(() => {
     if (isOpen) {
-      fetchStationLocations();
-      fetchDistrictLocations();
+      fetchAllEnumData();
     }
   }, [isOpen]);
 
-  // Fetch station locations from API
-  const fetchStationLocations = async () => {
+  // Replace the existing fetchStationLocations function with this:
+  const fetchAllEnumData = async () => {
     setLoadingLocations(true);
     try {
-      const result = await getStationLocationsWithEnum();
-      if (result.success) {
-        setStationLocations(result.data);
+      // Fetch all enum data in parallel
+      const [
+        stationLocationsResult,
+        districtLocationsResult,
+        stationStatusResult,
+        stationFacilitiesResult,
+      ] = await Promise.all([
+        getStationLocationsWithEnum(),
+        getStationDistrictWithEnum(),
+        getStationStatusWithEnum(),
+        getStationFacilitiesWithEnum(),
+      ]);
+
+      // Handle station locations
+      if (stationLocationsResult.success) {
+        setStationLocations(stationLocationsResult.data);
       } else {
-        setError("Failed to load station locations");
-        console.error("Error fetching station locations:", result.error);
+        console.error(
+          "Error fetching station locations:",
+          stationLocationsResult.error
+        );
+      }
+
+      // Handle district locations
+      if (districtLocationsResult.success) {
+        setDistrictLocations(districtLocationsResult.data);
+      } else {
+        console.error(
+          "Error fetching district locations:",
+          districtLocationsResult.error
+        );
+      }
+
+      // Handle station status
+      if (stationStatusResult.success) {
+        setStationStatusOptions(stationStatusResult.data);
+      } else {
+        console.error(
+          "Error fetching station status:",
+          stationStatusResult.error
+        );
+        // Fallback to hardcoded options if API fails
+        setStationStatusOptions({
+          active: "Active",
+          inactive: "Inactive",
+          under_construction: "Under Construction",
+          maintenance: "Under Maintenance",
+          planned: "Planned",
+        });
+      }
+
+      // Handle station facilities
+      if (stationFacilitiesResult.success) {
+        setStationFacilitiesOptions(stationFacilitiesResult.data);
+      } else {
+        console.error(
+          "Error fetching station facilities:",
+          stationFacilitiesResult.error
+        );
+        // Fallback to hardcoded options if API fails
+        setStationFacilitiesOptions({
+          parking: "Parking",
+          restroom: "Restroom",
+          waiting_area: "Waiting Area",
+          ticket_counter: "Ticket Counter",
+          food_court: "Food Court",
+          atm: "ATM",
+          wifi: "Free WiFi",
+          security: "Security",
+          cctv: "CCTV Surveillance",
+          wheelchair_access: "Wheelchair Access",
+          elevator: "Elevator",
+          escalator: "Escalator",
+          shops: "Shops",
+          pharmacy: "Pharmacy",
+          first_aid: "First Aid",
+          lost_found: "Lost & Found",
+          information_desk: "Information Desk",
+        });
       }
     } catch (error) {
-      setError("Failed to load station locations");
-      console.error("Error fetching station locations:", error);
+      console.error("Error fetching enum data:", error);
+      setError("Failed to load some options. Please try again.");
     } finally {
       setLoadingLocations(false);
-    }
-  };
-
-  // Fetch district locations from API
-  const fetchDistrictLocations = async () => {
-    try {
-      const result = await getStationDistrictWithEnum();
-      if (result.success) {
-        setDistrictLocations(result.data);
-      } else {
-        console.error("Error fetching district locations:", result.error);
-        // Don't set error here as it's not critical - user can still proceed
-      }
-    } catch (error) {
-      console.error("Error fetching district locations:", error);
-      // Don't set error here as it's not critical - user can still proceed
     }
   };
 
@@ -138,25 +177,25 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         name: editData.name || "",
         tehsil: editData.tehsil || "",
         district: editData.district || "", // Added district for edit mode
-        stationStatus: editData.status || "", // Added station status for edit mode
-        stationFacilities: editData.facilities || [], // Added station facilities for edit mode
+        stationStatus: editData.status || "",
+        stationFacilities: editData.facilities || [],
         address: {
           line1: editData.address?.line1 || "",
           line2: editData.address?.line2 || "",
           city: editData.address?.city || "",
         },
         coordinates: {
-          lat: editData.latitude || null,
-          lng: editData.longitude || null,
+          lat: editData.latitude ? parseFloat(editData.latitude) : null,
+          lng: editData.longitude ? parseFloat(editData.longitude) : null,
         },
-        pictures: editData.pictures || editData.stationImageUrl || [], // Support both field names
+        pictures: editData.stationImageUrl || [],
       });
-      
+
       // Set selected location if coordinates exist
       if (editData.coordinates?.lat && editData.coordinates?.lng) {
         setSelectedLocation({
-          lat: editData.coordinates.lat,
-          lng: editData.coordinates.lng,
+          lat: parseFloat(editData.latitude),
+          lng: parseFloat(editData.longitude),
         });
       }
     } else {
@@ -219,7 +258,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
         };
-        
+
         updateLocationOnMap(location, place);
         fillAddressFields(place);
       }
@@ -231,7 +270,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         lat: event.latLng.lat(),
         lng: event.latLng.lng(),
       };
-      
+
       updateLocationOnMap(location);
       reverseGeocode(location);
     });
@@ -246,9 +285,9 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     if (!mapInstanceRef.current) return;
 
     setSelectedLocation(location);
-    
+
     // Update coordinates in form data
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       coordinates: location,
     }));
@@ -283,13 +322,13 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
         lat: event.latLng.lat(),
         lng: event.latLng.lng(),
       };
-      
+
       setSelectedLocation(location);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         coordinates: location,
       }));
-      
+
       reverseGeocode(location);
     });
   };
@@ -298,14 +337,11 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     if (!window.google) return;
 
     const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode(
-      { location: location },
-      (results, status) => {
-        if (status === "OK" && results[0]) {
-          fillAddressFields(results[0]);
-        }
+    geocoder.geocode({ location: location }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        fillAddressFields(results[0]);
       }
-    );
+    });
   };
 
   const fillAddressFields = (place) => {
@@ -316,20 +352,26 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     // Extract address components
     for (const component of addressComponents) {
       const types = component.types;
-      
+
       if (types.includes("street_number")) {
         line1 = component.long_name + " ";
       } else if (types.includes("route")) {
         line1 += component.long_name;
-      } else if (types.includes("sublocality_level_1") || types.includes("neighborhood")) {
+      } else if (
+        types.includes("sublocality_level_1") ||
+        types.includes("neighborhood")
+      ) {
         if (!line1) line1 = component.long_name;
-      } else if (types.includes("locality") || types.includes("administrative_area_level_2")) {
+      } else if (
+        types.includes("locality") ||
+        types.includes("administrative_area_level_2")
+      ) {
         city = component.long_name;
       }
     }
 
     // Update form data with extracted address
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       address: {
         ...prev.address,
@@ -368,26 +410,34 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
   const handleCoordinateChange = (e) => {
     const { name, value } = e.target;
     const numValue = parseFloat(value);
-    
+
     if (isNaN(numValue) && value !== "") return; // Only allow numbers
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       coordinates: {
         ...prev.coordinates,
         [name]: value === "" ? null : numValue,
-      }
+      },
     }));
 
     // Update map if both coordinates are valid
-    if (name === "lat" && formData.coordinates.lng !== null && !isNaN(numValue)) {
+    if (
+      name === "lat" &&
+      formData.coordinates.lng !== null &&
+      !isNaN(numValue)
+    ) {
       const newLocation = { lat: numValue, lng: formData.coordinates.lng };
       setSelectedLocation(newLocation);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.setCenter(newLocation);
         addMarker(newLocation);
       }
-    } else if (name === "lng" && formData.coordinates.lat !== null && !isNaN(numValue)) {
+    } else if (
+      name === "lng" &&
+      formData.coordinates.lat !== null &&
+      !isNaN(numValue)
+    ) {
       const newLocation = { lat: formData.coordinates.lat, lng: numValue };
       setSelectedLocation(newLocation);
       if (mapInstanceRef.current) {
@@ -397,26 +447,12 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
     }
   };
 
-  // Handle facilities multi-select
-  const handleFacilitiesChange = (facilityValue) => {
-    setFormData(prev => {
-      const currentFacilities = prev.stationFacilities || [];
-      const isSelected = currentFacilities.includes(facilityValue);
-      
-      if (isSelected) {
-        // Remove facility
-        return {
-          ...prev,
-          stationFacilities: currentFacilities.filter(f => f !== facilityValue)
-        };
-      } else {
-        // Add facility
-        return {
-          ...prev,
-          stationFacilities: [...currentFacilities, facilityValue]
-        };
-      }
-    });
+  const handleFacilitiesEnumChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      stationFacilities: value,
+    }));
   };
 
   // Handle picture upload
@@ -455,12 +491,12 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             const data = new FormData();
             data.append("file", pic);
             data.append("upload_preset", "Stations"); // Replace with your actual preset name
-            
+
             const res = await fetch(
               "https://api.cloudinary.com/v1_1/dxisw0kcc/image/upload", // Replace with your actual cloud name
               { method: "POST", body: data }
             );
-            
+
             const result = await res.json();
             if (result.secure_url) {
               uploadedUrls.push(result.secure_url);
@@ -597,7 +633,11 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
               onChange={handleChange}
               enumObject={stationLocations}
               required={true}
-              placeholder={loadingLocations ? "Loading locations..." : "Search and select tehsil..."}
+              placeholder={
+                loadingLocations
+                  ? "Loading locations..."
+                  : "Search and select tehsil..."
+              }
               readOnly={loadingLocations}
             />
 
@@ -615,92 +655,36 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
 
           {/* Station Status and Facilities */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Station Status Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Station Status *
-              </label>
-              <select
-                name="stationStatus"
-                value={formData.stationStatus}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select station status...</option>
-                {stationStatusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Station Status - Now using EnumSelect */}
+            <EnumSelect
+              label="Station Status"
+              name="stationStatus"
+              value={formData.stationStatus}
+              onChange={handleChange}
+              enumObject={stationStatusOptions}
+              required={true}
+              placeholder={
+                loadingLocations
+                  ? "Loading status options..."
+                  : "Search and select status..."
+              }
+              readOnly={loadingLocations}
+            />
 
-            {/* Station Facilities Multi-Select */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Station Facilities
-              </label>
-              <div className="relative">
-                <div className="w-full min-h-[42px] px-3 py-2 border border-gray-300 rounded-md focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 bg-white">
-                  {/* Selected Facilities Display */}
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {formData.stationFacilities.map((facilityValue) => {
-                      const facility = stationFacilitiesOptions.find(f => f.value === facilityValue);
-                      return (
-                        <span
-                          key={facilityValue}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {facility?.label}
-                          <button
-                            type="button"
-                            onClick={() => handleFacilitiesChange(facilityValue)}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Dropdown for selecting facilities */}
-                  <details className="relative">
-                    <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 list-none">
-                      {formData.stationFacilities.length === 0 
-                        ? "Select facilities..." 
-                        : `Add more facilities... (${formData.stationFacilities.length} selected)`}
-                      <span className="float-right">▼</span>
-                    </summary>
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-                      {stationFacilitiesOptions.map((facility) => {
-                        const isSelected = formData.stationFacilities.includes(facility.value);
-                        return (
-                          <label
-                            key={facility.value}
-                            className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50 ${
-                              isSelected ? 'bg-blue-50 text-blue-800' : ''
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleFacilitiesChange(facility.value)}
-                              className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm">{facility.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </details>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Select multiple facilities available at this station
-              </p>
-            </div>
+            {/* Station Facilities - Now Searchable with MultiEnumSelect */}
+            <MultiEnumSelect
+              label="Station Facilities"
+              name="stationFacilities"
+              value={formData.stationFacilities}
+              onChange={handleFacilitiesEnumChange}
+              enumObject={stationFacilitiesOptions}
+              placeholder={
+                loadingLocations
+                  ? "Loading facilities..."
+                  : "Search and select facilities..."
+              }
+              readOnly={loadingLocations}
+            />
           </div>
 
           {/* Station Pictures Upload */}
@@ -708,7 +692,7 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Station Pictures
             </h3>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Upload Station Pictures
@@ -721,7 +705,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
-                You can select multiple images. Supported formats: JPG, PNG, WEBP
+                You can select multiple images. Supported formats: JPG, PNG,
+                WEBP
               </p>
             </div>
 
@@ -738,7 +723,11 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
                       className="relative w-full h-24 overflow-hidden rounded-md border border-gray-200 group"
                     >
                       <img
-                        src={typeof pic === "string" ? pic : URL.createObjectURL(pic)}
+                        src={
+                          typeof pic === "string"
+                            ? pic
+                            : URL.createObjectURL(pic)
+                        }
                         alt={`Station preview ${index + 1}`}
                         className="object-cover w-full h-full"
                       />
@@ -889,7 +878,8 @@ const StationModal = ({ isOpen, onClose, isEdit = false, editData = null, create
             {selectedLocation && (
               <div className="mt-2 p-3 bg-blue-50 rounded-md">
                 <p className="text-sm text-blue-800">
-                  Selected Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                  Selected Coordinates: {selectedLocation.lat.toFixed(6)},{" "}
+                  {selectedLocation.lng.toFixed(6)}
                 </p>
               </div>
             )}
