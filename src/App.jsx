@@ -18,6 +18,9 @@ import Stationassignment from './pages/StationAssignment.jsx';
 import StatusAssignment from './pages/StatusAssignment.jsx';
 import BulkStationAssignment from './components/BulkStation/BulkStation.jsx';
 import EmployeeImport from './pages/EmployeeImport.jsx'
+import StationMap from './pages/StationMap.jsx';
+import AdminManagementPage from './pages/Admin.jsx'
+import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -121,6 +124,15 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/station-map"
+          element={
+            <ProtectedRoute>
+              <StationMap />
             </ProtectedRoute>
           }
         />
@@ -230,6 +242,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <BulkStationAssignment />
+            </ProtectedRoute>
+          }
+        />
+          <Route
+          path="/editgrid"
+          element={
+            <ProtectedRoute>
+              <EmployeeGridContainer />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminManagementPage />
             </ProtectedRoute>
           }
         />

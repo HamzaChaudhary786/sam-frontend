@@ -260,6 +260,9 @@ const EmployeeList = () => {
   const handleAddStation = () => {
     navigate("/stations");
   };
+   const handleEditGrid = () => {
+    navigate("/editgrid");
+  };
 
   const handleAddAsset = () => {
     navigate("/assets");
@@ -354,6 +357,12 @@ const EmployeeList = () => {
               Add Employee
             </button>
           )}
+           <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+            onClick={handleEditGrid}
+          >
+            Edit Employee Grid
+          </button>
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleAddStation}

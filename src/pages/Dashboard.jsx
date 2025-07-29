@@ -142,6 +142,27 @@ const Dashboard = () => {
               </h3>
               <p className="text-sm text-gray-600 mt-1">Access control</p>
             </button>
+
+
+            <button
+              onClick={() => handleNavigation('station-map')}
+              className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl shadow-sm border border-purple-200 hover:shadow-md hover:from-purple-100 hover:to-purple-200 transition-all duration-200 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-purple-400 group-hover:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
+                Station Location
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">See your station on map</p>
+            </button>
           </div>
         </div>
       </div>
@@ -291,6 +312,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+
     </div>
   );
 };
