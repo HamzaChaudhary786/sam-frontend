@@ -1,11 +1,13 @@
 // AssetApi.js
 import { BACKEND_URL } from "../../constants/api.js";
+import { role_admin } from "../../constants/Enum.js";
 
 const API_URL = BACKEND_URL;
 
 // Get auth token from localStorage
 const getAuthToken = () => localStorage.getItem("authToken");
 const getCurrentUserId = () => localStorage.getItem("userId");
+const getCurrentUserType = () => localStorage.getItem("userType");
 
 // Get all asset assignments for a specific employee
 export const getAllAssetAssignments = async (filters = {}) => {
@@ -98,6 +100,8 @@ export const getAllAssets = async () => {
 // Create asset assignment
 export const createAssetAssignment = async (assignmentData) => {
   try {
+    const isAdmin = getCurrentUserType() === role_admin;
+    
     const response = await fetch(`${API_URL}/asset-history`, {
       method: "POST",
       headers: {
@@ -107,6 +111,13 @@ export const createAssetAssignment = async (assignmentData) => {
       body: JSON.stringify({
         ...assignmentData,
         editBy: getCurrentUserId(),
+        // If admin and isApproved is true, add approval data
+        ...(isAdmin && assignmentData.isApproved
+          ? {
+              approvalDate: new Date(),
+              isApprovedBy: getCurrentUserId(),
+            }
+          : {}),
       }),
     });
 
@@ -129,16 +140,27 @@ export const createAssetAssignment = async (assignmentData) => {
 // Update asset assignment
 export const updateAssetAssignment = async (assignmentId, assignmentData) => {
   try {
+    const isAdmin = getCurrentUserType() === role_admin;
+    
+    const body = JSON.stringify({
+      ...assignmentData,
+      ...(isAdmin && assignmentData.isApproved
+        ? {
+            approvalDate: new Date(),
+            isApprovedBy: getCurrentUserId(),
+          }
+        : {
+            editBy: getCurrentUserId(),
+          }),
+    });
+
     const response = await fetch(`${API_URL}/asset-history/${assignmentId}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${getAuthToken()}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        ...assignmentData,
-        editBy: getCurrentUserId(),
-      }),
+      body,
     });
 
     const data = await response.json();
@@ -209,6 +231,77 @@ export const bulkDeleteAssetAssignments = async (assignmentIds) => {
     }
   } catch (error) {
     console.error("Error bulk deleting asset assignments:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Approve asset assignment - similar to station assignment approve pattern
+export const approveAssetAssignment = async (assignmentId) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/asset-history/${assignmentId}/approve`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          approvedBy: getCurrentUserId(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data.data || data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to approve asset assignment",
+      };
+    }
+  } catch (error) {
+    console.error("Error approving asset assignment:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get pending asset assignment approvals
+export const getPendingAssetApprovals = async (filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await fetch(
+      `${API_URL}/asset-history/approvals/pending?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data.data || data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to fetch pending asset approvals",
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching pending asset approvals:", error);
     return { success: false, error: error.message };
   }
 };

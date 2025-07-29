@@ -1,4 +1,4 @@
-// AchievementList.jsx - Updated with Dynamic Lookup and Approval Functionality
+// AchievementList.jsx - Updated with Dynamic Lookup and Admin-Only Approval Functionality
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllAchievements, deleteAchievement, approveAchievement } from "../AchievementsApi.js";
@@ -10,6 +10,10 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
   const [filteredAchievements, setFilteredAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Dynamic achievement types from API
   const [achievementTypes, setAchievementTypes] = useState({});
@@ -47,6 +51,28 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
     }
     return years;
   };
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        console.error("Error checking user role:", error);
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   // Fetch achievement types from API
   const fetchAchievementTypes = async () => {
@@ -171,6 +197,11 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Delete achievement
   const handleDelete = async (achievementId) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can delete achievements");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this achievement?")) {
       return;
     }
@@ -190,6 +221,11 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Approve achievement
   const handleApprove = async (achievementId) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can approve achievements");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to approve this achievement?")) {
       return;
     }
@@ -256,9 +292,16 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
       {/* Header with Filters */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Achievements List
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Achievements List
+            </h2>
+            {!isAdmin && (
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Viewing in read-only mode - Contact administrator for approvals
+              </p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
               Showing {filteredAchievements.length} of {achievements.length} achievements
@@ -371,6 +414,12 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                 ? "No achievements match your filter criteria"
                 : "No achievements to display"}
             </p>
+            <p className="text-gray-400 text-sm mt-1">
+              {achievements.length === 0 
+                ? "No achievements have been recorded yet."
+                : "Try adjusting your filter criteria to see more results."
+              }
+            </p>
           </div>
         ) : (
           <table className="min-w-full">
@@ -434,7 +483,7 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
+                    <div className="space-y-2">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           achievement?.isApproved
@@ -445,37 +494,135 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                         {achievement?.isApproved ? "Approved" : "Pending"}
                       </span>
                       {achievement?.isApproved && achievement?.isApprovedBy && (
-                        <div className="ml-2 text-xs text-gray-500">
-                          by {achievement.isApprovedBy.name || achievement.isApprovedBy.firstName || role_admin}
+                        <div className="text-xs text-gray-500">
+                          Approved by:{" "}
+                          {achievement.isApprovedBy.name ||
+                            achievement.isApprovedBy.firstName ||
+                            "System"}
+                        </div>
+                      )}
+                      {achievement.approvalDate && (
+                        <div className="text-xs text-gray-500">
+                          Approved on: {formatDate(achievement.approvalDate)}
                         </div>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
+                    <div className="flex items-center space-x-2">
                       {!achievement?.isApproved && (
                         <>
-                          <button
-                            onClick={() => handleApprove(achievement._id)}
-                            className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition"
-                            title="Approve Achievement"
-                          >
-                            Approve
-                          </button>
+                          {/* Approve Button - Admin Only */}
+                          {isAdmin ? (
+                            <button
+                              onClick={() => handleApprove(achievement._id)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                              title="Approve Achievement"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Approve
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                              title="Only administrators can approve achievements"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Approve
+                            </button>
+                          )}
+                          
+                          {/* Edit Button */}
                           <button
                             onClick={() => onEdit(achievement)}
-                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+                            className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                             title="Edit Achievement"
                           >
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
                             Edit
                           </button>
-                          <button
-                            onClick={() => handleDelete(achievement._id)}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition"
-                            title="Delete Achievement"
-                          >
-                            Delete
-                          </button>
+                          
+                          {/* Delete Button - Admin Only */}
+                          {isAdmin ? (
+                            <button
+                              onClick={() => handleDelete(achievement._id)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                              title="Delete Achievement"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                              Delete
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                              title="Only administrators can delete achievements"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                              Delete
+                            </button>
+                          )}
                         </>
                       )}
                       {achievement?.isApproved && (

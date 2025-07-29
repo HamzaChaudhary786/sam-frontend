@@ -7,6 +7,7 @@ import {
   approveStatusAssignment,
 } from "../StatusAssignmentApi.js";
 import { getStatusWithEnum } from "../../Employee/AddEmployee/Status.js";
+import { role_admin } from "../../../constants/Enum.js";
 
 const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
@@ -17,6 +18,10 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   // Dynamic status options from API
   const [statusOptions, setStatusOptions] = useState({});
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
+
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -40,6 +45,28 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
     }
     return years;
   };
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        console.error("Error checking user role:", error);
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   // Fetch status options from API
   const fetchStatusOptions = async () => {
@@ -167,6 +194,11 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Delete assignment
   const handleDelete = async (assignmentId) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can delete status assignments");
+      return;
+    }
+
     if (
       !window.confirm(
         "Are you sure you want to delete this status assignment?"
@@ -190,6 +222,11 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Approve assignment
   const handleApprove = async (assignment) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can approve status assignments");
+      return;
+    }
+
     if (
       !window.confirm(
         "Are you sure you want to approve this status assignment?"
@@ -305,9 +342,16 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
       {/* Header with Filters */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Employee Status History
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Employee Status History
+            </h2>
+            {!isAdmin && (
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Viewing in read-only mode - Contact administrator for approvals
+              </p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
               Showing {filteredAssignments.length} of {assignments.length}{" "}
@@ -534,10 +578,15 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 "System"}
                             </div>
                           )}
-                          {assignment.approvalDate && (
+                           {assignment.approvalDate && (
                             <div className="text-xs text-gray-500">
                               Approved on: {formatDate(assignment.approvalDate)}
                             </div>
+                          )}
+                          {assignment.disciplinaryAction && (
+                          <div className="text-xs text-red-500">
+                                Disciplinary Action
+                                </div>
                           )}
                         </div>
                       </td>
@@ -556,26 +605,52 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                         <div className="flex items-center space-x-2">
                           {!assignment.isApproved && (
                             <>
-                              <button
-                                onClick={() => handleApprove(assignment)}
-                                className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
-                                title="Approve Assignment"
-                              >
-                                <svg
-                                  className="w-3 h-3 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                              {/* Approve Button - Admin Only */}
+                              {isAdmin ? (
+                                <button
+                                  onClick={() => handleApprove(assignment)}
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                                  title="Approve Assignment"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                Approve
-                              </button>
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                  Approve
+                                </button>
+                              ) : (
+                                <button
+                                  disabled
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                                  title="Only administrators can approve assignments"
+                                >
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                  Approve
+                                </button>
+                              )}
+                              
+                              {/* Edit Button */}
                               <button
                                 onClick={() => onEdit(assignment)}
                                 className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
@@ -596,26 +671,51 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 </svg>
                                 Edit
                               </button>
-                              <button
-                                onClick={() => handleDelete(assignment._id)}
-                                className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                                title="Delete Assignment"
-                              >
-                                <svg
-                                  className="w-3 h-3 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                              
+                              {/* Delete Button - Admin Only */}
+                              {isAdmin ? (
+                                <button
+                                  onClick={() => handleDelete(assignment._id)}
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                                  title="Delete Assignment"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                                Delete
-                              </button>
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  Delete
+                                </button>
+                              ) : (
+                                <button
+                                  disabled
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                                  title="Only administrators can delete assignments"
+                                >
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  Delete
+                                </button>
+                              )}
                             </>
                           )}
                           {assignment.isApproved && (
