@@ -6,22 +6,50 @@ import {
   updateAssetAssignment,
   getAllAssets,
 } from "../AssetApi.js";
+import { role_admin } from "../../../constants/Enum.js";
 
 const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const [formData, setFormData] = useState({
     asset: [],
     assignedRounds: "",
     consumedRounds: "0",
     consumedDate: "",
     consumedReason: "",
+    isApproved: false,
+    approvalComment: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableAssets, setAvailableAssets] = useState([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState([]);
 
-
   console.log(employee, "all employee data are here");
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        console.error("Error checking user role:", error);
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   // Reset form
   const resetForm = () => {
@@ -31,6 +59,8 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
       consumedRounds: "0",
       consumedDate: "",
       consumedReason: "",
+      isApproved: false,
+      approvalComment: "",
     });
     setSelectedAssets([]);
   };
@@ -54,10 +84,10 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
 
   // Handle form changes
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
+      [name]: type === "checkbox" ? checked : type === "number" ? (value === "" ? "" : Number(value)) : value,
     }));
   };
 
@@ -105,6 +135,11 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
         ...(formData.consumedDate && { consumedDate: formData.consumedDate }),
         ...(formData.consumedReason && {
           consumedReason: formData.consumedReason,
+        }),
+        // Only include approval fields when editing and user is admin
+        ...(editingAsset && isAdmin && {
+          isApproved: formData.isApproved,
+          approvalComment: formData.approvalComment,
         }),
       };
 
@@ -159,6 +194,8 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
           ? new Date(editingAsset.consumedDate).toISOString().split("T")[0]
           : "",
         consumedReason: editingAsset.consumedReason || "",
+        isApproved: editingAsset.isApproved || false,
+        approvalComment: editingAsset.approvalComment || "",
       });
       setSelectedAssets(assetIds);
     } else {
@@ -195,6 +232,11 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
             </p>
+            {editingAsset && !isAdmin && (
+              <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
+                Note: Only administrators can modify approval settings
+              </p>
+            )}
           </div>
           <button
             onClick={handleCancel}
@@ -370,7 +412,6 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                                     rows={2}
                                     className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
                                   />
-
                                 </div>
                               </div>
                             </div>
@@ -387,6 +428,104 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
             </p>
           </div>
 
+          {/* Approval Fields - Only show when editing and user is admin */}
+          {editingAsset && isAdmin && (
+            <>
+              {/* Approval Checkbox */}
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex flex-row gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    name="isApproved"
+                    checked={formData.isApproved}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Approved
+                  </label>
+                </div>
+              </div>
+
+              {/* Approval Comment */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approval Comments *
+                </label>
+                <textarea
+                  name="approvalComment"
+                  value={formData.approvalComment}
+                  onChange={handleChange}
+                  placeholder="Enter detailed reason for this approval/comments..."
+                  rows={2}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Provide approval comments or additional notes
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Non-Admin Approval Info - Show when editing but user is not admin */}
+          {editingAsset && !isAdmin && (
+            <div className="border-t border-gray-200 pt-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-1">
+                      Current Approval Status
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Status:</span>{" "}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        editingAsset.isApproved 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {editingAsset.isApproved ? 'Approved' : 'Pending Approval'}
+                      </span>
+                    </p>
+                    {editingAsset.approvalComment && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        <span className="font-medium">Admin Comment:</span> {editingAsset.approvalComment}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Contact an administrator to modify approval settings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Info Note */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <div className="flex">
+              <svg className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div>
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Assignment Process
+                </h3>
+                <p className="text-sm text-yellow-700 mt-1">
+                  {editingAsset 
+                    ? (isAdmin && formData.isApproved 
+                        ? "This assignment will be updated as approved and will be active immediately."
+                        : "This assignment will be updated and may require administrator approval before becoming active.")
+                    : "This assignment will be created as pending approval and will need to be approved before becoming active."
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
@@ -399,7 +538,11 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || selectedAssets.length === 0}
+              disabled={
+                isSubmitting || 
+                selectedAssets.length === 0 ||
+                (editingAsset && isAdmin && !formData.approvalComment) // Only require approval comment when editing as admin
+              }
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {isSubmitting

@@ -332,7 +332,7 @@ const EmployeeList = () => {
   return (
     <div className="p-3 sm:p-6">
       {/* Header Section - Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             Employee Management
@@ -344,33 +344,34 @@ const EmployeeList = () => {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-7">
+        {/* Header Buttons - Stack vertically on small/medium screens */}
+        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
           {isAdmin && (
             <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
               onClick={handleAddEmployee}
             >
               Add Employee
             </button>
           )}
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleAddStation}
           >
             Stations
           </button>
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleAddAsset}
           >
             Assets
           </button>
           <button
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium flex items-center"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleBulkStationAssignment}
           >
             <svg
-              className="w-4 h-4 mr-2"
+              className="w-4 h-4 mr-2 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -382,7 +383,8 @@ const EmployeeList = () => {
                 d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
               />
             </svg>
-            Bulk Station Assignment
+            <span className="hidden lg:inline">Bulk Station Assignment</span>
+            <span className="lg:hidden">Bulk Assignment</span>
           </button>
         </div>
       </div>
@@ -393,8 +395,8 @@ const EmployeeList = () => {
         </div>
       )}
 
-      {/* Filter Toggle Button - Mobile Only */}
-      <div className="md:hidden mb-4">
+      {/* Filter Toggle Button - Show on medium and small screens */}
+      <div className="xl:hidden mb-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium flex items-center justify-center"
@@ -420,14 +422,14 @@ const EmployeeList = () => {
       <div
         className={`bg-white shadow-md rounded-lg p-4 mb-6 ${
           showFilters ? "block" : "hidden"
-        } md:block`}
+        } xl:block`}
       >
         <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
           Filter Employees
         </h3>
 
         {/* Filter Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Name
@@ -484,28 +486,30 @@ const EmployeeList = () => {
             />
           </div>
 
-          {/* Filter Buttons - Full width on mobile */}
-          <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-2 sm:col-span-4">
-            <button
-              onClick={handleApplyFilters}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-            >
-              Apply Filters
-            </button>
-            <button
-              onClick={handleClearFilters}
-              className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
-            >
-              Clear
-            </button>
+          {/* Filter Buttons - Stack vertically on mobile/tablet */}
+          <div className="flex flex-col space-y-2 sm:col-span-2 xl:col-span-4">
+            <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-2">
+              <button
+                onClick={handleApplyFilters}
+                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={handleClearFilters}
+                className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Employee Table/Cards - Responsive */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Desktop Table View with Horizontal Scroll */}
-        <div className="hidden lg:block">
+        {/* Desktop Table View - Only for screens 1200px+ */}
+        <div className="hidden xl:block">
           <div className="overflow-x-auto">
             <table
               className="min-w-full divide-y divide-gray-200"
@@ -518,9 +522,6 @@ const EmployeeList = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                     Information
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
-                    Position
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[250px]">
                     Employee Actions
@@ -599,14 +600,7 @@ const EmployeeList = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {employee.mobileNumber}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {employee.address?.line1 || "N/A"},{" "}
-                          {employee.address?.tehsil || "N/A"}
-                        </div>
-                        <div
+                         <div
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             employee.status === "active"
                               ? "bg-green-100 text-green-800"
@@ -619,19 +613,19 @@ const EmployeeList = () => {
                         >
                           {employee.status}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {getDesignationName(employee.designation)}
+                          <div className="text-sm text-gray-500">
+                          {employee.mobileNumber}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Grade: {getGradeName(employee.grade)}
+                          {employee.address?.line1 || "N/A"},{" "}
+                          {employee.address?.tehsil || "N/A"}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          Service: {employee.serviceType || "N/A"}
-                        </div>
-                        <div className="text-sm text-gray-500">
+                      
+                         <div className="text-sm text-gray-500">
                           Cast: {employee.cast || "N/A"}
+                        </div>
+                         <div className="text-sm text-gray-500">
+                          Service: {employee.serviceType || "N/A"}
                         </div>
                       </td>
                       <td className=" px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -680,7 +674,7 @@ const EmployeeList = () => {
                               onClick={() => handleStatus(employee)}
                               className="px-3 py-1 text-xs rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
                             >
-                              Status
+                              History
                             </button>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -696,12 +690,12 @@ const EmployeeList = () => {
                             >
                               Deduction
                             </button>
-                            <button
+                            {/* <button
                               onClick={() => handleHistory(employee)}
                               className="px-3 py-1 text-xs rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition"
                             >
                               History
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </td>
@@ -713,8 +707,8 @@ const EmployeeList = () => {
           </div>
         </div>
 
-        {/* Mobile Card View */}
-        <div className="lg:hidden">
+        {/* Mobile/Tablet Card View - For screens under 1200px */}
+        <div className="xl:hidden">
           {safeEmployees.map((employee) => {
             const currentImageIndex = imageIndexes[employee._id] || 0;
             const totalImages = getImageCount(employee);
@@ -808,42 +802,89 @@ const EmployeeList = () => {
                       </p>
                     </div>
 
-                    {/* Mobile Action Buttons */}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleView(employee)}
-                        className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEdit(employee)}
-                        className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleHistory(employee)}
-                        className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200"
-                      >
-                        History
-                      </button>
-                      {isAdmin && (
+                    {/* Mobile Action Buttons - Stacked vertically in columns */}
+                    <div className="mt-3">
+                      {/* Primary Actions Row */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
                         <button
-                          onClick={() => handleDelete(employee._id)}
-                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+                          onClick={() => handleView(employee)}
+                          className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-center"
                         >
-                          Delete
+                          View
                         </button>
-                      )}
-                      {!isAdmin && (
                         <button
-                          disabled
-                          className="px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                          onClick={() => handleEdit(employee)}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
                         >
-                          Delete
+                          Edit
                         </button>
-                      )}
+                      </div>
+
+                      {/* Secondary Actions Row */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <button
+                          onClick={() => handleAssets(employee)}
+                          className="px-3 py-1 text-xs bg-cyan-100 text-cyan-700 rounded-md hover:bg-cyan-200 text-center"
+                        >
+                          Assets
+                        </button>
+                        <button
+                          onClick={() => handlePosting(employee)}
+                          className="px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 text-center"
+                        >
+                          Posting
+                        </button>
+                      </div>
+
+                      {/* Third Actions Row */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <button
+                          onClick={() => handleStatus(employee)}
+                          className="px-3 py-1 text-xs bg-teal-100 text-teal-700 rounded-md hover:bg-teal-200 text-center"
+                        >
+                          History
+                        </button>
+                        <button
+                          onClick={() => handleAchievements(employee)}
+                          className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 text-center"
+                        >
+                          Achievements
+                        </button>
+                      </div>
+
+                      {/* Fourth Actions Row */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => handleDeductions(employee)}
+                          className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-md hover:bg-pink-200 text-center"
+                        >
+                          Deductions
+                        </button>
+                        {/* <button
+                          onClick={() => handleHistory(employee)}
+                          className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 text-center"
+                        >
+                          History
+                        </button> */}
+                      
+      
+                        {isAdmin ? (
+                          <button
+                            onClick={() => handleDelete(employee._id)}
+                            className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
+                          >
+                            Delete 
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="w-full px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed text-center"
+                          >
+                            Delete Employee 
+                          </button>
+                        )}
+                        </div>
+              
                     </div>
                   </div>
                 </div>

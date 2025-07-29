@@ -3,12 +3,17 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllSalaryDeductions, deleteSalaryDeduction, approveSalaryDeduction } from "../SalaryDeductionApi.js";
 import { getStatusWithEnum } from "../Lookup.js"; // Update with correct path to your deduction lookup file
+import { role_admin } from "../../../constants/Enum.js";
 
 const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
   const [deductions, setDeductions] = useState([]);
   const [filteredDeductions, setFilteredDeductions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Dynamic deduction types from API
   const [deductionTypes, setDeductionTypes] = useState({});
@@ -30,6 +35,28 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
   // Years (current year ± 5)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        console.error("Error checking user role:", error);
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   // Fetch deduction types from API
   const fetchDeductionTypes = async () => {
@@ -136,6 +163,11 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Delete deduction
   const handleDelete = async (deductionId) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can delete salary deductions");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this salary deduction?")) {
       return;
     }
@@ -155,6 +187,11 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
 
    // Approve Deduction
    const handleApprove = async (deductionId) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can approve salary deductions");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to approve this salary deduction?")) {
       return;
     }
@@ -243,9 +280,16 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
       {/* Header with Filters */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Salary Deductions List
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Salary Deductions List
+            </h2>
+            {!isAdmin && (
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Viewing in read-only mode - Contact administrator for approvals
+              </p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
               Showing {filteredDeductions.length} of {deductions.length} deductions
@@ -417,7 +461,7 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
+                    <div className="space-y-2">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           deduction?.isApproved
@@ -428,37 +472,135 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
                         {deduction?.isApproved ? "Approved" : "Pending"}
                       </span>
                       {deduction?.isApproved && deduction?.isApprovedBy && (
-                        <div className="ml-2 text-xs text-gray-500">
-                          by {deduction.isApprovedBy.firstName || "System"}
+                        <div className="text-xs text-gray-500">
+                          Approved by:{" "}
+                          {deduction.isApprovedBy.name ||
+                            deduction.isApprovedBy.firstName ||
+                            "System"}
+                        </div>
+                      )}
+                      {deduction.approvalDate && (
+                        <div className="text-xs text-gray-500">
+                          Approved on: {formatDate(deduction.approvalDate)}
                         </div>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
+                    <div className="flex items-center space-x-2">
                       {!deduction?.isApproved && (
                         <>
-                          <button
-                            onClick={() => handleApprove(deduction._id)}
-                            className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition"
-                            title="Approve Deduction"
-                          >
-                            Approve
-                          </button>
+                          {/* Approve Button - Admin Only */}
+                          {isAdmin ? (
+                            <button
+                              onClick={() => handleApprove(deduction._id)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                              title="Approve Deduction"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Approve
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                              title="Only administrators can approve deductions"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Approve
+                            </button>
+                          )}
+                          
+                          {/* Edit Button */}
                           <button
                             onClick={() => onEdit(deduction)}
-                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+                            className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                             title="Edit Deduction"
                           >
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
                             Edit
                           </button>
-                          <button
-                            onClick={() => handleDelete(deduction._id)}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition"
-                            title="Delete Deduction"
-                          >
-                            Delete
-                          </button>
+                          
+                          {/* Delete Button - Admin Only */}
+                          {isAdmin ? (
+                            <button
+                              onClick={() => handleDelete(deduction._id)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                              title="Delete Deduction"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                              Delete
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                              title="Only administrators can delete deductions"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                              Delete
+                            </button>
+                          )}
                         </>
                       )}
                       {deduction?.isApproved && (
