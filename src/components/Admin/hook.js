@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { roleApi } from './RoleApi';
 import { userApi } from './UserApi';
 import { employeeApi } from './EmployeeApi';
+import { groupApi } from './GroupApi'; // Add this import
 import { toast } from 'react-toastify';
 
 export const useAdminData = () => {
@@ -10,6 +11,7 @@ export const useAdminData = () => {
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [groups, setGroups] = useState([]); // Add groups state
   const [loading, setLoading] = useState(false);
   const [userPagination, setUserPagination] = useState({
     page: 1,
@@ -33,6 +35,21 @@ export const useAdminData = () => {
       console.error('Fetch roles error:', error);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Fetch groups
+  const fetchGroups = useCallback(async () => {
+    try {
+      const result = await groupApi.getAll();
+      if (result.success) {
+        setGroups(result.data || []);
+      } else {
+        toast.error('Failed to fetch groups: ' + result.error);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch groups');
+      console.error('Fetch groups error:', error);
     }
   }, []);
 
@@ -139,6 +156,71 @@ export const useAdminData = () => {
     }
   }, [fetchRoles]);
 
+  // Group CRUD operations
+  const createGroup = useCallback(async (groupData) => {
+    setLoading(true);
+    try {
+      const result = await groupApi.create(groupData);
+      if (result.success) {
+        toast.success('Group created successfully');
+        await fetchGroups();
+        return { success: true };
+      } else {
+        toast.error('Failed to create group: ' + result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      toast.error('Failed to create group');
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchGroups]);
+
+  const updateGroup = useCallback(async (id, groupData) => {
+    setLoading(true);
+    try {
+      const result = await groupApi.update(id, groupData);
+      if (result.success) {
+        toast.success('Group updated successfully');
+        await fetchGroups();
+        return { success: true };
+      } else {
+        toast.error('Failed to update group: ' + result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      toast.error('Failed to update group');
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchGroups]);
+
+  const deleteGroup = useCallback(async (id) => {
+    if (!window.confirm('Are you sure you want to delete this group?')) {
+      return { success: false, cancelled: true };
+    }
+
+    setLoading(true);
+    try {
+      const result = await groupApi.delete(id);
+      if (result.success) {
+        toast.success('Group deleted successfully');
+        await fetchGroups();
+        return { success: true };
+      } else {
+        toast.error('Failed to delete group: ' + result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      toast.error('Failed to delete group');
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchGroups]);
+
   // User CRUD operations
   const createUser = useCallback(async (userData) => {
     setLoading(true);
@@ -218,13 +300,15 @@ export const useAdminData = () => {
     fetchRoles();
     fetchUsers();
     fetchEmployees();
-  }, [fetchRoles, fetchUsers, fetchEmployees]);
+    fetchGroups();
+  }, [fetchRoles, fetchUsers, fetchEmployees, fetchGroups]);
 
   return {
     // Data
     roles,
     users,
     employees,
+    groups,
     loading,
     userPagination,
 
@@ -233,6 +317,12 @@ export const useAdminData = () => {
     updateRole,
     deleteRole,
     fetchRoles,
+
+    // Group operations
+    createGroup,
+    updateGroup,
+    deleteGroup,
+    fetchGroups,
 
     // User operations
     createUser,

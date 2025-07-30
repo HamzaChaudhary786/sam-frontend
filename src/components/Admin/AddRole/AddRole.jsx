@@ -1,84 +1,112 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { X, Plus, Trash2, CheckSquare, Square } from "lucide-react";
 
 const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    accessRequirement: []
+    name: "",
+    description: "",
+    accessRequirement: [],
   });
 
   const resourceOptions = [
-    'station',
-    'employee', 
-    'salary deduction',
-    'reports',
-    'users',
-    'roles'
+    "station",
+    "employee",
+    "salary deduction",
+    "reports",
+    "users",
+    "roles",
   ];
 
   const permissionFields = [
-    { key: 'canView', label: 'View' },
-    { key: 'canAdd', label: 'Add' },
-    { key: 'canEdit', label: 'Edit' },
-    { key: 'canDelete', label: 'Delete' },
-    { key: 'canApprove', label: 'Approve' },
-    { key: 'canPrint', label: 'Print' }
+    { key: "canView", label: "View" },
+    { key: "canAdd", label: "Add" },
+    { key: "canEdit", label: "Edit" },
+    { key: "canDelete", label: "Delete" },
+    { key: "canApprove", label: "Approve" },
+    { key: "canPrint", label: "Print" },
   ];
 
   useEffect(() => {
     if (editingRole) {
       setFormData({
-        name: editingRole.name || '',
-        description: editingRole.description || '',
-        accessRequirement: editingRole.accessRequirement || []
+        name: editingRole.name || "",
+        description: editingRole.description || "",
+        accessRequirement: editingRole.accessRequirement || [],
       });
     } else {
       setFormData({
-        name: '',
-        description: '',
-        accessRequirement: []
+        name: "",
+        description: "",
+        accessRequirement: [],
       });
     }
   }, [editingRole, isOpen]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const addPermission = () => {
     const newPermission = {
-      resourceName: '',
+      resourceName: "",
       canApprove: false,
       canView: true,
       canAdd: false,
       canEdit: false,
       canDelete: false,
-      canPrint: false
+      canPrint: false,
     };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      accessRequirement: [...prev.accessRequirement, newPermission]
+      accessRequirement: [...prev.accessRequirement, newPermission],
     }));
   };
 
   const updatePermission = (index, field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      accessRequirement: prev.accessRequirement.map((perm, i) => 
+      accessRequirement: prev.accessRequirement.map((perm, i) =>
         i === index ? { ...perm, [field]: value } : perm
-      )
+      ),
     }));
   };
 
   const removePermission = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      accessRequirement: prev.accessRequirement.filter((_, i) => i !== index)
+      accessRequirement: prev.accessRequirement.filter((_, i) => i !== index),
+    }));
+  };
+
+  const selectAllPermissions = (index) => {
+    const updatedPermission = { ...formData.accessRequirement[index] };
+    permissionFields.forEach((field) => {
+      updatedPermission[field.key] = true;
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      accessRequirement: prev.accessRequirement.map((perm, i) =>
+        i === index ? updatedPermission : perm
+      ),
+    }));
+  };
+
+  const clearAllPermissions = (index) => {
+    const updatedPermission = { ...formData.accessRequirement[index] };
+    permissionFields.forEach((field) => {
+      updatedPermission[field.key] = false;
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      accessRequirement: prev.accessRequirement.map((perm, i) =>
+        i === index ? updatedPermission : perm
+      ),
     }));
   };
 
@@ -89,9 +117,9 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
 
   const handleClose = () => {
     setFormData({
-      name: '',
-      description: '',
-      accessRequirement: []
+      name: "",
+      description: "",
+      accessRequirement: [],
     });
     onClose();
   };
@@ -105,7 +133,7 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">
-              {editingRole ? 'Edit Role' : 'Create New Role'}
+              {editingRole ? "Edit Role" : "Create New Role"}
             </h3>
             <button
               onClick={handleClose}
@@ -125,7 +153,7 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter role name"
                   required
@@ -138,7 +166,9 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                 <input
                   type="text"
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter role description"
                   required
@@ -149,7 +179,9 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
             {/* Permissions Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h4 className="text-md font-medium text-gray-900">Permissions</h4>
+                <h4 className="text-md font-medium text-gray-900">
+                  Permissions
+                </h4>
                 <button
                   type="button"
                   onClick={addPermission}
@@ -162,21 +194,48 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
 
               <div className="space-y-4">
                 {formData.accessRequirement.map((permission, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-center mb-3">
                       <select
                         value={permission.resourceName}
-                        onChange={(e) => updatePermission(index, 'resourceName', e.target.value)}
+                        onChange={(e) =>
+                          updatePermission(
+                            index,
+                            "resourceName",
+                            e.target.value
+                          )
+                        }
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
                         <option value="">Select Resource</option>
-                        {resourceOptions.map(resource => (
+                        {resourceOptions.map((resource) => (
                           <option key={resource} value={resource}>
-                            {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                            {resource.charAt(0).toUpperCase() +
+                              resource.slice(1)}
                           </option>
                         ))}
                       </select>
+
+                      <button
+                        type="button"
+                        onClick={() => selectAllPermissions(index)}
+                        className="flex items-center text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 text-sm transition-colors"
+                      >
+                        <CheckSquare className="w-4 h-4 mr-1" />
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => clearAllPermissions(index)}
+                        className="flex items-center text-gray-600 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 text-sm transition-colors"
+                      >
+                        <Square className="w-4 h-4 mr-1" />
+                        Clear All
+                      </button>
                       <button
                         type="button"
                         onClick={() => removePermission(index)}
@@ -188,12 +247,21 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {permissionFields.map(field => (
-                        <label key={field.key} className="flex items-center space-x-2">
+                      {permissionFields.map((field) => (
+                        <label
+                          key={field.key}
+                          className="flex items-center space-x-2"
+                        >
                           <input
                             type="checkbox"
                             checked={permission[field.key]}
-                            onChange={(e) => updatePermission(index, field.key, e.target.checked)}
+                            onChange={(e) =>
+                              updatePermission(
+                                index,
+                                field.key,
+                                e.target.checked
+                              )
+                            }
                             className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                           />
                           <span className="text-sm text-gray-700">
@@ -228,7 +296,11 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                 disabled={loading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Saving...' : (editingRole ? 'Update Role' : 'Create Role')}
+                {loading
+                  ? "Saving..."
+                  : editingRole
+                  ? "Update Role"
+                  : "Create Role"}
               </button>
             </div>
           </div>
