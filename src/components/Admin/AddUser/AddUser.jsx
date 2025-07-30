@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loading }) => {
+const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, groups, employees, loading }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -10,6 +10,7 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
     profileImage: '',
     employeeId: '',
     roles: [],
+    group: [], // Changed from groups to group to match schema
     userType: 'data_entry',
     isActive: true
   });
@@ -17,8 +18,8 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
   const userTypeOptions = [
     { value: 'admin', label: 'Admin' },
     { value: 'data_entry', label: 'Data Entry' },
-    { value: 'user', label: 'User' },
-    { value: 'clerk', label: 'Clerk' }
+    { value: 'incharge', label: 'In Charge' },
+    { value: 'view_only', label: 'View Only' }
   ];
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
         profileImage: editingUser.profileImage || '',
         employeeId: editingUser.employeeId || '',
         roles: editingUser.roles || [],
+        group: editingUser.group || [],
         userType: editingUser.userType || 'data_entry',
         isActive: editingUser.isActive !== undefined ? editingUser.isActive : true
       });
@@ -43,6 +45,7 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
         profileImage: '',
         employeeId: '',
         roles: [],
+        group: [],
         userType: 'data_entry',
         isActive: true
       });
@@ -65,6 +68,15 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
     }));
   };
 
+  const handleGroupChange = (groupId, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      group: checked 
+        ? [...prev.group, groupId]
+        : prev.group.filter(id => id !== groupId)
+    }));
+  };
+
   const handleClose = () => {
     setFormData({
       firstName: '',
@@ -74,6 +86,7 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
       profileImage: '',
       employeeId: '',
       roles: [],
+      group: [],
       userType: 'data_entry',
       isActive: true
     });
@@ -99,7 +112,7 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
@@ -222,30 +235,60 @@ const UserModal = ({ isOpen, onClose, onSave, editingUser, roles, employees, loa
               />
             </div>
 
-            {/* Roles Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assign Roles
-              </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 bg-gray-50">
-                {roles.length > 0 ? (
-                  roles.map(role => (
-                    <label key={role._id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.roles.includes(role._id)}
-                        onChange={(e) => handleRoleChange(role._id, e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                      />
-                      <div className="flex-1">
-                        <span className="text-sm font-medium">{role.name}</span>
-                        <p className="text-xs text-gray-500">{role.description}</p>
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">No roles available</p>
-                )}
+            {/* Groups and Roles in a grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Groups Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign Groups
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 bg-purple-50">
+                  {groups && groups.length > 0 ? (
+                    groups.map(group => (
+                      <label key={group._id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.group.includes(group._id)}
+                          onChange={(e) => handleGroupChange(group._id, e.target.checked)}
+                          className="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">{group.name}</span>
+                          <p className="text-xs text-gray-500">{group.description}</p>
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No groups available</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Roles Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign Direct Roles
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 bg-blue-50">
+                  {roles.length > 0 ? (
+                    roles.map(role => (
+                      <label key={role._id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.roles.includes(role._id)}
+                          onChange={(e) => handleRoleChange(role._id, e.target.checked)}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">{role.name}</span>
+                          <p className="text-xs text-gray-500">{role.description}</p>
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No roles available</p>
+                  )}
+                </div>
               </div>
             </div>
 

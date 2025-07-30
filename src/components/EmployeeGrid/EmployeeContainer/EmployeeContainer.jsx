@@ -375,7 +375,7 @@ const EmployeeGridContainer = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            Employee Grid Management
+            Employee Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Click Edit button, then double-click any cell to edit • 15 employees per page
