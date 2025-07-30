@@ -101,9 +101,8 @@ const Navbar = () => {
                 </svg>
                 <span>Menu</span>
                 <svg
-                  className={`h-4 w-4 transform transition-transform duration-200 ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 transform transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -142,7 +141,7 @@ const Navbar = () => {
                   <hr className="my-1 border-gray-200" />
 
                   <button
-                    onClick={() => handleNavigation("/employee")}
+                    onClick={() => handleNavigation("/editgrid")}
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                   >
                     <svg
@@ -158,7 +157,7 @@ const Navbar = () => {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    Add Employee
+                    Employee (Tabular)
                   </button>
 
                   <button
@@ -267,7 +266,7 @@ const Navbar = () => {
                     </svg>
                     Lookup
                   </button>
-                   <button
+                  <button
                     onClick={() => handleNavigation("/lookup")}
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                   >

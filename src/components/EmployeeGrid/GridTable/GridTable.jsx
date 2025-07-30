@@ -389,132 +389,145 @@ const EmployeeGridTable = ({
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-black/95 text-white  text-lg font-bold">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                 Photo
               </th>
-              <SortableHeader sortKey="personalNumber">Personal #</SortableHeader>
-              <SortableHeader sortKey="firstName">Name</SortableHeader>
-              <SortableHeader sortKey="fatherFirstName">Father's Name</SortableHeader>
-              <SortableHeader sortKey="cnic">CNIC</SortableHeader>
-              <SortableHeader sortKey="mobileNumber">Mobile</SortableHeader>
-              <SortableHeader sortKey="designation">Designation</SortableHeader>
-              
-              <SortableHeader sortKey="grade">Grade</SortableHeader>
-              <SortableHeader sortKey="rank">Rank</SortableHeader>
-              <SortableHeader sortKey="cast">Cast</SortableHeader>
-              <SortableHeader sortKey="status">Status</SortableHeader>
-              <SortableHeader sortKey="serviceType">Service Type</SortableHeader>
-              <SortableHeader sortKey="dateOfBirth">Date of Birth</SortableHeader>
-              <SortableHeader sortKey="stations">Station</SortableHeader>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <SortableHeader className="text-white" sortKey="personalNumber">Personal #</SortableHeader>
+              <SortableHeader className="text-white" sortKey="firstName">Name</SortableHeader>
+              <SortableHeader className="text-white" sortKey="fatherFirstName">Father's Name</SortableHeader>
+              <SortableHeader className="text-white" sortKey="cnic">CNIC</SortableHeader>
+              <SortableHeader className="text-white" sortKey="mobileNumber">Mobile</SortableHeader>
+              <SortableHeader className="text-white" sortKey="designation">Designation</SortableHeader>
+              <SortableHeader className="text-white" sortKey="serviceType">Service Type</SortableHeader>
+              <SortableHeader className="text-white" sortKey="dateOfBirth">Date of Birth</SortableHeader>
+              <SortableHeader className="text-white" sortKey="dateOfBirth"></SortableHeader>
+
+
+            </tr>
+            <tr>
+              <SortableHeader className="text-white" sortKey="grade">Grade</SortableHeader>
+              <SortableHeader className="text-white" sortKey="rank">Rank</SortableHeader>
+              <SortableHeader className="text-white" sortKey="cast">Cast</SortableHeader>
+              <SortableHeader className="text-white" sortKey="status">Status</SortableHeader>
+              <SortableHeader className="text-white" sortKey="stations">Station</SortableHeader>
+              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                 Address
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
                 Mohalla
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
                 Tehsil
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                 District
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                 Actions
               </th>
             </tr>
+
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className=" " >
             {employees?.map((employee) => {
               const isEditing = editingCell?.rowId === employee._id;
               const isEditable = editableEmployees.has(employee._id);
 
               return (
-                <tr key={employee._id} className="hover:bg-gray-50">
-                  {/* Photo */}
-                  {renderImageCell(employee)}
 
-                  {/* Editable Fields */}
-                  {renderCell(employee, 'personalNumber', 'input')}
-                  {renderCell(employee, 'firstName', 'input')}
-                  {renderCell(employee, 'fatherFirstName', 'input')}
-                  {renderCell(employee, 'cnic', 'input')}
-                  {renderCell(employee, 'mobileNumber', 'input')}
-                  {renderCell(employee, 'designation', 'select', 'designations')}
-                  {renderCell(employee, 'grade', 'select', 'grades')}
-                  {renderCell(employee, 'rank', 'select', 'ranks')}
-                  {renderCell(employee, 'cast', 'select', 'casts')}
-                  {renderCell(employee, 'status', 'select', 'statuses')}
-                  {renderCell(employee, 'serviceType', 'serviceType')}
-                  {renderCell(employee, 'dateOfBirth', 'date')}
-                  {renderCell(employee, 'stations', 'select', 'stations')}
+                <>
+                  <tr key={employee._id} className="hover:bg-gray-50">
+                    {/* Photo */}
+                    {renderImageCell(employee)}
 
-                  {/* Address Fields - Now Editable */}
-                  {renderCell(employee, 'address.line1', 'textarea')}
-                  {renderCell(employee, 'address.muhala', 'input')}
-                  {renderCell(employee, 'address.tehsil', 'select', 'locations')}
-                  {renderCell(employee, 'address.line2', 'select', 'districts')}
+                    {/* Editable Fields */}
+                    {renderCell(employee, 'personalNumber', 'input')}
+                    {renderCell(employee, 'firstName', 'input')}
+                    {renderCell(employee, 'fatherFirstName', 'input')}
+                    {renderCell(employee, 'cnic', 'input')}
+                    {renderCell(employee, 'mobileNumber', 'input')}
+                    {renderCell(employee, 'designation', 'select', 'designations')}
+                    {renderCell(employee, 'serviceType', 'serviceType')}
+                    {renderCell(employee, 'dateOfBirth', 'date')}
+                  </tr>
+                  <tr className="border-b-4  w-full  border-blue-500 ">
+                    {renderCell(employee, 'grade', 'select', 'grades')}
+                    {renderCell(employee, 'rank', 'select', 'ranks')}
+                    {renderCell(employee, 'cast', 'select', 'casts')}
+                    {renderCell(employee, 'status', 'select', 'statuses')}
+                    {renderCell(employee, 'stations', 'select', 'stations')}
+                    {/* Address Fields - Now Editable */}
+                    {renderCell(employee, 'address.line1', 'textarea')}
+                    {renderCell(employee, 'address.muhala', 'input')}
+                    {renderCell(employee, 'address.tehsil', 'select', 'locations')}
+                    {renderCell(employee, 'address.line2', 'select', 'districts')}
 
-                  {/* Actions */}
-                  <td className="px-3 py-2">
-                    <div className="flex space-x-1">
-                      {isEditing ? (
-                        <>
-                          <button
-                            onClick={() => onSaveCell(employee)}
-                            className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => handleCancelEditing(employee)}
-                            className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={() => toggleEditMode(employee._id)}
-                                className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
-                                  ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                  : 'bg-blue-600 text-white hover:bg-blue-700'
-                                  }`}
-                                title={isEditable ? "Disable editing" : "Enable editing"}
-                              >
-                                {isEditable ? 'Disable Edit' : 'Edit'}
-                              </button>
-
-                              <button
-                                onClick={() => { handleDelete(employee?._id) }}
-                                className="bg-red-500 py-1 px-2 text-xs text-white rounded"
-                              >
-                                Delete
-                              </button>
-
-                              {/* Show Save All button if employee has pending changes */}
-                              {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
+                    {/* Actions */}
+                    <td className="px-3 py-2">
+                      <div className="flex space-x-1">
+                        {isEditing ? (
+                          <>
+                            <button
+                              onClick={() => onSaveCell(employee)}
+                              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => handleCancelEditing(employee)}
+                              className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {isAdmin && (
+                              <>
                                 <button
-                                  onClick={() => onSaveCell(employee)}
-                                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                                  title="Save all changes"
+                                  onClick={() => toggleEditMode(employee._id)}
+                                  className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
+                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
+                                  title={isEditable ? "Disable editing" : "Enable editing"}
                                 >
-                                  Save All
+                                  {isEditable ? 'Disable Edit' : 'Edit'}
                                 </button>
-                              )}
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+
+                                <button
+                                  onClick={() => { handleDelete(employee?._id) }}
+                                  className="bg-red-500 py-1 px-2 text-xs text-white rounded"
+                                >
+                                  Delete
+                                </button>
+
+                                {/* Show Save All button if employee has pending changes */}
+                                {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
+                                  <button
+                                    onClick={() => onSaveCell(employee)}
+                                    className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                                    title="Save all changes"
+                                  >
+                                    Save All
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+
+                  </tr>
+                  
+
+                </>
               );
             })}
+
           </tbody>
         </table>
       </div>
@@ -569,12 +582,14 @@ const EmployeeGridTable = ({
         )}
       </div>
 
-      {employees.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No employees found</p>
-        </div>
-      )}
-    </div>
+      {
+        employees.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No employees found</p>
+          </div>
+        )
+      }
+    </div >
   );
 };
 
