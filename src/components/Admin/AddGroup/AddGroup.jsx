@@ -11,10 +11,16 @@ const GroupModal = ({ isOpen, onClose, onSave, editingGroup, roles, loading }) =
 
   useEffect(() => {
     if (editingGroup) {
+      // Extract role IDs from role objects if they exist
+      const roleIds = editingGroup.roles ? 
+        editingGroup.roles.map(role => 
+          typeof role === 'object' ? role._id : role
+        ) : [];
+      
       setFormData({
         name: editingGroup.name || '',
         description: editingGroup.description || '',
-        roles: editingGroup.roles || [],
+        roles: roleIds, // Store only role IDs
         isActive: editingGroup.isActive !== undefined ? editingGroup.isActive : true
       });
     } else {
