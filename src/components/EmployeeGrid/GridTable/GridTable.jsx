@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { deleteEmployee } from "../../Employee/EmployeeApi";
 import { AlertTriangle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import EmployeeFilter from "../filter.jsx";
 
 const EmployeeGridTable = ({
   employees,
@@ -22,15 +22,74 @@ const EmployeeGridTable = ({
   onNextImage,
   onImageClick,
   onImageUpload,
-  onRemoveImage
+  onRemoveImage,
 }) => {
-  // State management
+  // State management for grid
   const [editableEmployees, setEditableEmployees] = useState(new Set());
   const [confirmPopup, setConfirmPopup] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
+  // State management for filtering
+  const [filteredEmployees, setFilteredEmployees] = useState(employees || []);
+  const [currentFilters, setCurrentFilters] = useState({});
+
   const navigate = useNavigate();
-    
+
+  // Filter logic
+  const applyFilters = (filters) => {
+    let filtered = employees || [];
+
+    // Apply name filter
+    if (filters.name) {
+      filtered = filtered.filter((employee) =>
+        `${employee.firstName} ${employee.lastName}`
+          .toLowerCase()
+          .includes(filters.name.toLowerCase())
+      );
+    }
+
+    // Apply city filter
+    if (filters.city) {
+      filtered = filtered.filter(
+        (employee) =>
+          employee.address?.line2
+            ?.toLowerCase()
+            .includes(filters.city.toLowerCase()) ||
+          employee.address?.city
+            ?.toLowerCase()
+            .includes(filters.city.toLowerCase())
+      );
+    }
+
+    // Apply personal number filter
+    if (filters.personalNumber) {
+      filtered = filtered.filter((employee) =>
+        employee.personalNumber
+          ?.toLowerCase()
+          .includes(filters.personalNumber.toLowerCase())
+      );
+    }
+
+    // Apply CNIC filter
+    if (filters.cnic) {
+      filtered = filtered.filter((employee) =>
+        employee.cnic?.includes(filters.cnic)
+      );
+    }
+
+    setFilteredEmployees(filtered);
+    setCurrentFilters(filters);
+  };
+
+  // Handle filter changes from the filter component
+  const handleFilterChange = (filters) => {
+    applyFilters(filters);
+  };
+
+  // Initialize filtered employees when employees data loads
+  useEffect(() => {
+    applyFilters(currentFilters);
+  }, [employees]);
 
   // Helper functions
   const getEnumDisplayName = (enumKey, valueId) => {
@@ -39,7 +98,7 @@ const EmployeeGridTable = ({
 
     const enumData = enums[enumKey];
     if (Array.isArray(enumData)) {
-      const item = enumData.find(item => item._id === valueId);
+      const item = enumData.find((item) => item._id === valueId);
       return item?.name || valueId || `${enumKey} N/A`;
     }
     return valueId || `${enumKey} N/A`;
@@ -47,7 +106,11 @@ const EmployeeGridTable = ({
 
   const getEmployeeImage = (employee, index = 0) => {
     if (Array.isArray(employee.profileUrl)) {
-      return employee.profileUrl[index] || employee.profileUrl[0] || "/default-avatar.png";
+      return (
+        employee.profileUrl[index] ||
+        employee.profileUrl[0] ||
+        "/default-avatar.png"
+      );
     }
     return employee.profileUrl || "/default-avatar.png";
   };
@@ -55,14 +118,16 @@ const EmployeeGridTable = ({
   const getImageCount = (employee) => {
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
-      : employee.profileUrl ? 1 : 0;
+      : employee.profileUrl
+      ? 1
+      : 0;
   };
 
   const getSortIcon = (key) => {
     if (sortConfig.key === key) {
-      return sortConfig.direction === 'asc' ? '↑' : '↓';
+      return sortConfig.direction === "asc" ? "↑" : "↓";
     }
-    return '';
+    return "";
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -72,12 +137,12 @@ const EmployeeGridTable = ({
       return employeeEditingData[fieldPath];
     }
 
-    const pathParts = fieldPath.split('.');
+    const pathParts = fieldPath.split(".");
     let value = employee;
     for (const part of pathParts) {
       value = value?.[part];
     }
-    return value || '';
+    return value || "";
   };
 
   // Event handlers
@@ -120,10 +185,9 @@ const EmployeeGridTable = ({
     setDeleteId(null);
   };
 
-  // Navigation handlers (these would need to be passed as props or use router)
+  // Navigation handlers
   const handleAchievements = (employee) => {
     navigate("/achievements", { state: { employee } });
-    
   };
 
   const handleDeductions = (employee) => {
@@ -147,22 +211,24 @@ const EmployeeGridTable = ({
     const employeeEditingData = editingData[employee._id] || {};
     let value;
 
-    if (fieldKey.includes('.')) {
+    if (fieldKey.includes(".")) {
       value = getNestedValue(employee, fieldKey, editingData);
     } else {
-      value = employeeEditingData[fieldKey] !== undefined 
-        ? employeeEditingData[fieldKey] 
-        : employee[fieldKey];
+      value =
+        employeeEditingData[fieldKey] !== undefined
+          ? employeeEditingData[fieldKey]
+          : employee[fieldKey];
     }
 
-    const baseInputClasses = "w-full px-2 py-1 border border-gray-300 rounded text-xs";
+    const baseInputClasses =
+      "w-full px-2 py-1 border border-gray-300 rounded text-xs";
 
     switch (fieldType) {
-      case 'select':
+      case "select":
         const enumData = enums[enumType] || [];
         return (
           <select
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={`${baseInputClasses} min-w-24`}
             placeholder={fieldKey}
@@ -177,10 +243,10 @@ const EmployeeGridTable = ({
           </select>
         );
 
-      case 'serviceType':
+      case "serviceType":
         return (
           <select
-            value={value || 'provincial'}
+            value={value || "provincial"}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={baseInputClasses}
             autoFocus
@@ -190,16 +256,16 @@ const EmployeeGridTable = ({
           </select>
         );
 
-      case 'date':
-        let dateValue = '';
+      case "date":
+        let dateValue = "";
         if (value) {
           try {
             const date = new Date(value);
             if (!isNaN(date.getTime())) {
-              dateValue = date.toISOString().split('T')[0];
+              dateValue = date.toISOString().split("T")[0];
             }
           } catch (error) {
-            console.error('Date formatting error:', error);
+            console.error("Date formatting error:", error);
           }
         }
 
@@ -213,10 +279,10 @@ const EmployeeGridTable = ({
           />
         );
 
-      case 'textarea':
+      case "textarea":
         return (
           <textarea
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={`${baseInputClasses} min-w-32 min-h-16 resize-none`}
             autoFocus
@@ -229,7 +295,7 @@ const EmployeeGridTable = ({
         return (
           <input
             type="text"
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={`${baseInputClasses} min-w-24`}
             autoFocus
@@ -241,64 +307,71 @@ const EmployeeGridTable = ({
 
   const renderDisplayCell = (employee, fieldKey, fieldType, enumType) => {
     let value;
-    if (fieldKey.includes('.')) {
+    if (fieldKey.includes(".")) {
       value = getNestedValue(employee, fieldKey, editingData);
     } else {
       const employeeEditingData = editingData[employee._id] || {};
-      value = employeeEditingData[fieldKey] !== undefined 
-        ? employeeEditingData[fieldKey] 
-        : employee[fieldKey];
+      value =
+        employeeEditingData[fieldKey] !== undefined
+          ? employeeEditingData[fieldKey]
+          : employee[fieldKey];
     }
 
     switch (fieldType) {
-      case 'select':
-        if (fieldKey === 'status') {
+      case "select":
+        if (fieldKey === "status") {
           const displayName = getEnumDisplayName(enumType, value);
           const statusClasses = {
             active: "bg-green-100 text-green-800",
             retired: "bg-blue-100 text-blue-800",
             terminated: "bg-red-100 text-red-800",
-            default: "bg-gray-100 text-gray-800"
+            default: "bg-gray-100 text-gray-800",
           };
-          
+
           return (
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              statusClasses[value] || statusClasses.default
-            }`}>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                statusClasses[value] || statusClasses.default
+              }`}
+            >
               {displayName}
             </span>
           );
         }
         return getEnumDisplayName(enumType, value);
-        
-      case 'date':
+
+      case "date":
         return value ? new Date(value).toLocaleDateString() : `${fieldKey} N/A`;
-        
+
       default:
         return value || `${fieldKey} N/A`;
     }
   };
 
   const renderCell = (employee, fieldKey, fieldType, enumType = null) => {
-    const isEditing = editingCell?.rowId === employee._id && editingCell?.fieldName === fieldKey;
+    const isEditing =
+      editingCell?.rowId === employee._id &&
+      editingCell?.fieldName === fieldKey;
     const isEditable = editableEmployees.has(employee._id);
 
     let currentValue;
-    if (fieldKey.includes('.')) {
+    if (fieldKey.includes(".")) {
       currentValue = getNestedValue(employee, fieldKey, editingData);
     } else {
       currentValue = employee[fieldKey];
     }
 
     const cellClasses = `p-1 rounded min-h-6 flex items-center ${
-      isAdmin && isEditable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
+      isAdmin && isEditable
+        ? "cursor-pointer hover:bg-gray-100"
+        : "cursor-default"
     }`;
 
-    const titleText = !isAdmin 
-      ? "Read-only" 
-      : !isEditable 
-        ? "Click Edit button to enable editing" 
-        : "Double-click to edit";
+    const titleText = !isAdmin
+      ? "Read-only"
+      : !isEditable
+      ? "Click Edit button to enable editing"
+      : "Double-click to edit";
 
     return (
       <>
@@ -307,11 +380,15 @@ const EmployeeGridTable = ({
         ) : (
           <div
             className={cellClasses}
-            onDoubleClick={() => isAdmin && isEditable && onStartEditing(employee._id, fieldKey, currentValue)}
+            onDoubleClick={() =>
+              isAdmin &&
+              isEditable &&
+              onStartEditing(employee._id, fieldKey, currentValue)
+            }
             title={titleText}
           >
-            <div 
-              className="max-w-32 truncate" 
+            <div
+              className="max-w-32 truncate"
               title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}
             >
               {renderDisplayCell(employee, fieldKey, fieldType, enumType)}
@@ -373,16 +450,26 @@ const EmployeeGridTable = ({
                   if (file) {
                     onImageUpload(employee, file);
                   }
-                  e.target.value = '';
+                  e.target.value = "";
                 }}
                 className="hidden"
               />
-              <div 
-                className="bg-green-600 hover:bg-green-700 text-white rounded-full p-1 shadow-sm transition-colors" 
+              <div
+                className="bg-green-600 hover:bg-green-700 text-white rounded-full p-1 shadow-sm transition-colors"
                 title="Upload new image"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
                 </svg>
               </div>
             </label>
@@ -393,8 +480,18 @@ const EmployeeGridTable = ({
                 className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-sm transition-colors"
                 title="Remove current image"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -433,12 +530,12 @@ const EmployeeGridTable = ({
                   onClick={() => toggleEditMode(employee._id)}
                   className={`${buttonBaseClasses} ${
                     isEditable
-                      ? 'bg-orange-600 text-white hover:bg-orange-700'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
                   title={isEditable ? "Disable editing" : "Enable editing"}
                 >
-                  {isEditable ? 'Disable Edit' : 'Edit'}
+                  {isEditable ? "Disable Edit" : "Edit"}
                 </button>
 
                 <button
@@ -448,44 +545,46 @@ const EmployeeGridTable = ({
                   Delete
                 </button>
 
-                {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
-                  <button
-                    onClick={() => onSaveCell(employee)}
-                    className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
-                    title="Save all changes"
-                  >
-                    Save All
-                  </button>
-                )}
+                {isEditable &&
+                  editingData[employee._id] &&
+                  Object.keys(editingData[employee._id]).length > 0 && (
+                    <button
+                      onClick={() => onSaveCell(employee)}
+                      className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
+                      title="Save all changes"
+                    >
+                      Save All
+                    </button>
+                  )}
               </>
             )}
             <button
               onClick={() => handleAssets(employee)}
-              className={`${actionButtonClasses} bg-cyan-100 text-cyan-700 hover:bg-cyan-200`}
+              className={`${actionButtonClasses} bg-cyan-700 text-white hover:bg-cyan-200`}
             >
               Employee Assets
             </button>
             <button
               onClick={() => handlePosting(employee)}
-              className={`${actionButtonClasses} bg-indigo-100 text-indigo-700 hover:bg-indigo-200`}
+              className={`${actionButtonClasses} bg-indigo-700 text-white hover:bg-indigo-200`}
             >
               Posting
             </button>
             <button
               onClick={() => handleStatus(employee)}
-              className={`${actionButtonClasses} bg-teal-100 text-teal-700 hover:bg-teal-200`}
+              className={`${actionButtonClasses} bg-teal-700 text-white hover:bg-teal-200`}
             >
               History
             </button>
             <button
               onClick={() => handleAchievements(employee)}
-              className={`${actionButtonClasses} bg-purple-100 text-purple-700 hover:bg-purple-200`}
+              className={`${actionButtonClasses} bg-purple-700 text-white hover:bg-purple-200`}
             >
               Employee Achievements
             </button>
             <button
               onClick={() => handleDeductions(employee)}
-              className={`${actionButtonClasses} bg-pink-100 text-pink-700 hover:bg-pink-200`}
+              className={`${actionButtonClasses} bg-pink-700 text-white hover:bg-pink-200`}
             >
               Deduction
             </button>
@@ -503,7 +602,9 @@ const EmployeeGridTable = ({
             <div className="p-2 bg-red-100 rounded-full">
               <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Confirm Deletion</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Confirm Deletion
+            </h2>
           </div>
           <button
             onClick={handleCancelDelete}
@@ -542,87 +643,117 @@ const EmployeeGridTable = ({
 
   // Main render
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      {/* Header Grid */}
-      <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/95 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
-        <div>Photo</div>
-        <div>Personal #</div>
-        <div>Name</div>
-        <div>Father's Name</div>
-        <div>CNIC</div>
-        <div>Mobile</div>
-        <div>Designation</div>
-        <div>Service Type</div>
-        <div>Date of Birth</div>
-        <div>Status</div>
-        <div>Grade</div>
-        <div>Rank</div>
-        <div>Cast</div>
-        <div>Station</div>
-        <div>Address</div>
-        <div>Mohalla</div>
-        <div>Tehsil</div>
-        <div>District</div>
-      </div>
+    <div>
+      {/* Filter Component */}
+      <EmployeeFilter
+        onFilterChange={handleFilterChange}
+        initialFilters={currentFilters}
+        totalEmployees={employees?.length || 0}
+        filteredCount={filteredEmployees.length}
+      />
 
-      {/* Employee Rows */}
-      {employees?.map((employee) => {
-        const isEditing = editingCell?.rowId === employee._id;
-        const isEditable = editableEmployees.has(employee._id);
-
-        return (
-          <div 
-            key={employee._id} 
-            className="grid grid-cols-9 grid-rows-3 gap-1 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider p-2 border-b border-gray-200"
-          >
-            {/* Photo - spans 2 rows */}
-            <div className="row-span-2">
-              {renderImageCell(employee)}
-            </div>
-
-            {/* First row of data */}
-            <div>{renderCell(employee, 'personalNumber', 'input')}</div>
-            <div>{renderCell(employee, 'firstName', 'input')}</div>
-            <div>{renderCell(employee, 'fatherFirstName', 'input')}</div>
-            <div>{renderCell(employee, 'cnic', 'input')}</div>
-            <div>{renderCell(employee, 'mobileNumber', 'input')}</div>
-            <div>{renderCell(employee, 'designation', 'select', 'designations')}</div>
-            <div>{renderCell(employee, 'serviceType', 'serviceType')}</div>
-            <div>{renderCell(employee, 'dateOfBirth', 'date')}</div>
-
-            {/* Second row of data */}
-            <div className="col-start-1 row-start-3 border-b border-indigo-600">
-              {renderCell(employee, 'status', 'select', 'statuses')}
-            </div>
-            <div className="col-start-2">{renderCell(employee, 'grade', 'select', 'grades')}</div>
-            <div className="col-start-3">{renderCell(employee, 'rank', 'select', 'ranks')}</div>
-            <div className="col-start-4">{renderCell(employee, 'cast', 'select', 'casts')}</div>
-            <div className="col-start-5">{renderCell(employee, 'stations', 'select', 'stations')}</div>
-            <div className="col-start-6">{renderCell(employee, 'address.line1', 'textarea')}</div>
-            <div className="col-start-7">{renderCell(employee, 'address.muhala', 'input')}</div>
-            <div className="col-start-8">{renderCell(employee, 'address.tehsil', 'select', 'locations')}</div>
-            <div className="col-start-9">{renderCell(employee, 'address.line2', 'select', 'districts')}</div>
-
-            {/* Action buttons row */}
-            <div className="col-start-2 row-start-3 col-span-8 border-b border-indigo-600">
-              {renderActionButtons(employee, isEditing, isEditable)}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Confirmation Modal */}
-      {confirmPopup && renderConfirmationModal()}
-
-      {/* Empty State */}
-      {employees.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No employees found</p>
+      {/* Grid Section */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        {/* Header Grid */}
+        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/95 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
+          <div>Photo</div>
+          <div>Personal #</div>
+          <div>Name</div>
+          <div>Father's Name</div>
+          <div>CNIC</div>
+          <div>Mobile</div>
+          <div>Designation</div>
+          <div>Service Type</div>
+          <div>Date of Birth</div>
+          <div>Status</div>
+          <div>Grade</div>
+          <div>Rank</div>
+          <div>Cast</div>
+          <div>Station</div>
+          <div>Address</div>
+          <div>Mohalla</div>
+          <div>Tehsil</div>
+          <div>District</div>
         </div>
-      )}
-      
+
+        {/* Employee Rows */}
+        {filteredEmployees?.map((employee) => {
+          const isEditing = editingCell?.rowId === employee._id;
+          const isEditable = editableEmployees.has(employee._id);
+
+          return (
+            <div
+              key={employee._id}
+              className="grid grid-cols-9 grid-rows-3 gap-1 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider p-2 border-b border-gray-200"
+            >
+              {/* Photo - spans 2 rows */}
+              <div className="row-span-2">{renderImageCell(employee)}</div>
+
+              {/* First row of data */}
+              <div>{renderCell(employee, "personalNumber", "input")}</div>
+              <div>{renderCell(employee, "firstName", "input")}</div>
+              <div>{renderCell(employee, "fatherFirstName", "input")}</div>
+              <div>{renderCell(employee, "cnic", "input")}</div>
+              <div>{renderCell(employee, "mobileNumber", "input")}</div>
+              <div>
+                {renderCell(employee, "designation", "select", "designations")}
+              </div>
+              <div>{renderCell(employee, "serviceType", "serviceType")}</div>
+              <div>{renderCell(employee, "dateOfBirth", "date")}</div>
+
+              {/* Second row of data */}
+              <div className="col-start-1 row-start-3  border-b-2 border-black pb-3">
+                {renderCell(employee, "status", "select", "statuses")}
+              </div>
+              <div className="col-start-2">
+                {renderCell(employee, "grade", "select", "grades")}
+              </div>
+              <div className="col-start-3">
+                {renderCell(employee, "rank", "select", "ranks")}
+              </div>
+              <div className="col-start-4">
+                {renderCell(employee, "cast", "select", "casts")}
+              </div>
+              <div className="col-start-5">
+                {renderCell(employee, "stations", "select", "stations")}
+              </div>
+              <div className="col-start-6">
+                {renderCell(employee, "address.line1", "textarea")}
+              </div>
+              <div className="col-start-7">
+                {renderCell(employee, "address.muhala", "input")}
+              </div>
+              <div className="col-start-8">
+                {renderCell(employee, "address.tehsil", "select", "locations")}
+              </div>
+              <div className="col-start-9">
+                {renderCell(employee, "address.line2", "select", "districts")}
+              </div>
+
+
+              {/* Action buttons row */}
+              <div className="col-start-2 row-start-3 col-span-8 border-b-2 border-black pb-3">
+                {renderActionButtons(employee, isEditing, isEditable)}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Confirmation Modal */}
+        {confirmPopup && renderConfirmationModal()}
+
+        {/* Empty State */}
+        {filteredEmployees.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">
+              {Object.values(currentFilters).some((filter) => filter !== "")
+                ? "No employees match your filters"
+                : "No employees found"}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
-    
   );
 };
 
