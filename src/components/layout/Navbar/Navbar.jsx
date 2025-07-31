@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userType, setUserType] = useState("");
+  const [lastLogin, setLastLogin] = useState("");
 
   const navigate = useNavigate();
 
@@ -25,17 +26,53 @@ const Navbar = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const formatLastLogin = (dateString) => {
+    if (!dateString) return "Unknown";
+    
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMs = now - date;
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+      if (diffInMinutes < 5) {
+        return "Just now";
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} min${diffInMinutes > 1 ? 's' : ''} ago`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+      } else if (diffInDays < 7) {
+        return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+      } else {
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    } catch (e) {
+      return "Unknown";
+    }
+  };
+
   useEffect(() => {
     const userData = localStorage.getItem("userData");
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
         setUserType(parsed.userType || "Unknown");
+        setLastLogin(formatLastLogin(parsed.lastLogin));
       } catch (e) {
         setUserType("Unknown");
+        setLastLogin("Unknown");
       }
     } else {
       setUserType("Unknown");
+      setLastLogin("Unknown");
     }
   }, []);
 
@@ -71,11 +108,30 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600 mr-2">
-            Logged in as:{" "}
-            <span className="font-semibold capitalize text-blue-600">
-              {userType}
-            </span>
+          {/* User Info Section */}
+          <div className="flex flex-col items-center justify-center text-sm text-gray-600 mr-2">
+            <div className="flex items-center space-x-1">
+              <span>Logged in as:</span>
+              <span className="font-semibold capitalize text-blue-600">
+                {userType}
+              </span>
+            </div>
+            <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>Last login: {lastLogin}</span>
+            </div>
           </div>
 
           {/* Navigation and User Menu */}
@@ -287,7 +343,7 @@ const Navbar = () => {
                   </button>
 
                   <button
-                    onClick={() => handleNavigation("/user-role")}
+                    onClick={() => handleNavigation("/admin")}
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                   >
                     <svg

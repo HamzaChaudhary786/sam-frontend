@@ -124,7 +124,7 @@ const Dashboard = () => {
             </button>
 
             <button
-              onClick={() => handleNavigation('userrole')}
+              onClick={() => handleNavigation('admin')}
               className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl shadow-sm border border-red-200 hover:shadow-md hover:from-red-100 hover:to-red-200 transition-all duration-200 text-left group"
             >
               <div className="flex items-center justify-between mb-3">

@@ -50,6 +50,108 @@ export const getAllAssetAssignments = async (filters = {}) => {
   }
 };
 
+// Process and filter assignments (moved from component)
+export const processAndFilterAssignments = (rawData, filters, assetTypes) => {
+  try {
+    // Handle the correct data structure from the API response
+    let assignmentsData = [];
+    
+    if (rawData) {
+      // Check if the data has a 'history' property (pagination response)
+      if (rawData.history && Array.isArray(rawData.history)) {
+        assignmentsData = rawData.history;
+      }
+      // Check if data itself is an array
+      else if (Array.isArray(rawData)) {
+        assignmentsData = rawData;
+      }
+      // Check if data has a 'data' property that's an array
+      else if (rawData.data && Array.isArray(rawData.data)) {
+        assignmentsData = rawData.data;
+      }
+      // Single object case
+      else if (typeof rawData === "object" && rawData._id) {
+        assignmentsData = [rawData];
+      }
+      // If it's just pagination metadata with empty history
+      else {
+        assignmentsData = [];
+      }
+    }
+
+    console.log("📊 Processed assignments data:", assignmentsData);
+
+    // Apply filters
+    if (!Array.isArray(assignmentsData)) {
+      return [];
+    }
+
+    let filtered = [...assignmentsData];
+
+    if (filters.assetType) {
+      filtered = filtered.filter(assignment => {
+        if (!assignment.asset || !Array.isArray(assignment.asset)) {
+          return false;
+        }
+        // Get the asset type name from the enum
+        const selectedTypeName = assetTypes[filters.assetType];
+        if (!selectedTypeName) return false;
+        
+        return assignment.asset.some(asset => 
+          asset && asset.type && asset.type.toLowerCase() === selectedTypeName.toLowerCase()
+        );
+      });
+    }
+
+    if (filters.approvalStatus) {
+      filtered = filtered.filter((assignment) => {
+        if (filters.approvalStatus === "pending") {
+          return !assignment.isApproved;
+        } else if (filters.approvalStatus === "approved") {
+          return assignment.isApproved === true;
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  } catch (error) {
+    console.error("Error processing assignments:", error);
+    return [];
+  }
+};
+
+// Bulk approve asset assignments
+export const bulkApproveAssetAssignments = async (assignmentIds) => {
+  try {
+    const response = await fetch(`${API_URL}/asset-history/bulk-approve`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ids: assignmentIds,
+        approvedBy: getCurrentUserId(),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to approve asset assignments",
+      };
+    }
+  } catch (error) {
+    console.error("Error bulk approving asset assignments:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Get all available assets (for dropdown)
 export const getAllAssets = async () => {
   try {

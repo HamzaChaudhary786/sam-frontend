@@ -1,70 +1,77 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { 
-  userTypes, 
-  role_data_entery, 
-  role_incharge, 
-  role_admin, 
-  role_view_only 
+import {
+  userTypes,
+  role_data_entery,
+  role_incharge,
+  role_admin,
+  role_view_only,
 } from "../../../constants/Enum";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 
 // Searchable Select Component for general use
-const SearchableSelect = ({ 
-  label, 
-  value, 
-  onChange, 
-  options, 
-  placeholder, 
+const SearchableSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
   required = false,
   disabled = false,
-  name
+  name,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const filteredOptions = options.filter(option =>
+
+  const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-  const selectedOption = options.find(option => option.value === value);
-  
+
+  const selectedOption = options.find((option) => option.value === value);
+
   const handleSelect = (optionValue) => {
     onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
     setSearchTerm("");
   };
-  
+
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      
+
       <div className="relative">
         <div
           className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+            disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
           }`}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           <div className="flex justify-between items-center">
-            <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
+            <span
+              className={selectedOption ? "text-gray-900" : "text-gray-500"}
+            >
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             <svg
               className={`w-5 h-5 text-gray-400 transition-transform ${
-                isOpen ? 'transform rotate-180' : ''
+                isOpen ? "transform rotate-180" : ""
               }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
-        
+
         {isOpen && !disabled && (
           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
             <div className="p-2 border-b">
@@ -77,25 +84,31 @@ const SearchableSelect = ({
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-            
+
             <div className="max-h-48 overflow-y-auto">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}
                     className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                      value === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                      value === option.value
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-gray-900"
                     }`}
                     onClick={() => handleSelect(option.value)}
                   >
                     <div className="font-medium">{option.label}</div>
                     {option.subtitle && (
-                      <div className="text-sm text-gray-500">{option.subtitle}</div>
+                      <div className="text-sm text-gray-500">
+                        {option.subtitle}
+                      </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="px-3 py-2 text-gray-500 text-sm">No options found</div>
+                <div className="px-3 py-2 text-gray-500 text-sm">
+                  No options found
+                </div>
               )}
             </div>
           </div>
@@ -118,9 +131,9 @@ const UserModal = ({
   // Create user type enum object for EnumSelect
   const userTypeEnum = {
     [role_data_entery]: "Data Entry",
-    [role_incharge]: "In Charge", 
+    [role_incharge]: "In Charge",
     [role_admin]: "Admin",
-    [role_view_only]: "View Only"
+    [role_view_only]: "View Only",
   };
 
   const [formData, setFormData] = useState({
@@ -231,6 +244,11 @@ const UserModal = ({
       alert("Password is required for new users");
       return;
     }
+  
+    // Remove employeeId if it's empty (optional field)
+    if (!formData.employeeId || formData.employeeId === "") {
+      delete formData.employeeId;
+    }
 
     onSave(formData);
   };
@@ -243,8 +261,8 @@ const UserModal = ({
     ...employees.map((employee) => ({
       value: employee._id,
       label: `${employee.firstName} ${employee.lastName || ""}`,
-      subtitle: employee.personalNumber
-    }))
+      subtitle: employee.personalNumber,
+    })),
   ];
 
   return (
@@ -339,7 +357,18 @@ const UserModal = ({
                 <EnumSelect
                   label="User Type"
                   name="userType"
-                  value={Object.keys(userTypeEnum).find(key => userTypeEnum[key] === Object.values(userTypeEnum).find(val => Object.keys(userTypeEnum).find(k => userTypeEnum[k] === val && k === formData.userType))) || formData.userType}
+                  value={
+                    Object.keys(userTypeEnum).find(
+                      (key) =>
+                        userTypeEnum[key] ===
+                        Object.values(userTypeEnum).find((val) =>
+                          Object.keys(userTypeEnum).find(
+                            (k) =>
+                              userTypeEnum[k] === val && k === formData.userType
+                          )
+                        )
+                    ) || formData.userType
+                  }
                   onChange={handleChange}
                   enumObject={userTypeEnum}
                   required={true}
@@ -347,7 +376,7 @@ const UserModal = ({
                   disabled={loading}
                 />
               </div>
-              
+
               {/* Employee - Using SearchableSelect */}
               <SearchableSelect
                 label="Employee (optional)"
