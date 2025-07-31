@@ -22,6 +22,11 @@ const EmployeeGridTable = ({
   onImageUpload,
   onRemoveImage
 }) => {
+
+  // View Modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   // State to track which employees are in edit mode
   const [editableEmployees, setEditableEmployees] = React.useState(new Set());
   const [confirmPopup, setConfirmPopup] = useState(false)
@@ -47,15 +52,15 @@ const EmployeeGridTable = ({
 
   // Helper functions
   const getEnumDisplayName = (enumKey, valueId) => {
-    if (!valueId) return "N/A";
+    if (!valueId) return `${enumKey} N/A`;
     if (typeof valueId === "object" && valueId?.name) return valueId.name;
 
     const enumData = enums[enumKey];
     if (Array.isArray(enumData)) {
       const item = enumData.find(item => item._id === valueId);
-      return item?.name || valueId || "N/A";
+      return item?.name || valueId || `${enumKey} N/A`;
     }
-    return valueId || "N/A";
+    return valueId || `${enumKey} N/A`;
   };
 
   const getEmployeeImage = (employee, index = 0) => {
@@ -117,6 +122,7 @@ const EmployeeGridTable = ({
             value={value || ''}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-24"
+            placeholder={fieldKey}
             autoFocus
           >
             <option value="">Select...</option>
@@ -131,7 +137,7 @@ const EmployeeGridTable = ({
       case 'serviceType':
         return (
           <select
-            value={value || 'federal'}
+            value={value || 'provincial'}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
             autoFocus
@@ -172,6 +178,7 @@ const EmployeeGridTable = ({
             className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-32 min-h-16 resize-none"
             autoFocus
             rows={2}
+            placeholder={fieldKey}
           />
         );
 
@@ -183,11 +190,13 @@ const EmployeeGridTable = ({
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-24"
             autoFocus
+            placeholder={fieldKey}
           />
         );
     }
   };
 
+  
   // Render display cell
   const renderDisplayCell = (employee, fieldKey, fieldType, enumType) => {
     // Get the editing data for this specific employee, show edited value if exists
@@ -217,9 +226,9 @@ const EmployeeGridTable = ({
         }
         return getEnumDisplayName(enumType, value);
       case 'date':
-        return value ? new Date(value).toLocaleDateString() : "N/A";
+        return value ? new Date(value).toLocaleDateString() : `${fieldKey} N/A`;
       default:
-        return value || "N/A";
+        return value || `${fieldKey} N/A`;
     }
   };
 
@@ -237,7 +246,7 @@ const EmployeeGridTable = ({
     }
 
     return (
-      <td className="px-3 py-2 text-xs">
+      <>
         {isEditing ? (
           renderEditingCell(employee, fieldKey, fieldType, enumType)
         ) : (
@@ -256,7 +265,7 @@ const EmployeeGridTable = ({
             </div>
           </div>
         )}
-      </td>
+      </>
     );
   };
 
@@ -268,7 +277,7 @@ const EmployeeGridTable = ({
     const isEditable = editableEmployees.has(employee._id);
 
     return (
-      <td className="px-3 py-2">
+      <>
         <div className="relative">
           <img
             className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
@@ -341,7 +350,7 @@ const EmployeeGridTable = ({
             </div>
           )}
         </div>
-      </td>
+      </>
     );
   };
 
@@ -385,152 +394,225 @@ const EmployeeGridTable = ({
     setConfirmPopup(false);
   };
 
+  
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAchievements = (employee) => {
+    navigate("/achievements", { state: { employee } });
+  };
+
+  const handleDeductions = (employee) => {
+    navigate("/deductions", { state: { employee } });
+  };
+  const handleAssets = (employee) => {
+    navigate("/assetassignment", { state: { employee } });
+  };
+  const handlePosting = (employee) => {
+    navigate("/stationassignment", { state: { employee } });
+  };
+  const handleStatus = (employee) => {
+    navigate("/statusassignment", { state: { employee } });
+  };
+
+  const handleApplyFilters = () => {
+    const activeFilters = {};
+    if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
+    if (filterForm.city.trim()) activeFilters.city = filterForm.city.trim();
+    if (filterForm.status) activeFilters.status = filterForm.status;
+    if (filterForm.designation)
+      activeFilters.designation = filterForm.designation;
+    if (filterForm.grade) activeFilters.grade = filterForm.grade;
+    if (filterForm.personalNumber.trim())
+      activeFilters.personalNumber = filterForm.personalNumber.trim();
+    if (filterForm.cnic.trim()) activeFilters.cnic = filterForm.cnic.trim();
+    updateFilters(activeFilters);
+    setShowFilters(false); // Close filters on mobile after applying
+  };
+
+  const handleClearFilters = () => {
+    setFilterForm({
+      name: "",
+      city: "",
+      status: "",
+      designation: "",
+      grade: "",
+      personalNumber: "",
+      cnic: "",
+    });
+    clearFilters();
+  };
+
+
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-black/95 text-white  text-lg font-bold">
-            <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Photo
-              </th>
-              <SortableHeader className="text-white" sortKey="personalNumber">Personal #</SortableHeader>
-              <SortableHeader className="text-white" sortKey="firstName">Name</SortableHeader>
-              <SortableHeader className="text-white" sortKey="fatherFirstName">Father's Name</SortableHeader>
-              <SortableHeader className="text-white" sortKey="cnic">CNIC</SortableHeader>
-              <SortableHeader className="text-white" sortKey="mobileNumber">Mobile</SortableHeader>
-              <SortableHeader className="text-white" sortKey="designation">Designation</SortableHeader>
-              <SortableHeader className="text-white" sortKey="serviceType">Service Type</SortableHeader>
-              <SortableHeader className="text-white" sortKey="dateOfBirth">Date of Birth</SortableHeader>
-              <SortableHeader className="text-white" sortKey="dateOfBirth"></SortableHeader>
+    <div className="bg-white shadow-md rounded-lg overflow-hidden ">
 
+      <div className="grid grid-cols-9 grid-rows-2 gap-1 bg-black/95 text-white text-lg font-bold text-left text-xs font-medium  uppercase tracking-wider">
+        <div >Photo</div>
+        <div >Personal #</div>
+        <div >Name</div>
+        <div >Father's Name</div>
+        <div >CNIC</div>
+        <div >Mobile</div>
+        <div >Designation</div>
+        <div >Service Type</div>
+        <div >Date of Birth</div>
+        <div className="padding-5" >Status</div>
+        <div >Grade</div>
+        <div >Rank</div>
+        <div >Cast</div>
+        <div >Station</div>
+        <div >Address</div>
+        <div >Mohalla</div>
+        <div >Tehsil</div>
+        <div >District</div>
 
-            </tr>
-            <tr>
-              <SortableHeader className="text-white" sortKey="grade">Grade</SortableHeader>
-              <SortableHeader className="text-white" sortKey="rank">Rank</SortableHeader>
-              <SortableHeader className="text-white" sortKey="cast">Cast</SortableHeader>
-              <SortableHeader className="text-white" sortKey="status">Status</SortableHeader>
-              <SortableHeader className="text-white" sortKey="stations">Station</SortableHeader>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Address
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Mohalla
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Tehsil
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                District
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
+      </div>
 
-          </thead>
-          <tbody className=" " >
-            {employees?.map((employee) => {
-              const isEditing = editingCell?.rowId === employee._id;
-              const isEditable = editableEmployees.has(employee._id);
+      {employees?.map((employee) => {
+        const isEditing = editingCell?.rowId === employee._id;
+        const isEditable = editableEmployees.has(employee._id);
 
-              return (
+        return (
+          <>
 
-                <>
-                  <tr key={employee._id} className="hover:bg-gray-50">
-                    {/* Photo */}
-                    {renderImageCell(employee)}
+            <div key={employee._id} className="grid grid-cols-9 grid-rows-3 gap-1 overflow-x-auto text-left text-xs font-medium  uppercase tracking-wider ">
+              <div className="row-span-2">
+                {/* Photo */}
+                {renderImageCell(employee)}
+              </div>
+              <div >{renderCell(employee, 'personalNumber', 'input')}</div>
+              <div > {renderCell(employee, 'firstName', 'input')}</div>
+              <div > {renderCell(employee, 'fatherFirstName', 'input')}</div>
+              <div > {renderCell(employee, 'cnic', 'input')}</div>
+              <div > {renderCell(employee, 'mobileNumber', 'input')}</div>
+              <div > {renderCell(employee, 'designation', 'select', 'designations')}</div>
+              <div >{renderCell(employee, 'serviceType', 'serviceType')}</div>
+              <div > {renderCell(employee, 'dateOfBirth', 'date')}</div>
 
-                    {/* Editable Fields */}
-                    {renderCell(employee, 'personalNumber', 'input')}
-                    {renderCell(employee, 'firstName', 'input')}
-                    {renderCell(employee, 'fatherFirstName', 'input')}
-                    {renderCell(employee, 'cnic', 'input')}
-                    {renderCell(employee, 'mobileNumber', 'input')}
-                    {renderCell(employee, 'designation', 'select', 'designations')}
-                    {renderCell(employee, 'serviceType', 'serviceType')}
-                    {renderCell(employee, 'dateOfBirth', 'date')}
-                  </tr>
-                  <tr className="border-b-4  w-full  border-blue-500 ">
-                    {renderCell(employee, 'grade', 'select', 'grades')}
-                    {renderCell(employee, 'rank', 'select', 'ranks')}
-                    {renderCell(employee, 'cast', 'select', 'casts')}
-                    {renderCell(employee, 'status', 'select', 'statuses')}
-                    {renderCell(employee, 'stations', 'select', 'stations')}
-                    {/* Address Fields - Now Editable */}
-                    {renderCell(employee, 'address.line1', 'textarea')}
-                    {renderCell(employee, 'address.muhala', 'input')}
-                    {renderCell(employee, 'address.tehsil', 'select', 'locations')}
-                    {renderCell(employee, 'address.line2', 'select', 'districts')}
+              <div className="col-start-1 row-start-3   border-b border-indigo-600 "> {renderCell(employee, 'status', 'select', 'statuses')}</div>
 
-                    {/* Actions */}
-                    <td className="px-3 py-2">
-                      <div className="flex space-x-1">
-                        {isEditing ? (
-                          <>
+              <div className="col-start-2"> {renderCell(employee, 'grade', 'select', 'grades')}</div>
+              <div className="col-start-3">{renderCell(employee, 'rank', 'select', 'ranks')}</div>
+              <div className="col-start-4">{renderCell(employee, 'cast', 'select', 'casts')}</div>
+              <div className="col-start-5">{renderCell(employee, 'stations', 'select', 'stations')}</div>
+              <div className="col-start-6">{renderCell(employee, 'address.line1', 'textarea')}</div>
+              <div className="col-start-7">{renderCell(employee, 'address.muhala', 'input')}</div>
+              <div className="col-start-8">{renderCell(employee, 'address.tehsil', 'select', 'locations')}</div>
+              <div className="col-start-9"> {renderCell(employee, 'address.line2', 'select', 'districts')}</div>
+
+              <div className="col-start-2 row-start-3 col-span-8  border-b border-indigo-600 ">
+                <div className="flex space-x-1">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => onSaveCell(employee)}
+                        className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => handleCancelEditing(employee)}
+                        className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => toggleEditMode(employee._id)}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
+                              ? 'bg-orange-600 text-white hover:bg-orange-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }`}
+                            title={isEditable ? "Disable editing" : "Enable editing"}
+                          >
+                            {isEditable ? 'Disable Edit' : 'Edit'}
+                          </button>
+
+                          <button
+                            onClick={() => { handleDelete(employee?._id) }}
+                            className="bg-red-500 py-1 px-2 text-xs text-white rounded"
+                          >
+                            Delete
+                          </button>
+
+                          {/* Show Save All button if employee has pending changes */}
+                          {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
                             <button
                               onClick={() => onSaveCell(employee)}
                               className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                              title="Save all changes"
                             >
-                              Save
+                              Save All
                             </button>
-                            <button
-                              onClick={() => handleCancelEditing(employee)}
-                              className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            {isAdmin && (
-                              <>
-                                <button
-                                  onClick={() => toggleEditMode(employee._id)}
-                                  className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
-                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                    }`}
-                                  title={isEditable ? "Disable editing" : "Enable editing"}
-                                >
-                                  {isEditable ? 'Disable Edit' : 'Edit'}
-                                </button>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
 
-                                <button
-                                  onClick={() => { handleDelete(employee?._id) }}
-                                  className="bg-red-500 py-1 px-2 text-xs text-white rounded"
-                                >
-                                  Delete
-                                </button>
+                  <button
+                    onClick={() => handleView(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition margin-right-15"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleAssets(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
+                  >
+                    Assets
+                  </button>
+                  <button
+                    onClick={() => handlePosting(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
+                  >
+                    Posting
+                  </button>
+                  <button
+                    onClick={() => handleStatus(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
+                  >
+                    History
+                  </button>
+                  <button
+                    onClick={() => handleAchievements(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
+                  >
+                    Achievements
+                  </button>
+                  <button
+                    onClick={() => handleDeductions(employee)}
+                    className="px-3 py-2 text-xs rounded-md bg-pink-100 text-pink-700 hover:bg-pink-200 transition"
+                  >
+                    Deduction
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                                {/* Show Save All button if employee has pending changes */}
-                                {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
-                                  <button
-                                    onClick={() => onSaveCell(employee)}
-                                    className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                                    title="Save all changes"
-                                  >
-                                    Save All
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-
-                  </tr>
-                  
-
-                </>
-              );
-            })}
-
-          </tbody>
-        </table>
-      </div>
+          </>
+        );
+      })}
 
       <div>
         {confirmPopup && (
@@ -590,7 +672,10 @@ const EmployeeGridTable = ({
         )
       }
     </div >
+
+    
   );
+  
 };
 
 export default EmployeeGridTable;
