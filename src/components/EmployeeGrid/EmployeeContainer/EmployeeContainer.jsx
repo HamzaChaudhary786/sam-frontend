@@ -42,8 +42,8 @@ const EmployeeGridContainer = () => {
     casts: [],
     ranks: [],
     statuses: [],
-    districts: [],
-    locations: [],
+    district: [],
+    tehsil: [],
     stations: []
   });
 
@@ -109,8 +109,8 @@ const EmployeeGridContainer = () => {
           casts: processEnumData(castRes, 'casts'),
           ranks: processEnumData(rankRes, 'ranks'),
           statuses: processEnumData(statusRes, 'statuses'),
-          districts: processEnumData(districtRes, 'districts'),
-          locations: processEnumData(locationRes, 'locations'),
+          district: processEnumData(districtRes, 'districts'),
+          tehsil: processEnumData(locationRes, 'locations'),
           stations: processEnumData(stationsRes, 'stations')
         });
       } catch (error) {

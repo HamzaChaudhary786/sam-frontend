@@ -3,6 +3,7 @@ import { deleteEmployee } from "../../Employee/EmployeeApi";
 import { AlertTriangle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import EmployeeFilter from "../filter.jsx";
+import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
 
 const EmployeeGridTable = ({
   employees,
@@ -33,6 +34,10 @@ const EmployeeGridTable = ({
   const [filteredEmployees, setFilteredEmployees] = useState(employees || []);
   const [currentFilters, setCurrentFilters] = useState({});
 
+  // View Modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   const navigate = useNavigate();
 
   // Filter logic
@@ -52,12 +57,9 @@ const EmployeeGridTable = ({
     if (filters.city) {
       filtered = filtered.filter(
         (employee) =>
-          employee.address?.line2
+          `${employee.address?.line1} ${employee.address?.line2} ${employee.address?.muhala} ${employee.address?.tehsil}`
             ?.toLowerCase()
-            .includes(filters.city.toLowerCase()) ||
-          employee.address?.city
-            ?.toLowerCase()
-            .includes(filters.city.toLowerCase())
+            .includes(filters.city?.toLowerCase())
       );
     }
 
@@ -66,7 +68,7 @@ const EmployeeGridTable = ({
       filtered = filtered.filter((employee) =>
         employee.personalNumber
           ?.toLowerCase()
-          .includes(filters.personalNumber.toLowerCase())
+          .includes(filters.personalNumber?.toLowerCase())
       );
     }
 
@@ -119,8 +121,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-      ? 1
-      : 0;
+        ? 1
+        : 0;
   };
 
   const getSortIcon = (key) => {
@@ -206,6 +208,16 @@ const EmployeeGridTable = ({
     navigate("/statusassignment", { state: { employee } });
   };
 
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
   // Render functions
   const renderEditingCell = (employee, fieldKey, fieldType, enumType) => {
     const employeeEditingData = editingData[employee._id] || {};
@@ -223,6 +235,22 @@ const EmployeeGridTable = ({
     const baseInputClasses =
       "w-full px-2 py-1 border border-gray-300 rounded text-xs";
 
+    let placeHolder = fieldKey;
+    switch (fieldKey) {
+      case "address.line1":
+        placeHolder = "Address";
+        break;
+      case "address.line2":
+        placeHolder = "District";
+        break;
+      case "address.muhala":
+        placeHolder = "Mohalla";
+        break;
+      case "address.tehsil":
+        placeHolder = "Tehsil";
+        break;
+    }
+
     switch (fieldType) {
       case "select":
         const enumData = enums[enumType] || [];
@@ -231,7 +259,7 @@ const EmployeeGridTable = ({
             value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={`${baseInputClasses} min-w-24`}
-            placeholder={fieldKey}
+            placeholder={placeHolder}
             autoFocus
           >
             <option value="">Select...</option>
@@ -287,11 +315,12 @@ const EmployeeGridTable = ({
             className={`${baseInputClasses} min-w-32 min-h-16 resize-none`}
             autoFocus
             rows={2}
-            placeholder={fieldKey}
+            placeholder={placeHolder}
           />
         );
 
       default:
+
         return (
           <input
             type="text"
@@ -299,7 +328,7 @@ const EmployeeGridTable = ({
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
             className={`${baseInputClasses} min-w-24`}
             autoFocus
-            placeholder={fieldKey}
+            placeholder={placeHolder}
           />
         );
     }
@@ -330,9 +359,8 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                statusClasses[value] || statusClasses.default
-              }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
+                }`}
             >
               {displayName}
             </span>
@@ -344,7 +372,21 @@ const EmployeeGridTable = ({
         return value ? new Date(value).toLocaleDateString() : `${fieldKey} N/A`;
 
       default:
-        return value || `${fieldKey} N/A`;
+        {
+          switch (fieldKey) {
+            case "address.line1":
+              return value || `Address N/A`;
+            case "address.line2":
+              return value || `District N/A`;
+            case "address.muhala":
+              return value || `Mohalla N/A`;
+            case "address.tehsil":
+              return value || `Tehsil N/A`;
+
+            default:
+              return value || `${fieldKey} N/A`;
+          }
+        }
     }
   };
 
@@ -361,17 +403,16 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
-      isAdmin && isEditable
-        ? "cursor-pointer hover:bg-gray-100"
-        : "cursor-default"
-    }`;
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
+      ? "cursor-pointer hover:bg-gray-100"
+      : "cursor-default"
+      }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-      ? "Click Edit button to enable editing"
-      : "Double-click to edit";
+        ? "Click Edit button to enable editing"
+        : "Double-click to edit";
 
     return (
       <>
@@ -528,11 +569,10 @@ const EmployeeGridTable = ({
               <>
                 <button
                   onClick={() => toggleEditMode(employee._id)}
-                  className={`${buttonBaseClasses} ${
-                    isEditable
-                      ? "bg-orange-600 text-white hover:bg-orange-700"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
+                  className={`${buttonBaseClasses} ${isEditable
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
                   title={isEditable ? "Disable editing" : "Enable editing"}
                 >
                   {isEditable ? "Disable Edit" : "Edit"}
@@ -558,11 +598,19 @@ const EmployeeGridTable = ({
                   )}
               </>
             )}
+
+            <button
+              onClick={() => handleView(employee)}
+              className={`${actionButtonClasses} bg-green-700 text-white hover:bg-green-200`}
+            >
+              View Employee
+            </button>
+
             <button
               onClick={() => handleAssets(employee)}
               className={`${actionButtonClasses} bg-cyan-700 text-white hover:bg-cyan-200`}
             >
-              Employee Assets
+              Assets
             </button>
             <button
               onClick={() => handlePosting(employee)}
@@ -580,14 +628,21 @@ const EmployeeGridTable = ({
               onClick={() => handleAchievements(employee)}
               className={`${actionButtonClasses} bg-purple-700 text-white hover:bg-purple-200`}
             >
-              Employee Achievements
+              Achievements
             </button>
             <button
               onClick={() => handleDeductions(employee)}
               className={`${actionButtonClasses} bg-pink-700 text-white hover:bg-pink-200`}
             >
-              Deduction
+              Deductions
             </button>
+
+            {/* Employee View Modal */}
+            <EmployeeViewModal
+              isOpen={isViewModalOpen}
+              onClose={handleCloseViewModal}
+              employee={selectedEmployee}
+            />
           </>
         )}
       </div>
@@ -655,7 +710,7 @@ const EmployeeGridTable = ({
       {/* Grid Section */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Grid */}
-        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/95 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
+        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
           <div>Photo</div>
           <div>Personal #</div>
           <div>Name</div>
@@ -684,7 +739,7 @@ const EmployeeGridTable = ({
           return (
             <div
               key={employee._id}
-              className="grid grid-cols-9 grid-rows-3 gap-1 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider p-2 border-b border-gray-200"
+              className="grid grid-cols-9 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2"
             >
               {/* Photo - spans 2 rows */}
               <div className="row-span-2">{renderImageCell(employee)}</div>
@@ -702,7 +757,7 @@ const EmployeeGridTable = ({
               <div>{renderCell(employee, "dateOfBirth", "date")}</div>
 
               {/* Second row of data */}
-              <div className="col-start-1 row-start-3  border-b-2 border-black pb-3">
+              <div className="col-start-1 row-start-3 ">
                 {renderCell(employee, "status", "select", "statuses")}
               </div>
               <div className="col-start-2">
@@ -724,20 +779,21 @@ const EmployeeGridTable = ({
                 {renderCell(employee, "address.muhala", "input")}
               </div>
               <div className="col-start-8">
-                {renderCell(employee, "address.tehsil", "select", "locations")}
+                {renderCell(employee, "address.tehsil", "select", "tehsil")}
               </div>
               <div className="col-start-9">
-                {renderCell(employee, "address.line2", "select", "districts")}
+                {renderCell(employee, "address.line2", "select", "district")}
               </div>
 
 
               {/* Action buttons row */}
-              <div className="col-start-2 row-start-3 col-span-8 border-b-2 border-black pb-3">
+              <div className="col-start-2 row-start-3 col-span-8 ">
                 {renderActionButtons(employee, isEditing, isEditable)}
               </div>
             </div>
           );
         })}
+        {/* End Employee Rows */}
 
         {/* Confirmation Modal */}
         {confirmPopup && renderConfirmationModal()}
