@@ -9,9 +9,10 @@ const ConsumeRoundsModal = ({
   loading,
 }) => {
   const [formData, setFormData] = useState({
-    rounds: "",
-    consumeDate: "",
-    description: "",
+    roundsConsumed: "",
+    date: "",
+    reason: "",
+    isCompleteConsumption: false,
   });
 
   useEffect(() => {
@@ -19,12 +20,34 @@ const ConsumeRoundsModal = ({
       // Reset form when modal opens
       const today = new Date().toISOString().split('T')[0];
       setFormData({
-        rounds: "",
-        consumeDate: today,
-        description: "",
+        roundsConsumed: "",
+        date: today,
+        reason: "",
+        isCompleteConsumption: false,
       });
     }
   }, [isOpen]);
+
+  // CALCULATE TOTALS FROM ROUND HISTORY
+  const calculateRoundTotals = (assignment) => {
+    if (!assignment?.roundHistory || !Array.isArray(assignment.roundHistory)) {
+      return { assignedRounds: 0, consumedRounds: 0 };
+    }
+
+    let totalAssigned = 0;
+    let totalConsumed = 0;
+
+    assignment.roundHistory.forEach(entry => {
+      if (entry.assignedRounds) {
+        totalAssigned += parseInt(entry.assignedRounds) || 0;
+      }
+      if (entry.consumedRounds) {
+        totalConsumed += parseInt(entry.consumedRounds) || 0;
+      }
+    });
+
+    return { assignedRounds: totalAssigned, consumedRounds: totalConsumed };
+  };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -35,37 +58,48 @@ const ConsumeRoundsModal = ({
 
   const handleClose = () => {
     setFormData({
-      rounds: "",
-      consumeDate: "",
-      description: "",
+      roundsConsumed: "",
+      date: "",
+      reason: "",
+      isCompleteConsumption: false,
     });
     onClose();
   };
 
   const handleSave = () => {
     // Basic validation
-    if (!formData.rounds || !formData.consumeDate || !formData.description) {
+    if (!formData.roundsConsumed || !formData.date || !formData.reason) {
       alert("Please fill in all required fields");
       return;
     }
 
-    const rounds = parseInt(formData.rounds);
+    const rounds = parseInt(formData.roundsConsumed);
     if (rounds <= 0) {
       alert("Number of rounds must be greater than 0");
       return;
     }
 
-    const availableRounds = (assignment.assignedRounds || 0) - (assignment.consumedRounds || 0);
+    // Calculate available rounds from round history
+    const { assignedRounds, consumedRounds } = calculateRoundTotals(assignment);
+    const availableRounds = assignedRounds - consumedRounds;
+
     if (rounds > availableRounds) {
       alert(`Cannot consume more than ${availableRounds} available rounds`);
       return;
     }
 
-    // Pass assignment ID and form data to parent
+    // Convert date to ISO string if it's not already
+    const dateValue = formData.date.includes('T') ? formData.date : `${formData.date}T00:00:00.000Z`;
+
+    // Check if this consumption will use all available rounds
+    const isCompleteConsumption = rounds >= availableRounds;
+
+    // Pass data in the format expected by the API
     onSave({
-      assignmentId: assignment._id,
-      ...formData,
-      rounds: rounds,
+      roundsConsumed: rounds,
+      reason: formData.reason,
+      date: dateValue,
+      isCompleteConsumption: isCompleteConsumption,
     });
   };
 
@@ -89,7 +123,19 @@ const ConsumeRoundsModal = ({
 
   if (!isOpen || !assignment) return null;
 
-  const availableRounds = (assignment.assignedRounds || 0) - (assignment.consumedRounds || 0);
+  // Calculate round totals from round history
+  const { assignedRounds, consumedRounds } = calculateRoundTotals(assignment);
+  const availableRounds = assignedRounds - consumedRounds;
+
+  // Debug log
+  console.log("🔍 Round calculation:", {
+    roundHistory: assignment.roundHistory,
+    calculated: { assignedRounds, consumedRounds, availableRounds },
+    original: {
+      assignedRounds: assignment.assignedRounds,
+      consumedRounds: assignment.consumedRounds
+    }
+  });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -151,61 +197,119 @@ const ConsumeRoundsModal = ({
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Consume Form */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Rounds to Consume *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max={availableRounds}
-                  value={formData.rounds}
-                  onChange={(e) => handleInputChange("rounds", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  placeholder={`Enter number of rounds (max: ${availableRounds})`}
-                  disabled={availableRounds <= 0}
-                  required
-                />
-                {formData.rounds && parseInt(formData.rounds) > availableRounds && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Cannot consume more than {availableRounds} available rounds
+              {/* Round Summary - Now calculated from round history */}
+              <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Assigned</p>
+                  <p className="text-lg font-semibold text-blue-600">
+                    {assignedRounds}
                   </p>
-                )}
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Consumed</p>
+                  <p className="text-lg font-semibold text-red-600">
+                    {consumedRounds}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Available</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    {availableRounds}
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Consumption Date *
-                </label>
-                <input
-                  type="date"
-                  value={formData.consumeDate}
-                  onChange={(e) => handleInputChange("consumeDate", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  disabled={availableRounds <= 0}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description *
-                </label>
-                <textarea
-                  rows="3"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  placeholder="Enter reason for consuming rounds (e.g., training, practice, etc.)..."
-                  disabled={availableRounds <= 0}
-                  required
-                />
-              </div>
+              {/* Round History Display */}
+              {assignment.roundHistory && assignment.roundHistory.length > 0 && (
+                <div className="pt-3 border-t border-gray-200">
+                  <h5 className="text-xs font-medium text-gray-600 mb-2">Recent Round History:</h5>
+                  <div className="max-h-24 overflow-y-auto">
+                    {assignment.roundHistory.slice(-3).map((entry, index) => (
+                      <div key={entry._id || index} className="text-xs text-gray-500 mb-1">
+                        <span className="font-medium">{entry.Reason}</span>
+                        {parseInt(entry.assignedRounds) > 0 && (
+                          <span className="text-blue-600"> (+{entry.assignedRounds} assigned)</span>
+                        )}
+                        {parseInt(entry.consumedRounds) > 0 && (
+                          <span className="text-red-600"> (-{entry.consumedRounds} consumed)</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {availableRounds <= 0 ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="text-yellow-600 mr-2">⚠️</div>
+                  <div>
+                    <p className="text-sm text-yellow-700 font-medium">No Rounds Available</p>
+                    <p className="text-xs text-yellow-600">
+                      All assigned rounds have been consumed. No rounds available for consumption.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Consume Form */
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Rounds to Consume *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={availableRounds}
+                    value={formData.roundsConsumed}
+                    onChange={(e) => handleInputChange("roundsConsumed", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder={`Enter number of rounds (max: ${availableRounds})`}
+                    required
+                  />
+                  {formData.roundsConsumed && parseInt(formData.roundsConsumed) > availableRounds && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Cannot consume more than {availableRounds} available rounds
+                    </p>
+                  )}
+                  {formData.roundsConsumed && parseInt(formData.roundsConsumed) === availableRounds && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      ℹ️ This will consume all remaining rounds and mark the assignment as complete
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Consumption Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Consumption *
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={formData.reason}
+                    onChange={(e) => handleInputChange("reason", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Enter reason for consuming rounds (e.g., training exercise, practice session, qualification test, etc.)..."
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="flex justify-end space-x-3 pt-4 border-t">

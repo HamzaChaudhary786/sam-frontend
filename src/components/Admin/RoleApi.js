@@ -1,9 +1,10 @@
 // api/RoleApi.js
 import axios from 'axios';
+import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
-const BASE_URL = 'http://localhost:5000/api/roles';
+const BASE_URL = `${BACKEND_URL}/roles`;
 
 export const roleApi = {
   // Create role

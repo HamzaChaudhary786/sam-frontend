@@ -118,13 +118,15 @@ const TransferReturnModal = ({
   employees,
   loading,
 }) => {
+  // FIXED: Use correct field names that match API expectations
   const [formData, setFormData] = useState({
     action: "",
-    transferDate: "",
-    description: "",
+    date: "",           // Changed from 'transferDate' to 'date'
+    reason: "",         // Changed from 'description' to 'reason'
     newEmployeeId: "",
+    condition: "",      // Changed from "Good" to empty string for placeholder
+    notes: "",          // Added notes field for additional info
   });
-
 
   useEffect(() => {
     if (isOpen) {
@@ -132,9 +134,11 @@ const TransferReturnModal = ({
       const today = new Date().toISOString().split('T')[0];
       setFormData({
         action: "",
-        transferDate: today,
-        description: "",
+        date: today,        // Use 'date' instead of 'transferDate'
+        reason: "",         // Use 'reason' instead of 'description'
         newEmployeeId: "",
+        condition: "",      // Start with empty string for placeholder
+        notes: "",
       });
     }
   }, [isOpen]);
@@ -157,16 +161,18 @@ const TransferReturnModal = ({
   const handleClose = () => {
     setFormData({
       action: "",
-      transferDate: "",
-      description: "",
+      date: "",
+      reason: "",
       newEmployeeId: "",
+      condition: "",      // Reset to empty string
+      notes: "",
     });
     onClose();
   };
 
   const handleSave = () => {
     // Basic validation
-    if (!formData.action || !formData.transferDate || !formData.description) {
+    if (!formData.action || !formData.date || !formData.reason) {
       alert("Please fill in all required fields");
       return;
     }
@@ -191,11 +197,26 @@ const TransferReturnModal = ({
       }
     }
 
-    // Pass assignment ID and form data to parent
-    onSave({
-      assignmentId: assignment._id,
-      ...formData,
-    });
+    // Convert date to ISO string if needed
+    const dateValue = formData.date.includes('T') ? formData.date : `${formData.date}T00:00:00.000Z`;
+
+    // FIXED: Pass data in the correct format expected by AssetList.jsx
+    const saveData = {
+      action: formData.action,
+      date: dateValue,
+      reason: formData.reason,
+      condition: formData.condition,
+      notes: formData.notes,
+    };
+
+    // Add transfer-specific fields
+    if (formData.action === "transfer") {
+      saveData.newEmployeeId = formData.newEmployeeId;
+    }
+
+    console.log("🚀 Sending transfer/return data:", saveData);
+
+    onSave(saveData);
   };
 
   const getAssetNames = (assets) => {
@@ -231,7 +252,6 @@ const TransferReturnModal = ({
 
   // Enhanced safety check for employees prop with detailed logging
   const safeEmployees = (() => {
-    
     if (!employees) {
       console.warn("No employees prop provided");
       return [];
@@ -241,8 +261,6 @@ const TransferReturnModal = ({
       console.warn("Employees prop is not an array:", typeof employees);
       return [];
     }
-    
-   
     
     const validEmployees = employees.filter(emp => {
       // Check for your specific employee structure
@@ -256,22 +274,17 @@ const TransferReturnModal = ({
       return isValid;
     });
     
-    
     return validEmployees;
   })();
 
   // Prepare employee options for SearchableSelect (exclude current employee)
   const employeeOptions = (() => {
-   
-    
     const currentEmployeeId = assignment.employee?._id;
 
-    
     const availableEmployees = safeEmployees.filter(emp => {
       const shouldInclude = emp._id !== currentEmployeeId;
       return shouldInclude;
     });
-    
     
     const options = [
       { value: "", label: "Select Employee" },
@@ -288,8 +301,6 @@ const TransferReturnModal = ({
         const label = fullName || "Unknown Employee";
         const subtitle = employee.personalNumber || employee.employeeId || employee.cnic || "No ID";
         
-        console.log(`Creating option: ${employee._id} - ${label} - ${subtitle}`);
-        
         return {
           value: employee._id,
           label: label,
@@ -298,7 +309,6 @@ const TransferReturnModal = ({
       }),
     ];
     
-    console.log("Final employee options:", options);
     return options;
   })();
 
@@ -306,6 +316,14 @@ const TransferReturnModal = ({
     { value: "", label: "Select Action" },
     { value: "return", label: "Return Asset" },
     { value: "transfer", label: "Transfer Asset" },
+  ];
+
+  const conditionOptions = [
+    { value: "Excellent", label: "Excellent" },
+    { value: "Good", label: "Good" },
+    { value: "Fair", label: "Fair" },
+    { value: "Poor", label: "Poor" },
+    { value: "Damaged", label: "Damaged" },
   ];
 
   return (
@@ -411,31 +429,75 @@ const TransferReturnModal = ({
                 </label>
                 <input
                   type="date"
-                  value={formData.transferDate}
-                  onChange={(e) => handleInputChange("transferDate", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description *
+                  Asset Condition *
+                </label>
+                <input
+                  type="text"
+                  value={formData.condition}
+                  onChange={(e) => handleInputChange("condition", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter asset condition (e.g., Good, Fair, Excellent, etc.)"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason *
                 </label>
                 <textarea
                   rows="3"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.reason}
+                  onChange={(e) => handleInputChange("reason", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={
                     formData.action === "transfer" 
-                      ? "Enter reason for transfer..." 
-                      : "Enter reason for return..."
+                      ? "Enter reason for transfer (e.g., department change, role reassignment)..." 
+                      : "Enter reason for return (e.g., project completion, equipment replacement)..."
                   }
                   required
                 />
               </div>
             </div>
+
+            {/* Summary Preview */}
+            {formData.action && (
+              <div className={`rounded-lg p-3 border ${
+                formData.action === "transfer" 
+                  ? "bg-blue-50 border-blue-200" 
+                  : "bg-orange-50 border-orange-200"
+              }`}>
+                <h5 className={`text-sm font-medium mb-2 ${
+                  formData.action === "transfer" ? "text-blue-800" : "text-orange-800"
+                }`}>
+                  {formData.action === "transfer" ? "Transfer" : "Return"} Summary:
+                </h5>
+                <div className={`text-sm ${
+                  formData.action === "transfer" ? "text-blue-700" : "text-orange-700"
+                }`}>
+                  <p>• Asset: <span className="font-medium">{getAssetNames(assignment.asset)}</span></p>
+                  <p>• From: <span className="font-medium">{getEmployeeName(assignment.employee)}</span></p>
+                  {formData.action === "transfer" && formData.newEmployeeId && (
+                    <p>• To: <span className="font-medium">
+                      {employeeOptions.find(emp => emp.value === formData.newEmployeeId)?.label || "Selected Employee"}
+                    </span></p>
+                  )}
+                  <p>• Condition: <span className="font-medium">{formData.condition}</span></p>
+                  {formData.reason && (
+                    <p>• Reason: <span className="font-medium">{formData.reason}</span></p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="flex justify-end space-x-3 pt-4 border-t">

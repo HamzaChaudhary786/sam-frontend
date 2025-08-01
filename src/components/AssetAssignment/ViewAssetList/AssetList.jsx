@@ -1,4 +1,4 @@
-// AssetList.jsx - Clean production version
+// AssetList.jsx - Updated with new API integration
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { 
@@ -7,7 +7,12 @@ import {
   bulkDeleteAssetAssignments,
   bulkApproveAssetAssignments,
   approveAssetAssignment,
-  processAndFilterAssignments
+  processAndFilterAssignments,
+  // NEW: Import the specialized action functions
+  issueRoundsToAssignment,
+  consumeRoundsFromAssignment,
+  transferAssetAssignment,
+  returnAssetAssignment
 } from "../AssetApi.js";
 import { getAssetTypesWithEnum } from "../TypeLookup.js";
 import { role_admin } from "../../../constants/Enum.js";
@@ -16,6 +21,7 @@ import AssetTable from "../AssetTable/AssetTable.jsx";
 import IssueRoundsModal from "../IssueRound.jsx";
 import ConsumeRoundsModal from "../ConsumeRound.jsx";
 import TransferReturnModal from "../TransferAsset.jsx";
+import { BACKEND_URL } from "../../../constants/api.js";
 
 const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
@@ -85,7 +91,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     setEmployeesError("");
 
     try {
-      const response = await fetch('http://localhost:5000/api/employee?limit=2000&page=1', {
+      const response = await fetch(`${BACKEND_URL}/employee?limit=2000&page=1`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +112,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
         if (result.pagination && result.pagination.hasNext && employeesData.length < result.pagination.totalEmployees) {
           if (result.pagination.totalEmployees <= 2000) {
             try {
-              const allEmployeesResponse = await fetch(`http://localhost:5000/api/employee?limit=${result.pagination.totalEmployees}&page=1`, {
+              const allEmployeesResponse = await fetch(`${BACKEND_URL}/employee?limit=${result.pagination.totalEmployees}&page=1`, {
                 method: 'GET',
                 headers: {
                   'Content-Type': 'application/json',
@@ -269,16 +275,36 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     });
   };
 
-  // API call handlers for modals
+  // ===============================
+  // UPDATED: API call handlers for modals using new APIs
+  // ===============================
+
   const handleIssueRoundsSave = async (data) => {
+    if (!issueRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
     setModalLoading(true);
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Rounds issued successfully");
-      setIssueRoundsModal({ isOpen: false, assignment: null });
-      fetchAssetAssignments();
+      const issueData = {
+        roundsIssued: parseInt(data.roundsIssued) || 0,
+        reason: data.reason || "Rounds issued",
+        date: data.date || new Date().toISOString(),
+      };
+
+      const result = await issueRoundsToAssignment(
+        issueRoundsModal.assignment._id, 
+        issueData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds issued successfully");
+        setIssueRoundsModal({ isOpen: false, assignment: null });
+        fetchAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to issue rounds");
+      }
     } catch (error) {
       toast.error(error.message || "Failed to issue rounds");
     } finally {
@@ -287,14 +313,32 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   };
 
   const handleConsumeRoundsSave = async (data) => {
+    if (!consumeRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
     setModalLoading(true);
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Rounds consumed successfully");
-      setConsumeRoundsModal({ isOpen: false, assignment: null });
-      fetchAssetAssignments();
+      const consumeData = {
+        roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        reason: data.reason || "Rounds consumed",
+        date: data.date || new Date().toISOString(),
+        isCompleteConsumption: data.isCompleteConsumption || false,
+      };
+
+      const result = await consumeRoundsFromAssignment(
+        consumeRoundsModal.assignment._id,
+        consumeData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds consumed successfully");
+        setConsumeRoundsModal({ isOpen: false, assignment: null });
+        fetchAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to consume rounds");
+      }
     } catch (error) {
       toast.error(error.message || "Failed to consume rounds");
     } finally {
@@ -303,15 +347,68 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   };
 
   const handleTransferReturnSave = async (data) => {
+    if (!transferReturnModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
     setModalLoading(true);
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let result;
       
-      const action = data.action === "transfer" ? "transferred" : "returned";
-      toast.success(`Asset ${action} successfully`);
-      setTransferReturnModal({ isOpen: false, assignment: null });
-      fetchAssetAssignments();
+      if (data.action === "transfer") {
+        // Find the selected employee name for better messaging
+        const selectedEmployee = employees.find(emp => emp._id === data.newEmployeeId);
+        const newEmployeeName = selectedEmployee ? 
+          `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 
+          'another employee';
+
+        const transferData = {
+          newEmployeeId: data.newEmployeeId,
+          newEmployeeName: newEmployeeName,
+          reason: data.reason || "Asset transfer",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          transferRounds: parseInt(data.transferRounds) || 0,
+          notes: data.notes || "",
+        };
+
+        result = await transferAssetAssignment(
+          transferReturnModal.assignment._id,
+          transferData
+        );
+      } else if (data.action === "return") {
+        const returnData = {
+          reason: data.reason || "Asset return",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          returnRounds: parseInt(data.returnRounds) || 0,
+          notes: data.notes || "",
+          // Include round history if provided
+          roundHistory: data.roundHistory ? {
+            Date: data.date || new Date().toISOString(),
+            Reason: data.reason || "Asset return",
+            assignedRounds: "0",
+            consumedRounds: data.returnRounds?.toString() || "0"
+          } : null,
+        };
+
+        result = await returnAssetAssignment(
+          transferReturnModal.assignment._id,
+          returnData
+        );
+      } else {
+        throw new Error("Invalid action specified");
+      }
+
+      if (result.success) {
+        const action = data.action === "transfer" ? "transferred" : "returned";
+        toast.success(result.message || `Asset ${action} successfully`);
+        setTransferReturnModal({ isOpen: false, assignment: null });
+        fetchAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to process request");
+      }
     } catch (error) {
       toast.error(error.message || "Failed to process request");
     } finally {

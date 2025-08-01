@@ -239,7 +239,7 @@ export const createAssetAssignment = async (assignmentData) => {
   }
 };
 
-// Update asset assignment
+// Update asset assignment - Enhanced version with more options
 export const updateAssetAssignment = async (assignmentId, assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
@@ -404,6 +404,236 @@ export const getPendingAssetApprovals = async (filters = {}) => {
     }
   } catch (error) {
     console.error("Error fetching pending asset approvals:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ================================
+// NEW ROUND HISTORY APIs
+// ================================
+
+// Add round history to an asset assignment
+export const addRoundHistory = async (assignmentId, roundData) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/round-history/${assignmentId}/round-history`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Date: roundData.date || new Date().toISOString(),
+          Reason: roundData.reason,
+          assignedRounds: roundData.assignedRounds.toString(),
+          consumedRounds: roundData.consumedRounds.toString(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data.data || data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to add round history",
+      };
+    }
+  } catch (error) {
+    console.error("Error adding round history:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ================================
+// SPECIALIZED ACTION FUNCTIONS
+// ================================
+
+// Issue rounds to an asset assignment
+export const issueRoundsToAssignment = async (assignmentId, issueData) => {
+  try {
+    // First, add the round history entry
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: issueData.date || new Date().toISOString(),
+      reason: issueData.reason || "Rounds issued",
+      assignedRounds: issueData.roundsIssued,
+      consumedRounds: 0, // No consumption when issuing
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Then update the assignment with the new round data
+    const updateData = {
+      // Add any other fields you need to update
+      lastRoundIssueDate: issueData.date || new Date().toISOString(),
+      lastRoundIssueReason: issueData.reason || "Rounds issued",
+      // You might want to update total available rounds here
+      // totalAvailableRounds: existingRounds + issueData.roundsIssued,
+    };
+
+    const updateResult = await updateAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundHistory: roundHistoryResult.data,
+        },
+        message: `${issueData.roundsIssued} rounds issued successfully`,
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error issuing rounds:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Consume rounds from an asset assignment
+export const consumeRoundsFromAssignment = async (assignmentId, consumeData) => {
+  try {
+    // Add the round history entry for consumption
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: consumeData.date || new Date().toISOString(),
+      reason: consumeData.reason || "Rounds consumed",
+      assignedRounds: 0, // No new assignment when consuming
+      consumedRounds: consumeData.roundsConsumed,
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Update the assignment with consumption data
+    const updateData = {
+      lastRoundConsumeDate: consumeData.date || new Date().toISOString(),
+      lastRoundConsumeReason: consumeData.reason || "Rounds consumed",
+      // Mark as consumed if this is a complete consumption
+      ...(consumeData.isCompleteConsumption && {
+        consumedDate: consumeData.date || new Date().toISOString(),
+        consumedReason: consumeData.reason || "Rounds consumed",
+      }),
+    };
+
+    const updateResult = await updateAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundHistory: roundHistoryResult.data,
+        },
+        message: `${consumeData.roundsConsumed} rounds consumed successfully`,
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error consuming rounds:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Transfer asset to another employee
+export const transferAssetAssignment = async (assignmentId, transferData) => {
+  try {
+    // Add round history entry for transfer
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: transferData.date || new Date().toISOString(),
+      reason: `Asset transferred to ${transferData.newEmployeeName || 'another employee'}`,
+      assignedRounds: transferData.transferRounds || 0,
+      consumedRounds: 0,
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Update the assignment with transfer information
+    const updateData = {
+      status: "Transferred",
+      transferredDate: transferData.date || new Date().toISOString(),
+      transferredTo: transferData.newEmployeeId,
+      transferredBy: getCurrentUserId(),
+      transferReason: transferData.reason || "Asset transfer",
+      condition: transferData.condition || "Good",
+      ...(transferData.notes && { notes: transferData.notes }),
+    };
+
+    const updateResult = await updateAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundHistory: roundHistoryResult.data,
+        },
+        message: "Asset transferred successfully",
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error transferring asset:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Return asset
+export const returnAssetAssignment = async (assignmentId, returnData) => {
+  try {
+    // Add round history entry for return (if any rounds are being returned)
+    if (returnData.returnRounds && returnData.returnRounds > 0) {
+      const roundHistoryResult = await addRoundHistory(assignmentId, {
+        date: returnData.date || new Date().toISOString(),
+        reason: "Asset returned with remaining rounds",
+        assignedRounds: 0,
+        consumedRounds: 0, // This might need adjustment based on your logic
+      });
+
+      if (!roundHistoryResult.success) {
+        return roundHistoryResult;
+      }
+    }
+
+    // Update the assignment with return information
+    const updateData = {
+      status: "Returned",
+      returnedDate: returnData.date || new Date().toISOString(),
+      returnedBy: getCurrentUserId(),
+      returnReason: returnData.reason || "Asset return",
+      condition: returnData.condition || "Good",
+      ...(returnData.notes && { notes: returnData.notes }),
+      // Add any round history if provided
+      ...(returnData.roundHistory && {
+        roundHistory: Array.isArray(returnData.roundHistory) 
+          ? returnData.roundHistory 
+          : [returnData.roundHistory]
+      }),
+    };
+
+    const updateResult = await updateAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: updateResult.data,
+        message: "Asset returned successfully",
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error returning asset:", error);
     return { success: false, error: error.message };
   }
 };
