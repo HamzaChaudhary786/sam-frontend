@@ -1,9 +1,10 @@
 // api/EmployeeApi.js
 import axios from 'axios';
+import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
-const BASE_URL = 'http://localhost:5000/api/employee';
+const BASE_URL = `${BACKEND_URL}/employee`;
 
 export const employeeApi = {
   // Get all employees with pagination

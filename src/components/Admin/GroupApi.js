@@ -1,9 +1,10 @@
 // api/GroupApi.js
 import axios from 'axios';
+import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
-const BASE_URL = 'http://localhost:5000/api/group';
+const BASE_URL = `${BACKEND_URL}/group`;
 
 export const groupApi = {
   // Create group

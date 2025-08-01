@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { deleteEmployee } from "../../Employee/EmployeeApi";
 import { AlertTriangle, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import EmployeeFilter from "../filter.jsx";
+import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
 
 const EmployeeGridTable = ({
   employees,
@@ -20,17 +23,135 @@ const EmployeeGridTable = ({
   onNextImage,
   onImageClick,
   onImageUpload,
-  onRemoveImage
+  onRemoveImage,
 }) => {
-  // State to track which employees are in edit mode
-  const [editableEmployees, setEditableEmployees] = React.useState(new Set());
-  const [confirmPopup, setConfirmPopup] = useState(false)
-  const [deleteId, setDeleteId] = useState(null)
+  // State management for grid
+  const [editableEmployees, setEditableEmployees] = useState(new Set());
+  const [confirmPopup, setConfirmPopup] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+  // State management for filtering
+  const [filteredEmployees, setFilteredEmployees] = useState(employees || []);
+  const [currentFilters, setCurrentFilters] = useState({});
+
+  // View Modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  const navigate = useNavigate();
+
+  // Filter logic
+  const applyFilters = (filters) => {
+    let filtered = employees || [];
+
+    // Apply name filter
+    if (filters.name) {
+      filtered = filtered.filter((employee) =>
+        `${employee.firstName} ${employee.lastName}`
+          .toLowerCase()
+          .includes(filters.name.toLowerCase())
+      );
+    }
+
+    // Apply city filter
+    if (filters.city) {
+      filtered = filtered.filter(
+        (employee) =>
+          `${employee.address?.line1} ${employee.address?.line2} ${employee.address?.muhala} ${employee.address?.tehsil}`
+            ?.toLowerCase()
+            .includes(filters.city?.toLowerCase())
+      );
+    }
+
+    // Apply personal number filter
+    if (filters.personalNumber) {
+      filtered = filtered.filter((employee) =>
+        employee.personalNumber
+          ?.toLowerCase()
+          .includes(filters.personalNumber?.toLowerCase())
+      );
+    }
+
+    // Apply CNIC filter
+    if (filters.cnic) {
+      filtered = filtered.filter((employee) =>
+        employee.cnic?.includes(filters.cnic)
+      );
+    }
+
+    setFilteredEmployees(filtered);
+    setCurrentFilters(filters);
+  };
+
+  // Handle filter changes from the filter component
+  const handleFilterChange = (filters) => {
+    applyFilters(filters);
+  };
+
+  // Initialize filtered employees when employees data loads
+  useEffect(() => {
+    applyFilters(currentFilters);
+  }, [employees]);
+
+  // Helper functions
+  const getEnumDisplayName = (enumKey, valueId) => {
+    if (!valueId) return `${enumKey} N/A`;
+    if (typeof valueId === "object" && valueId?.name) return valueId.name;
+
+    const enumData = enums[enumKey];
+    if (Array.isArray(enumData)) {
+      const item = enumData.find((item) => item._id === valueId);
+      return item?.name || valueId || `${enumKey} N/A`;
+    }
+    return valueId || `${enumKey} N/A`;
+  };
+
+  const getEmployeeImage = (employee, index = 0) => {
+    if (Array.isArray(employee.profileUrl)) {
+      return (
+        employee.profileUrl[index] ||
+        employee.profileUrl[0] ||
+        "/default-avatar.png"
+      );
+    }
+    return employee.profileUrl || "/default-avatar.png";
+  };
+
+  const getImageCount = (employee) => {
+    return Array.isArray(employee.profileUrl)
+      ? employee.profileUrl.length
+      : employee.profileUrl
+        ? 1
+        : 0;
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === "asc" ? "↑" : "↓";
+    }
+    return "";
+  };
+
+  const getNestedValue = (employee, fieldPath, editingData) => {
+    const employeeEditingData = editingData[employee._id] || {};
+
+    if (employeeEditingData[fieldPath] !== undefined) {
+      return employeeEditingData[fieldPath];
+    }
+
+    const pathParts = fieldPath.split(".");
+    let value = employee;
+    for (const part of pathParts) {
+      value = value?.[part];
+    }
+    return value || "";
+  };
+
+  // Event handlers
   const toggleEditMode = (employeeId) => {
     const newEditableEmployees = new Set(editableEmployees);
     if (newEditableEmployees.has(employeeId)) {
       newEditableEmployees.delete(employeeId);
-      // If currently editing this employee, stop editing and clear data
       if (editingCell?.rowId === employeeId) {
         onCancelEditing(employeeId);
       }
@@ -40,83 +161,105 @@ const EmployeeGridTable = ({
     setEditableEmployees(newEditableEmployees);
   };
 
-  // Handle cancel editing for an employee
   const handleCancelEditing = (employee) => {
     onCancelEditing(employee._id);
   };
 
-  // Helper functions
-  const getEnumDisplayName = (enumKey, valueId) => {
-    if (!valueId) return "N/A";
-    if (typeof valueId === "object" && valueId?.name) return valueId.name;
-
-    const enumData = enums[enumKey];
-    if (Array.isArray(enumData)) {
-      const item = enumData.find(item => item._id === valueId);
-      return item?.name || valueId || "N/A";
-    }
-    return valueId || "N/A";
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setConfirmPopup(true);
   };
 
-  const getEmployeeImage = (employee, index = 0) => {
-    if (Array.isArray(employee.profileUrl)) {
-      return employee.profileUrl[index] || employee.profileUrl[0] || "/default-avatar.png";
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteEmployee(deleteId);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+    } finally {
+      setConfirmPopup(false);
+      setDeleteId(null);
     }
-    return employee.profileUrl || "/default-avatar.png";
   };
 
-  const getImageCount = (employee) => {
-    return Array.isArray(employee.profileUrl)
-      ? employee.profileUrl.length
-      : employee.profileUrl ? 1 : 0;
+  const handleCancelDelete = () => {
+    setConfirmPopup(false);
+    setDeleteId(null);
   };
 
-  const getSortIcon = (key) => {
-    if (sortConfig.key === key) {
-      return sortConfig.direction === 'asc' ? '↑' : '↓';
-    }
-    return '';
+  // Navigation handlers
+  const handleAchievements = (employee) => {
+    navigate("/achievements", { state: { employee } });
   };
 
-  // Helper function to get nested value (for address fields)
-  const getNestedValue = (employee, fieldPath, editingData) => {
-    const employeeEditingData = editingData[employee._id] || {};
-
-    // Check if we have editing data for this field
-    if (employeeEditingData[fieldPath] !== undefined) {
-      return employeeEditingData[fieldPath];
-    }
-
-    // Get the original value
-    const pathParts = fieldPath.split('.');
-    let value = employee;
-    for (const part of pathParts) {
-      value = value?.[part];
-    }
-    return value || '';
+  const handleDeductions = (employee) => {
+    navigate("/deductions", { state: { employee } });
   };
 
-  // Render editable cell
+  const handleAssets = (employee) => {
+    navigate("/assetassignment", { state: { employee } });
+  };
+
+  const handlePosting = (employee) => {
+    navigate("/stationassignment", { state: { employee } });
+  };
+
+  const handleStatus = (employee) => {
+    navigate("/statusassignment", { state: { employee } });
+  };
+
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  // Render functions
   const renderEditingCell = (employee, fieldKey, fieldType, enumType) => {
-    // Get the editing data for this specific employee
     const employeeEditingData = editingData[employee._id] || {};
-
     let value;
-    if (fieldKey.includes('.')) {
-      // Handle nested fields like address.line1
+
+    if (fieldKey.includes(".")) {
       value = getNestedValue(employee, fieldKey, editingData);
     } else {
-      value = employeeEditingData[fieldKey] !== undefined ? employeeEditingData[fieldKey] : employee[fieldKey];
+      value =
+        employeeEditingData[fieldKey] !== undefined
+          ? employeeEditingData[fieldKey]
+          : employee[fieldKey];
+    }
+
+    const baseInputClasses =
+      "w-full px-2 py-1 border border-gray-300 rounded text-xs";
+
+    let placeHolder = fieldKey;
+    switch (fieldKey) {
+      case "address.line1":
+        placeHolder = "Address";
+        break;
+      case "address.line2":
+        placeHolder = "District";
+        break;
+      case "address.muhala":
+        placeHolder = "Mohalla";
+        break;
+      case "address.tehsil":
+        placeHolder = "Tehsil";
+        break;
     }
 
     switch (fieldType) {
-      case 'select':
+      case "select":
         const enumData = enums[enumType] || [];
         return (
           <select
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-24"
+            className={`${baseInputClasses} min-w-24`}
+            placeholder={placeHolder}
             autoFocus
           >
             <option value="">Select...</option>
@@ -128,12 +271,12 @@ const EmployeeGridTable = ({
           </select>
         );
 
-      case 'serviceType':
+      case "serviceType":
         return (
           <select
-            value={value || 'federal'}
+            value={value || "provincial"}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+            className={baseInputClasses}
             autoFocus
           >
             <option value="federal">Federal</option>
@@ -141,16 +284,16 @@ const EmployeeGridTable = ({
           </select>
         );
 
-      case 'date':
-        let dateValue = '';
+      case "date":
+        let dateValue = "";
         if (value) {
           try {
             const date = new Date(value);
             if (!isNaN(date.getTime())) {
-              dateValue = date.toISOString().split('T')[0];
+              dateValue = date.toISOString().split("T")[0];
             }
           } catch (error) {
-            console.error('Date formatting error:', error);
+            console.error("Date formatting error:", error);
           }
         }
 
@@ -159,108 +302,144 @@ const EmployeeGridTable = ({
             type="date"
             value={dateValue}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-32"
+            className={`${baseInputClasses} min-w-32`}
             autoFocus
           />
         );
 
-      case 'textarea':
+      case "textarea":
         return (
           <textarea
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-32 min-h-16 resize-none"
+            className={`${baseInputClasses} min-w-32 min-h-16 resize-none`}
             autoFocus
             rows={2}
+            placeholder={placeHolder}
           />
         );
 
       default:
+
         return (
           <input
             type="text"
-            value={value || ''}
+            value={value || ""}
             onChange={(e) => onCellChange(fieldKey, e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded text-xs min-w-24"
+            className={`${baseInputClasses} min-w-24`}
             autoFocus
+            placeholder={placeHolder}
           />
         );
     }
   };
 
-  // Render display cell
   const renderDisplayCell = (employee, fieldKey, fieldType, enumType) => {
-    // Get the editing data for this specific employee, show edited value if exists
     let value;
-    if (fieldKey.includes('.')) {
-      // Handle nested fields like address.line1
+    if (fieldKey.includes(".")) {
       value = getNestedValue(employee, fieldKey, editingData);
     } else {
       const employeeEditingData = editingData[employee._id] || {};
-      value = employeeEditingData[fieldKey] !== undefined ? employeeEditingData[fieldKey] : employee[fieldKey];
+      value =
+        employeeEditingData[fieldKey] !== undefined
+          ? employeeEditingData[fieldKey]
+          : employee[fieldKey];
     }
 
     switch (fieldType) {
-      case 'select':
-        // Special handling for status to show colored badges
-        if (fieldKey === 'status') {
+      case "select":
+        if (fieldKey === "status") {
           const displayName = getEnumDisplayName(enumType, value);
+          const statusClasses = {
+            active: "bg-green-100 text-green-800",
+            retired: "bg-blue-100 text-blue-800",
+            terminated: "bg-red-100 text-red-800",
+            default: "bg-gray-100 text-gray-800",
+          };
+
           return (
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${value === "active" ? "bg-green-100 text-green-800" :
-              value === "retired" ? "bg-blue-100 text-blue-800" :
-                value === "terminated" ? "bg-red-100 text-red-800" :
-                  "bg-gray-100 text-gray-800"
-              }`}>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
+                }`}
+            >
               {displayName}
             </span>
           );
         }
         return getEnumDisplayName(enumType, value);
-      case 'date':
-        return value ? new Date(value).toLocaleDateString() : "N/A";
+
+      case "date":
+        return value ? new Date(value).toLocaleDateString() : `${fieldKey} N/A`;
+
       default:
-        return value || "N/A";
+        {
+          switch (fieldKey) {
+            case "address.line1":
+              return value || `Address N/A`;
+            case "address.line2":
+              return value || `District N/A`;
+            case "address.muhala":
+              return value || `Mohalla N/A`;
+            case "address.tehsil":
+              return value || `Tehsil N/A`;
+
+            default:
+              return value || `${fieldKey} N/A`;
+          }
+        }
     }
   };
 
-  // Render editable cell wrapper
   const renderCell = (employee, fieldKey, fieldType, enumType = null) => {
-    const isEditing = editingCell?.rowId === employee._id && editingCell?.fieldName === fieldKey;
+    const isEditing =
+      editingCell?.rowId === employee._id &&
+      editingCell?.fieldName === fieldKey;
     const isEditable = editableEmployees.has(employee._id);
 
-    // For nested fields, get the current value properly
     let currentValue;
-    if (fieldKey.includes('.')) {
+    if (fieldKey.includes(".")) {
       currentValue = getNestedValue(employee, fieldKey, editingData);
     } else {
       currentValue = employee[fieldKey];
     }
 
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
+      ? "cursor-pointer hover:bg-gray-100"
+      : "cursor-default"
+      }`;
+
+    const titleText = !isAdmin
+      ? "Read-only"
+      : !isEditable
+        ? "Click Edit button to enable editing"
+        : "Double-click to edit";
+
     return (
-      <td className="px-3 py-2 text-xs">
+      <>
         {isEditing ? (
           renderEditingCell(employee, fieldKey, fieldType, enumType)
         ) : (
           <div
-            className={`p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
-              }`}
-            onDoubleClick={() => isAdmin && isEditable && onStartEditing(employee._id, fieldKey, currentValue)}
-            title={
-              !isAdmin ? "Read-only" :
-                !isEditable ? "Click Edit button to enable editing" :
-                  "Double-click to edit"
+            className={cellClasses}
+            onDoubleClick={() =>
+              isAdmin &&
+              isEditable &&
+              onStartEditing(employee._id, fieldKey, currentValue)
             }
+            title={titleText}
           >
-            <div className="max-w-32 truncate" title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}>
+            <div
+              className="max-w-32 truncate"
+              title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}
+            >
               {renderDisplayCell(employee, fieldKey, fieldType, enumType)}
             </div>
           </div>
         )}
-      </td>
+      </>
     );
   };
 
-  // Render image cell
   const renderImageCell = (employee) => {
     const currentImageIndex = imageIndexes[employee._id] || 0;
     const totalImages = getImageCount(employee);
@@ -268,328 +447,369 @@ const EmployeeGridTable = ({
     const isEditable = editableEmployees.has(employee._id);
 
     return (
-      <td className="px-3 py-2">
-        <div className="relative">
-          <img
-            className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-            src={currentImage}
-            alt={`${employee.firstName} ${employee.lastName}`}
-            onClick={() => onImageClick({ image: currentImage, employee })}
-          />
+      <div className="relative">
+        <img
+          className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+          src={currentImage}
+          alt={`${employee.firstName} ${employee.lastName}`}
+          onClick={() => onImageClick({ image: currentImage, employee })}
+        />
 
-          {totalImages > 1 && (
-            <>
-              <button
-                onClick={() => onPrevImage(employee._id, totalImages)}
-                className="absolute -left-1 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-0.5 shadow-sm hover:bg-gray-100 transition-colors text-xs"
-                title="Previous image"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => onNextImage(employee._id, totalImages)}
-                className="absolute -right-1 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-0.5 shadow-sm hover:bg-gray-100 transition-colors text-xs"
-                title="Next image"
-              >
-                ›
-              </button>
+        {totalImages > 1 && (
+          <>
+            <button
+              onClick={() => onPrevImage(employee._id, totalImages)}
+              className="absolute -left-1 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-0.5 shadow-sm hover:bg-gray-100 transition-colors text-xs"
+              title="Previous image"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => onNextImage(employee._id, totalImages)}
+              className="absolute -right-1 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-0.5 shadow-sm hover:bg-gray-100 transition-colors text-xs"
+              title="Next image"
+            >
+              ›
+            </button>
+            <div
+              className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
+              style={{ fontSize: "8px" }}
+            >
+              {currentImageIndex + 1}/{totalImages}
+            </div>
+          </>
+        )}
+
+        {isAdmin && isEditable && (
+          <div className="absolute -bottom-2 -right-2 flex space-x-1">
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    onImageUpload(employee, file);
+                  }
+                  e.target.value = "";
+                }}
+                className="hidden"
+              />
               <div
-                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
-                style={{ fontSize: "8px" }}
+                className="bg-green-600 hover:bg-green-700 text-white rounded-full p-1 shadow-sm transition-colors"
+                title="Upload new image"
               >
-                {currentImageIndex + 1}/{totalImages}
-              </div>
-            </>
-          )}
-
-          {/* Image editing controls when in edit mode */}
-          {isAdmin && isEditable && (
-            <div className="absolute -bottom-2 -right-2 flex space-x-1">
-              {/* Upload new image button */}
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      onImageUpload(employee, file);
-                    }
-                    e.target.value = ''; // Reset input
-                  }}
-                  className="hidden"
-                />
-                <div className="bg-green-600 hover:bg-green-700 text-white rounded-full p-1 shadow-sm transition-colors" title="Upload new image">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-              </label>
-
-              {/* Remove current image button (only if more than 1 image) */}
-              {totalImages > 1 && (
-                <button
-                  onClick={() => onRemoveImage(employee, currentImageIndex)}
-                  className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-sm transition-colors"
-                  title="Remove current image"
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </td>
-    );
-  };
-
-  // Sortable header component
-  const SortableHeader = ({ sortKey, children, className = "" }) => (
-    <th
-      className={`px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${className}`}
-      onClick={() => onSort(sortKey)}
-    >
-      {children}
-      {getSortIcon(sortKey) && (
-        <span className="ml-1">{getSortIcon(sortKey)}</span>
-      )}
-    </th>
-  );
-
-
-  // const handleDelete = async (id) => {
-
-  //   await deleteEmployee(id)
-
-  // }
-
-
-  const handleDelete = (id) => {
-
-    setDeleteId(id)
-    setConfirmPopup(true)
-
-  }
-
-  const handleYes = async () => {
-    // Add your delete logic here
-    console.log("Deleting all employee data...");
-    await deleteEmployee(deleteId)
-    window.location.reload();
-    setConfirmPopup(false);
-  };
-
-  const handleNo = () => {
-    setConfirmPopup(false);
-  };
-
-  return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-black/95 text-white  text-lg font-bold">
-            <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Photo
-              </th>
-              <SortableHeader className="text-white" sortKey="personalNumber">Personal #</SortableHeader>
-              <SortableHeader className="text-white" sortKey="firstName">Name</SortableHeader>
-              <SortableHeader className="text-white" sortKey="fatherFirstName">Father's Name</SortableHeader>
-              <SortableHeader className="text-white" sortKey="cnic">CNIC</SortableHeader>
-              <SortableHeader className="text-white" sortKey="mobileNumber">Mobile</SortableHeader>
-              <SortableHeader className="text-white" sortKey="designation">Designation</SortableHeader>
-              <SortableHeader className="text-white" sortKey="serviceType">Service Type</SortableHeader>
-              <SortableHeader className="text-white" sortKey="dateOfBirth">Date of Birth</SortableHeader>
-              <SortableHeader className="text-white" sortKey="dateOfBirth"></SortableHeader>
-
-
-            </tr>
-            <tr>
-              <SortableHeader className="text-white" sortKey="grade">Grade</SortableHeader>
-              <SortableHeader className="text-white" sortKey="rank">Rank</SortableHeader>
-              <SortableHeader className="text-white" sortKey="cast">Cast</SortableHeader>
-              <SortableHeader className="text-white" sortKey="status">Status</SortableHeader>
-              <SortableHeader className="text-white" sortKey="stations">Station</SortableHeader>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Address
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Mohalla
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Tehsil
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                District
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium  uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-
-          </thead>
-          <tbody className=" " >
-            {employees?.map((employee) => {
-              const isEditing = editingCell?.rowId === employee._id;
-              const isEditable = editableEmployees.has(employee._id);
-
-              return (
-
-                <>
-                  <tr key={employee._id} className="hover:bg-gray-50">
-                    {/* Photo */}
-                    {renderImageCell(employee)}
-
-                    {/* Editable Fields */}
-                    {renderCell(employee, 'personalNumber', 'input')}
-                    {renderCell(employee, 'firstName', 'input')}
-                    {renderCell(employee, 'fatherFirstName', 'input')}
-                    {renderCell(employee, 'cnic', 'input')}
-                    {renderCell(employee, 'mobileNumber', 'input')}
-                    {renderCell(employee, 'designation', 'select', 'designations')}
-                    {renderCell(employee, 'serviceType', 'serviceType')}
-                    {renderCell(employee, 'dateOfBirth', 'date')}
-                  </tr>
-                  <tr className="border-b-4  w-full  border-blue-500 ">
-                    {renderCell(employee, 'grade', 'select', 'grades')}
-                    {renderCell(employee, 'rank', 'select', 'ranks')}
-                    {renderCell(employee, 'cast', 'select', 'casts')}
-                    {renderCell(employee, 'status', 'select', 'statuses')}
-                    {renderCell(employee, 'stations', 'select', 'stations')}
-                    {/* Address Fields - Now Editable */}
-                    {renderCell(employee, 'address.line1', 'textarea')}
-                    {renderCell(employee, 'address.muhala', 'input')}
-                    {renderCell(employee, 'address.tehsil', 'select', 'locations')}
-                    {renderCell(employee, 'address.line2', 'select', 'districts')}
-
-                    {/* Actions */}
-                    <td className="px-3 py-2">
-                      <div className="flex space-x-1">
-                        {isEditing ? (
-                          <>
-                            <button
-                              onClick={() => onSaveCell(employee)}
-                              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => handleCancelEditing(employee)}
-                              className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            {isAdmin && (
-                              <>
-                                <button
-                                  onClick={() => toggleEditMode(employee._id)}
-                                  className={`px-2 py-1 text-xs rounded transition-colors ${isEditable
-                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                    }`}
-                                  title={isEditable ? "Disable editing" : "Enable editing"}
-                                >
-                                  {isEditable ? 'Disable Edit' : 'Edit'}
-                                </button>
-
-                                <button
-                                  onClick={() => { handleDelete(employee?._id) }}
-                                  className="bg-red-500 py-1 px-2 text-xs text-white rounded"
-                                >
-                                  Delete
-                                </button>
-
-                                {/* Show Save All button if employee has pending changes */}
-                                {isEditable && editingData[employee._id] && Object.keys(editingData[employee._id]).length > 0 && (
-                                  <button
-                                    onClick={() => onSaveCell(employee)}
-                                    className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                                    title="Save all changes"
-                                  >
-                                    Save All
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-
-                  </tr>
-                  
-
-                </>
-              );
-            })}
-
-          </tbody>
-        </table>
-      </div>
-
-      <div>
-        {confirmPopup && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-full">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Confirm Deletion</h2>
-                </div>
-                <button
-                  onClick={handleNo}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
               </div>
+            </label>
 
-              {/* Content */}
-              <div className="p-6">
-                <p className="text-gray-700 text-base leading-relaxed mb-2">
-                  Are you sure you want to delete employee ?
-                </p>
-                <p className="text-sm text-red-600 font-medium">
-                  This action cannot be undone.
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 p-6 bg-gray-50 justify-end">
-                <button
-                  onClick={handleNo}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            {totalImages > 1 && (
+              <button
+                onClick={() => onRemoveImage(employee, currentImageIndex)}
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-sm transition-colors"
+                title="Remove current image"
+              >
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleYes}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-                >
-                  Delete Employee
-                </button>
-              </div>
-            </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
         )}
       </div>
+    );
+  };
 
-      {
-        employees.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No employees found</p>
+  const renderActionButtons = (employee, isEditing, isEditable) => {
+    const buttonBaseClasses = "px-2 py-1 text-xs rounded transition-colors";
+    const actionButtonClasses = "px-3 py-2 text-xs rounded-md transition";
+
+    return (
+      <div className="flex space-x-1">
+        {isEditing ? (
+          <>
+            <button
+              onClick={() => onSaveCell(employee)}
+              className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => handleCancelEditing(employee)}
+              className={`${buttonBaseClasses} bg-gray-600 text-white hover:bg-gray-700`}
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => toggleEditMode(employee._id)}
+                  className={`${buttonBaseClasses} ${isEditable
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  title={isEditable ? "Disable editing" : "Enable editing"}
+                >
+                  {isEditable ? "Disable Edit" : "Edit"}
+                </button>
+
+                <button
+                  onClick={() => handleDelete(employee?._id)}
+                  className={`${buttonBaseClasses} bg-red-500 text-white hover:bg-red-600`}
+                >
+                  Delete
+                </button>
+
+                {isEditable &&
+                  editingData[employee._id] &&
+                  Object.keys(editingData[employee._id]).length > 0 && (
+                    <button
+                      onClick={() => onSaveCell(employee)}
+                      className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
+                      title="Save all changes"
+                    >
+                      Save All
+                    </button>
+                  )}
+              </>
+            )}
+
+            <button
+              onClick={() => handleView(employee)}
+              className={`${actionButtonClasses} bg-green-700 text-white hover:bg-green-200`}
+            >
+              View Employee
+            </button>
+
+            <button
+              onClick={() => handleAssets(employee)}
+              className={`${actionButtonClasses} bg-cyan-700 text-white hover:bg-cyan-200`}
+            >
+              Assets
+            </button>
+            <button
+              onClick={() => handlePosting(employee)}
+              className={`${actionButtonClasses} bg-indigo-700 text-white hover:bg-indigo-200`}
+            >
+              Posting
+            </button>
+            <button
+              onClick={() => handleStatus(employee)}
+              className={`${actionButtonClasses} bg-teal-700 text-white hover:bg-teal-200`}
+            >
+              History
+            </button>
+            <button
+              onClick={() => handleAchievements(employee)}
+              className={`${actionButtonClasses} bg-purple-700 text-white hover:bg-purple-200`}
+            >
+              Achievements
+            </button>
+            <button
+              onClick={() => handleDeductions(employee)}
+              className={`${actionButtonClasses} bg-pink-700 text-white hover:bg-pink-200`}
+            >
+              Deductions
+            </button>
+
+            {/* Employee View Modal */}
+            <EmployeeViewModal
+              isOpen={isViewModalOpen}
+              onClose={handleCloseViewModal}
+              employee={selectedEmployee}
+            />
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderConfirmationModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 rounded-full">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Confirm Deletion
+            </h2>
           </div>
-        )
-      }
-    </div >
+          <button
+            onClick={handleCancelDelete}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <p className="text-gray-700 text-base leading-relaxed mb-2">
+            Are you sure you want to delete this employee?
+          </p>
+          <p className="text-sm text-red-600 font-medium">
+            This action cannot be undone.
+          </p>
+        </div>
+
+        <div className="flex gap-3 p-6 bg-gray-50 justify-end">
+          <button
+            onClick={handleCancelDelete}
+            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirmDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+          >
+            Delete Employee
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Main render
+  return (
+    <div>
+      {/* Filter Component */}
+      <EmployeeFilter
+        onFilterChange={handleFilterChange}
+        initialFilters={currentFilters}
+        totalEmployees={employees?.length || 0}
+        filteredCount={filteredEmployees.length}
+      />
+
+      {/* Grid Section */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        {/* Header Grid */}
+        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
+          <div>Photo</div>
+          <div>Personal #</div>
+          <div>Name</div>
+          <div>Father's Name</div>
+          <div>CNIC</div>
+          <div>Mobile</div>
+          <div>Designation</div>
+          <div>Service Type</div>
+          <div>Date of Birth</div>
+          <div>Status</div>
+          <div>Grade</div>
+          <div>Rank</div>
+          <div>Cast</div>
+          <div>Station</div>
+          <div>Address</div>
+          <div>Mohalla</div>
+          <div>Tehsil</div>
+          <div>District</div>
+        </div>
+
+        {/* Employee Rows */}
+        {filteredEmployees?.map((employee) => {
+          const isEditing = editingCell?.rowId === employee._id;
+          const isEditable = editableEmployees.has(employee._id);
+
+          return (
+            <div
+              key={employee._id}
+              className="grid grid-cols-9 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2"
+            >
+              {/* Photo - spans 2 rows */}
+              <div className="row-span-2">{renderImageCell(employee)}</div>
+
+              {/* First row of data */}
+              <div>{renderCell(employee, "personalNumber", "input")}</div>
+              <div>{renderCell(employee, "firstName", "input")}</div>
+              <div>{renderCell(employee, "fatherFirstName", "input")}</div>
+              <div>{renderCell(employee, "cnic", "input")}</div>
+              <div>{renderCell(employee, "mobileNumber", "input")}</div>
+              <div>
+                {renderCell(employee, "designation", "select", "designations")}
+              </div>
+              <div>{renderCell(employee, "serviceType", "serviceType")}</div>
+              <div>{renderCell(employee, "dateOfBirth", "date")}</div>
+
+              {/* Second row of data */}
+              <div className="col-start-1 row-start-3 ">
+                {renderCell(employee, "status", "select", "statuses")}
+              </div>
+              <div className="col-start-2">
+                {renderCell(employee, "grade", "select", "grades")}
+              </div>
+              <div className="col-start-3">
+                {renderCell(employee, "rank", "select", "ranks")}
+              </div>
+              <div className="col-start-4">
+                {renderCell(employee, "cast", "select", "casts")}
+              </div>
+              <div className="col-start-5">
+                {renderCell(employee, "stations", "select", "stations")}
+              </div>
+              <div className="col-start-6">
+                {renderCell(employee, "address.line1", "textarea")}
+              </div>
+              <div className="col-start-7">
+                {renderCell(employee, "address.muhala", "input")}
+              </div>
+              <div className="col-start-8">
+                {renderCell(employee, "address.tehsil", "select", "tehsil")}
+              </div>
+              <div className="col-start-9">
+                {renderCell(employee, "address.line2", "select", "district")}
+              </div>
+
+
+              {/* Action buttons row */}
+              <div className="col-start-2 row-start-3 col-span-8 ">
+                {renderActionButtons(employee, isEditing, isEditable)}
+              </div>
+            </div>
+          );
+        })}
+        {/* End Employee Rows */}
+
+        {/* Confirmation Modal */}
+        {confirmPopup && renderConfirmationModal()}
+
+        {/* Empty State */}
+        {filteredEmployees.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">
+              {Object.values(currentFilters).some((filter) => filter !== "")
+                ? "No employees match your filters"
+                : "No employees found"}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

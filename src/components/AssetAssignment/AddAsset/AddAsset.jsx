@@ -15,10 +15,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
 
   const [formData, setFormData] = useState({
     asset: [],
-    assignedRounds: "",
-    consumedRounds: "0",
-    consumedDate: "",
-    consumedReason: "",
+    assetRounds: {}, // Store rounds for each asset individually
     isApproved: false,
     approvalComment: "",
   });
@@ -55,10 +52,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
   const resetForm = () => {
     setFormData({
       asset: [],
-      assignedRounds: "",
-      consumedRounds: "0",
-      consumedDate: "",
-      consumedReason: "",
+      assetRounds: {},
       isApproved: false,
       approvalComment: "",
     });
@@ -87,7 +81,18 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : type === "number" ? (value === "" ? "" : Number(value)) : value,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  // Handle rounds change for specific assets
+  const handleRoundsChange = (assetId, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      assetRounds: {
+        ...prev.assetRounds,
+        [assetId]: value === "" ? "" : Number(value)
+      }
     }));
   };
 
@@ -103,23 +108,38 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
       setFormData((prevForm) => ({
         ...prevForm,
         asset: newSelection,
+        // Remove rounds data if asset is deselected
+        assetRounds: isSelected 
+          ? Object.fromEntries(Object.entries(prevForm.assetRounds).filter(([key]) => key !== assetId))
+          : prevForm.assetRounds
       }));
 
       return newSelection;
     });
   };
 
-  // Auto-populate rounds for weapons
+  // Get asset details
   const getAssetDetails = (assetId) => {
     const asset = availableAssets.find((a) => a._id === assetId);
     return asset;
   };
 
-  // Check if selected assets include rounds
-  const hasRounds = selectedAssets.some((assetId) => {
-    const asset = getAssetDetails(assetId);
-    return asset?.type === "round" || asset?.type === "weaponRound";
-  });
+  // Check if asset requires rounds
+  const assetRequiresRounds = (assetType) => {
+    return assetType === "weapons" || assetType === "pistol" || assetType === "round" || assetType === "weaponRound";
+  };
+
+  // Check if we have required rounds data for assets that need them
+  const hasRequiredRoundsData = () => {
+    const assetsNeedingRounds = selectedAssets.filter(assetId => {
+      const asset = getAssetDetails(assetId);
+      return assetRequiresRounds(asset?.type);
+    });
+    
+    return assetsNeedingRounds.every(assetId => 
+      formData.assetRounds[assetId] && formData.assetRounds[assetId] > 0
+    );
+  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -130,12 +150,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
       const submitData = {
         employee: employee._id,
         asset: selectedAssets,
-        assignedRounds: formData.assignedRounds || "0",
-        consumedRounds: formData.consumedRounds || "0",
-        ...(formData.consumedDate && { consumedDate: formData.consumedDate }),
-        ...(formData.consumedReason && {
-          consumedReason: formData.consumedReason,
-        }),
+        assetRounds: formData.assetRounds, // Send individual asset rounds
         // Only include approval fields when editing and user is admin
         ...(editingAsset && isAdmin && {
           isApproved: formData.isApproved,
@@ -152,8 +167,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
 
       if (result.success) {
         toast.success(
-          `Asset assignment ${editingAsset ? "updated" : "created"
-          } successfully`
+          `Asset assignment ${editingAsset ? "updated" : "created"} successfully`
         );
         resetForm();
         onSuccess();
@@ -185,15 +199,21 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
     if (editingAsset) {
       // Extract asset IDs from the editing asset
       const assetIds = editingAsset.asset?.map((a) => a._id || a) || [];
+      
+      // Build assetRounds object from existing data
+      const assetRounds = {};
+      if (editingAsset.assetRounds) {
+        Object.assign(assetRounds, editingAsset.assetRounds);
+      } else if (editingAsset.assignedRounds) {
+        // Fallback for old data structure - assign same rounds to all assets
+        assetIds.forEach(id => {
+          assetRounds[id] = editingAsset.assignedRounds;
+        });
+      }
 
       setFormData({
         asset: assetIds,
-        assignedRounds: editingAsset.assignedRounds || "",
-        consumedRounds: editingAsset.consumedRounds || "0",
-        consumedDate: editingAsset.consumedDate
-          ? new Date(editingAsset.consumedDate).toISOString().split("T")[0]
-          : "",
-        consumedReason: editingAsset.consumedReason || "",
+        assetRounds: assetRounds,
         isApproved: editingAsset.isApproved || false,
         approvalComment: editingAsset.approvalComment || "",
       });
@@ -295,16 +315,22 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                               {asset.name}
                             </span>
                             <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.type === "weapons"
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                asset.type === "weapons"
                                   ? "bg-red-100 text-red-800"
+                                  : asset.type === "pistol"
+                                  ? "bg-purple-100 text-purple-800"
                                   : asset.type === "round" || asset.type === "weaponRound"
-                                    ? "bg-orange-100 text-orange-800"
-                                    : "bg-blue-100 text-blue-800"
-                                }`}
+                                  ? "bg-orange-100 text-orange-800"
+                                  : asset.type === "vehicle" || asset.type === "vehicles"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
                             >
                               {asset.type}
                             </span>
                           </div>
+
                           {/* Weapon Number */}
                           {asset.type === "weapons" && asset.weaponNumber && (
                             <p className="text-xs text-gray-500">
@@ -320,8 +346,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                           )}
 
                           {/* Vehicle Number */}
-                          {(asset.type === "vehicle" ||
-                            asset.type === "vehicles") &&
+                          {(asset.type === "vehicle" || asset.type === "vehicles") &&
                             asset.vehicleNumber && (
                               <p className="text-xs text-gray-500">
                                 Vehicle No: {asset.vehicleNumber}
@@ -351,68 +376,25 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                             </p>
                           )}
 
-                          {/* Consumption Details for Rounds - Show inline when selected */}
-                          {(asset.type === "round" || asset.type === "weaponRound") && selectedAssets.includes(asset._id) && (
+                          {/* Assigned Rounds - Show inline for weapons, pistols, and rounds when selected */}
+                          {assetRequiresRounds(asset.type) && selectedAssets.includes(asset._id) && (
                             <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded">
-                              <p className="text-xs font-medium text-orange-800 mb-3">Rounds & Consumption Details</p>
-                              <div className="space-y-3">
-                                {/* Rounds Information */}
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-xs font-medium text-orange-700 mb-1">
-                                      Assigned Rounds
-                                    </label>
-                                    <input
-                                      type="number"
-                                      name="assignedRounds"
-                                      value={formData.assignedRounds}
-                                      onChange={handleChange}
-                                      placeholder="0"
-                                      min="0"
-                                      className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-medium text-orange-700 mb-1">
-                                      Consumed Rounds
-                                    </label>
-                                    <input
-                                      type="number"
-                                      name="consumedRounds"
-                                      value={formData.consumedRounds}
-                                      onChange={handleChange}
-                                      placeholder="0"
-                                      min="0"
-                                      className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500"
-                                    />
-                                  </div>
-                                </div>
-                                {/* Consumption Details */}
-                                <div>
-                                  <label className="block text-xs font-medium text-orange-700 mb-1">
-                                    Consumed Date
-                                  </label>
-                                  <input
-                                    type="date"
-                                    name="consumedDate"
-                                    value={formData.consumedDate}
-                                    onChange={handleChange}
-                                    className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-orange-700 mb-1">
-                                    Consumption Reason
-                                  </label>
-                                  <textarea
-                                    name="consumedReason"
-                                    value={formData.consumedReason}
-                                    onChange={handleChange}
-                                    placeholder="Enter consumption reason..."
-                                    rows={2}
-                                    className="w-full px-2 py-1 text-xs border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
-                                  />
-                                </div>
+                              <p className="text-xs font-medium text-orange-800 mb-2">
+                                Assigned Rounds for {asset.name}
+                              </p>
+                              <div>
+                                <input
+                                  type="number"
+                                  value={formData.assetRounds[asset._id] || ""}
+                                  onChange={(e) => handleRoundsChange(asset._id, e.target.value)}
+                                  placeholder={`Enter rounds for ${asset.name}`}
+                                  min="0"
+                                  required
+                                  className="w-full px-2 py-1 text-sm border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                />
+                                <p className="text-xs text-orange-600 mt-1">
+                                  Specify rounds for this {asset.type}
+                                </p>
                               </div>
                             </div>
                           )}
@@ -468,64 +450,6 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
             </>
           )}
 
-          {/* Non-Admin Approval Info - Show when editing but user is not admin */}
-          {editingAsset && !isAdmin && (
-            <div className="border-t border-gray-200 pt-4">
-              <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
-                <div className="flex items-start">
-                  <svg className="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-1">
-                      Current Approval Status
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Status:</span>{" "}
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        editingAsset.isApproved 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {editingAsset.isApproved ? 'Approved' : 'Pending Approval'}
-                      </span>
-                    </p>
-                    {editingAsset.approvalComment && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        <span className="font-medium">Admin Comment:</span> {editingAsset.approvalComment}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Contact an administrator to modify approval settings.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Info Note */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-            <div className="flex">
-              <svg className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <div>
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Assignment Process
-                </h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  {editingAsset 
-                    ? (isAdmin && formData.isApproved 
-                        ? "This assignment will be updated as approved and will be active immediately."
-                        : "This assignment will be updated and may require administrator approval before becoming active.")
-                    : "This assignment will be created as pending approval and will need to be approved before becoming active."
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
@@ -541,6 +465,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
               disabled={
                 isSubmitting || 
                 selectedAssets.length === 0 ||
+                !hasRequiredRoundsData() || // Check individual asset rounds
                 (editingAsset && isAdmin && !formData.approvalComment) // Only require approval comment when editing as admin
               }
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"

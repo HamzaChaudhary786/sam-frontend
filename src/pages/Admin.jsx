@@ -213,7 +213,7 @@ const AdminManagementPage = () => {
             }`}
           >
             <Shield className="w-5 h-5 mr-2" />
-            Roles Management ({roles.length})
+            Roles Management 
           </button>
           <button
             onClick={() => setActiveTab("groups")}
@@ -224,7 +224,7 @@ const AdminManagementPage = () => {
             }`}
           >
             <UsersIcon className="w-5 h-5 mr-2" />
-            Groups Management ({groups.length})
+            Groups Management 
           </button>
           <button
             onClick={() => setActiveTab("users")}
@@ -235,7 +235,7 @@ const AdminManagementPage = () => {
             }`}
           >
             <Users className="w-5 h-5 mr-2" />
-            Users Management ({userPagination.total})
+            Users Management
           </button>
         </div>
 
