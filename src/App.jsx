@@ -21,6 +21,7 @@ import EmployeeImport from './pages/EmployeeImport.jsx'
 import StationMap from './pages/StationMap.jsx';
 import AdminManagementPage from './pages/Admin.jsx'
 import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
+import AuditTrailPage from './pages/Audit.jsx';
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -245,7 +246,7 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-          <Route
+        <Route
           path="/editgrid"
           element={
             <ProtectedRoute>
@@ -253,11 +254,37 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-         <Route
+        <Route
           path="/admin"
           element={
             <ProtectedRoute>
               <AdminManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* NEW: Audit Trail Routes */}
+        <Route
+          path="/audit"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/audit-trail"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee-audit"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
             </ProtectedRoute>
           }
         />
