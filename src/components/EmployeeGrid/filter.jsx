@@ -2,6 +2,8 @@ import React, { useState } from "react";
 
 const EmployeeFilter = ({ 
   onFilterChange, 
+  onApplyFilters,
+  onClearFilters,
   initialFilters = {},
   totalEmployees = 0,
   filteredCount = 0
@@ -18,7 +20,7 @@ const EmployeeFilter = ({
   // State for showing/hiding filters on mobile
   const [showFilters, setShowFilters] = useState(false);
 
-  // Handle filter input changes
+  // Handle filter input changes (only updates local state)
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const newFilters = {
@@ -27,8 +29,10 @@ const EmployeeFilter = ({
     };
     setFilterForm(newFilters);
     
-    // Call the parent's filter change handler
-    onFilterChange(newFilters);
+    // Call the parent's filter change handler (for local state management only)
+    if (onFilterChange) {
+      onFilterChange(newFilters);
+    }
   };
 
   // Handle clear filters
@@ -40,12 +44,18 @@ const EmployeeFilter = ({
       cnic: ''
     };
     setFilterForm(clearedFilters);
-    onFilterChange(clearedFilters);
+    
+    // Call parent's clear filters handler to trigger backend call
+    if (onClearFilters) {
+      onClearFilters();
+    }
   };
 
-  // Handle apply filters (optional - since filtering happens on change)
+  // Handle apply filters - triggers backend call
   const handleApplyFilters = () => {
-    onFilterChange(filterForm);
+    if (onApplyFilters) {
+      onApplyFilters(filterForm);
+    }
   };
 
   // Check if any filters are active
@@ -149,7 +159,7 @@ const EmployeeFilter = ({
             <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-2">
               <button
                 onClick={handleApplyFilters}
-                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm transition-colors"
                 disabled={!hasActiveFilters}
               >
                 Apply Filters
@@ -157,22 +167,18 @@ const EmployeeFilter = ({
               <button
                 onClick={handleClearFilters}
                 className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm transition-colors"
-                disabled={!hasActiveFilters}
               >
-                Clear
+                Clear Filters
               </button>
             </div>
           </div>
         </div>
 
-        {/* Show filter results count */}
-        {hasActiveFilters && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+        {/* Show filter results count - only show if filters have been applied */}
+        {totalEmployees > 0 && (
+          <div className="mt-4 p-3 ">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-blue-800">
-                <span className="font-medium">Showing {filteredCount} of {totalEmployees} employees</span>
-              </div>
-              {filteredCount === 0 && (
+              {filteredCount === 0 && hasActiveFilters && (
                 <div className="text-xs text-blue-600">
                   No employees match your filters
                 </div>

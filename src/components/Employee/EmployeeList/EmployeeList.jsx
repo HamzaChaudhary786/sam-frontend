@@ -51,7 +51,7 @@ const EmployeeList = () => {
   // Filter state
   const [filterForm, setFilterForm] = useState({
     name: filters.name || "",
-    city: filters.city || "",
+    address: filters.address || "",
     status: filters.status || "",
     designation: filters.designation || "",
     grade: filters.grade || "",
@@ -287,11 +287,7 @@ const EmployeeList = () => {
   const handleApplyFilters = () => {
     const activeFilters = {};
     if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.city.trim()) activeFilters.city = filterForm.city.trim();
-    if (filterForm.status) activeFilters.status = filterForm.status;
-    if (filterForm.designation)
-      activeFilters.designation = filterForm.designation;
-    if (filterForm.grade) activeFilters.grade = filterForm.grade;
+    if (filterForm.address.trim()) activeFilters.address = filterForm.address.trim();
     if (filterForm.personalNumber.trim())
       activeFilters.personalNumber = filterForm.personalNumber.trim();
     if (filterForm.cnic.trim()) activeFilters.cnic = filterForm.cnic.trim();
@@ -302,7 +298,7 @@ const EmployeeList = () => {
   const handleClearFilters = () => {
     setFilterForm({
       name: "",
-      city: "",
+      address: "",
       status: "",
       designation: "",
       grade: "",
@@ -455,12 +451,12 @@ const EmployeeList = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
+              Address
             </label>
             <input
               type="text"
-              name="city"
-              value={filterForm.city}
+              name="address"
+              value={filterForm.address}
               onChange={handleFilterChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               placeholder="e.g., Lahore"
@@ -602,7 +598,6 @@ const EmployeeList = () => {
                               CNIC: {employee.cnic}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {getDesignationName(employee.designation)} -{" "}
                               {getGradeName(employee.grade)}
                             </div>
                           </div>
@@ -725,7 +720,7 @@ const EmployeeList = () => {
 
             return (
               <div key={employee._id} className="border-b border-gray-200 p-4">
-                <div className="flex items-start space-x-3">
+                <div className="flex flex-col md:flex-row items-start space-x-3">
                   <div className="flex-shrink-0 relative">
                     <img
                       className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"

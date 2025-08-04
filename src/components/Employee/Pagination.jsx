@@ -45,7 +45,7 @@ const Pagination = ({
   const endItem = Math.min(currentPage * limit, totalEmployees);
 
   return (
-    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+    <div className="bg-white md:px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
       {/* Mobile view */}
       <div className="flex-1 flex justify-between sm:hidden">
         <button
@@ -59,7 +59,7 @@ const Pagination = ({
         >
           Previous
         </button>
-        <span className="text-sm text-gray-700 flex items-center">
+        <span className=" text-xs md:text-sm text-gray-700 flex items-center">
           Page {currentPage} of {totalPages}
         </span>
         <button

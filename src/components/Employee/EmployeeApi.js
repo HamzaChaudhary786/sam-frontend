@@ -21,11 +21,8 @@ export const getEmployees = async (filters = {}) => {
     
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
-    if (filters.city) queryParams.append('city', filters.city);
-    if (filters.status) queryParams.append('status', filters.status);
-    if (filters.designation) queryParams.append('designation', filters.designation);
-    if (filters.grade) queryParams.append('grade', filters.grade);
-    if (filters.pnumber) queryParams.append('pnumber', filters.pnumber);
+    if (filters.address) queryParams.append('address', filters.address);
+    if (filters.personalNumber) queryParams.append('personalNumber', filters.personalNumber);
     if (filters.cnic) queryParams.append('cnic', filters.cnic);
     
     // Add pagination parameters
