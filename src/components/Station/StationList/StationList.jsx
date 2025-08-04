@@ -4,8 +4,11 @@ import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
 import DrillUpPage from "../DrillUp/DrillUp.jsx";
 import DrillDownPage from "../DrillDown/DrillDown.jsx";
+import Pagination from "../Pagination/Pagination.jsx"; // Import the pagination component
 import { getStationLocationsWithEnum } from "../lookUp.js";
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 const StationList = () => {
   const {
@@ -18,6 +21,13 @@ const StationList = () => {
     filters,
     createStation,
     modifyStation,
+    // Add these if available from your hook
+    currentPage,
+    totalPages,
+    totalStations,
+    itemsPerPage,
+    setPage,
+    setItemsPerPage,
   } = useStations();
 
   const [imageIndexes, setImageIndexes] = useState({});
@@ -35,7 +45,8 @@ const StationList = () => {
   // Station locations state
   const [stationLocations, setStationLocations] = useState({});
   const [loadingLocations, setLoadingLocations] = useState(false);
-
+  const navigate = useNavigate();
+   
   // Filter state
   const [filterForm, setFilterForm] = useState({
     name: filters.name || "",
@@ -78,6 +89,10 @@ const StationList = () => {
     setIsEditMode(false);
     setEditData(null);
     setIsModalOpen(true);
+  };
+    const handleImportStation = () => {
+      navigate("/stationimport")
+
   };
 
   const handleEdit = (station) => {
@@ -142,11 +157,32 @@ const StationList = () => {
       activeFilters.tehsil = filterForm.tehsil.trim();
     if (filterForm.city.trim()) activeFilters.city = filterForm.city.trim();
     updateFilters(activeFilters);
+    // Reset to first page when applying filters
+    if (setPage) setPage(1);
   };
 
   const handleClearFilters = () => {
     setFilterForm({ name: "", tehsil: "", city: "" });
     clearFilters();
+    // Reset to first page when clearing filters
+    if (setPage) setPage(1);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    if (setPage) {
+      setPage(page);
+      // Scroll to top when page changes
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    if (setItemsPerPage) {
+      setItemsPerPage(newItemsPerPage);
+      // Reset to first page when changing items per page
+      if (setPage) setPage(1);
+    }
   };
 
   const handlePrevImage = (stationId, imagesLength) => {
@@ -207,12 +243,20 @@ const StationList = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Station Management</h1>
-        <button
-          onClick={handleAddStation}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-        >
-          Add Station
-        </button>
+        <div className="flex flex-row gap-x-4">
+          <button
+            onClick={handleAddStation}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Add Station
+          </button>
+          <button
+            onClick={handleImportStation}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Import Station File
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -467,6 +511,29 @@ const StationList = () => {
         {safeStations.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-500">No stations found</p>
+          </div>
+        )}
+
+        {/* Pagination Component */}
+        {(totalPages > 1 || safeStations.length > 0) && (
+          <div className="border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage || 1}
+              totalPages={totalPages || 1}
+              totalItems={totalStations || safeStations.length}
+              itemsPerPage={itemsPerPage || 10}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={
+                setItemsPerPage ? handleItemsPerPageChange : undefined
+              }
+              showItemsPerPage={!!setItemsPerPage}
+              itemsPerPageOptions={[10, 20, 50, 100]}
+              showPageInfo={true}
+              showFirstLast={true}
+              maxVisiblePages={5}
+              disabled={loading}
+              className="px-6"
+            />
           </div>
         )}
       </div>

@@ -12,14 +12,20 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// Get all stations with optional filters
+// Get all stations with optional filters and pagination
 export const getStations = async (filters = {}) => {
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
+    
+    // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
     if (filters.city) queryParams.append('city', filters.city);
+    
+    // Add pagination parameters
+    if (filters.page) queryParams.append('page', filters.page.toString());
+    if (filters.limit) queryParams.append('limit', filters.limit.toString());
     
     const queryString = queryParams.toString();
     const url = `${API_URL}/stations${queryString ? `?${queryString}` : ''}`;

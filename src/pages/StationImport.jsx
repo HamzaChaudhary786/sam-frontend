@@ -176,7 +176,7 @@ const StationImport = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg mb-8 p-8">
@@ -221,7 +221,7 @@ const StationImport = () => {
               <h2 className="text-xl font-semibold text-gray-800">Step 1: Upload Excel File</h2>
             </div>
             
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <button
                 onClick={downloadTemplate}
                 className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
@@ -229,7 +229,7 @@ const StationImport = () => {
                 <Download className="w-4 h-4 mr-2" />
                 Download Template
               </button>
-            </div>
+            </div> */}
 
             <div
               className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${

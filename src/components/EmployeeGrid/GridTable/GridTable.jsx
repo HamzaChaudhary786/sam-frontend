@@ -84,12 +84,6 @@ const EmployeeGridTable = ({
         : 0;
   };
 
-  const getSortIcon = (key) => {
-    if (sortConfig.key === key) {
-      return sortConfig.direction === "asc" ? "↑" : "↓";
-    }
-    return "";
-  };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
     const employeeEditingData = editingData[employee._id] || {};
@@ -741,7 +735,7 @@ const EmployeeGridTable = ({
       {/* Grid Section */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Grid */}
-        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left font-bold uppercase tracking-wider p-3">
+        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
           <div>Photo</div>
           <div>Personal #</div>
           <div>Name</div>
