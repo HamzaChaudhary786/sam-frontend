@@ -22,6 +22,7 @@ import StationMap from './pages/StationMap.jsx';
 import AdminManagementPage from './pages/Admin.jsx'
 import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
 import AuditTrailPage from './pages/Audit.jsx';
+import StationImport from './pages/StationImport.jsx';
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -285,6 +286,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/stationimport"
+          element={
+            <ProtectedRoute>
+              <StationImport />
             </ProtectedRoute>
           }
         />

@@ -141,32 +141,60 @@ const EmployeeImport = () => {
         }
     };
 
-    // Download template
-    const handleDownloadTemplate = async () => {
-        try {
-            const response = await fetch(`${BACKEND_URL}/employee/template`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+    const downloadTemplate = () => {
+        const headers = [
+            'Personal Number',
+            'First Name',
+            'Last Name',
+            'Father First Name',
+            'Father Last Name',
+            'Cast',
+            'Rank',
+            'CNIC',
+            'Status',
+            'Designation',
+            'Mobile Number',
+            'Grade',
+            'Service Type (federal/provincial)',
+            'Address Line 1',
+            'Address Line 2',
+            'Muhala',
+            'Tehsil',
+            'Date of Birth (YYYY-MM-DD)'
+        ];
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'employee_import_template.xlsx';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            } else {
-                setError('Error downloading template');
-            }
-        } catch (err) {
-            setError('Error downloading template: ' + err.message);
-        }
+        const sampleData = [
+            'EMP001',
+            'Ali',
+            'Khan',
+            'Ahmed',
+            'Khan',
+            'Rajput',
+            'Senior',
+            '35202-1234567-1',
+            'active',
+            'Inspector',
+            '03001234567',
+            'BPS-17',
+            'federal',
+            'Street 123',
+            'House 5',
+            'Gulshan-e-Iqbal',
+            'Lahore Tehsil',
+            '1990-01-15'
+        ];
+
+        const csvContent = [headers, sampleData].map(row => row.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'employee_import_template.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
+
+
 
     // Reset process
     const handleReset = () => {
@@ -303,15 +331,15 @@ const EmployeeImport = () => {
                         <p className="text-gray-600">Select an Excel file containing employee information</p>
                     </div>
 
-                    {/* <div className="mb-4">
+                    <div className="mb-4">
                         <button
-                            onClick={handleDownloadTemplate}
+                            onClick={downloadTemplate}
                             className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                             <Download className="w-4 h-4 mr-2" />
                             Download Template
                         </button>
-                    </div> */}
+                    </div>
 
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                         <input

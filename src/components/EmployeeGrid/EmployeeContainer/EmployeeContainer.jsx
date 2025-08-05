@@ -14,7 +14,6 @@ import { uploadToCloudinary } from "../../Employee/AddEmployee/Cloudinary.js";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
 import EmployeeGridTable from "../GridTable/GridTable.jsx";
-import EmployeeGridPagination from "../Pagination/Pagination.jsx";
 
 const EmployeeGridContainer = () => {
   const {
@@ -390,7 +389,7 @@ const EmployeeGridContainer = () => {
             Employee Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Click Edit button, then double-click any cell to edit • 15 employees per page
+            Click Edit button, then double-click any cell to edit 
           </p>
           {!isAdmin && (
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -479,12 +478,12 @@ const EmployeeGridContainer = () => {
         onRemoveImage={handleRemoveImage}
       />
 
-      <EmployeeGridPagination
+      {/* <EmployeeGridPagination
         pagination={pagination}
         onPageChange={goToPage}
         onNextPage={nextPage}
         onPrevPage={prevPage}
-      />
+      /> */}
 
       {/* Image Modal */}
       {imageModal && (
