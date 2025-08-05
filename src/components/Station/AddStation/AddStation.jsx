@@ -600,7 +600,8 @@ const StationModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">
@@ -614,300 +615,255 @@ const StationModal = ({
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-800">{error}</p>
-            </div>
-          )}
+        {/* Form with scrollable body and sticky footer */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
 
-          {/* Station Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Station Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Iqbal Town Station"
-              />
-            </div>
-
-            {/* Replace regular select with EnumSelect for Tehsil */}
-            <EnumSelect
-              label="Tehsil"
-              name="tehsil"
-              value={formData.tehsil}
-              onChange={handleChange}
-              enumObject={stationLocations}
-              required={true}
-              placeholder={
-                loadingLocations
-                  ? "Loading locations..."
-                  : "Search and select tehsil..."
-              }
-              readOnly={loadingLocations}
-            />
-
-            {/* Replace regular select with EnumSelect for District */}
-            <EnumSelect
-              label="District"
-              name="district"
-              value={formData.district}
-              onChange={handleChange}
-              enumObject={districtLocations}
-              required={true}
-              placeholder="Search and select district..."
-            />
-          </div>
-
-          {/* Station Status and Facilities */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Station Status - Now using EnumSelect */}
-            <EnumSelect
-              label="Station Status"
-              name="stationStatus"
-              value={formData.stationStatus}
-              onChange={handleChange}
-              enumObject={stationStatusOptions}
-              required={true}
-              placeholder={
-                loadingLocations
-                  ? "Loading status options..."
-                  : "Search and select status..."
-              }
-              readOnly={loadingLocations}
-            />
-
-            {/* Station Facilities - Now Searchable with MultiEnumSelect */}
-            <MultiEnumSelect
-              label="Station Facilities"
-              name="stationFacilities"
-              value={formData.stationFacilities}
-              onChange={handleFacilitiesEnumChange}
-              enumObject={stationFacilitiesOptions}
-              placeholder={
-                loadingLocations
-                  ? "Loading facilities..."
-                  : "Search and select facilities..."
-              }
-              readOnly={loadingLocations}
-            />
-          </div>
-
-          {/* Station Pictures Upload */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Station Pictures
-            </h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Station Pictures
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handlePicturesChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                You can select multiple images. Supported formats: JPG, PNG,
-                WEBP
-              </p>
-            </div>
-
-            {/* Picture Preview */}
-            {formData.pictures.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Selected Pictures ({formData.pictures.length})
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {formData.pictures.map((pic, index) => (
-                    <div
-                      key={index}
-                      className="relative w-full h-24 overflow-hidden rounded-md border border-gray-200 group"
-                    >
-                      <img
-                        src={
-                          typeof pic === "string"
-                            ? pic
-                            : URL.createObjectURL(pic)
-                        }
-                        alt={`Station preview ${index + 1}`}
-                        className="object-cover w-full h-full"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removePicture(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                        title="Remove image"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+          {/* Scrollable Form Content */}
+          <div className="overflow-y-auto p-6 space-y-6 flex-1">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <p className="text-red-800">{error}</p>
               </div>
             )}
-          </div>
 
-          {/* Address Information */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Address Information
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Station Basic Information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Line 1 *
+                  Station Name *
                 </label>
                 <input
                   type="text"
-                  name="address.line1"
-                  value={formData.address.line1}
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Block C, College Road"
+                  placeholder="e.g., Iqbal Town Station"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mohalla
-                </label>
-                <input
-                  type="text"
-                  name="address.line2"
-                  value={formData.address.line2}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Adjacent to Central Plaza"
-                />
-              </div>
-            </div>
+              <EnumSelect
+                label="Tehsil"
+                name="tehsil"
+                value={formData.tehsil}
+                onChange={handleChange}
+                enumObject={stationLocations}
+                required={true}
+                placeholder={
+                  loadingLocations
+                    ? "Loading locations..."
+                    : "Search and select tehsil..."
+                }
+                readOnly={loadingLocations}
+              />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City *
-                </label>
-                <input
-                  type="text"
-                  name="address.city"
-                  value={formData.address.city}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Lahore"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Location Selection */}
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Location Selection
-              </h3>
-              {/* <button
-                type="button"
-                onClick={getCurrentLocation}
-                className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              >
-                Use Current Location
-              </button> */}
-            </div>
-
-            {/* Manual Coordinate Input */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Latitude
-                </label>
-                <input
-                  type="number"
-                  name="lat"
-                  value={formData.coordinates.lat || ""}
-                  onChange={handleCoordinateChange}
-                  step="any"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 31.5204"
-                />
-              </div>
-
-
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Longitude
-                </label>
-                <input
-                  type="number"
-                  name="lng"
-                  value={formData.coordinates.lng || ""}
-                  onChange={handleCoordinateChange}
-                  step="any"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 74.3587"
-                />
-              </div>
-            </div>
-
-
-            <div className="pt-10">
-              <MapLocation onPositionChange={setPosition} hidePanels={hideLocationPanels} />
-            </div>
-
-            {/* <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search Location
-              </label>
-              <input
-                ref={autocompleteRef}
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Search for a location..."
+              <EnumSelect
+                label="District"
+                name="district"
+                value={formData.district}
+                onChange={handleChange}
+                enumObject={districtLocations}
+                required={true}
+                placeholder="Search and select district..."
               />
             </div>
 
-            <div className="border border-gray-300 rounded-md overflow-hidden">
-              <div
-                ref={mapRef}
-                style={{ height: "300px", width: "100%" }}
-                className="bg-gray-200"
-              >
-                {!mapLoaded && (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Loading map...</p>
+            {/* Status and Facilities */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <EnumSelect
+                label="Station Status"
+                name="stationStatus"
+                value={formData.stationStatus}
+                onChange={handleChange}
+                enumObject={stationStatusOptions}
+                required={true}
+                placeholder={
+                  loadingLocations
+                    ? "Loading status options..."
+                    : "Search and select status..."
+                }
+                readOnly={loadingLocations}
+              />
+
+              <MultiEnumSelect
+                label="Station Facilities"
+                name="stationFacilities"
+                value={formData.stationFacilities}
+                onChange={handleFacilitiesEnumChange}
+                enumObject={stationFacilitiesOptions}
+                placeholder={
+                  loadingLocations
+                    ? "Loading facilities..."
+                    : "Search and select facilities..."
+                }
+                readOnly={loadingLocations}
+              />
+            </div>
+
+            {/* Pictures */}
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Station Pictures
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Station Pictures
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePicturesChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  You can select multiple images. Supported formats: JPG, PNG, WEBP
+                </p>
+              </div>
+
+              {formData.pictures.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Selected Pictures ({formData.pictures.length})
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {formData.pictures.map((pic, index) => (
+                      <div
+                        key={index}
+                        className="relative w-full h-24 overflow-hidden rounded-md border border-gray-200 group"
+                      >
+                        <img
+                          src={
+                            typeof pic === "string"
+                              ? pic
+                              : URL.createObjectURL(pic)
+                          }
+                          alt={`Station preview ${index + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePicture(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* Address */}
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Address Information
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address Line 1 *
+                  </label>
+                  <input
+                    type="text"
+                    name="address.line1"
+                    value={formData.address.line1}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Block C, College Road"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mohalla
+                  </label>
+                  <input
+                    type="text"
+                    name="address.line2"
+                    value={formData.address.line2}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Adjacent to Central Plaza"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    name="address.city"
+                    value={formData.address.city}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Lahore"
+                  />
+                </div>
               </div>
             </div>
 
-            {selectedLocation && (
-              <div className="mt-2 p-3 bg-blue-50 rounded-md">
-                <p className="text-sm text-blue-800">
-                  Selected Coordinates: {selectedLocation.lat.toFixed(6)},{" "}
-                  {selectedLocation.lng.toFixed(6)}
-                </p>
+            {/* Coordinates */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Location Selection
+                </h3>
               </div>
-            )} */}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitude
+                  </label>
+                  <input
+                    type="number"
+                    name="lat"
+                    value={formData.coordinates.lat || ""}
+                    onChange={handleCoordinateChange}
+                    step="any"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 31.5204"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    name="lng"
+                    value={formData.coordinates.lng || ""}
+                    onChange={handleCoordinateChange}
+                    step="any"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 74.3587"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-10">
+                <MapLocation
+                  onPositionChange={setPosition}
+                  hidePanels={hideLocationPanels}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Modal Footer */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          {/* Sticky Footer Buttons */}
+          <div className="flex justify-end space-x-3 p-4 border-t bg-white">
             <button
               type="button"
               onClick={handleClose}
@@ -932,6 +888,7 @@ const StationModal = ({
         </form>
       </div>
     </div>
+
   );
 };
 
