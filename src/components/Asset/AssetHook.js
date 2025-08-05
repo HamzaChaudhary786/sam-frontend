@@ -8,43 +8,51 @@ export const useAssets = (initialFilters = {}) => {
   const [error, setError] = useState('');
   const [filters, setFilters] = useState(initialFilters);
 
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalAssets: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+
   // Fetch all assets with current filters
-  const fetchAssets = async (currentFilters = filters) => {
+  const fetchAssets = async (customFilters = filters) => {
     setLoading(true);
     setError('');
-    
+
     try {
-      const result = await getAssets(currentFilters);
-      
+      const result = await getAssets(customFilters);
+
       if (result.success) {
-        const assetsData = result.data.assets || result.data;
-        const safeAssetsData = Array.isArray(assetsData) ? assetsData : [];
-        setAssets(safeAssetsData);
-        
+        const assetsData = result.data.assets || [];
+        const safeAssets = Array.isArray(assetsData) ? assetsData : [];
+
+        setAssets(safeAssets);
+        setPagination(result.data.pagination || {}); // <- backend pagination
       } else {
         setError(result.error);
         setAssets([]);
         toast.error(`Failed to fetch assets: ${result.error}`);
       }
     } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while fetching assets';
+      const errorMessage =
+        error.message || 'Unknown error occurred while fetching assets';
       setError(errorMessage);
       setAssets([]);
       toast.error(`Error fetching assets: ${errorMessage}`);
     }
-    
+
     setLoading(false);
   };
 
   // Add new asset
   const createAsset = async (assetData) => {
     setError('');
-    
     try {
       const result = await addAsset(assetData);
-      
       if (result.success) {
-        await fetchAssets(); // only if success
+        await fetchAssets();
         toast.success(`Asset "${assetData.name || 'New Asset'}" created successfully!`);
         return { success: true };
       } else {
@@ -63,12 +71,10 @@ export const useAssets = (initialFilters = {}) => {
   // Update asset
   const modifyAsset = async (id, assetData) => {
     setError('');
-    
     try {
       const result = await updateAsset(assetData, id);
-      
       if (result.success) {
-        await fetchAssets(); // only if success
+        await fetchAssets();
         toast.success(`Asset "${assetData.name || 'Asset'}" updated successfully!`);
         return { success: true };
       } else {
@@ -87,13 +93,11 @@ export const useAssets = (initialFilters = {}) => {
   // Delete asset
   const removeAsset = async (id) => {
     setError('');
-    
     try {
       const result = await deleteAsset(id);
-      
       if (result.success) {
         toast.success("Asset deleted successfully");
-        await fetchAssets(); // only if success
+        await fetchAssets();
         return { success: true };
       } else {
         setError(result.error);
@@ -108,22 +112,26 @@ export const useAssets = (initialFilters = {}) => {
     }
   };
 
-  // Update filters and refetch
+  // Update filters and reset page to 1
   const updateFilters = (newFilters) => {
-    setFilters(newFilters);
-    
-    
-    fetchAssets(newFilters);
+    const combinedFilters = { ...newFilters, page: 1 };
+    setFilters(combinedFilters);
+    fetchAssets(combinedFilters);
+  };
+
+  // Set page for pagination
+  const setPage = (pageNumber) => {
+    fetchAssets({ ...filters, page: pageNumber });
   };
 
   const clearFilters = () => {
     setFilters({});
-    fetchAssets({});
+    fetchAssets({ page: 1 });
   };
 
   useEffect(() => {
     fetchAssets();
-  }, []); // or [filters] if you want reactive filtering
+  }, []);
 
   return {
     assets,
@@ -135,6 +143,8 @@ export const useAssets = (initialFilters = {}) => {
     modifyAsset,
     removeAsset,
     updateFilters,
-    clearFilters
+    clearFilters,
+    pagination,
+    setPage,
   };
 };

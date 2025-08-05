@@ -18,6 +18,11 @@ import Stationassignment from './pages/StationAssignment.jsx';
 import StatusAssignment from './pages/StatusAssignment.jsx';
 import BulkStationAssignment from './components/BulkStation/BulkStation.jsx';
 import EmployeeImport from './pages/EmployeeImport.jsx'
+import StationMap from './pages/StationMap.jsx';
+import AdminManagementPage from './pages/Admin.jsx'
+import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
+import AuditTrailPage from './pages/Audit.jsx';
+import StationImport from './pages/StationImport.jsx';
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -121,6 +126,15 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/station-map"
+          element={
+            <ProtectedRoute>
+              <StationMap />
             </ProtectedRoute>
           }
         />
@@ -230,6 +244,56 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <BulkStationAssignment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/editgrid"
+          element={
+            <ProtectedRoute>
+              <EmployeeGridContainer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* NEW: Audit Trail Routes */}
+        <Route
+          path="/audit"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/audit-trail"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee-audit"
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/stationimport"
+          element={
+            <ProtectedRoute>
+              <StationImport />
             </ProtectedRoute>
           }
         />
