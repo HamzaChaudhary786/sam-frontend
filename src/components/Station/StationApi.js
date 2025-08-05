@@ -21,7 +21,11 @@ export const getStations = async (filters = {}) => {
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
-    if (filters.city) queryParams.append('city', filters.city);
+    if (filters.address) queryParams.append('address', filters.address);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.district) queryParams.append('district', filters.district);
+
+
     
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page.toString());

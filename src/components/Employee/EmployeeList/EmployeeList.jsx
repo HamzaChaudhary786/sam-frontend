@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../EmployeeHook";
-import { STATUS_ENUM } from "../AddEmployee/EmployeeConstants";
 import { getCastsWithEnum } from "../AddEmployee/Cast.js";
 import { getDesignationsWithEnum } from "../AddEmployee/Designation.js";
 import { getGradesWithEnum } from "../AddEmployee/Grades.js";
 import EmployeeViewModal from "../ViewEmployee/ViewEmployee.jsx";
+import EmployeeFilters from "../Filters.jsx";
 import Pagination from "../Pagination.jsx";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
@@ -37,7 +37,7 @@ const EmployeeList = () => {
   const [imageIndexes, setImageIndexes] = useState({});
   const [imageModal, setImageModal] = useState(null);
 
-  // Filter dropdown options
+  // Filter dropdown options (moved to EmployeeFilters component)
   const [designationEnum, setDesignationEnum] = useState([]);
   const [gradeEnum, setGradeEnum] = useState([]);
 
@@ -48,16 +48,9 @@ const EmployeeList = () => {
   // Mobile view state
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter state
-  const [filterForm, setFilterForm] = useState({
-    name: filters.name || "",
-    address: filters.address || "",
-    status: filters.status || "",
-    designation: filters.designation || "",
-    grade: filters.grade || "",
-    personalNumber: filters.personalNumber || "",
-    cnic: filters.cnic || "",
-  });
+  // Multiple selection state
+  const [selectedEmployees, setSelectedEmployees] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   const navigate = useNavigate();
 
@@ -83,21 +76,16 @@ const EmployeeList = () => {
     checkUserRole();
   }, []);
 
-  // Fetch dropdown options for filters
+  // Fetch dropdown options for helper functions (still needed for display purposes)
   useEffect(() => {
-    const fetchFilterOptions = async () => {
+    const fetchDisplayOptions = async () => {
       try {
-        console.log("Fetching designations and grades...");
         const [desigRes, gradeRes] = await Promise.all([
           getDesignationsWithEnum(),
           getGradesWithEnum(),
         ]);
 
-        console.log("Designation response:", desigRes);
-        console.log("Grade response:", gradeRes);
-
         if (desigRes.success && desigRes.data) {
-          // Convert object to array format
           const designationArray = Object.entries(desigRes.data).map(
             ([_id, name]) => ({
               _id,
@@ -105,13 +93,9 @@ const EmployeeList = () => {
             })
           );
           setDesignationEnum(designationArray);
-          console.log("Set designations array:", designationArray);
-        } else {
-          console.error("Invalid designation response:", desigRes);
         }
 
         if (gradeRes.success && gradeRes.data) {
-          // Convert object to array format
           const gradeArray = Object.entries(gradeRes.data).map(
             ([_id, name]) => ({
               _id,
@@ -119,17 +103,20 @@ const EmployeeList = () => {
             })
           );
           setGradeEnum(gradeArray);
-          console.log("Set grades array:", gradeArray);
-        } else {
-          console.error("Invalid grade response:", gradeRes);
         }
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        console.error("Error fetching display options:", error);
       }
     };
 
-    fetchFilterOptions();
+    fetchDisplayOptions();
   }, []);
+
+  // Reset selection when employees change
+  useEffect(() => {
+    setSelectedEmployees(new Set());
+    setSelectAll(false);
+  }, [employees]);
 
   // Helper function to get designation name by ID
   const getDesignationName = (designationId) => {
@@ -160,6 +147,7 @@ const EmployeeList = () => {
 
     return gradeId || "N/A";
   };
+
   const getEmployeeImage = (employee, index = 0) => {
     if (Array.isArray(employee.profileUrl)) {
       return (
@@ -201,13 +189,123 @@ const EmployeeList = () => {
     }));
   };
 
+  // Multiple selection handlers
+  const handleSelectEmployee = (employeeId) => {
+    setSelectedEmployees(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(employeeId)) {
+        newSet.delete(employeeId);
+      } else {
+        newSet.add(employeeId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedEmployees(new Set());
+    } else {
+      setSelectedEmployees(new Set(safeEmployees.map(emp => emp._id)));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can delete employees");
+      return;
+    }
+    
+    if (selectedEmployees.size === 0) {
+      toast.error("Please select employees to delete");
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedEmployees.size} employee(s)?`)) {
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+        
+        for (const employeeId of selectedEmployees) {
+          try {
+            // Validate ID format
+            if (!employeeId || typeof employeeId !== 'string' || employeeId.trim() === '') {
+              throw new Error("Invalid employee ID format");
+            }
+            
+            console.log("Attempting to delete employee with ID:", employeeId);
+            
+            // The hook function expects just the string ID
+            const result = await removeEmployee(employeeId.trim());
+            
+            if (result && result.success) {
+              successCount++;
+            } else {
+              errorCount++;
+              errors.push(`${employeeId}: ${result?.error || 'Unknown error'}`);
+            }
+          } catch (error) {
+            console.error(`Failed to delete employee ${employeeId}:`, error);
+            errorCount++;
+            errors.push(`${employeeId}: ${error?.message || 'Unknown error'}`);
+          }
+        }
+        
+        setSelectedEmployees(new Set());
+        setSelectAll(false);
+        
+        if (successCount > 0 && errorCount === 0) {
+          toast.success(`Successfully deleted ${successCount} employee(s)`);
+        } else if (successCount > 0 && errorCount > 0) {
+          toast.warning(`Deleted ${successCount} employee(s), failed to delete ${errorCount}`);
+          console.log("Errors:", errors);
+        } else {
+          toast.error("Failed to delete selected employees");
+          console.log("All errors:", errors);
+        }
+      } catch (error) {
+        console.error("Bulk delete error:", error);
+        toast.error("Error deleting employees");
+      }
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedEmployees(new Set());
+    setSelectAll(false);
+  };
+
   const handleDelete = async (id) => {
     if (!isAdmin) {
       toast.error("Access denied: Only administrators can delete employees");
       return;
     }
 
-    await removeEmployee(id);
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      toast.error("Invalid employee ID");
+      return;
+    }
+
+    try {
+      console.log("Attempting to delete employee with ID:", id);
+      
+      // The hook function expects just the string ID and returns a result object
+      const result = await removeEmployee(id.trim());
+      
+      if (result && result.success) {
+        // Success toast is handled by the API function, don't duplicate
+        console.log("Employee deleted successfully");
+      } else {
+        // Error handling is done by the hook, but we can add additional handling if needed
+        console.error("Failed to delete employee:", result?.error);
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      // The hook already shows error toasts, so we don't need to duplicate them
+    }
   };
 
   const handleAddEmployee = () => {
@@ -237,9 +335,11 @@ const EmployeeList = () => {
       },
     });
   };
+
   const handleBulkStationAssignment = () => {
     navigate("/bulk-station-assignment");
   };
+
   const handleView = (employee) => {
     setSelectedEmployee(employee);
     setIsViewModalOpen(true);
@@ -250,23 +350,14 @@ const EmployeeList = () => {
     setSelectedEmployee(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilterForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
   const handleAddStation = () => {
     navigate("/stations");
-  };
-   const handleEditGrid = () => {
-    navigate("/editgrid");
   };
 
   const handleAddAsset = () => {
     navigate("/assets");
   };
+
   const handleAchievements = (employee) => {
     navigate("/achievements", { state: { employee } });
   };
@@ -274,38 +365,17 @@ const EmployeeList = () => {
   const handleDeductions = (employee) => {
     navigate("/deductions", { state: { employee } });
   };
+
   const handleAssets = (employee) => {
     navigate("/assetassignment", { state: { employee } });
   };
+
   const handlePosting = (employee) => {
     navigate("/stationassignment", { state: { employee } });
   };
+
   const handleStatus = (employee) => {
     navigate("/statusassignment", { state: { employee } });
-  };
-
-  const handleApplyFilters = () => {
-    const activeFilters = {};
-    if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.address.trim()) activeFilters.address = filterForm.address.trim();
-    if (filterForm.personalNumber.trim())
-      activeFilters.personalNumber = filterForm.personalNumber.trim();
-    if (filterForm.cnic.trim()) activeFilters.cnic = filterForm.cnic.trim();
-    updateFilters(activeFilters);
-    setShowFilters(false); // Close filters on mobile after applying
-  };
-
-  const handleClearFilters = () => {
-    setFilterForm({
-      name: "",
-      address: "",
-      status: "",
-      designation: "",
-      grade: "",
-      personalNumber: "",
-      cnic: "",
-    });
-    clearFilters();
   };
 
   // Pagination handlers
@@ -353,12 +423,6 @@ const EmployeeList = () => {
               Add Employee
             </button>
           )}
-           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-            onClick={handleEditGrid}
-          >
-            Edit Employee Grid
-          </button>
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleAddStation}
@@ -400,116 +464,39 @@ const EmployeeList = () => {
         </div>
       )}
 
-      {/* Filter Toggle Button - Show on medium and small screens */}
-      <div className="xl:hidden mb-4">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium flex items-center justify-center"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"
-            />
-          </svg>
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </button>
-      </div>
-
-      {/* Filter Section - Responsive */}
-      <div
-        className={`bg-white shadow-md rounded-lg p-4 mb-6 ${
-          showFilters ? "block" : "hidden"
-        } xl:block`}
-      >
-        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
-          Filter Employees
-        </h3>
-
-        {/* Filter Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={filterForm.name}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="e.g., Hamza"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={filterForm.address}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="e.g., Lahore"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Personal Number
-            </label>
-            <input
-              type="text"
-              name="personalNumber"
-              value={filterForm.personalNumber}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="e.g., Emp-234"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CNIC
-            </label>
-            <input
-              type="text"
-              name="cnic"
-              value={filterForm.cnic}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="e.g., 1234567891010"
-            />
-          </div>
-
-          {/* Filter Buttons - Stack vertically on mobile/tablet */}
-          <div className="flex flex-col space-y-2 sm:col-span-2 xl:col-span-4">
-            <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-2">
+      {/* Bulk Actions Bar */}
+      {selectedEmployees.size > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
+          <span className="text-sm text-blue-800 font-medium">
+            {selectedEmployees.size} employee(s) selected
+          </span>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {isAdmin && (
               <button
-                onClick={handleApplyFilters}
-                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                onClick={handleBulkDelete}
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
               >
-                Apply Filters
+                Delete Selected
               </button>
-              <button
-                onClick={handleClearFilters}
-                className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
-              >
-                Clear
-              </button>
-            </div>
+            )}
+            <button
+              onClick={handleClearSelection}
+              className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm"
+            >
+              Clear Selection
+            </button>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Employee Filters Component */}
+      <EmployeeFilters
+        filters={filters}
+        updateFilters={updateFilters}
+        clearFilters={clearFilters}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+      />
 
       {/* Employee Table/Cards - Responsive */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -522,6 +509,14 @@ const EmployeeList = () => {
             >
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[280px]">
                     Employee Info
                   </th>
@@ -544,6 +539,14 @@ const EmployeeList = () => {
 
                   return (
                     <tr key={employee._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedEmployees.has(employee._id)}
+                          onChange={() => handleSelectEmployee(employee._id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 relative">
@@ -598,6 +601,7 @@ const EmployeeList = () => {
                               CNIC: {employee.cnic}
                             </div>
                             <div className="text-sm text-gray-500">
+                              {getDesignationName(employee.designation)} -{" "}
                               {getGradeName(employee.grade)}
                             </div>
                           </div>
@@ -720,7 +724,13 @@ const EmployeeList = () => {
 
             return (
               <div key={employee._id} className="border-b border-gray-200 p-4">
-                <div className="flex flex-col md:flex-row items-start space-x-3">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedEmployees.has(employee._id)}
+                    onChange={() => handleSelectEmployee(employee._id)}
+                    className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
                   <div className="flex-shrink-0 relative">
                     <img
                       className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
