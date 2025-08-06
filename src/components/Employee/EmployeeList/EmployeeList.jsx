@@ -7,8 +7,12 @@ import { getGradesWithEnum } from "../AddEmployee/Grades.js";
 import EmployeeViewModal from "../ViewEmployee/ViewEmployee.jsx";
 import EmployeeFilters from "../Filters.jsx";
 import Pagination from "../Pagination.jsx";
+import EmployeeMultiSelect from "../MultiSelectGrid.jsx";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
+import MultiStationAssignmentForm from "../Multipostingform.jsx";
+import MultiSalaryDeductionForm from "../Multisalarydeductin.jsx";
+import MultiAchievementForm from "../MultiAchievement.jsx";
 
 const EmployeeList = () => {
   const {
@@ -25,6 +29,18 @@ const EmployeeList = () => {
     prevPage,
     changePageSize,
   } = useEmployees();
+  // Multi Station Assignment Modal state
+  const [isMultiStationModalOpen, setIsMultiStationModalOpen] = useState(false);
+  const [selectedEmployeesForPosting, setSelectedEmployeesForPosting] =
+    useState([]);
+  const [isMultiDeductionModalOpen, setIsMultiDeductionModalOpen] =
+    useState(false);
+  const [selectedEmployeesForDeduction, setSelectedEmployeesForDeduction] =
+    useState([]);
+  const [isMultiAchievementModalOpen, setIsMultiAchievementModalOpen] =
+    useState(false);
+  const [selectedEmployeesForAchievement, setSelectedEmployeesForAchievement] =
+    useState([]);
 
   const [isEdit, setIsEdit] = useState(false);
   const [editData, setEditData] = useState({});
@@ -48,11 +64,79 @@ const EmployeeList = () => {
   // Mobile view state
   const [showFilters, setShowFilters] = useState(false);
 
-  // Multiple selection state
-  const [selectedEmployees, setSelectedEmployees] = useState(new Set());
-  const [selectAll, setSelectAll] = useState(false);
-
   const navigate = useNavigate();
+
+  // Safety check for employees
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+
+  // Handle multi-posting functionality
+  function handleMultiPosting(selectedEmployeeObjects) {
+    console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
+    alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
+    setSelectedEmployeesForPosting(selectedEmployeeObjects);
+    setIsMultiStationModalOpen(true);
+  }
+
+  // Handle multi station assignment success
+  const handleMultiStationSuccess = () => {
+    setIsMultiStationModalOpen(false);
+    setSelectedEmployeesForPosting([]);
+    multiSelect.clearSelection();
+    toast.success("Multi station assignments completed!");
+  };
+
+  // Handle multi station assignment cancel
+  const handleMultiStationCancel = () => {
+    setIsMultiStationModalOpen(false);
+    setSelectedEmployeesForPosting([]);
+  };
+
+  function handleMultiDeduction(selectedEmployeeObjects) {
+    console.log("🚀 Multi-deduction triggered!", selectedEmployeeObjects);
+    setSelectedEmployeesForDeduction(selectedEmployeeObjects);
+    setIsMultiDeductionModalOpen(true);
+  }
+
+  // Add these handler functions:
+  const handleMultiDeductionSuccess = () => {
+    setIsMultiDeductionModalOpen(false);
+    setSelectedEmployeesForDeduction([]);
+    multiSelect.clearSelection();
+    toast.success("Multi salary deductions completed!");
+  };
+
+  const handleMultiDeductionCancel = () => {
+    setIsMultiDeductionModalOpen(false);
+    setSelectedEmployeesForDeduction([]);
+  };
+  function handleMultiAchievement(selectedEmployeeObjects) {
+    console.log("🚀 Multi-achievement triggered!", selectedEmployeeObjects);
+    setSelectedEmployeesForAchievement(selectedEmployeeObjects);
+    setIsMultiAchievementModalOpen(true);
+  }
+
+  const handleMultiAchievementSuccess = () => {
+    setIsMultiAchievementModalOpen(false);
+    setSelectedEmployeesForAchievement([]);
+    multiSelect.clearSelection();
+    toast.success("Multi achievements completed!");
+  };
+
+  const handleMultiAchievementCancel = () => {
+    setIsMultiAchievementModalOpen(false);
+    setSelectedEmployeesForAchievement([]);
+  };
+
+  // Multi-select functionality using the component
+  const multiSelect = EmployeeMultiSelect({
+    employees: safeEmployees,
+    isAdmin,
+    removeEmployee,
+    loading,
+    onMultiPosting: handleMultiPosting, // Add this line!
+    onMultiDeduction: handleMultiDeduction, // Add this line!
+    onMultiAchievement: handleMultiAchievement, // ✅ Add this line!
+  });
 
   // Check user role from localStorage
   useEffect(() => {
@@ -111,12 +195,6 @@ const EmployeeList = () => {
 
     fetchDisplayOptions();
   }, []);
-
-  // Reset selection when employees change
-  useEffect(() => {
-    setSelectedEmployees(new Set());
-    setSelectAll(false);
-  }, [employees]);
 
   // Helper function to get designation name by ID
   const getDesignationName = (designationId) => {
@@ -189,94 +267,6 @@ const EmployeeList = () => {
     }));
   };
 
-  // Multiple selection handlers
-  const handleSelectEmployee = (employeeId) => {
-    setSelectedEmployees(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(employeeId)) {
-        newSet.delete(employeeId);
-      } else {
-        newSet.add(employeeId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedEmployees(new Set());
-    } else {
-      setSelectedEmployees(new Set(safeEmployees.map(emp => emp._id)));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  const handleBulkDelete = async () => {
-    if (!isAdmin) {
-      toast.error("Access denied: Only administrators can delete employees");
-      return;
-    }
-    
-    if (selectedEmployees.size === 0) {
-      toast.error("Please select employees to delete");
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to delete ${selectedEmployees.size} employee(s)?`)) {
-      try {
-        let successCount = 0;
-        let errorCount = 0;
-        const errors = [];
-        
-        for (const employeeId of selectedEmployees) {
-          try {
-            // Validate ID format
-            if (!employeeId || typeof employeeId !== 'string' || employeeId.trim() === '') {
-              throw new Error("Invalid employee ID format");
-            }
-            
-            console.log("Attempting to delete employee with ID:", employeeId);
-            
-            // The hook function expects just the string ID
-            const result = await removeEmployee(employeeId.trim());
-            
-            if (result && result.success) {
-              successCount++;
-            } else {
-              errorCount++;
-              errors.push(`${employeeId}: ${result?.error || 'Unknown error'}`);
-            }
-          } catch (error) {
-            console.error(`Failed to delete employee ${employeeId}:`, error);
-            errorCount++;
-            errors.push(`${employeeId}: ${error?.message || 'Unknown error'}`);
-          }
-        }
-        
-        setSelectedEmployees(new Set());
-        setSelectAll(false);
-        
-        if (successCount > 0 && errorCount === 0) {
-          toast.success(`Successfully deleted ${successCount} employee(s)`);
-        } else if (successCount > 0 && errorCount > 0) {
-          toast.warning(`Deleted ${successCount} employee(s), failed to delete ${errorCount}`);
-          console.log("Errors:", errors);
-        } else {
-          toast.error("Failed to delete selected employees");
-          console.log("All errors:", errors);
-        }
-      } catch (error) {
-        console.error("Bulk delete error:", error);
-        toast.error("Error deleting employees");
-      }
-    }
-  };
-
-  const handleClearSelection = () => {
-    setSelectedEmployees(new Set());
-    setSelectAll(false);
-  };
-
   const handleDelete = async (id) => {
     if (!isAdmin) {
       toast.error("Access denied: Only administrators can delete employees");
@@ -284,17 +274,17 @@ const EmployeeList = () => {
     }
 
     // Validate ID format
-    if (!id || typeof id !== 'string' || id.trim() === '') {
+    if (!id || typeof id !== "string" || id.trim() === "") {
       toast.error("Invalid employee ID");
       return;
     }
 
     try {
       console.log("Attempting to delete employee with ID:", id);
-      
+
       // The hook function expects just the string ID and returns a result object
       const result = await removeEmployee(id.trim());
-      
+
       if (result && result.success) {
         // Success toast is handled by the API function, don't duplicate
         console.log("Employee deleted successfully");
@@ -387,9 +377,6 @@ const EmployeeList = () => {
     changePageSize(pageSize);
   };
 
-  // Safety check for employees
-  const safeEmployees = Array.isArray(employees) ? employees : [];
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -464,30 +451,8 @@ const EmployeeList = () => {
         </div>
       )}
 
-      {/* Bulk Actions Bar */}
-      {selectedEmployees.size > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
-          <span className="text-sm text-blue-800 font-medium">
-            {selectedEmployees.size} employee(s) selected
-          </span>
-          <div className="flex flex-col sm:flex-row gap-2">
-            {isAdmin && (
-              <button
-                onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
-              >
-                Delete Selected
-              </button>
-            )}
-            <button
-              onClick={handleClearSelection}
-              className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm"
-            >
-              Clear Selection
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Bulk Actions Bar - Using the component */}
+      {multiSelect.renderBulkActionsBar()}
 
       {/* Employee Filters Component */}
       <EmployeeFilters
@@ -510,12 +475,8 @@ const EmployeeList = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
+                    {/* Using the component's render function */}
+                    {multiSelect.renderSelectAllCheckbox()}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[280px]">
                     Employee Info
@@ -538,14 +499,15 @@ const EmployeeList = () => {
                   );
 
                   return (
-                    <tr key={employee._id} className="hover:bg-gray-50">
+                    <tr
+                      key={employee._id}
+                      className={`hover:bg-gray-50 ${
+                        multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                      }`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={selectedEmployees.has(employee._id)}
-                          onChange={() => handleSelectEmployee(employee._id)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
+                        {/* Using the component's render function */}
+                        {multiSelect.renderEmployeeCheckbox(employee)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -608,7 +570,7 @@ const EmployeeList = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                         <div
+                        <div
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             employee.status === "active"
                               ? "bg-green-100 text-green-800"
@@ -621,18 +583,18 @@ const EmployeeList = () => {
                         >
                           {employee.status}
                         </div>
-                          <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500">
                           {employee.mobileNumber}
                         </div>
                         <div className="text-sm text-gray-500">
                           {employee.address?.line1 || "N/A"},{" "}
                           {employee.address?.tehsil || "N/A"}
                         </div>
-                      
-                         <div className="text-sm text-gray-500">
+
+                        <div className="text-sm text-gray-500">
                           Cast: {employee.cast || "N/A"}
                         </div>
-                         <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500">
                           Service: {employee.serviceType || "N/A"}
                         </div>
                       </td>
@@ -698,12 +660,6 @@ const EmployeeList = () => {
                             >
                               Deduction
                             </button>
-                            {/* <button
-                              onClick={() => handleHistory(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition"
-                            >
-                              History
-                            </button> */}
                           </div>
                         </div>
                       </td>
@@ -723,14 +679,15 @@ const EmployeeList = () => {
             const currentImage = getEmployeeImage(employee, currentImageIndex);
 
             return (
-              <div key={employee._id} className="border-b border-gray-200 p-4">
+              <div
+                key={employee._id}
+                className={`border-b border-gray-200 p-4 ${
+                  multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                }`}
+              >
                 <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedEmployees.has(employee._id)}
-                    onChange={() => handleSelectEmployee(employee._id)}
-                    className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
+                  {/* Using the component's render function */}
+                  {multiSelect.renderEmployeeCheckbox(employee)}
                   <div className="flex-shrink-0 relative">
                     <img
                       className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
@@ -874,31 +831,23 @@ const EmployeeList = () => {
                         >
                           Deductions
                         </button>
-                        {/* <button
-                          onClick={() => handleHistory(employee)}
-                          className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 text-center"
-                        >
-                          History
-                        </button> */}
-                      
-      
+
                         {isAdmin ? (
                           <button
                             onClick={() => handleDelete(employee._id)}
                             className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
                           >
-                            Delete 
+                            Delete
                           </button>
                         ) : (
                           <button
                             disabled
                             className="w-full px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed text-center"
                           >
-                            Delete Employee 
+                            Delete Employee
                           </button>
                         )}
-                        </div>
-              
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -913,6 +862,26 @@ const EmployeeList = () => {
           </div>
         )}
       </div>
+      {/* Multi Station Assignment Modal */}
+      <MultiStationAssignmentForm
+        selectedEmployees={selectedEmployeesForPosting}
+        isOpen={isMultiStationModalOpen}
+        onSuccess={handleMultiStationSuccess}
+        onCancel={handleMultiStationCancel}
+      />
+      <MultiSalaryDeductionForm
+        selectedEmployees={selectedEmployeesForDeduction}
+        isOpen={isMultiDeductionModalOpen}
+        onSuccess={handleMultiDeductionSuccess}
+        onCancel={handleMultiDeductionCancel}
+      />
+
+      <MultiAchievementForm
+        selectedEmployees={selectedEmployeesForAchievement}
+        isOpen={isMultiAchievementModalOpen}
+        onSuccess={handleMultiAchievementSuccess}
+        onCancel={handleMultiAchievementCancel}
+      />
 
       {/* Pagination Component */}
       <Pagination

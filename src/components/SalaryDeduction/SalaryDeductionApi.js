@@ -9,7 +9,7 @@ const getAuthToken = () => localStorage.getItem("authToken");
 const getCurrentUserId = () => localStorage.getItem("userId");
 const getCurrentUserType = () => localStorage.getItem("userType");
 
-// Get all salary deductions
+// Get all salary deductions (admin view)
 export const getAllSalaryDeductions = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
@@ -48,6 +48,80 @@ export const getAllSalaryDeductions = async (filters = {}) => {
   }
 };
 
+// Get salary deductions for a specific employee (ID in path)
+export const getEmployeeSalaryDeductions = async (employeeId, filters = {}) => {
+  try {
+    // Validate employeeId
+    if (!employeeId) {
+      return {
+        success: false,
+        error: "Employee ID is required",
+      };
+    }
+
+    let validEmployeeId;
+
+    // Handle different formats of employeeId
+    if (typeof employeeId === 'string') {
+      validEmployeeId = employeeId;
+    } else if (typeof employeeId === 'object') {
+      // Handle case where employeeId is an object like {employee: 'id'} or {_id: 'id'}
+      validEmployeeId = employeeId.employee || employeeId._id || employeeId.id;
+    }
+    
+    if (!validEmployeeId || typeof validEmployeeId !== 'string') {
+      console.error("Invalid employee ID format:", employeeId);
+      return {
+        success: false,
+        error: "Invalid employee ID format - expected string but got: " + typeof employeeId,
+      };
+    }
+
+    console.log("Fetching deductions for employee ID:", validEmployeeId); // Debug log
+
+    const queryParams = new URLSearchParams();
+
+    // Add other filters to query params (excluding employeeId since it's in the path)
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    // Build URL with employee ID in the path
+    const queryString = queryParams.toString();
+    const url = queryString 
+      ? `${API_URL}/salary-deductions/${validEmployeeId}?${queryString}`
+      : `${API_URL}/salary-deductions/${validEmployeeId}`;
+
+    console.log("API URL:", url); // Debug log
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to fetch employee salary deductions",
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching employee salary deductions:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+
+
 // Create salary deduction
 export const createSalaryDeduction = async (deductionData) => {
   try {
@@ -83,7 +157,7 @@ export const createSalaryDeduction = async (deductionData) => {
 export const updateSalaryDeduction = async (deductionId, deductionData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    console.log(isAdmin,"this is my boolean value")
+    console.log(isAdmin, "this is my boolean value");
     const body = JSON.stringify({
       ...deductionData,
       ...(isAdmin

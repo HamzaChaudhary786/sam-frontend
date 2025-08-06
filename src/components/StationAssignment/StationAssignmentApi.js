@@ -102,7 +102,9 @@ export const createStationAssignment = async (assignmentData) => {
       }),
     });
 
+    console.log(response,"my response testin hahahahah")
     const data = await response.json();
+
 
     if (response.ok) {
       return { success: true, data: data.data || data };
