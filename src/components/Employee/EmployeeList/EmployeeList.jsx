@@ -13,6 +13,8 @@ import { role_admin } from "../../../constants/Enum.js";
 import MultiStationAssignmentForm from "../Multipostingform.jsx";
 import MultiSalaryDeductionForm from "../Multisalarydeductin.jsx";
 import MultiAchievementForm from "../MultiAchievement.jsx";
+import MultiStatusAssignmentForm from "../MultiStatus.jsx";
+import MultiAssetAssignmentForm from "../MultiAsset.jsx";
 
 const EmployeeList = () => {
   const {
@@ -41,6 +43,14 @@ const EmployeeList = () => {
     useState(false);
   const [selectedEmployeesForAchievement, setSelectedEmployeesForAchievement] =
     useState([]);
+  const [isMultiStatusModalOpen, setIsMultiStatusModalOpen] = useState(false);
+  const [selectedEmployeesForStatus, setSelectedEmployeesForStatus] = useState(
+    []
+  );
+  const [isMultiAssetModalOpen, setIsMultiAssetModalOpen] = useState(false);
+  const [selectedEmployeesForAsset, setSelectedEmployeesForAsset] = useState(
+    []
+  );
 
   const [isEdit, setIsEdit] = useState(false);
   const [editData, setEditData] = useState({});
@@ -126,6 +136,43 @@ const EmployeeList = () => {
     setIsMultiAchievementModalOpen(false);
     setSelectedEmployeesForAchievement([]);
   };
+  function handleMultiStatus(selectedEmployeeObjects) {
+    setSelectedEmployeesForStatus(selectedEmployeeObjects);
+    setIsMultiStatusModalOpen(true);
+  }
+
+  const handleMultiStatusSuccess = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+    multiSelect.clearSelection();
+    toast.success("Multi status assignments completed!");
+  };
+
+  const handleMultiStatusCancel = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+  };
+  function handleMultiAsset(selectedEmployeeObjects) {
+    console.log(
+      "🚀 Multi-asset assignment triggered!",
+      selectedEmployeeObjects
+    );
+    setSelectedEmployeesForAsset(selectedEmployeeObjects);
+    setIsMultiAssetModalOpen(true);
+  }
+
+  // 4. Add success and cancel handlers:
+  const handleMultiAssetSuccess = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+    multiSelect.clearSelection();
+    toast.success("Multi asset assignments completed!");
+  };
+
+  const handleMultiAssetCancel = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+  };
 
   // Multi-select functionality using the component
   const multiSelect = EmployeeMultiSelect({
@@ -136,6 +183,8 @@ const EmployeeList = () => {
     onMultiPosting: handleMultiPosting, // Add this line!
     onMultiDeduction: handleMultiDeduction, // Add this line!
     onMultiAchievement: handleMultiAchievement, // ✅ Add this line!
+    onMultiStatus: handleMultiStatus, // Add this line
+    onMultiAsset: handleMultiAsset, // ✅ Add this line!
   });
 
   // Check user role from localStorage
@@ -881,6 +930,18 @@ const EmployeeList = () => {
         isOpen={isMultiAchievementModalOpen}
         onSuccess={handleMultiAchievementSuccess}
         onCancel={handleMultiAchievementCancel}
+      />
+      <MultiStatusAssignmentForm
+        selectedEmployees={selectedEmployeesForStatus}
+        isOpen={isMultiStatusModalOpen}
+        onSuccess={handleMultiStatusSuccess}
+        onCancel={handleMultiStatusCancel}
+      />
+       <MultiAssetAssignmentForm
+        selectedEmployees={selectedEmployeesForAsset}
+        isOpen={isMultiAssetModalOpen}
+        onSuccess={handleMultiAssetSuccess}
+        onCancel={handleMultiAssetCancel}
       />
 
       {/* Pagination Component */}

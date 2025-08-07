@@ -10,6 +10,8 @@ import useGridMultiSelect from "../../Employee/MultiSelectGrid.jsx";
 import MultiStationAssignmentForm from "../../Employee/Multipostingform.jsx";
 import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
+import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
+import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
 
 import { toast } from "react-toastify";
 
@@ -59,6 +61,14 @@ const EmployeeGridTable = ({
     useState(false);
   const [selectedEmployeesForAchievement, setSelectedEmployeesForAchievement] =
     useState([]);
+  const [isMultiStatusModalOpen, setIsMultiStatusModalOpen] = useState(false);
+  const [selectedEmployeesForStatus, setSelectedEmployeesForStatus] = useState(
+    []
+  );
+  const [isMultiAssetModalOpen, setIsMultiAssetModalOpen] = useState(false);
+  const [selectedEmployeesForAsset, setSelectedEmployeesForAsset] = useState(
+    []
+  );
   // State management for grid
   const [editableEmployees, setEditableEmployees] = useState(new Set());
   const [confirmPopup, setConfirmPopup] = useState(false);
@@ -128,6 +138,43 @@ const EmployeeGridTable = ({
     setIsMultiAchievementModalOpen(false);
     setSelectedEmployeesForAchievement([]);
   };
+  function handleMultiStatus(selectedEmployeeObjects) {
+    setSelectedEmployeesForStatus(selectedEmployeeObjects);
+    setIsMultiStatusModalOpen(true);
+  }
+
+  const handleMultiStatusSuccess = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+    multiSelect.clearSelection();
+    toast.success("Multi status assignments completed!");
+  };
+
+  const handleMultiStatusCancel = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+  };
+  function handleMultiAsset(selectedEmployeeObjects) {
+    console.log(
+      "🚀 Multi-asset assignment triggered!",
+      selectedEmployeeObjects
+    );
+    setSelectedEmployeesForAsset(selectedEmployeeObjects);
+    setIsMultiAssetModalOpen(true);
+  }
+
+  // 4. Add success and cancel handlers:
+  const handleMultiAssetSuccess = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+    multiSelect.clearSelection();
+    toast.success("Multi asset assignments completed!");
+  };
+
+  const handleMultiAssetCancel = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+  };
 
   // Multi-select functionality - Add this exactly like EmployeeList
   const multiSelect = useGridMultiSelect({
@@ -138,6 +185,8 @@ const EmployeeGridTable = ({
     onMultiPosting: handleMultiPosting,
     onMultiDeduction: handleMultiDeduction, // Add this line!
     onMultiAchievement: handleMultiAchievement, // ✅ Add this line!
+    onMultiStatus: handleMultiStatus, // Add this line
+    onMultiAsset: handleMultiAsset, // ✅ Add this line!
   });
   const {
     selectedEmployees,
@@ -944,6 +993,18 @@ const EmployeeGridTable = ({
         isOpen={isMultiAchievementModalOpen}
         onSuccess={handleMultiAchievementSuccess}
         onCancel={handleMultiAchievementCancel}
+      />
+      <MultiStatusAssignmentForm
+        selectedEmployees={selectedEmployeesForStatus}
+        isOpen={isMultiStatusModalOpen}
+        onSuccess={handleMultiStatusSuccess}
+        onCancel={handleMultiStatusCancel}
+      />
+       <MultiAssetAssignmentForm
+        selectedEmployees={selectedEmployeesForAsset}
+        isOpen={isMultiAssetModalOpen}
+        onSuccess={handleMultiAssetSuccess}
+        onCancel={handleMultiAssetCancel}
       />
       {/* Pagination Component */}
       <Pagination
