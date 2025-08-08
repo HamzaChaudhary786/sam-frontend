@@ -1,7 +1,7 @@
 // SalaryDeductionList.jsx
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { getAllSalaryDeductions, deleteSalaryDeduction, approveSalaryDeduction } from "../SalaryDeductionApi.js";
+import { getEmployeeSalaryDeductions, deleteSalaryDeduction, approveSalaryDeduction } from "../SalaryDeductionApi.js";
 import { getStatusWithEnum } from "../Lookup.js"; // Update with correct path to your deduction lookup file
 import { role_admin } from "../../../constants/Enum.js";
 
@@ -97,7 +97,7 @@ const SalaryDeductionList = ({ employee, onEdit, refreshTrigger }) => {
       setLoading(true);
       setError("");
 
-      const result = await getAllSalaryDeductions({ employee: employee._id });
+      const result = await getEmployeeSalaryDeductions({ employee: employee._id });
       
       if (result.success) {
         // Ensure data is always an array

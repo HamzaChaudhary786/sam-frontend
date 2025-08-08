@@ -1,7 +1,7 @@
 // AchievementList.jsx - Updated with Dynamic Lookup and Admin-Only Approval Functionality
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { getAllAchievements, deleteAchievement, approveAchievement } from "../AchievementsApi.js";
+import { getEmployeeAchievement, deleteAchievement, approveAchievement } from "../AchievementsApi.js";
 import { getStatusWithEnum } from "../LookUp.js";
 import { role_admin } from "../../../constants/Enum.js";
 
@@ -113,7 +113,7 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
       setLoading(true);
       setError("");
 
-      const result = await getAllAchievements({ employee: employee._id });
+      const result = await getEmployeeAchievement({ employee: employee._id });
 
       if (result.success) {
         let achievementsData = [];
