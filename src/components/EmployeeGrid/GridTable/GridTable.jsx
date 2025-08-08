@@ -2,10 +2,18 @@ import React, { useState, useEffect } from "react";
 import { deleteEmployee } from "../../Employee/EmployeeApi";
 import { AlertTriangle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import EmployeeFilter from "../filter.jsx";
+import EmployeeFilters from "../../Employee/Filters.jsx";
 import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
-import { useEmployees } from "../../Employee/EmployeeHook.js"; // Import the hook
-import Pagination from "../Pagination/Pagination.jsx"; // Import pagination component
+import { useEmployees } from "../../Employee/EmployeeHook.js";
+import Pagination from "../Pagination/Pagination.jsx";
+import useGridMultiSelect from "../../Employee/MultiSelectGrid.jsx";
+import MultiStationAssignmentForm from "../../Employee/Multipostingform.jsx";
+import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
+import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
+import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
+import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
+
+import { toast } from "react-toastify";
 
 const EmployeeGridTable = ({
   sortConfig,
@@ -31,6 +39,7 @@ const EmployeeGridTable = ({
     employees,
     loading,
     error,
+    removeEmployee,
     updateFilters,
     clearFilters,
     filters,
@@ -40,7 +49,26 @@ const EmployeeGridTable = ({
     prevPage,
     changePageSize,
   } = useEmployees();
+  const [isMultiStationModalOpen, setIsMultiStationModalOpen] = useState(false);
+  const [selectedEmployeesForPosting, setSelectedEmployeesForPosting] =
+    useState([]);
+  const [isMultiDeductionModalOpen, setIsMultiDeductionModalOpen] =
+    useState(false);
+  const [selectedEmployeesForDeduction, setSelectedEmployeesForDeduction] =
+    useState([]);
 
+  const [isMultiAchievementModalOpen, setIsMultiAchievementModalOpen] =
+    useState(false);
+  const [selectedEmployeesForAchievement, setSelectedEmployeesForAchievement] =
+    useState([]);
+  const [isMultiStatusModalOpen, setIsMultiStatusModalOpen] = useState(false);
+  const [selectedEmployeesForStatus, setSelectedEmployeesForStatus] = useState(
+    []
+  );
+  const [isMultiAssetModalOpen, setIsMultiAssetModalOpen] = useState(false);
+  const [selectedEmployeesForAsset, setSelectedEmployeesForAsset] = useState(
+    []
+  );
   // State management for grid
   const [editableEmployees, setEditableEmployees] = useState(new Set());
   const [confirmPopup, setConfirmPopup] = useState(false);
@@ -52,7 +80,130 @@ const EmployeeGridTable = ({
 
   const navigate = useNavigate();
 
-  // Helper functions
+  // Safety check for employees
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+
+  function handleMultiPosting(selectedEmployeeObjects) {
+    console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
+    alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
+    setSelectedEmployeesForPosting(selectedEmployeeObjects);
+    setIsMultiStationModalOpen(true);
+  }
+
+  // Handle multi station assignment success
+  const handleMultiStationSuccess = () => {
+    setIsMultiStationModalOpen(false);
+    setSelectedEmployeesForPosting([]);
+    multiSelect.clearSelection(); // Use the function from the hook
+    toast.success("Multi station assignments completed!");
+  };
+
+  // Handle multi station assignment cancel
+  const handleMultiStationCancel = () => {
+    setIsMultiStationModalOpen(false);
+    setSelectedEmployeesForPosting([]);
+  };
+  function handleMultiDeduction(selectedEmployeeObjects) {
+    console.log("🚀 Multi-deduction triggered!", selectedEmployeeObjects);
+    setSelectedEmployeesForDeduction(selectedEmployeeObjects);
+    setIsMultiDeductionModalOpen(true);
+  }
+
+  // Add these handler functions:
+  const handleMultiDeductionSuccess = () => {
+    setIsMultiDeductionModalOpen(false);
+    setSelectedEmployeesForDeduction([]);
+    multiSelect.clearSelection();
+    toast.success("Multi salary deductions completed!");
+  };
+
+  const handleMultiDeductionCancel = () => {
+    setIsMultiDeductionModalOpen(false);
+    setSelectedEmployeesForDeduction([]);
+  };
+  function handleMultiAchievement(selectedEmployeeObjects) {
+    console.log("🚀 Multi-achievement triggered!", selectedEmployeeObjects);
+    setSelectedEmployeesForAchievement(selectedEmployeeObjects);
+    setIsMultiAchievementModalOpen(true);
+  }
+
+  const handleMultiAchievementSuccess = () => {
+    setIsMultiAchievementModalOpen(false);
+    setSelectedEmployeesForAchievement([]);
+    multiSelect.clearSelection();
+    toast.success("Multi achievements completed!");
+  };
+
+  const handleMultiAchievementCancel = () => {
+    setIsMultiAchievementModalOpen(false);
+    setSelectedEmployeesForAchievement([]);
+  };
+  function handleMultiStatus(selectedEmployeeObjects) {
+    setSelectedEmployeesForStatus(selectedEmployeeObjects);
+    setIsMultiStatusModalOpen(true);
+  }
+
+  const handleMultiStatusSuccess = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+    multiSelect.clearSelection();
+    toast.success("Multi status assignments completed!");
+  };
+
+  const handleMultiStatusCancel = () => {
+    setIsMultiStatusModalOpen(false);
+    setSelectedEmployeesForStatus([]);
+  };
+  function handleMultiAsset(selectedEmployeeObjects) {
+    console.log(
+      "🚀 Multi-asset assignment triggered!",
+      selectedEmployeeObjects
+    );
+    setSelectedEmployeesForAsset(selectedEmployeeObjects);
+    setIsMultiAssetModalOpen(true);
+  }
+
+  // 4. Add success and cancel handlers:
+  const handleMultiAssetSuccess = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+    multiSelect.clearSelection();
+    toast.success("Multi asset assignments completed!");
+  };
+
+  const handleMultiAssetCancel = () => {
+    setIsMultiAssetModalOpen(false);
+    setSelectedEmployeesForAsset([]);
+  };
+
+  // Multi-select functionality - Add this exactly like EmployeeList
+  const multiSelect = useGridMultiSelect({
+    employees: safeEmployees,
+    isAdmin,
+    removeEmployee,
+    loading,
+    onMultiPosting: handleMultiPosting,
+    onMultiDeduction: handleMultiDeduction, // Add this line!
+    onMultiAchievement: handleMultiAchievement, // ✅ Add this line!
+    onMultiStatus: handleMultiStatus, // Add this line
+    onMultiAsset: handleMultiAsset, // ✅ Add this line!
+  });
+  const {
+    selectedEmployees,
+    selectAll,
+    handleSelectEmployee,
+    handleSelectAll,
+    handleBulkDelete,
+    handleClearSelection,
+    selectedCount,
+    hasSelection,
+    isSelected,
+    renderSelectAllCheckbox,
+    renderEmployeeCheckbox,
+    renderBulkActionsBar,
+  } = multiSelect;
+
+  // All your existing helper functions remain the same
   const getEnumDisplayName = (enumKey, valueId) => {
     if (!valueId) return `${enumKey} N/A`;
     if (typeof valueId === "object" && valueId?.name) return valueId.name;
@@ -80,10 +231,9 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-        ? 1
-        : 0;
+      ? 1
+      : 0;
   };
-
 
   const getNestedValue = (employee, fieldPath, editingData) => {
     const employeeEditingData = editingData[employee._id] || {};
@@ -100,7 +250,7 @@ const EmployeeGridTable = ({
     return value || "";
   };
 
-  // Event handlers
+  // All your existing event handlers remain the same
   const toggleEditMode = (employeeId) => {
     const newEditableEmployees = new Set(editableEmployees);
     if (newEditableEmployees.has(employeeId)) {
@@ -140,33 +290,22 @@ const EmployeeGridTable = ({
     setDeleteId(null);
   };
 
-  // Filter handlers - Now using backend filtering
-  const handleFilterChange = (filters) => {
-    // This is just for managing local filter state, not triggering backend calls
-    // The actual filtering will happen when Apply Filters is clicked
-  };
-
   const handleApplyFilters = (filters) => {
-    // Convert the filters to match the backend API format
-    const backendFilters = {};
-    
-    if (filters.name) {
-      backendFilters.name = filters.name;
-    }
-    
-    if (filters.city) {
-      backendFilters.address = filters.city; // Backend uses 'address' for city search
-    }
-    
-    if (filters.personalNumber) {
-      backendFilters.personalNumber = filters.personalNumber;
-    }
-    
-    if (filters.cnic) {
-      backendFilters.cnic = filters.cnic;
-    }
+    console.log("🔍 Applying filters:", filters);
 
-    // Update filters using the hook - this triggers backend call
+    const backendFilters = {};
+
+    if (filters.name) backendFilters.name = filters.name;
+    if (filters.address) backendFilters.address = filters.address;
+    if (filters.personalNumber)
+      backendFilters.personalNumber = filters.personalNumber;
+    if (filters.cnic) backendFilters.cnic = filters.cnic;
+    if (filters.cast) backendFilters.cast = filters.cast;
+    if (filters.rank) backendFilters.rank = filters.rank;
+    if (filters.status) backendFilters.status = filters.status;
+    if (filters.designation) backendFilters.designation = filters.designation;
+    if (filters.grade) backendFilters.grade = filters.grade;
+
     updateFilters(backendFilters);
   };
 
@@ -174,7 +313,7 @@ const EmployeeGridTable = ({
     clearFilters();
   };
 
-  // Navigation handlers
+  // Navigation handlers remain the same
   const handleAchievements = (employee) => {
     navigate("/achievements", { state: { employee } });
   };
@@ -205,7 +344,7 @@ const EmployeeGridTable = ({
     setSelectedEmployee(null);
   };
 
-  // Pagination handlers
+  // Pagination handlers remain the same
   const handlePageChange = (page) => {
     goToPage(page);
   };
@@ -214,7 +353,7 @@ const EmployeeGridTable = ({
     changePageSize(pageSize);
   };
 
-  // Render functions
+  // All your render functions remain the same...
   const renderEditingCell = (employee, fieldKey, fieldType, enumType) => {
     const employeeEditingData = editingData[employee._id] || {};
     let value;
@@ -354,8 +493,9 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
-                }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                statusClasses[value] || statusClasses.default
+              }`}
             >
               {displayName}
             </span>
@@ -366,22 +506,21 @@ const EmployeeGridTable = ({
       case "date":
         return value ? new Date(value).toLocaleDateString() : `${fieldKey} N/A`;
 
-      default:
-        {
-          switch (fieldKey) {
-            case "address.line1":
-              return value || `Address N/A`;
-            case "address.line2":
-              return value || `District N/A`;
-            case "address.muhala":
-              return value || `Mohalla N/A`;
-            case "address.tehsil":
-              return value || `Tehsil N/A`;
+      default: {
+        switch (fieldKey) {
+          case "address.line1":
+            return value || `Address N/A`;
+          case "address.line2":
+            return value || `District N/A`;
+          case "address.muhala":
+            return value || `Mohalla N/A`;
+          case "address.tehsil":
+            return value || `Tehsil N/A`;
 
-            default:
-              return value || `${fieldKey} N/A`;
-          }
+          default:
+            return value || `${fieldKey} N/A`;
         }
+      }
     }
   };
 
@@ -398,16 +537,17 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
-      ? "cursor-pointer hover:bg-gray-100"
-      : "cursor-default"
-      }`;
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
+      isAdmin && isEditable
+        ? "cursor-pointer hover:bg-gray-100"
+        : "cursor-default"
+    }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-        ? "Click Edit button to enable editing"
-        : "Double-click to edit";
+      ? "Click Edit button to enable editing"
+      : "Double-click to edit";
 
     return (
       <>
@@ -564,10 +704,11 @@ const EmployeeGridTable = ({
               <>
                 <button
                   onClick={() => toggleEditMode(employee._id)}
-                  className={`${buttonBaseClasses} ${isEditable
-                    ? "bg-orange-600 text-white hover:bg-orange-700"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
+                  className={`${buttonBaseClasses} ${
+                    isEditable
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
                   title={isEditable ? "Disable editing" : "Enable editing"}
                 >
                   {isEditable ? "Disable Edit" : "Edit"}
@@ -691,16 +832,6 @@ const EmployeeGridTable = ({
     </div>
   );
 
-  // Convert backend filters to frontend filter format for the filter component
-  const convertFiltersForComponent = (backendFilters) => {
-    return {
-      name: backendFilters.name || '',
-      city: backendFilters.address || '', // Backend uses 'address' for city
-      personalNumber: backendFilters.personalNumber || '',
-      cnic: backendFilters.cnic || ''
-    };
-  };
-
   // Show loading state
   if (loading) {
     return (
@@ -719,23 +850,26 @@ const EmployeeGridTable = ({
     );
   }
 
-  // Main render
+  // Main render with multi-select functionality
   return (
     <div>
-      {/* Filter Component */}
-      <EmployeeFilter
-        onFilterChange={handleFilterChange}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        initialFilters={convertFiltersForComponent(filters)}
-        totalEmployees={pagination.totalEmployees}
-        filteredCount={employees?.length || 0}
+      <EmployeeFilters
+        filters={filters}
+        updateFilters={handleApplyFilters}
+        clearFilters={handleClearFilters}
+        showFilters={true}
       />
 
-      {/* Grid Section */}
+      {/* Bulk Actions Bar - exactly like EmployeeList */}
+      {renderBulkActionsBar()}
+
+      {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header Grid */}
-        <div className="grid grid-cols-9 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
+        {/* Header Grid - Updated to include checkbox column */}
+        <div className="grid grid-cols-10 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
+          <div className="flex items-center justify-center">
+            {renderSelectAllCheckbox()}
+          </div>
           <div>Photo</div>
           <div>Personal #</div>
           <div>Name</div>
@@ -745,6 +879,7 @@ const EmployeeGridTable = ({
           <div>Designation</div>
           <div>Service Type</div>
           <div>Date of Birth</div>
+          <div></div> {/* Empty cell for alignment */}
           <div>Status</div>
           <div>Grade</div>
           <div>Rank</div>
@@ -756,16 +891,23 @@ const EmployeeGridTable = ({
           <div>District</div>
         </div>
 
-        {/* Employee Rows */}
-        {employees?.map((employee) => {
+        {/* Employee Rows - Updated with checkboxes */}
+        {safeEmployees?.map((employee) => {
           const isEditing = editingCell?.rowId === employee._id;
           const isEditable = editableEmployees.has(employee._id);
 
           return (
             <div
               key={employee._id}
-              className="grid grid-cols-9 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2"
+              className={`grid grid-cols-10 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
+                isSelected(employee._id) ? "bg-blue-50" : ""
+              }`}
             >
+              {/* Checkbox - spans 2 rows */}
+              <div className="row-span-2 flex items-center justify-center">
+                {renderEmployeeCheckbox(employee)}
+              </div>
+
               {/* Photo - spans 2 rows */}
               <div className="row-span-2">{renderImageCell(employee)}</div>
 
@@ -782,48 +924,47 @@ const EmployeeGridTable = ({
               <div>{renderCell(employee, "dateOfBirth", "date")}</div>
 
               {/* Second row of data */}
-              <div className="col-start-1 row-start-3 ">
+              <div className="col-start-2 row-start-3">
                 {renderCell(employee, "status", "select", "statuses")}
               </div>
-              <div className="col-start-2">
+              <div className="col-start-3">
                 {renderCell(employee, "grade", "select", "grades")}
               </div>
-              <div className="col-start-3">
+              <div className="col-start-4">
                 {renderCell(employee, "rank", "select", "ranks")}
               </div>
-              <div className="col-start-4">
+              <div className="col-start-5">
                 {renderCell(employee, "cast", "select", "casts")}
               </div>
-              <div className="col-start-5">
+              <div className="col-start-6">
                 {renderCell(employee, "stations", "select", "stations")}
               </div>
-              <div className="col-start-6">
+              <div className="col-start-7">
                 {renderCell(employee, "address.line1", "textarea")}
               </div>
-              <div className="col-start-7">
+              <div className="col-start-8">
                 {renderCell(employee, "address.muhala", "input")}
               </div>
-              <div className="col-start-8">
+              <div className="col-start-9">
                 {renderCell(employee, "address.tehsil", "select", "tehsil")}
               </div>
-              <div className="col-start-9">
+              <div className="col-start-10">
                 {renderCell(employee, "address.line2", "select", "district")}
               </div>
 
-              {/* Action buttons row */}
-              <div className="col-start-2 row-start-3 col-span-8 ">
+              {/* Action buttons row - updated column positioning */}
+              <div className="col-start-3 row-start-3 col-span-8">
                 {renderActionButtons(employee, isEditing, isEditable)}
               </div>
             </div>
           );
         })}
-        {/* End Employee Rows */}
 
         {/* Confirmation Modal */}
         {confirmPopup && renderConfirmationModal()}
 
         {/* Empty State */}
-        {employees?.length === 0 && !loading && (
+        {safeEmployees.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-500">
               {Object.values(filters).some((filter) => filter !== "")
@@ -833,7 +974,38 @@ const EmployeeGridTable = ({
           </div>
         )}
       </div>
+      <MultiStationAssignmentForm
+        selectedEmployees={selectedEmployeesForPosting}
+        isOpen={isMultiStationModalOpen}
+        onSuccess={handleMultiStationSuccess}
+        onCancel={handleMultiStationCancel}
+      />
 
+      <MultiSalaryDeductionForm
+        selectedEmployees={selectedEmployeesForDeduction}
+        isOpen={isMultiDeductionModalOpen}
+        onSuccess={handleMultiDeductionSuccess}
+        onCancel={handleMultiDeductionCancel}
+      />
+
+      <MultiAchievementForm
+        selectedEmployees={selectedEmployeesForAchievement}
+        isOpen={isMultiAchievementModalOpen}
+        onSuccess={handleMultiAchievementSuccess}
+        onCancel={handleMultiAchievementCancel}
+      />
+      <MultiStatusAssignmentForm
+        selectedEmployees={selectedEmployeesForStatus}
+        isOpen={isMultiStatusModalOpen}
+        onSuccess={handleMultiStatusSuccess}
+        onCancel={handleMultiStatusCancel}
+      />
+       <MultiAssetAssignmentForm
+        selectedEmployees={selectedEmployeesForAsset}
+        isOpen={isMultiAssetModalOpen}
+        onSuccess={handleMultiAssetSuccess}
+        onCancel={handleMultiAssetCancel}
+      />
       {/* Pagination Component */}
       <Pagination
         pagination={pagination}
@@ -847,11 +1019,6 @@ const EmployeeGridTable = ({
 };
 
 export default EmployeeGridTable;
-
-
-
-
-
 
 // import React, { useState, useEffect } from "react";
 // import { deleteEmployee } from "../../Employee/EmployeeApi";
@@ -1008,19 +1175,19 @@ export default EmployeeGridTable;
 
 //   const handleApplyFilters = (filters) => {
 //     const backendFilters = {};
-    
+
 //     if (filters.name) {
 //       backendFilters.name = filters.name;
 //     }
-    
+
 //     if (filters.city) {
 //       backendFilters.address = filters.city;
 //     }
-    
+
 //     if (filters.personalNumber) {
 //       backendFilters.personalNumber = filters.personalNumber;
 //     }
-    
+
 //     if (filters.cnic) {
 //       backendFilters.cnic = filters.cnic;
 //     }
@@ -1548,7 +1715,7 @@ export default EmployeeGridTable;
 //     // Helper function to render mobile field with proper editing support
 //     const renderMobileField = (fieldKey, fieldType, enumType, label) => {
 //       const isFieldEditing = editingCell?.rowId === employee._id && editingCell?.fieldName === fieldKey;
-      
+
 //       return (
 //         <div>
 //           <span className="text-gray-500 block mb-1">{label}:</span>
@@ -1566,7 +1733,7 @@ export default EmployeeGridTable;
 //                 }`}
 //                 onDoubleClick={() => {
 //                   if (isAdmin && isEditable) {
-//                     const currentValue = fieldKey.includes(".") 
+//                     const currentValue = fieldKey.includes(".")
 //                       ? getNestedValue(employee, fieldKey, editingData)
 //                       : employee[fieldKey];
 //                     onStartEditing(employee._id, fieldKey, currentValue);
@@ -1630,7 +1797,7 @@ export default EmployeeGridTable;
 //               <div className="font-medium">
 //                 {(() => {
 //                   const isFieldEditing = editingCell?.rowId === employee._id && editingCell?.fieldName === "address.line1";
-                  
+
 //                   if (isFieldEditing) {
 //                     return (
 //                       <div className="w-full">
