@@ -305,6 +305,10 @@ const EmployeeGridTable = ({
     if (filters.status) backendFilters.status = filters.status;
     if (filters.designation) backendFilters.designation = filters.designation;
     if (filters.grade) backendFilters.grade = filters.grade;
+    if (filters.station) backendFilters.station = filters.station;
+    if (filters.district) backendFilters.district = filters.district;
+    if (filters.tehsil) backendFilters.tehsil = filters.tehsil;
+    if (filters.assetType) backendFilters.assetType = filters.assetType; 
 
     updateFilters(backendFilters);
   };

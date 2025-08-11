@@ -1,9 +1,9 @@
-import { useStations } from "../StationHook";
-import { getStationLocationsWithEnum } from "../lookUp.js";
-import { getStationDistrictWithEnum } from "../District.js";
+import { useStations } from "../hook.js";
+import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
+import { getStationDistrictWithEnum } from "../../Station/District.js";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
-import { getStationFacilitiesWithEnum } from "../statusfacilities.js";
-import { getStationStatusWithEnum } from "../stationstatus.js";
+import { getStationFacilitiesWithEnum } from "../../Station/statusfacilities.js";
+import { getStationStatusWithEnum } from "../../Station/stationstatus.js";
 import { MultiEnumSelect } from "../../Multiselect.jsx";
 import MapLocation from "../../Dashboard/MapComponent/MapLocation.jsx";
 import { useRef, useState, useEffect } from "react";
@@ -1219,7 +1219,7 @@ const StationModal = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Station Name *
+                  Maal Khana Name *
                 </label>
                 <input
                   type="text"
@@ -1261,7 +1261,7 @@ const StationModal = ({
             {/* Status, Facilities, and Description */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <EnumSelect
-                label="Station Status"
+                label="Maal Khana Status"
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
@@ -1276,7 +1276,7 @@ const StationModal = ({
               />
 
               <MultiEnumSelect
-                label="Station Facilities"
+                label="Maal Khana Facilities"
                 name="facilities"
                 value={formData.facilities}
                 onChange={handleFacilitiesEnumChange}
@@ -1309,7 +1309,7 @@ const StationModal = ({
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Station Incharge
+                  Maal Khana Incharge
                 </h3>
                 {formData.stationIncharge.length < 2 && (
                   <button
@@ -1383,7 +1383,7 @@ const StationModal = ({
 
               {formData.stationIncharge.length === 2 && (
                 <p className="text-sm text-gray-500 italic">
-                  Maximum 2 incharges allowed per station
+                  Maximum 2 incharges allowed per maal khana
                 </p>
               )}
             </div>
@@ -1392,7 +1392,7 @@ const StationModal = ({
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Station Minimum Requirements
+                  Maal khana Minimum Requirements
                 </h3>
                 <button
                   type="button"
@@ -1709,12 +1709,12 @@ const StationModal = ({
             {/* Pictures */}
             <div className="border-t pt-4">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Station Pictures
+                Maal Khana Pictures
               </h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Upload Station Pictures
+                  Upload Maal Khana Pictures
                 </label>
                 <input
                   type="file"

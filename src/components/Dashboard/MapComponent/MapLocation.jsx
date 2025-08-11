@@ -1659,7 +1659,7 @@ const MapLocation = ({ onPositionChange, hidePanels = false, stationData = [] })
 
         // Move map to clicked location with higher zoom
         setMapCenter([coordinates.lat, coordinates.lng]);
-        setMapZoom(15);
+        setMapZoom(100);
 
         // Get address for clicked location (only if panels are visible for saving)
         if (!hidePanels) {
@@ -1864,7 +1864,8 @@ const MapLocation = ({ onPositionChange, hidePanels = false, stationData = [] })
         };
         // Only move the map, don't change the clicked position
         setMapCenter([coordinates.lat, coordinates.lng]);
-        setMapZoom(9);
+        setMapZoom(15);
+        setClickedPosition(coordinates);
         // Don't call setClickedPosition here to preserve the original clicked location
     };
 
