@@ -25,9 +25,13 @@ const SearchableSelect = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOptions = options.filter((option) => {
+  const searchLower = searchTerm.toLowerCase();
+  return (
+    option.label.toLowerCase().includes(searchLower) ||
+    (option.subtitle && option.subtitle.toLowerCase().includes(searchLower))
   );
+});
 
   const selectedOption = options.find((option) => option.value === value);
 
