@@ -23,6 +23,7 @@ import AdminManagementPage from './pages/Admin.jsx'
 import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
 import AuditTrailPage from './pages/Audit.jsx';
 import StationImport from './pages/StationImport.jsx';
+import MaalKhana from './pages/MaalKhana.jsx'
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -170,6 +171,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <StationsPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/maalkhana"
+          element={
+            <ProtectedRoute>
+              <MaalKhana />
             </ProtectedRoute>
           }
         />
