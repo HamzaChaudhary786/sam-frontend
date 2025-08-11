@@ -600,7 +600,7 @@ const AssetsList = () => {
       </div>
 
       {/* Pagination Component */}
-      {totalPages > 1 && (
+      {totalPages >= 1 && (
         <div className="mt-6">
           <Pagination
             currentPage={currentPage}

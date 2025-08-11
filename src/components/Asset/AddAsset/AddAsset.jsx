@@ -541,20 +541,6 @@ const AssetModal = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Asset Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="e.g., Black Hawk"
-              />
-            </div>
 
             <div>
               <EnumSelect
@@ -567,7 +553,22 @@ const AssetModal = ({
                 placeholder="Search and select asset type..."
               />
             </div>
-          </div>
+        
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Asset Number *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="e.g., Black Hawk"
+              />
+            </div>
+            </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

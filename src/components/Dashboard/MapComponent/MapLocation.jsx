@@ -2068,7 +2068,7 @@ const MapLocation = ({ onPositionChange, hidePanels = false, stationData = [] })
                         />
                     </LayersControl.BaseLayer>
 
-                    <LayersControl.BaseLayer name="🌍 Satellite + Streets">
+                    {/* <LayersControl.BaseLayer name="🌍 Satellite + Streets">
                         <TileLayer
                             attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
                             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -2078,7 +2078,7 @@ const MapLocation = ({ onPositionChange, hidePanels = false, stationData = [] })
                             url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
                             opacity={0.8}
                         />
-                    </LayersControl.BaseLayer>
+                    </LayersControl.BaseLayer> */}
 
                     <LayersControl.BaseLayer name="🗺️ Topographic">
                         <TileLayer

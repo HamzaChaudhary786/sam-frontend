@@ -8,7 +8,7 @@ const Pagination = ({
   itemsPerPage,
   onPageChange,
   showItemsPerPage = true,
-  itemsPerPageOptions = [10, 20, 50, 100],
+  itemsPerPageOptions = [10, 20, 50, 100, 200, 500],
   onItemsPerPageChange,
   showPageInfo = true,
   showFirstLast = true,
