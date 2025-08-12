@@ -15,6 +15,7 @@ import MultiSalaryDeductionForm from "../Multisalarydeductin.jsx";
 import MultiAchievementForm from "../MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../MultiAsset.jsx";
+import { useEmployeeAssets } from "../EmployeeAsset.js";
 
 const EmployeeList = () => {
   const {
@@ -73,11 +74,12 @@ const EmployeeList = () => {
 
   // Mobile view state
   const [showFilters, setShowFilters] = useState(false);
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+
+  const { getEmployeeAssetsString, loading: assetsLoading } =
+    useEmployeeAssets(safeEmployees);
 
   const navigate = useNavigate();
-
-  // Safety check for employees
-  const safeEmployees = Array.isArray(employees) ? employees : [];
 
   // Handle multi-posting functionality
   function handleMultiPosting(selectedEmployeeObjects) {
@@ -519,12 +521,11 @@ const EmployeeList = () => {
           <div className="overflow-x-auto">
             <table
               className="min-w-full divide-y divide-gray-200"
-              style={{ minWidth: "1200px" }}
+              style={{ minWidth: "1400px" }} // Increased to accommodate assets column
             >
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    {/* Using the component's render function */}
                     {multiSelect.renderSelectAllCheckbox()}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[280px]">
@@ -532,6 +533,9 @@ const EmployeeList = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                     Information
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                    Assigned Assets
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[250px]">
                     Employee Actions
@@ -555,9 +559,10 @@ const EmployeeList = () => {
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {/* Using the component's render function */}
                         {multiSelect.renderEmployeeCheckbox(employee)}
                       </td>
+
+                      {/* Employee Info Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 relative">
@@ -618,6 +623,8 @@ const EmployeeList = () => {
                           </div>
                         </div>
                       </td>
+
+                      {/* Information Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -639,7 +646,6 @@ const EmployeeList = () => {
                           {employee.address?.line1 || "N/A"},{" "}
                           {employee.address?.tehsil || "N/A"}
                         </div>
-
                         <div className="text-sm text-gray-500">
                           Cast: {employee.cast || "N/A"}
                         </div>
@@ -647,7 +653,25 @@ const EmployeeList = () => {
                           Service: {employee.serviceType || "N/A"}
                         </div>
                       </td>
-                      <td className=" px-6 py-4 whitespace-nowrap text-sm font-medium">
+
+                      {/* NEW: Assets Column */}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 max-w-xs">
+                          {assetsLoading ? (
+                            <span className="text-gray-500 animate-pulse">
+                              Loading assets...
+                            </span>
+                          ) : (
+                            <span className="text-gray-700 break-words">
+                              {getEmployeeAssetsString(employee._id)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Employee Actions Column */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {/* Your existing action buttons remain the same */}
                         <div className="flex flex-col space-y-2">
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -821,6 +845,14 @@ const EmployeeList = () => {
                         {employee.cast?.name || "N/A"}
                       </p>
                     </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <span className="font-medium">Assets: </span>
+                      {assetsLoading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : (
+                        <span>{getEmployeeAssetsString(employee._id)}</span>
+                      )}
+                    </div>
 
                     {/* Mobile Action Buttons - Stacked vertically in columns */}
                     <div className="mt-3">
@@ -937,7 +969,7 @@ const EmployeeList = () => {
         onSuccess={handleMultiStatusSuccess}
         onCancel={handleMultiStatusCancel}
       />
-       <MultiAssetAssignmentForm
+      <MultiAssetAssignmentForm
         selectedEmployees={selectedEmployeesForAsset}
         isOpen={isMultiAssetModalOpen}
         onSuccess={handleMultiAssetSuccess}

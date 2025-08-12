@@ -12,6 +12,7 @@ import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
+import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 
 import { toast } from "react-toastify";
 
@@ -82,6 +83,9 @@ const EmployeeGridTable = ({
 
   // Safety check for employees
   const safeEmployees = Array.isArray(employees) ? employees : [];
+
+  const { getEmployeeAssetsString, loading: assetsLoading } =
+    useEmployeeAssets(safeEmployees);
 
   function handleMultiPosting(selectedEmployeeObjects) {
     console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
@@ -308,7 +312,7 @@ const EmployeeGridTable = ({
     if (filters.station) backendFilters.station = filters.station;
     if (filters.district) backendFilters.district = filters.district;
     if (filters.tehsil) backendFilters.tehsil = filters.tehsil;
-    if (filters.assetType) backendFilters.assetType = filters.assetType; 
+    if (filters.assetType) backendFilters.assetType = filters.assetType;
 
     updateFilters(backendFilters);
   };
@@ -870,7 +874,7 @@ const EmployeeGridTable = ({
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Grid - Updated to include checkbox column */}
-        <div className="grid grid-cols-10 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
+        <div className="grid grid-cols-11 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
           <div className="flex items-center justify-center">
             {renderSelectAllCheckbox()}
           </div>
@@ -883,6 +887,7 @@ const EmployeeGridTable = ({
           <div>Designation</div>
           <div>Service Type</div>
           <div>Date of Birth</div>
+          <div>Assigned Assets</div> {/* NEW: Assets column */}
           <div></div> {/* Empty cell for alignment */}
           <div>Status</div>
           <div>Grade</div>
@@ -903,7 +908,7 @@ const EmployeeGridTable = ({
           return (
             <div
               key={employee._id}
-              className={`grid grid-cols-10 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
+              className={`grid grid-cols-11 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
                 isSelected(employee._id) ? "bg-blue-50" : ""
               }`}
             >
@@ -926,6 +931,21 @@ const EmployeeGridTable = ({
               </div>
               <div>{renderCell(employee, "serviceType", "serviceType")}</div>
               <div>{renderCell(employee, "dateOfBirth", "date")}</div>
+
+              {/* NEW: Assets Column - spans 2 rows */}
+              <div className="row-span-2 flex items-center p-1">
+                <div className="text-xs text-gray-700 max-w-32 break-words">
+                  {assetsLoading ? (
+                    <span className="text-gray-500 animate-pulse">
+                      Loading...
+                    </span>
+                  ) : (
+                    <span title={getEmployeeAssetsString(employee._id)}>
+                      {getEmployeeAssetsString(employee._id)}
+                    </span>
+                  )}
+                </div>
+              </div>
 
               {/* Second row of data */}
               <div className="col-start-2 row-start-3">
@@ -1004,7 +1024,7 @@ const EmployeeGridTable = ({
         onSuccess={handleMultiStatusSuccess}
         onCancel={handleMultiStatusCancel}
       />
-       <MultiAssetAssignmentForm
+      <MultiAssetAssignmentForm
         selectedEmployees={selectedEmployeesForAsset}
         isOpen={isMultiAssetModalOpen}
         onSuccess={handleMultiAssetSuccess}
