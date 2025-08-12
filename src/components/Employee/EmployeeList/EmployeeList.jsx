@@ -437,7 +437,7 @@ const EmployeeList = () => {
   }
 
   return (
-    <div className="p-3 sm:p-6">
+    <div className="p-3 sm:p-6 lg:p-0">
       {/* Header Section - Responsive */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
         <div>
@@ -518,230 +518,210 @@ const EmployeeList = () => {
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Desktop Table View - Only for screens 1200px+ */}
         <div className="hidden xl:block">
-          <div className="overflow-x-auto">
-            <table
-              className="min-w-full divide-y divide-gray-200"
-              style={{ minWidth: "1400px" }} // Increased to accommodate assets column
-            >
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    {multiSelect.renderSelectAllCheckbox()}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[280px]">
-                    Employee Info
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                    Information
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                    Assigned Assets
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[250px]">
-                    Employee Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {safeEmployees.map((employee) => {
-                  const currentImageIndex = imageIndexes[employee._id] || 0;
-                  const totalImages = getImageCount(employee);
-                  const currentImage = getEmployeeImage(
-                    employee,
-                    currentImageIndex
-                  );
+     <div className="w-full">
+  <table className="w-full divide-y divide-gray-200 table-fixed">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
+          {multiSelect.renderSelectAllCheckbox()}
+        </th>
+        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[30%]">
+          Employee
+        </th>
+        <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[18%]">
+          Info
+        </th>
+        <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[17%]">
+          Assets
+        </th>
+        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[28%]">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody className="bg-white divide-y divide-gray-200">
+      {safeEmployees.map((employee) => {
+        const currentImageIndex = imageIndexes[employee._id] || 0;
+        const totalImages = getImageCount(employee);
+        const currentImage = getEmployeeImage(
+          employee,
+          currentImageIndex
+        );
 
-                  return (
-                    <tr
-                      key={employee._id}
-                      className={`hover:bg-gray-50 ${
-                        multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                      }`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {multiSelect.renderEmployeeCheckbox(employee)}
-                      </td>
+        return (
+          <tr
+            key={employee._id}
+            className={`hover:bg-gray-50 ${
+              multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+            }`}
+          >
+            <td className="px-1 py-2">
+              {multiSelect.renderEmployeeCheckbox(employee)}
+            </td>
 
-                      {/* Employee Info Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0 relative">
-                            <img
-                              className="w-10 h-10 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                              src={currentImage}
-                              alt={`${employee.firstName} ${employee.lastName}`}
-                              onClick={() =>
-                                setImageModal({ image: currentImage, employee })
-                              }
-                            />
+            {/* Employee Info Column - Ultra Compact */}
+            <td className="px-2 py-2">
+              <div className="flex items-center gap-1">
+                <div className="h-6 w-6 flex-shrink-0 relative">
+                  <img
+                    className="w-6 h-6 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    src={currentImage}
+                    alt={`${employee.firstName} ${employee.lastName}`}
+                    onClick={() =>
+                      setImageModal({ image: currentImage, employee })
+                    }
+                  />
 
-                            {/* Navigation arrows for multiple images */}
-                            {totalImages > 1 && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handlePrevImage(employee._id, totalImages)
-                                  }
-                                  className="absolute -left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
-                                  style={{ fontSize: "10px" }}
-                                >
-                                  ‹
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleNextImage(employee._id, totalImages)
-                                  }
-                                  className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
-                                  style={{ fontSize: "10px" }}
-                                >
-                                  ›
-                                </button>
-                                <div
-                                  className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
-                                  style={{ fontSize: "8px" }}
-                                >
-                                  {currentImageIndex + 1}/{totalImages}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee.firstName} {employee.lastName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Personal Number:{" "}
-                              {employee.personalNumber || employee.pnumber}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              CNIC: {employee.cnic}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {getDesignationName(employee.designation)} -{" "}
-                              {getGradeName(employee.grade)}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+                  {/* Navigation arrows for multiple images */}
+                  {totalImages > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          handlePrevImage(employee._id, totalImages)
+                        }
+                        className="absolute -left-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleNextImage(employee._id, totalImages)
+                        }
+                        className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
+                      >
+                        ›
+                      </button>
+                      <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-0.5 rounded-full text-[6px]">
+                        {currentImageIndex + 1}/{totalImages}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {employee.firstName} {employee.lastName}
+                  </div>
+                  <div className="text-[10px] text-gray-500 truncate">
+                    {employee.personalNumber || employee.pnumber}
+                  </div>
+                  <div className="text-[10px] text-gray-500 truncate">
+                    {getDesignationName(employee.designation)}
+                  </div>
+                </div>
+              </div>
+            </td>
 
-                      {/* Information Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            employee.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : employee.status === "retired"
-                              ? "bg-blue-100 text-blue-800"
-                              : employee.status === "terminated"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {employee.status}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {employee.mobileNumber}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {employee.address?.line1 || "N/A"},{" "}
-                          {employee.address?.tehsil || "N/A"}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Cast: {employee.cast || "N/A"}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Service: {employee.serviceType || "N/A"}
-                        </div>
-                      </td>
+            {/* Information Column - Ultra Compact */}
+            <td className="px-1 py-2">
+              <div
+                className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${
+                  employee.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : employee.status === "retired"
+                    ? "bg-blue-100 text-blue-800"
+                    : employee.status === "terminated"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {employee.status}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {employee.mobileNumber}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {employee.address?.tehsil || "N/A"}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {employee.serviceType || "N/A"}
+              </div>
+            </td>
 
-                      {/* NEW: Assets Column */}
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs">
-                          {assetsLoading ? (
-                            <span className="text-gray-500 animate-pulse">
-                              Loading assets...
-                            </span>
-                          ) : (
-                            <span className="text-gray-700 break-words">
-                              {getEmployeeAssetsString(employee._id)}
-                            </span>
-                          )}
-                        </div>
-                      </td>
+            {/* Assets Column - Ultra Compact */}
+            <td className="px-1 py-2">
+              <div className="text-xs text-gray-900">
+                {assetsLoading ? (
+                  <span className="text-gray-500 animate-pulse">
+                    Loading...
+                  </span>
+                ) : (
+                  <div className="break-words line-clamp-2 overflow-hidden">
+                    {getEmployeeAssetsString(employee._id)}
+                  </div>
+                )}
+              </div>
+            </td>
 
-                      {/* Employee Actions Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {/* Your existing action buttons remain the same */}
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => handleView(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleEdit(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                            >
-                              Edit
-                            </button>
-                            {isAdmin ? (
-                              <button
-                                onClick={() => handleDelete(employee._id)}
-                                className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                              >
-                                Delete
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="px-3 py-1 text-xs rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
-                              >
-                                Delete
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleAssets(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
-                            >
-                              Assets
-                            </button>
-                            <button
-                              onClick={() => handlePosting(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
-                            >
-                              Posting
-                            </button>
-                            <button
-                              onClick={() => handleStatus(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
-                            >
-                              History
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => handleAchievements(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
-                            >
-                              Achievements
-                            </button>
-                            <button
-                              onClick={() => handleDeductions(employee)}
-                              className="px-3 py-1 text-xs rounded-md bg-pink-100 text-pink-700 hover:bg-pink-200 transition"
-                            >
-                              Deduction
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+            {/* Employee Actions Column - Ultra Compact Grid */}
+            <td className="px-2 py-2">
+              <div className="grid grid-cols-3 gap-0.5 text-[10px]">
+                <button
+                  onClick={() => handleView(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => handleEdit(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                >
+                  Edit
+                </button>
+                {isAdmin ? (
+                  <button
+                    onClick={() => handleDelete(employee._id)}
+                    className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                  >
+                    Delete
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="px-1 py-0.5 text-[10px] rounded bg-gray-100 text-gray-400 cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => handleAssets(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
+                >
+                  Assets
+                </button>
+                <button
+                  onClick={() => handlePosting(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
+                >
+                  Posting
+                </button>
+                <button
+                  onClick={() => handleStatus(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
+                >
+                  History
+                </button>
+                
+                <button
+                  onClick={() => handleAchievements(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition col-span-1"
+                >
+                  Awards
+                </button>
+                <button
+                  onClick={() => handleDeductions(employee)}
+                  className="px-1 py-0.5 text-[10px] rounded bg-pink-100 text-pink-700 hover:bg-pink-200 transition col-span-2"
+                >
+                  Deduction
+                </button>
+              </div>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
         </div>
 
         {/* Mobile/Tablet Card View - For screens under 1200px */}

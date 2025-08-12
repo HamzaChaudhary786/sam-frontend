@@ -2104,21 +2104,21 @@ const MapLocation = ({
       {/* Title and Status */}
       <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-800 flex items-center">
         <span className="mr-1">{statusIcon}</span>
-        {location.station.name}
+        {location?.title}
       </h4>
 
       {/* Location Info */}
       <div className="mt-2 space-y-1">
         <p className="text-xs text-gray-600">
-          📍 {location.coordinates.lat.toFixed(4)},{" "}
-          {location.coordinates.lng.toFixed(4)}
+          📍 {location?.coordinates?.lat.toFixed(4)},{" "}
+          {location?.coordinates?.lng.toFixed(4)}
         </p>
 
         {/* Tehsil/District Info */}
         {location.station?.tehsil && (
           <p className="text-xs text-gray-600">
-            🏛️ {location.station.tehsil},{" "}
-            {location.station.district}
+            🏛️ {location?.station?.tehsil},{" "}
+            {location?.station?.district}
           </p>
         )}
 
@@ -2128,19 +2128,19 @@ const MapLocation = ({
 
         {/* Employee Count */}
         <p className="text-xs text-gray-600">
-          👥 Employees: {location.employeeCount || 0}
+          👥 Employees: {location?.employeeCount || 0}
         </p>
       </div>
 
       {/* Facilities */}
-      {location.station?.facilities &&
-        location.station.facilities.length > 0 && (
+      {location?.station?.facilities &&
+        location?.station?.facilities.length > 0 && (
           <div className="mt-2">
             <p className="text-xs font-medium text-gray-700 mb-1">
               🔧 Facilities:
             </p>
             <div className="flex flex-wrap gap-1">
-              {location.station.facilities.map(
+              {location?.station?.facilities?.map(
                 (facility, index) => (
                   <span
                     key={index}
@@ -2155,13 +2155,13 @@ const MapLocation = ({
         )}
 
       {/* Minimum Requirements */}
-      {location.station?.stationMinimumRequirements &&
-        location.station.stationMinimumRequirements.length > 0 && (
+      {location?.station?.stationMinimumRequirements &&
+        location?.station?.stationMinimumRequirements.length > 0 && (
           <div className="mt-2">
             <p className="text-xs font-medium text-gray-700 mb-1">
               📋 Minimum Requirements:
             </p>
-            {location.station.stationMinimumRequirements.map(
+            {location?.station?.stationMinimumRequirements?.map(
               (req, index) => (
                 <div
                   key={index}
@@ -2169,18 +2169,18 @@ const MapLocation = ({
                 >
                   {req.numberOfStaff && (
                     <p className="mb-1">
-                      • Staff Required: {req.numberOfStaff}
+                      • Staff Required: {req?.numberOfStaff}
                     </p>
                   )}
 
                   {/* General Asset Requirements */}
-                  {req.assetRequirement &&
-                    req.assetRequirement.length > 0 && (
+                  {req?.assetRequirement &&
+                    req?.assetRequirement.length > 0 && (
                       <div className="ml-2 mb-1">
                         <p className="font-medium text-gray-700 mb-1">
                           🛠️ General Assets:
                         </p>
-                        {req.assetRequirement.map(
+                        {req?.assetRequirement?.map(
                           (assetReq, assetIndex) => (
                             <div
                               key={assetIndex}
@@ -2188,15 +2188,15 @@ const MapLocation = ({
                             >
                               <p>
                                 <span className="font-medium">
-                                  {assetReq.assets?.name || "Unknown Asset"}
+                                  {assetReq?.assets?.name || "Unknown Asset"}
                                 </span>
                                 {" × "}
                                 <span className="text-blue-600 font-medium">
-                                  {assetReq.quantity}
+                                  {assetReq?.quantity}
                                 </span>
                               </p>
                               <p className="text-xs text-gray-500 capitalize">
-                                Type: {assetReq.assets?.type || "N/A"}
+                                Type: {assetReq?.assets?.type || "N/A"}
                               </p>
                               {/* {assetReq.assets?.weaponName && (
                                 <p className="text-xs text-gray-500">
@@ -2221,22 +2221,22 @@ const MapLocation = ({
                         <p className="font-medium text-gray-700 mb-1">
                           👤 Staff Details:
                         </p>
-                        {req.staffDetail.map(
+                        {req?.staffDetail?.map(
                           (staff, staffIndex) => (
                             <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
                               <p className="mb-1">
-                                - {staff.designation || "Staff"}
-                                : {staff.numberOfPersonal} personnel
+                                - {staff?.designation || "Staff"}
+                                : {staff?.numberOfPersonal} personnel
                               </p>
                               
                               {/* Staff Asset Requirements */}
-                              {staff.assetRequirement &&
-                                staff.assetRequirement.length > 0 && (
+                              {staff?.assetRequirement &&
+                                staff?.assetRequirement.length > 0 && (
                                   <div className="ml-2">
                                     <p className="text-xs font-medium text-gray-600 mb-1">
                                       🚗 Assigned Assets:
                                     </p>
-                                    {staff.assetRequirement.map(
+                                    {staff?.assetRequirement?.map(
                                       (staffAsset, staffAssetIndex) => (
                                         <div
                                           key={staffAssetIndex}
@@ -2244,15 +2244,15 @@ const MapLocation = ({
                                         >
                                           <p>
                                             <span className="font-medium">
-                                              {staffAsset.assets?.name || "Unknown Asset"}
+                                              {staffAsset?.assets?.name || "Unknown Asset"}
                                             </span>
                                             {" × "}
                                             <span className="text-orange-600 font-medium">
-                                              {staffAsset.quantity}
+                                              {staffAsset?.quantity}
                                             </span>
                                           </p>
                                           <p className="text-xs text-gray-500 capitalize">
-                                            Type: {staffAsset.assets?.type || "N/A"}
+                                            Type: {staffAsset?.assets?.type || "N/A"}
                                           </p>
                                           {/* {staffAsset.assets?.vehicleNumber && (
                                             <p className="text-xs text-gray-500">
@@ -2404,7 +2404,7 @@ const MapLocation = ({
                     </h4>
                     {location.description && (
                       <p className="text-gray-600 mt-1">
-                        {location.description}
+                        {location?.description}
                       </p>
                     )}
 
@@ -2416,14 +2416,14 @@ const MapLocation = ({
                       <p className="text-xs text-gray-600">
                         Current Employees:{" "}
                         <span className="font-medium">
-                          {location.employeeCount || 0}
+                          {location?.employeeCount || 0}
                         </span>
                       </p>
                       {/* Show requirements from the correct source */}
                       {(() => {
                         const requirements =
-                          location.station?.stationMinimumRequirements ||
-                          location.stationMinimumRequirements;
+                          location?.station?.stationMinimumRequirements ||
+                          location?.stationMinimumRequirements;
                         const source = location.station
                           ?.stationMinimumRequirements
                           ? "Station"
@@ -2480,10 +2480,10 @@ const MapLocation = ({
                     </div>
 
                     <p className="text-xs text-gray-500 mt-2">
-                      Category: {location.category}
+                      Category: {location?.category}
                       <br />
-                      Coordinates: {location.coordinates.lat.toFixed(6)},{" "}
-                      {location.coordinates.lng.toFixed(6)}
+                      Coordinates: {location?.coordinates.lat.toFixed(6)},{" "}
+                      {location?.coordinates?.lng.toFixed(6)}
                     </p>
                   </div>
                 </Popup>
