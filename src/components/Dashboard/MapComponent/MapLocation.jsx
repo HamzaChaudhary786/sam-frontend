@@ -2104,7 +2104,7 @@ const MapLocation = ({
       {/* Title and Status */}
       <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-800 flex items-center">
         <span className="mr-1">{statusIcon}</span>
-        {location.title}
+        {location.station.name}
       </h4>
 
       {/* Location Info */}
@@ -2122,9 +2122,9 @@ const MapLocation = ({
           </p>
         )}
 
-        <p className="text-xs text-gray-500 capitalize">
+        {/* <p className="text-xs text-gray-500 capitalize">
           🏷️ {location.category}
-        </p>
+        </p> */}
 
         {/* Employee Count */}
         <p className="text-xs text-gray-600">
