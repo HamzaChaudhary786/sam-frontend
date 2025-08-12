@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getEmployees } from "../Employee/EmployeeApi.js";
 import { bulkCreateStationAssignments, getStationsWithEnum, getEmployeeCurrentStation } from "./StationApi.js";
-
+import { getStations } from "../Station/StationApi.js";
 const BulkStationAssignment = () => {
   const navigate = useNavigate();
   
@@ -74,7 +74,7 @@ const BulkStationAssignment = () => {
     try {
       const result = await getEmployees({ 
         name: query,
-        limit: 10 
+        limit: 25
       });
       
       console.log("👥 Employee search result:", result);
@@ -111,7 +111,11 @@ const BulkStationAssignment = () => {
     setIsSearching(prev => ({ ...prev, [`station_${assignmentId}`]: true }));
     
     try {
-      const result = await getStationsWithEnum();
+      // const result = await getStationsWithEnum();
+      const result = await getStations({ 
+        name: query,
+        limit: 25
+      })
       
       if (result.success) {
         let stations = [];
@@ -442,7 +446,10 @@ const BulkStationAssignment = () => {
                               />
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-gray-900 truncate">
-                                  {employee.firstName} {employee.lastName}
+                                  {employee.firstName}
+                                </div>
+                                  <div className="text-xs text-gray-700 truncate">
+                                  {employee.fatherFirstName} 
                                 </div>
                                 <div className="text-xs text-gray-500 truncate">
                                   {employee.personalNumber || employee.pnumber} | {employee.cnic}
