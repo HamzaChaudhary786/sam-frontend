@@ -1523,6 +1523,8 @@ const MapLocation = ({
   // Default map settings for Balochistan, Pakistan
   const [mapCenter, setMapCenter] = useState([28.3, 66.6]); // Balochistan coordinates
   const [mapZoom, setMapZoom] = useState(7); // Adjusted zoom level to show the province
+  const [locationSearchTerm, setLocationSearchTerm] = useState('');
+
 
   const searchTimeoutRef = useRef(null);
   const [newLocation, setNewLocation] = useState({
@@ -1687,7 +1689,48 @@ const MapLocation = ({
         return MARKER_COLORS.SAVED;
     }
   };
-
+   const filteredSavedLocations = savedLocations.filter(location => {
+  if (!locationSearchTerm.trim()) return true;
+  
+  const searchTerm = locationSearchTerm.toLowerCase();
+  
+  // Search in title
+  if (location?.title?.toLowerCase().includes(searchTerm)) return true;
+  
+  // Search in coordinates
+  const coordsString = `${location?.coordinates?.lat.toFixed(4)}, ${location?.coordinates?.lng.toFixed(4)}`;
+  if (coordsString.includes(searchTerm)) return true;
+  
+  // Search in tehsil/district
+  if (location?.station?.tehsil?.toLowerCase().includes(searchTerm)) return true;
+  if (location?.station?.district?.toLowerCase().includes(searchTerm)) return true;
+  
+  // Search in facilities
+  if (location?.station?.facilities?.some(facility => 
+    facility.toLowerCase().includes(searchTerm)
+  )) return true;
+  
+  // Search in staff designations
+  if (location?.station?.stationMinimumRequirements?.some(req =>
+    req?.staffDetail?.some(staff =>
+      staff?.designation?.toLowerCase().includes(searchTerm)
+    )
+  )) return true;
+  
+  // Search in asset names
+  if (location?.station?.stationMinimumRequirements?.some(req =>
+    req?.assetRequirement?.some(asset =>
+      asset?.assets?.name?.toLowerCase().includes(searchTerm)
+    ) ||
+    req?.staffDetail?.some(staff =>
+      staff?.assetRequirement?.some(staffAsset =>
+        staffAsset?.assets?.name?.toLowerCase().includes(searchTerm)
+      )
+    )
+  )) return true;
+  
+  return false;
+});
   /**
    * Get status icon based on requirements
    * @param {string} status - Status string
@@ -2077,248 +2120,240 @@ const MapLocation = ({
 
       {/* Saved Locations Panel - Only show if hidePanels is false */}
       {!hidePanels && (
-        <div className="absolute bottom-4 left-4 z-[1000] bg-white p-4 rounded-lg shadow-lg w-80 max-h-80 overflow-y-auto">
-          <h3 className="font-bold text-lg mb-3 text-gray-800">
-            Saved Locations ({savedLocations.length})
-          </h3>
-
-          {savedLocations.length === 0 ? (
-            <p className="text-gray-500 text-sm">No saved locations yet</p>
-          ) : (
-            <div className="space-y-2">
-              {savedLocations.map((location) => {
-                // Check requirements using the location data directly
-                const requirementCheck = checkStationRequirements(location);
-                const statusIcon = getStatusIcon(requirementCheck.status);
-
-                return (
-                <div
-  key={location._id}
-  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
->
-  <div className="flex justify-between items-start">
-    <div
-      className="flex-1 cursor-pointer"
-      onClick={() => viewSavedLocation(location)}
-    >
-      {/* Title and Status */}
-      <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-800 flex items-center">
-        <span className="mr-1">{statusIcon}</span>
-        {location?.title}
-      </h4>
-
-      {/* Location Info */}
-      <div className="mt-2 space-y-1">
-        <p className="text-xs text-gray-600">
-          📍 {location?.coordinates?.lat.toFixed(4)},{" "}
-          {location?.coordinates?.lng.toFixed(4)}
-        </p>
-
-        {/* Tehsil/District Info */}
-        {location.station?.tehsil && (
-          <p className="text-xs text-gray-600">
-            🏛️ {location?.station?.tehsil},{" "}
-            {location?.station?.district}
-          </p>
+  <div className="absolute bottom-4 left-4 z-[1000] bg-white p-4 rounded-lg shadow-lg w-80 max-h-80 overflow-hidden flex flex-col">
+    {/* Header with search */}
+    <div className="mb-3">
+      <h3 className="font-bold text-lg mb-2 text-gray-800">
+        Saved Locations ({filteredSavedLocations.length})
+      </h3>
+      
+      {/* Search Bar */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search locations..."
+          value={locationSearchTerm}
+          onChange={(e) => setLocationSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-8"
+        />
+        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+          🔍
+        </div>
+        {locationSearchTerm && (
+          <button
+            onClick={() => setLocationSearchTerm('')}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
         )}
-
-        {/* <p className="text-xs text-gray-500 capitalize">
-          🏷️ {location.category}
-        </p> */}
-
-        {/* Employee Count */}
-        <p className="text-xs text-gray-600">
-          👥 Employees: {location?.employeeCount || 0}
-        </p>
       </div>
-
-      {/* Facilities */}
-      {location?.station?.facilities &&
-        location?.station?.facilities.length > 0 && (
-          <div className="mt-2">
-            <p className="text-xs font-medium text-gray-700 mb-1">
-              🔧 Facilities:
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {location?.station?.facilities?.map(
-                (facility, index) => (
-                  <span
-                    key={index}
-                    className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
-                  >
-                    {facility}
-                  </span>
-                )
-              )}
-            </div>
-          </div>
-        )}
-
-      {/* Minimum Requirements */}
-      {location?.station?.stationMinimumRequirements &&
-        location?.station?.stationMinimumRequirements.length > 0 && (
-          <div className="mt-2">
-            <p className="text-xs font-medium text-gray-700 mb-1">
-              📋 Minimum Requirements:
-            </p>
-            {location?.station?.stationMinimumRequirements?.map(
-              (req, index) => (
-                <div
-                  key={index}
-                  className="text-xs text-gray-600 ml-2 mb-2"
-                >
-                  {req.numberOfStaff && (
-                    <p className="mb-1">
-                      • Staff Required: {req?.numberOfStaff}
-                    </p>
-                  )}
-
-                  {/* General Asset Requirements */}
-                  {req?.assetRequirement &&
-                    req?.assetRequirement.length > 0 && (
-                      <div className="ml-2 mb-1">
-                        <p className="font-medium text-gray-700 mb-1">
-                          🛠️ General Assets:
-                        </p>
-                        {req?.assetRequirement?.map(
-                          (assetReq, assetIndex) => (
-                            <div
-                              key={assetIndex}
-                              className="ml-2 mb-1 p-1 bg-blue-50 rounded"
-                            >
-                              <p>
-                                <span className="font-medium">
-                                  {assetReq?.assets?.name || "Unknown Asset"}
-                                </span>
-                                {" × "}
-                                <span className="text-blue-600 font-medium">
-                                  {assetReq?.quantity}
-                                </span>
-                              </p>
-                              <p className="text-xs text-gray-500 capitalize">
-                                Type: {assetReq?.assets?.type || "N/A"}
-                              </p>
-                              {/* {assetReq.assets?.weaponName && (
-                                <p className="text-xs text-gray-500">
-                                  Weapon: {assetReq.assets.weaponName}
-                                </p>
-                              )} */}
-                              {/* {assetReq.assets?.make && (
-                                <p className="text-xs text-gray-500">
-                                  Make: {assetReq.assets.make} {assetReq.assets.model}
-                                </p>
-                              )} */}
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-
-                  {/* Staff Details with their Asset Requirements */}
-                  {req.staffDetail &&
-                    req.staffDetail.length > 0 && (
-                      <div className="ml-2">
-                        <p className="font-medium text-gray-700 mb-1">
-                          👤 Staff Details:
-                        </p>
-                        {req?.staffDetail?.map(
-                          (staff, staffIndex) => (
-                            <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
-                              <p className="mb-1">
-                                - {staff?.designation || "Staff"}
-                                : {staff?.numberOfPersonal} personnel
-                              </p>
-                              
-                              {/* Staff Asset Requirements */}
-                              {staff?.assetRequirement &&
-                                staff?.assetRequirement.length > 0 && (
-                                  <div className="ml-2">
-                                    <p className="text-xs font-medium text-gray-600 mb-1">
-                                      🚗 Assigned Assets:
-                                    </p>
-                                    {staff?.assetRequirement?.map(
-                                      (staffAsset, staffAssetIndex) => (
-                                        <div
-                                          key={staffAssetIndex}
-                                          className="ml-2 mb-1 p-1 bg-yellow-50 rounded"
-                                        >
-                                          <p>
-                                            <span className="font-medium">
-                                              {staffAsset?.assets?.name || "Unknown Asset"}
-                                            </span>
-                                            {" × "}
-                                            <span className="text-orange-600 font-medium">
-                                              {staffAsset?.quantity}
-                                            </span>
-                                          </p>
-                                          <p className="text-xs text-gray-500 capitalize">
-                                            Type: {staffAsset?.assets?.type || "N/A"}
-                                          </p>
-                                          {/* {staffAsset.assets?.vehicleNumber && (
-                                            <p className="text-xs text-gray-500">
-                                              Vehicle #: {staffAsset.assets.vehicleNumber}
-                                            </p>
-                                          )} */}
-                                          {/* {staffAsset.assets?.make && (
-                                            <p className="text-xs text-gray-500">
-                                              {staffAsset.assets.make} {staffAsset.assets.model} ({staffAsset.assets.color})
-                                            </p>
-                                          )} */}
-                                          {/* {staffAsset.assets?.condition && (
-                                            <p className="text-xs text-gray-500 capitalize">
-                                              Condition: {staffAsset.assets.condition}
-                                            </p>
-                                          )} */}
-                                        </div>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-                </div>
-              )
-            )}
-          </div>
-        )}
-
-      {/* Station In-charge */}
-      {/* {location.station?.stationIncharge &&
-        location.station.stationIncharge.length > 0 && (
-          <div className="mt-2">
-            <p className="text-xs font-medium text-gray-700">
-              👮 In-charge:{" "}
-              {location.station.stationIncharge.length}{" "}
-              assigned
-            </p>
-          </div>
-        )} */}
-
-      <p className="text-xs text-blue-500 mt-2">
-        👆 Click to view on map
-      </p>
     </div>
 
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        deleteLocation(location._id);
-      }}
-      className="text-red-500 hover:text-red-700 text-xs ml-2 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0"
-    >
-      🗑️ Delete
-    </button>
-  </div>
-</div>
-                );
-              })}
-            </div>
-          )}
+    {/* Scrollable content area */}
+    <div className="flex-1 overflow-y-auto">
+      {filteredSavedLocations.length === 0 ? (
+        <p className="text-gray-500 text-sm">
+          {locationSearchTerm ? 
+            `No locations found matching "${locationSearchTerm}"` : 
+            "No saved locations yet"
+          }
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {filteredSavedLocations.map((location) => {
+            // Check requirements using the location data directly
+            const requirementCheck = checkStationRequirements(location);
+            const statusIcon = getStatusIcon(requirementCheck.status);
+
+            return (
+              <div
+                key={location._id}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div
+                    className="flex-1 cursor-pointer"
+                    onClick={() => viewSavedLocation(location)}
+                  >
+                    {/* Title and Status */}
+                    <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                      <span className="mr-1">{statusIcon}</span>
+                      {location?.title}
+                    </h4>
+
+                    {/* Location Info */}
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-gray-600">
+                        📍 {location?.coordinates?.lat.toFixed(4)},{" "}
+                        {location?.coordinates?.lng.toFixed(4)}
+                      </p>
+
+                      {/* Tehsil/District Info */}
+                      {location.station?.tehsil && (
+                        <p className="text-xs text-gray-600">
+                          🏛️ {location?.station?.tehsil},{" "}
+                          {location?.station?.district}
+                        </p>
+                      )}
+
+                      {/* Employee Count */}
+                      <p className="text-xs text-gray-600">
+                        👥 Employees: {location?.employeeCount || 0}
+                      </p>
+                    </div>
+
+                    {/* Facilities */}
+                    {location?.station?.facilities &&
+                      location?.station?.facilities.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-gray-700 mb-1">
+                            🔧 Facilities:
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {location?.station?.facilities?.map(
+                              (facility, index) => (
+                                <span
+                                  key={index}
+                                  className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                >
+                                  {facility}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Minimum Requirements */}
+                    {location?.station?.stationMinimumRequirements &&
+                      location?.station?.stationMinimumRequirements.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-gray-700 mb-1">
+                            📋 Minimum Requirements:
+                          </p>
+                          {location?.station?.stationMinimumRequirements?.map(
+                            (req, index) => (
+                              <div
+                                key={index}
+                                className="text-xs text-gray-600 ml-2 mb-2"
+                              >
+                                {req.numberOfStaff && (
+                                  <p className="mb-1">
+                                    • Staff Required: {req?.numberOfStaff}
+                                  </p>
+                                )}
+
+                                {/* General Asset Requirements */}
+                                {req?.assetRequirement &&
+                                  req?.assetRequirement.length > 0 && (
+                                    <div className="ml-2 mb-1">
+                                      <p className="font-medium text-gray-700 mb-1">
+                                        🛠️ General Assets:
+                                      </p>
+                                      {req?.assetRequirement?.map(
+                                        (assetReq, assetIndex) => (
+                                          <div
+                                            key={assetIndex}
+                                            className="ml-2 mb-1 p-1 bg-blue-50 rounded"
+                                          >
+                                            <p>
+                                              <span className="font-medium">
+                                                {assetReq?.assets?.name || "Unknown Asset"}
+                                              </span>
+                                              {" × "}
+                                              <span className="text-blue-600 font-medium">
+                                                {assetReq?.quantity}
+                                              </span>
+                                            </p>
+                                            <p className="text-xs text-gray-500 capitalize">
+                                              Type: {assetReq?.assets?.type || "N/A"}
+                                            </p>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+
+                                {/* Staff Details with their Asset Requirements */}
+                                {req.staffDetail &&
+                                  req.staffDetail.length > 0 && (
+                                    <div className="ml-2">
+                                      <p className="font-medium text-gray-700 mb-1">
+                                        👤 Staff Details:
+                                      </p>
+                                      {req?.staffDetail?.map(
+                                        (staff, staffIndex) => (
+                                          <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
+                                            <p className="mb-1">
+                                              - {staff?.designation || "Staff"}
+                                              : {staff?.numberOfPersonal} personnel
+                                            </p>
+                                            
+                                            {/* Staff Asset Requirements */}
+                                            {staff?.assetRequirement &&
+                                              staff?.assetRequirement.length > 0 && (
+                                                <div className="ml-2">
+                                                  <p className="text-xs font-medium text-gray-600 mb-1">
+                                                    🚗 Assigned Assets:
+                                                  </p>
+                                                  {staff?.assetRequirement?.map(
+                                                    (staffAsset, staffAssetIndex) => (
+                                                      <div
+                                                        key={staffAssetIndex}
+                                                        className="ml-2 mb-1 p-1 bg-yellow-50 rounded"
+                                                      >
+                                                        <p>
+                                                          <span className="font-medium">
+                                                            {staffAsset?.assets?.name || "Unknown Asset"}
+                                                          </span>
+                                                          {" × "}
+                                                          <span className="text-orange-600 font-medium">
+                                                            {staffAsset?.quantity}
+                                                          </span>
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 capitalize">
+                                                          Type: {staffAsset?.assets?.type || "N/A"}
+                                                        </p>
+                                                      </div>
+                                                    )
+                                                  )}
+                                                </div>
+                                              )}
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
+
+                    <p className="text-xs text-blue-500 mt-2">
+                      👆 Click to view on map
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteLocation(location._id);
+                    }}
+                    className="text-red-500 hover:text-red-700 text-xs ml-2 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
+    </div>
+  </div>
+)}
 
       {/* Map Container with LayersControl for switching between map types */}
       <MapContainer center={mapCenter} zoom={mapZoom} className="w-full h-full">
@@ -2338,17 +2373,13 @@ const MapLocation = ({
             />
           </LayersControl.BaseLayer>
 
-          {/* <LayersControl.BaseLayer name="🌍 Satellite + Streets">
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                        />
+          <LayersControl.BaseLayer name="🌍 Satellite + Streets">
                         <TileLayer
                             attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
                             url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
                             opacity={0.8}
                         />
-                    </LayersControl.BaseLayer> */}
+                    </LayersControl.BaseLayer>
 
           <LayersControl.BaseLayer name="🗺️ Topographic">
             <TileLayer

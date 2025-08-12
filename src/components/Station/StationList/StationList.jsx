@@ -734,7 +734,7 @@ const StationList = () => {
               currentPage={currentPage || 1}
               totalPages={totalPages || 1}
               totalItems={totalStations || safeStations.length}
-              itemsPerPage={itemsPerPage || 10}
+              itemsPerPage={itemsPerPage || 50}
               onPageChange={handlePageChange}
               onItemsPerPageChange={
                 setItemsPerPage ? handleItemsPerPageChange : undefined
