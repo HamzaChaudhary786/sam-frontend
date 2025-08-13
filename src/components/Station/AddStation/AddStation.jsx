@@ -530,7 +530,10 @@ const StationModal = ({
           ...response.data.map((employee) => ({
             value: employee._id,
             label: `${employee.firstName} ${employee.lastName || ""}`,
-            subtitle: employee.personalNumber || employee.pnumber,
+            // subtitle: employee.personalNumber || employee.pnumber,
+            subtitle: `${employee.cnic} | ${employee.personalNumber} | ${employee.rank}`,
+
+            
           })),
         ];
         setEmployeeOptions(employeeOptions);
@@ -1357,12 +1360,11 @@ const StationModal = ({
                           : "Search and select employee"
                       }
                       disabled={loadingEmployees}
-                      required
                     />
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Incharge Type *
+                        Incharge Type 
                       </label>
                       <select
                         value={incharge.type}
@@ -1370,7 +1372,6 @@ const StationModal = ({
                           updateStationIncharge(index, "type", e.target.value)
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
                       >
                         <option value="">Select Type</option>
                         <option value="firstIncharge">First Incharge</option>
@@ -1484,13 +1485,12 @@ const StationModal = ({
                                   : "Search and select asset"
                               }
                               disabled={loadingAssets}
-                              required
                             />
                           </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Quantity *
+                              Quantity 
                             </label>
                             <div className="flex items-center gap-2">
                               <input
@@ -1584,7 +1584,6 @@ const StationModal = ({
                                     : "Search and select designation"
                                 }
                                 disabled={loadingDesignations}
-                                required
                               />
                             </div>
 
@@ -1652,7 +1651,6 @@ const StationModal = ({
                                         : "Select asset"
                                     }
                                     disabled={loadingAssets}
-                                    required
                                   />
                                 </div>
 
@@ -1676,7 +1674,7 @@ const StationModal = ({
                                       min="1"
                                       className="flex-1 px-2 py-1 text-sm border h-[44px] border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                                       placeholder="Qty"
-                                      required
+                                      
                                     />
                                     {staff.assetRequirement.length > 1 && (
                                       <button

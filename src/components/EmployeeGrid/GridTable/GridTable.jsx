@@ -313,6 +313,8 @@ const EmployeeGridTable = ({
     if (filters.district) backendFilters.district = filters.district;
     if (filters.tehsil) backendFilters.tehsil = filters.tehsil;
     if (filters.assetType) backendFilters.assetType = filters.assetType;
+    if (filters.serviceType) backendFilters.serviceType = filters.serviceType;
+
 
     updateFilters(backendFilters);
   };

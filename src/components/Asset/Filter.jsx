@@ -105,12 +105,12 @@ const AssetFilters = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Filter Assets</h3>
           {/* Active filter count */}
-          {Object.keys(filters).length > 0 && (
+          {/* {Object.keys(filters).length > 0 && (
             <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
               {Object.keys(filters).length} active filter
               {Object.keys(filters).length !== 1 ? "s" : ""}
             </span>
-          )}
+          )} */}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

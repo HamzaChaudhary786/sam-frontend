@@ -9,12 +9,19 @@ import { getStationLocationsWithEnum } from "../Station/lookUp.js";
 import { useLookupOptions } from "../../services/LookUp.js"; // 🆕 Add this import
 import { STATUS_ENUM } from "./AddEmployee/EmployeeConstants";
 
-const EmployeeFilters = ({ 
-  filters, 
-  updateFilters, 
-  clearFilters, 
-  showFilters, 
-  setShowFilters 
+// Add this after your imports
+const SERVICE_TYPE_ENUM = {
+  FEDERAL: "federal",
+  PROVINCIAL: "provincial",
+  NA: "NA",
+};
+
+const EmployeeFilters = ({
+  filters,
+  updateFilters,
+  clearFilters,
+  showFilters,
+  setShowFilters,
 }) => {
   // Filter dropdown options
   const [designationEnum, setDesignationEnum] = useState([]);
@@ -32,7 +39,7 @@ const EmployeeFilters = ({
   const [loading, setLoading] = useState({
     stations: false,
     districts: false,
-    tehsils: false
+    tehsils: false,
   });
 
   // Filter state
@@ -50,66 +57,75 @@ const EmployeeFilters = ({
     personalNumber: filters.personalNumber || "",
     cnic: filters.cnic || "",
     assetType: filters.assetType || "", // 🆕 Asset type filter
+    serviceType: filters.serviceType || "", // 🆕 Add this line
   });
 
   // Separate function to fetch stations
-const fetchStations = async () => {
-  setLoading(prev => ({ ...prev, stations: true }));
-  try {
-    console.log("🚀 Fetching all stations...");
-    
-    let allStations = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    
-    // Keep fetching until we get all pages
-    do {
-      console.log(`📄 Fetching page ${currentPage}...`);
-      
-      // Modify your getStations call to include page parameter
-      // You might need to update the API call depending on how your backend handles pagination
-      const stationRes = await getStations({ page: currentPage });
-      console.log(`📊 Station response for page ${currentPage}:`, stationRes);
-      
-      if (stationRes && stationRes.success && stationRes.data) {
-        // Extract stations from current page
-        if (stationRes.data.stations && Array.isArray(stationRes.data.stations)) {
-          allStations = [...allStations, ...stationRes.data.stations];
-          totalPages = stationRes.data.totalPages || 1;
-          currentPage++;
+  const fetchStations = async () => {
+    setLoading((prev) => ({ ...prev, stations: true }));
+    try {
+      console.log("🚀 Fetching all stations...");
+
+      let allStations = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      // Keep fetching until we get all pages
+      do {
+        console.log(`📄 Fetching page ${currentPage}...`);
+
+        // Modify your getStations call to include page parameter
+        // You might need to update the API call depending on how your backend handles pagination
+        const stationRes = await getStations({ page: currentPage });
+        console.log(`📊 Station response for page ${currentPage}:`, stationRes);
+
+        if (stationRes && stationRes.success && stationRes.data) {
+          // Extract stations from current page
+          if (
+            stationRes.data.stations &&
+            Array.isArray(stationRes.data.stations)
+          ) {
+            allStations = [...allStations, ...stationRes.data.stations];
+            totalPages = stationRes.data.totalPages || 1;
+            currentPage++;
+          } else {
+            break; // No more data
+          }
         } else {
-          break; // No more data
+          console.error(
+            `❌ Invalid station response for page ${currentPage}:`,
+            stationRes
+          );
+          break;
         }
-      } else {
-        console.error(`❌ Invalid station response for page ${currentPage}:`, stationRes);
-        break;
-      }
-    } while (currentPage <= totalPages);
-    
-    // Now map all stations to the format needed for dropdown
-    const stationArray = allStations.map(station => ({
-      _id: station._id,
-      name: station.name
-    }));
-    
-    setStationEnum(stationArray);
-    console.log(`✅ Fetched all ${allStations.length} stations:`, stationArray);
-    
-  } catch (error) {
-    console.error("💥 Error fetching stations:", error);
-    setStationEnum([]);
-  }
-  setLoading(prev => ({ ...prev, stations: false }));
-};
+      } while (currentPage <= totalPages);
+
+      // Now map all stations to the format needed for dropdown
+      const stationArray = allStations.map((station) => ({
+        _id: station._id,
+        name: station.name,
+      }));
+
+      setStationEnum(stationArray);
+      console.log(
+        `✅ Fetched all ${allStations.length} stations:`,
+        stationArray
+      );
+    } catch (error) {
+      console.error("💥 Error fetching stations:", error);
+      setStationEnum([]);
+    }
+    setLoading((prev) => ({ ...prev, stations: false }));
+  };
 
   // Separate function to fetch districts
   const fetchDistricts = async () => {
-    setLoading(prev => ({ ...prev, districts: true }));
+    setLoading((prev) => ({ ...prev, districts: true }));
     try {
       console.log("🚀 Fetching districts...");
       const districtRes = await getStationDistrictWithEnum();
       console.log("📊 District response:", districtRes);
-      
+
       if (districtRes && districtRes.success && districtRes.data) {
         const districtArray = Object.entries(districtRes.data).map(
           ([_id, name]) => ({ _id, name })
@@ -124,17 +140,17 @@ const fetchStations = async () => {
       console.error("💥 Error fetching districts:", error);
       setDistrictEnum([]);
     }
-    setLoading(prev => ({ ...prev, districts: false }));
+    setLoading((prev) => ({ ...prev, districts: false }));
   };
 
   // Separate function to fetch tehsils
   const fetchTehsils = async () => {
-    setLoading(prev => ({ ...prev, tehsils: true }));
+    setLoading((prev) => ({ ...prev, tehsils: true }));
     try {
       console.log("🚀 Fetching tehsils...");
       const tehsilRes = await getStationLocationsWithEnum();
       console.log("📊 Tehsil response:", tehsilRes);
-      
+
       if (tehsilRes && tehsilRes.success && tehsilRes.data) {
         const tehsilArray = Object.entries(tehsilRes.data).map(
           ([_id, name]) => ({ _id, name })
@@ -149,7 +165,7 @@ const fetchStations = async () => {
       console.error("💥 Error fetching tehsils:", error);
       setTehsilEnum([]);
     }
-    setLoading(prev => ({ ...prev, tehsils: false }));
+    setLoading((prev) => ({ ...prev, tehsils: false }));
   };
 
   // Fetch dropdown options for filters
@@ -157,7 +173,7 @@ const fetchStations = async () => {
     const fetchFilterOptions = async () => {
       try {
         console.log("🔄 Starting to fetch all filter options...");
-        
+
         // Fetch existing options (these should work)
         const [desigRes, gradeRes, castRes, rankRes] = await Promise.all([
           getDesignationsWithEnum(),
@@ -188,31 +204,34 @@ const fetchStations = async () => {
         }
 
         if (castRes.success && castRes.data) {
-          const castArray = Object.entries(castRes.data).map(
-            ([_id, name]) => ({ _id, name })
-          );
+          const castArray = Object.entries(castRes.data).map(([_id, name]) => ({
+            _id,
+            name,
+          }));
           setCastEnum(castArray);
         }
 
         if (rankRes.success && rankRes.data) {
-          const rankArray = Object.entries(rankRes.data).map(
-            ([_id, name]) => ({ _id, name })
-          );
+          const rankArray = Object.entries(rankRes.data).map(([_id, name]) => ({
+            _id,
+            name,
+          }));
           setRankEnum(rankArray);
         }
 
         // Now fetch the problematic ones separately with more detailed logging
-        console.log("🎯 Now fetching stations, districts, and tehsils separately...");
-        
+        console.log(
+          "🎯 Now fetching stations, districts, and tehsils separately..."
+        );
+
         // Fetch stations
         await fetchStations();
-        
-        // Fetch districts  
+
+        // Fetch districts
         await fetchDistricts();
-        
+
         // Fetch tehsils
         await fetchTehsils();
-
       } catch (error) {
         console.error("💥 Error in main fetchFilterOptions:", error);
       }
@@ -237,6 +256,7 @@ const fetchStations = async () => {
       personalNumber: filters.personalNumber || "",
       cnic: filters.cnic || "",
       assetType: filters.assetType || "", // 🆕 Asset type
+      serviceType: filters.serviceType || "", // 🆕 Add this line
     });
   }, [filters]);
 
@@ -251,18 +271,24 @@ const fetchStations = async () => {
   const handleApplyFilters = () => {
     const activeFilters = {};
     if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.address.trim()) activeFilters.address = filterForm.address.trim();
+    if (filterForm.address.trim())
+      activeFilters.address = filterForm.address.trim();
     if (filterForm.cast) activeFilters.cast = filterForm.cast;
     if (filterForm.rank) activeFilters.rank = filterForm.rank;
     if (filterForm.station) activeFilters.station = filterForm.station;
     if (filterForm.district) activeFilters.district = filterForm.district;
     if (filterForm.tehsil) activeFilters.tehsil = filterForm.tehsil;
     if (filterForm.status) activeFilters.status = filterForm.status;
-    if (filterForm.designation) activeFilters.designation = filterForm.designation;
+    if (filterForm.designation)
+      activeFilters.designation = filterForm.designation;
     if (filterForm.grade) activeFilters.grade = filterForm.grade;
-    if (filterForm.personalNumber.trim()) activeFilters.personalNumber = filterForm.personalNumber.trim();
+    if (filterForm.personalNumber.trim())
+      activeFilters.personalNumber = filterForm.personalNumber.trim();
     if (filterForm.cnic.trim()) activeFilters.cnic = filterForm.cnic.trim();
     if (filterForm.assetType) activeFilters.assetType = filterForm.assetType; // 🆕 Asset type
+    if (filterForm.serviceType)
+      activeFilters.serviceType = filterForm.serviceType; // 🆕 Add this line
+
     updateFilters(activeFilters);
     setShowFilters(false);
   };
@@ -282,6 +308,7 @@ const fetchStations = async () => {
       personalNumber: "",
       cnic: "",
       assetType: "", // 🆕 Asset type
+      serviceType: "", // 🆕 Add this line
     });
     clearFilters();
   };
@@ -376,10 +403,10 @@ const fetchStations = async () => {
               placeholder="e.g., Street, Muhala, City"
             />
           </div>
-             {/* Tehsil Filter */}
+          {/* Tehsil Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tehsil 
+              Tehsil
             </label>
             <select
               name="tehsil"
@@ -391,6 +418,7 @@ const fetchStations = async () => {
               <option value="">
                 {loading.tehsils ? "Loading..." : `All Tehsils`}
               </option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {tehsilEnum.map((tehsil) => (
                 <option key={tehsil._id} value={tehsil._id}>
                   {tehsil.name}
@@ -398,10 +426,10 @@ const fetchStations = async () => {
               ))}
             </select>
           </div>
-            {/* District Filter */}
+          {/* District Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              District 
+              District
             </label>
             <select
               name="district"
@@ -413,6 +441,7 @@ const fetchStations = async () => {
               <option value="">
                 {loading.districts ? "Loading..." : `All Districts`}
               </option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {districtEnum.map((district) => (
                 <option key={district._id} value={district._id}>
                   {district.name}
@@ -462,6 +491,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Status</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {Object.values(STATUS_ENUM).map((status) => (
                 <option key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -481,6 +511,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Designations</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {designationEnum.map((designation) => (
                 <option key={designation._id} value={designation._id}>
                   {designation.name}
@@ -500,6 +531,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Grades</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {gradeEnum.map((grade) => (
                 <option key={grade._id} value={grade._id}>
                   {grade.name}
@@ -519,6 +551,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Casts</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {castEnum.map((cast) => (
                 <option key={cast._id} value={cast._id}>
                   {cast.name}
@@ -538,6 +571,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Ranks</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {rankEnum.map((rank) => (
                 <option key={rank._id} value={rank._id}>
                   {rank.name}
@@ -545,11 +579,29 @@ const fetchStations = async () => {
               ))}
             </select>
           </div>
-          <div> </div>
+          {/* 🆕 Service Type Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Service Type
+            </label>
+            <select
+              name="serviceType"
+              value={filterForm.serviceType}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            >
+              <option value="">All Service Types</option>
+              <option value={SERVICE_TYPE_ENUM.NA}>N/A</option>
+
+              <option value={SERVICE_TYPE_ENUM.FEDERAL}>Federal</option>
+              <option value={SERVICE_TYPE_ENUM.PROVINCIAL}>Provincial</option>
+            </select>
+          </div>
+
           {/* Station Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Posting Station 
+              Posting Station
             </label>
             <select
               name="station"
@@ -561,6 +613,7 @@ const fetchStations = async () => {
               <option value="">
                 {loading.stations ? "Loading..." : `All Stations`}
               </option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {stationEnum.map((station) => (
                 <option key={station._id} value={station._id}>
                   {station.name}
@@ -581,6 +634,7 @@ const fetchStations = async () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">All Asset Types</option>
+              <option value="NA">N/A</option> {/* 🆕 Add this line */}
               {assetTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
