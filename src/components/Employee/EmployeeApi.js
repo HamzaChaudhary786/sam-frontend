@@ -32,6 +32,10 @@ export const getEmployees = async (filters = {}) => {
     if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
     if (filters.district) queryParams.append('district', filters.district);
     if (filters.station) queryParams.append('station', filters.station);
+    if (filters.assetType) queryParams.append('assetType', filters.assetType);
+    if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+
+
 
 
 

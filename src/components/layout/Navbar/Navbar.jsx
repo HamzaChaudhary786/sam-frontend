@@ -263,7 +263,7 @@ const Navbar = () => {
                   </button>
 
                   <button
-                    onClick={() => handleNavigation("/employees")}
+                    onClick={() => handleNavigation("/pendingapprovals")}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                   >
                     <svg className="h-5 w-5 mr-3 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
