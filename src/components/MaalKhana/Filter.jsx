@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useLookupOptions } from "../../services/LookUp.js";
+import { getStationLocationsWithEnum } from "../Station/lookUp.js";
+import { getStationStatusWithEnum } from "../Station/stationstatus.js";
+import { getStationDistrictWithEnum } from "../Station/District.js";
 
-const AssetFilters = ({
+const StationFilters = ({
   filters,
   updateFilters,
   clearFilters,
@@ -10,25 +12,84 @@ const AssetFilters = ({
 }) => {
   const [filterForm, setFilterForm] = useState({
     name: filters.name || "",
-    type: filters.type || "",
+    tehsil: filters.tehsil || "",
+    address: filters.address || "",
     status: filters.status || "",
-    purchaseDate: filters.purchaseDate || "",
+    district: filters.district || "",
   });
 
-  // Get lookup options for dropdowns
-  const { options: assetTypeOptions } = useLookupOptions("assetTypes");
-  const { options: assetStatusOptions } = useLookupOptions("assetStatus");
+  const [stationLocations, setStationLocations] = useState({});
+  const [stationStatuses, setStationStatuses] = useState({});
+  const [stationDistrict, setStationDistrict] = useState({});
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
+
+  // Fetch station locations and statuses on component mount
+  useEffect(() => {
+    fetchStationLocations();
+    fetchStationStatuses();
+    fetchStationDistrict();
+  }, []);
 
   // Update form when filters change externally
   useEffect(() => {
     setFilterForm({
       name: filters.name || "",
-      type: filters.type || "",
+      tehsil: filters.tehsil || "",
+      address: filters.address || "",
       status: filters.status || "",
-      purchaseDate: filters.purchaseDate || "",
+      district: filters.district || "",
     });
   }, [filters]);
 
+  // Fetch station locations from API
+  const fetchStationLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const result = await getStationLocationsWithEnum();
+      if (result.success) {
+        setStationLocations(result.data);
+      } else {
+        console.error("Error fetching station locations:", result.error);
+      }
+    } catch (error) {
+      console.error("Error fetching station locations:", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
+  // Fetch station statuses from API
+  const fetchStationStatuses = async () => {
+    setLoadingStatuses(true);
+    try {
+      const result = await getStationStatusWithEnum();
+      if (result.success) {
+        setStationStatuses(result.data);
+      } else {
+        console.error("Error fetching station statuses:", result.error);
+      }
+    } catch (error) {
+      console.error("Error fetching station statuses:", error);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };
+  const fetchStationDistrict = async () => {
+    setLoadingStatuses(true);
+    try {
+      const result = await getStationDistrictWithEnum();
+      if (result.success) {
+        setStationDistrict(result.data);
+      } else {
+        console.error("Error fetching station statuses:", result.error);
+      }
+    } catch (error) {
+      console.error("Error fetching station statuses:", error);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };  
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilterForm((prev) => ({
@@ -40,18 +101,24 @@ const AssetFilters = ({
   const handleApplyFilters = () => {
     const activeFilters = {};
     if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.type.trim()) activeFilters.type = filterForm.type.trim();
-    if (filterForm.status.trim()) activeFilters.status = filterForm.status.trim();
-    if (filterForm.purchaseDate.trim()) activeFilters.purchaseDate = filterForm.purchaseDate.trim();
+    if (filterForm.tehsil.trim())
+      activeFilters.tehsil = filterForm.tehsil.trim();
+    if (filterForm.address.trim())
+      activeFilters.address = filterForm.address.trim();
+    if (filterForm.status.trim())
+      activeFilters.status = filterForm.status.trim();
+    if (filterForm.district.trim())
+      activeFilters.district = filterForm.district.trim();
     updateFilters(activeFilters);
   };
 
   const handleClearFilters = () => {
-    setFilterForm({ 
-      name: "", 
-      type: "", 
-      status: "", 
-      purchaseDate: "" 
+    setFilterForm({
+      name: "",
+      tehsil: "",
+      address: "",
+      status: "",
+      district: "",
     });
     clearFilters();
   };
@@ -71,7 +138,7 @@ const AssetFilters = ({
           className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
         >
           <span className="text-sm font-medium text-gray-700">
-            Filter Assets
+            Filter Maal Khana
             {Object.keys(filters).length > 0 && (
               <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                 {Object.keys(filters).length}
@@ -103,21 +170,21 @@ const AssetFilters = ({
         }`}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Filter Assets</h3>
+          <h3 className="text-lg font-medium text-gray-900">Filter Maal Khana</h3>
           {/* Active filter count */}
-          {/* {Object.keys(filters).length > 0 && (
+          {Object.keys(filters).length > 0 && (
             <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
               {Object.keys(filters).length} active filter
               {Object.keys(filters).length !== 1 ? "s" : ""}
             </span>
-          )} */}
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Asset Name Filter */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {/* Station Name Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asset Name
+              Maal Khana Name
             </label>
             <input
               type="text"
@@ -126,31 +193,55 @@ const AssetFilters = ({
               onChange={handleFilterChange}
               onKeyPress={handleKeyPress}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., AK27"
+              placeholder="e.g., Gulshan"
             />
           </div>
 
-          {/* Asset Type Filter */}
+          {/* Tehsil Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asset Type
+              Tehsil
             </label>
             <select
-              name="type"
-              value={filterForm.type}
+              name="tehsil"
+              value={filterForm.tehsil}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={loadingLocations}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              <option value="">All Types</option>
-              {assetTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              <option value="">
+                {loadingLocations ? "Loading..." : "All Tehsils"}
+              </option>
+              {Object.entries(stationLocations).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
                 </option>
               ))}
             </select>
+            {loadingLocations && (
+              <p className="text-xs text-gray-500 mt-1">
+                Loading station locations...
+              </p>
+            )}
           </div>
 
-          {/* Asset Status Filter */}
+          {/* Address Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Address
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={filterForm.address}
+              onChange={handleFilterChange}
+              onKeyPress={handleKeyPress}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Main Street"
+            />
+          </div>
+
+          {/* Status Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status
@@ -159,29 +250,50 @@ const AssetFilters = ({
               name="status"
               value={filterForm.status}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={loadingStatuses}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              <option value="">All Statuses</option>
-              {assetStatusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              <option value="">
+                {loadingStatuses ? "Loading..." : "All Statuses"}
+              </option>
+              {Object.entries(stationStatuses).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
                 </option>
               ))}
             </select>
+            {loadingStatuses && (
+              <p className="text-xs text-gray-500 mt-1">
+                Loading station statuses...
+              </p>
+            )}
           </div>
 
-          {/* Purchase Date Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Purchase Date
+              District
             </label>
-            <input
-              type="date"
-              name="purchaseDate"
-              value={filterForm.purchaseDate}
+            <select
+              name="district"
+              value={filterForm.district}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              disabled={loadingStatuses}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="">
+                {loadingStatuses ? "Loading..." : "All Districts"}
+              </option>
+              {Object.entries(stationDistrict).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            {loadingStatuses && (
+              <p className="text-xs text-gray-500 mt-1">
+                Loading station statuses...
+              </p>
+            )}
           </div>
         </div>
 
@@ -205,7 +317,9 @@ const AssetFilters = ({
         {Object.keys(filters).length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-600 font-medium">Active filters:</span>
+              <span className="text-sm text-gray-600 font-medium">
+                Active filters:
+              </span>
               {filters.name && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   Name: {filters.name}
@@ -221,13 +335,28 @@ const AssetFilters = ({
                   </button>
                 </span>
               )}
-              {filters.type && (
+              {filters.tehsil && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Type: {assetTypeOptions.find(opt => opt.value === filters.type)?.label || filters.type}
+                  Tehsil: {stationLocations[filters.tehsil] || filters.tehsil}
                   <button
                     onClick={() => {
                       const newFilters = { ...filters };
-                      delete newFilters.type;
+                      delete newFilters.tehsil;
+                      updateFilters(newFilters);
+                    }}
+                    className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {filters.address && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Address: {filters.address}
+                  <button
+                    onClick={() => {
+                      const newFilters = { ...filters };
+                      delete newFilters.address;
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -238,7 +367,7 @@ const AssetFilters = ({
               )}
               {filters.status && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Status: {assetStatusOptions.find(opt => opt.value === filters.status)?.label || filters.status}
+                  Status: {stationStatuses[filters.status] || filters.status}
                   <button
                     onClick={() => {
                       const newFilters = { ...filters };
@@ -251,13 +380,13 @@ const AssetFilters = ({
                   </button>
                 </span>
               )}
-              {filters.purchaseDate && (
+              {filters.district && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Purchase Date: {filters.purchaseDate}
+                  District: {filters.district}
                   <button
                     onClick={() => {
                       const newFilters = { ...filters };
-                      delete newFilters.purchaseDate;
+                      delete newFilters.district;
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -274,4 +403,4 @@ const AssetFilters = ({
   );
 };
 
-export default AssetFilters;
+export default StationFilters;

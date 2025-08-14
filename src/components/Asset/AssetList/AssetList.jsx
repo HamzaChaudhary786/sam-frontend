@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 const AssetsList = () => {
   const {
     assets,
-    pagination: { currentPage, totalPages, hasNext, hasPrev },
+    pagination: { currentPage, totalPages, hasNext, hasPrev,totalAssets },
     setPage,
     loading,
     error,
@@ -26,6 +26,8 @@ const AssetsList = () => {
   
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
+  const [pageSize, setPageSize] = useState(50); // Add this line
+
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,6 +63,19 @@ const AssetsList = () => {
       return newSet;
     });
   };
+  const handlePageChange = (page) => {
+  if (page >= 1 && page <= totalPages) {
+    setPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+};
+  const handlePageSizeChange = (newPageSize) => {
+  setPageSize(newPageSize);
+  // Update filters with new page size and reset to page 1
+  const newFilters = { ...filters, limit: newPageSize, page: 1 };
+  updateFilters(newFilters);
+};
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -600,21 +615,14 @@ const AssetsList = () => {
       </div>
 
       {/* Pagination Component */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => {
-              if (page >= 1 && page <= totalPages) {
-                setPage(page);
-                // Scroll to top when page changes
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
-            }}
-          />
-        </div>
-      )}
+      <Pagination
+  currentPage={currentPage}
+  totalPages={totalPages}
+  onPageChange={handlePageChange}
+  pageSize={pageSize}                    // NEW
+  onPageSizeChange={handlePageSizeChange} // NEW
+  totalItems={totalAssets || 0}          // NEW (from pagination object)
+/>
 
       {/* Add/Edit Asset Modal */}
       <AssetModal

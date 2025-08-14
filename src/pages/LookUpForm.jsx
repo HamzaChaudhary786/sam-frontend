@@ -179,7 +179,7 @@ const LookupPage = () => {
   }, [currentFilters, searchTerm, filterType, totalItems]);
 
   // Pagination component
-  const Pagination = () => {
+  const   Pagination = () => {
     if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {

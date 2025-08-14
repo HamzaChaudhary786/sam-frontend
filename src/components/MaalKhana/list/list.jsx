@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useStations } from "../StationHook.js";
-import StationModal from "../AddStation/AddStation.jsx";
-import StationViewModal from "../ViewStation/ViewStation.jsx";
+import { useStations } from "../hook.js";
+import StationModal from "../AddMaalKhana/AddMaalKhana.jsx";
+import StationViewModal from "../MaalKhanaView/MaalKhanaView.jsx";
 import DrillUpPage from "../DrillUp/DrillUp.jsx";
 import DrillDownPage from "../DrillDown/DrillDown.jsx";
-import Pagination from "../Pagination/Pagination.jsx";
+import Pagination from "../pagination.jsx";
 import StationFilters from "../Filter.jsx";
-import { getStationLocationsWithEnum } from "../lookUp.js";
+import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -327,21 +327,21 @@ const StationList = () => {
       {/* Header Section - Responsive */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Station Management
+          Maal Khana Management
         </h1>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <button
             onClick={handleAddStation}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
           >
-            Add Station
+            Add Maal Khana
           </button>
-          <button
+          {/* <button
             onClick={handleImportStation}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
           >
             Import Station File
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -400,7 +400,7 @@ const StationList = () => {
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Station Info
+                    Maal Khana Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tehsil
@@ -408,9 +408,9 @@ const StationList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Address
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Drill Actions
-                  </th>
+                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -522,7 +522,7 @@ const StationList = () => {
                         {station.address?.city}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col space-y-2">
                         <button
                           onClick={() => handleDrillUp(station)}
@@ -541,7 +541,7 @@ const StationList = () => {
                           Drill Up
                         </button>
                       </div>
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -688,7 +688,7 @@ const StationList = () => {
                     </div>
 
                     {/* Drill Actions Row */}
-                    <div className="grid grid-cols-2 gap-2 mb-2">
+                    {/* <div className="grid grid-cols-2 gap-2 mb-2">
                       <button
                         onClick={() => handleDrillUp(station)}
                         className="flex items-center justify-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200"
@@ -703,7 +703,7 @@ const StationList = () => {
                         <TrendingUp className="h-3 w-3 mr-1" />
                         Drill Up
                       </button>
-                    </div>
+                    </div> */}
 
                     {/* Delete Action Row */}
                     <div className="grid grid-cols-1 gap-2">
@@ -734,7 +734,7 @@ const StationList = () => {
               currentPage={currentPage || 1}
               totalPages={totalPages || 1}
               totalItems={totalStations || safeStations.length}
-              itemsPerPage={itemsPerPage || 50}
+              itemsPerPage={itemsPerPage || 10}
               onPageChange={handlePageChange}
               onItemsPerPageChange={
                 setItemsPerPage ? handleItemsPerPageChange : undefined

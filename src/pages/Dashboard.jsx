@@ -42,25 +42,6 @@ const Dashboard = () => {
               </h3>
               <p className="text-sm text-gray-600 mt-1">Manage personnel records</p>
             </button>
-            <button
-              onClick={() => handleNavigation('stationimport')}
-              className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl shadow-sm border border-emerald-200 hover:shadow-md hover:from-emerald-100 hover:to-emerald-200 transition-all duration-200 text-left group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                  </svg>
-                </div>
-                <svg className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
-                Import Stations
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">Bulk import personnel data</p>
-            </button>
 
             {/* Import Employees */}
             <button
@@ -83,6 +64,28 @@ const Dashboard = () => {
               <p className="text-sm text-gray-600 mt-1">Bulk import personnel data</p>
             </button>
 
+
+            {/* Station Location */}
+            <button
+              onClick={() => handleNavigation('station-map')}
+              className="bg-gradient-to-br from-teal-50 to-teal-100 p-6 rounded-xl shadow-sm border border-teal-200 hover:shadow-md hover:from-teal-100 hover:to-teal-200 transition-all duration-200 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-teal-400 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
+                Station Location
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">See stations on map</p>
+            </button>
+
             {/* Stations */}
             <button
               onClick={() => handleNavigation('stations')}
@@ -102,9 +105,28 @@ const Dashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-700 transition-colors">
                 Stations
               </h3>
-              <p className="text-sm text-gray-600 mt-1">Location management</p>
+              <p className="text-sm text-gray-600 mt-1">Station management</p>
             </button>
 
+            <button
+              onClick={() => handleNavigation('stationimport')}
+              className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl shadow-sm border border-emerald-200 hover:shadow-md hover:from-emerald-100 hover:to-emerald-200 transition-all duration-200 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                Import Stations
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">Bulk import Stations data</p>
+            </button>
             {/* Assets */}
             <button
               onClick={() => handleNavigation('assets')}
@@ -192,26 +214,6 @@ const Dashboard = () => {
               <p className="text-sm text-gray-600 mt-1">Access control</p>
             </button>
 
-            {/* Station Location */}
-            <button
-              onClick={() => handleNavigation('station-map')}
-              className="bg-gradient-to-br from-teal-50 to-teal-100 p-6 rounded-xl shadow-sm border border-teal-200 hover:shadow-md hover:from-teal-100 hover:to-teal-200 transition-all duration-200 text-left group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                </div>
-                <svg className="w-5 h-5 text-teal-400 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
-                Station Location
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">See stations on map</p>
-            </button>
           </div>
         </div>
       </div>

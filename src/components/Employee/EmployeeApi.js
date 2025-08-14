@@ -29,6 +29,16 @@ export const getEmployees = async (filters = {}) => {
     if (filters.cast) queryParams.append('cast', filters.cast);
     if (filters.grade) queryParams.append('grade', filters.grade);
     if (filters.rank) queryParams.append('rank', filters.rank);
+    if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
+    if (filters.district) queryParams.append('district', filters.district);
+    if (filters.station) queryParams.append('station', filters.station);
+    if (filters.assetType) queryParams.append('assetType', filters.assetType);
+    if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+
+
+
+
+
 
 
 

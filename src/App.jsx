@@ -23,6 +23,8 @@ import AdminManagementPage from './pages/Admin.jsx'
 import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
 import AuditTrailPage from './pages/Audit.jsx';
 import StationImport from './pages/StationImport.jsx';
+import MaalKhana from './pages/MaalKhana.jsx'
+import PendingStationApprovals from './components/PendingStationPosting/PendingStations.jsx';
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -164,12 +166,28 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/pendingapprovals"
+          element={
+            <ProtectedRoute>
+              <PendingStationApprovals />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/stations"
           element={
             <ProtectedRoute>
               <StationsPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/maalkhana"
+          element={
+            <ProtectedRoute>
+              <MaalKhana />
             </ProtectedRoute>
           }
         />
