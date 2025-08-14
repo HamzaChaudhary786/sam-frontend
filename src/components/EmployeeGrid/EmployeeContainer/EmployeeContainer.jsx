@@ -287,7 +287,8 @@ const EmployeeGridContainer = () => {
           return newData;
         });
         // Force page refresh to show updated data
-        window.location.reload();
+        ////window.location.reload();
+        //TODD: Update the state to show the updated employee
       } else {
         toast.error("Failed to update employee");
       }
@@ -321,7 +322,8 @@ const EmployeeGridContainer = () => {
         const result = await updateEmployee(updatedData, employee._id);
         if (result.success) {
           toast.success("Image uploaded successfully");
-          window.location.reload(); // Refresh to show new image
+          ////window.location.reload(); // Refresh to show new image
+          //TODD: Update the state to add the image
         } else {
           throw new Error(result.error || 'Failed to save employee data');
         }
@@ -348,7 +350,8 @@ const EmployeeGridContainer = () => {
       const result = await updateEmployee(updatedData, employee._id);
       if (result.success) {
         toast.success("Image removed successfully");
-        window.location.reload(); // Refresh to show updated images
+        ////window.location.reload(); // Refresh to show updated images
+        //TODD: Update the state to add the image
       } else {
         throw new Error(result.error || 'Failed to save employee data');
       }
