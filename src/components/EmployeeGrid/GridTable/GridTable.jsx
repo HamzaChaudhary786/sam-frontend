@@ -280,7 +280,7 @@ const EmployeeGridTable = ({
   const handleConfirmDelete = async () => {
     try {
       await deleteEmployee(deleteId);
-      ////window.location.reload();
+      window.location.reload();
       // TODO: Instead of reloading, update the state to remove the employee
     } catch (error) {
       console.error("Error deleting employee:", error);
