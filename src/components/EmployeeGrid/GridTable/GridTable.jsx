@@ -776,10 +776,10 @@ const EmployeeGridTable = ({
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Header Grid - Reordered to match requested layout */}
-        <div className="grid grid-cols-12 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-12 grid-rows-2  bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
+          <div className="mb-2">
             {renderSelectAllCheckbox()}
-            <span>Photo</span>
+            <span className="ml-3">Photo</span>
           </div>
           <div>Actions</div>
           <div>Status</div>
@@ -791,7 +791,7 @@ const EmployeeGridTable = ({
           <div>Rank</div>
           <div>Tehsil</div>
           <div>District</div>
-          <div>Assigned Assets</div>
+          <div>Employee's</div>
           <div></div> {/* Row 2 placeholder for Photo column */}
           <div></div> {/* Row 2 placeholder for Actions column */}
           <div>Date of Birth</div>
@@ -802,7 +802,8 @@ const EmployeeGridTable = ({
           <div>Cast</div>
           <div>Address</div>
           <div>Mohalla</div>
-          <div>NOT USED</div>
+          <div></div>
+          <div className="text-center"> Assets</div>
         </div>
 
         {/* Employee Rows - Updated with checkboxes */}
@@ -905,20 +906,20 @@ const EmployeeGridTable = ({
               <div className="col-start-10">
                 {renderCell(employee, "address.muhala", "input")}
               </div>
-              <div className="col-start-11 row-start-2"></div>
+              {/* <div className="col-start-11 row-start-2"></div> */}
 
               {/* Removed horizontal action row; actions shown vertically next to checkbox */}
               {isEditing && (
-                <div className="col-start-4 row-start-3 col-span-8 flex gap-3">
+                <div className="col-start-11 row-start-2 flex gap-1 ">
                   <button
                     onClick={() => onSaveCell(employee)}
-                    className="px-2 py-0.5 text-[12px] rounded bg-green-600 text-white hover:bg-green-700 transform origin-left scale-x-[0.7]"
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 scale-y-[0.8]"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => handleCancelEditing(employee)}
-                    className="px-2 py-0.5 text-[12px] rounded bg-gray-600 text-white hover:bg-gray-700 transform origin-left scale-x-[0.7]"
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 scale-y-[0.8]"
                   >
                     Cancel
                   </button>
