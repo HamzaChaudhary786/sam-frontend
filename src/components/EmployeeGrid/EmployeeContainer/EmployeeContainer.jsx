@@ -14,6 +14,7 @@ import { uploadToCloudinary } from "../../Employee/AddEmployee/Cloudinary.js";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
 import EmployeeGridTable from "../GridTable/GridTable.jsx";
+import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 
 const EmployeeGridContainer = () => {
   const {
@@ -26,6 +27,8 @@ const EmployeeGridContainer = () => {
     nextPage,
     prevPage,
     changePageSize,
+    updateFilters,
+    clearFilters,
     fetchEmployees,
     modifyEmployee,
     removeEmployee,
@@ -37,6 +40,7 @@ const EmployeeGridContainer = () => {
   const [editingData, setEditingData] = useState({}); // Changed: Now stores data by employee ID
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Enum states
   const [enums, setEnums] = useState({
@@ -361,6 +365,183 @@ const EmployeeGridContainer = () => {
   };
 
   const sortedEmployees = sortData(employees);
+  const { getEmployeeAssetsString } = useEmployeeAssets(sortedEmployees);
+
+  const getEnumName = (enumKey, valueId) => {
+    if (!valueId) return "";
+    const enumData = enums[enumKey] || [];
+    if (Array.isArray(valueId)) {
+      const names = valueId
+        .map((id) => enumData.find((item) => item._id === id)?.name)
+        .filter(Boolean);
+      return names.join(", ");
+    }
+    const item = enumData.find((item) => item._id === valueId);
+    return item?.name || valueId;
+  };
+
+  const exportCSV = () => {
+    try {
+      const headers = [
+        "Personal Number",
+        "First Name",
+        "Father's Name",
+        "CNIC",
+        "Mobile",
+        "Designation",
+        "Service Type",
+        "Date of Birth",
+        "Status",
+        "Grade",
+        "Rank",
+        "Cast",
+        "Station",
+        "Address",
+        "Mohalla",
+        "Tehsil",
+        "District",
+        "Assigned Assets",
+      ];
+
+      const escapeCSVField = (field) => {
+        if (field == null) return "";
+        const str = String(field);
+        if (str.includes(",") || str.includes("\"") || str.includes("\n")) {
+          return `"${str.replace(/\"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const rows = sortedEmployees.map((e) => [
+        e.personalNumber || "",
+        e.firstName || "",
+        e.fatherFirstName || "",
+        e.cnic || "",
+        e.mobileNumber || "",
+        getEnumName("designations", e.designation),
+        e.serviceType || "",
+        e.dateOfBirth ? new Date(e.dateOfBirth).toLocaleDateString() : "",
+        getEnumName("statuses", e.status),
+        getEnumName("grades", e.grade),
+        getEnumName("ranks", e.rank),
+        getEnumName("casts", e.cast),
+        getEnumName("stations", e.stations),
+        (e.address && e.address.line1) || "",
+        (e.address && e.address.muhala) || "",
+        getEnumName("tehsil", e.address?.tehsil),
+        getEnumName("district", e.address?.line2),
+        getEmployeeAssetsString(e._id),
+      ]);
+
+      const csvContent = [headers, ...rows]
+        .map((row) => row.map(escapeCSVField).join(","))
+        .join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "employees_export.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      toast.error("Failed to export CSV");
+    }
+  };
+
+  const exportPDF = () => {
+    try {
+      const win = window.open("", "_blank");
+      if (!win) {
+        toast.error("Popup blocked. Please allow popups to export PDF.");
+        return;
+      }
+      const style = `
+        <style>
+          body { font-family: Arial, sans-serif; padding: 16px; }
+          h1 { font-size: 18px; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; font-size: 10px; }
+          th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+          th { background: #f3f4f6; }
+        </style>
+      `;
+      const headers = [
+        "Personal Number",
+        "First Name",
+        "Father's Name",
+        "CNIC",
+        "Mobile",
+        "Designation",
+        "Service Type",
+        "Date of Birth",
+        "Status",
+        "Grade",
+        "Rank",
+        "Cast",
+        "Station",
+        "Address",
+        "Mohalla",
+        "Tehsil",
+        "District",
+        "Assigned Assets",
+      ];
+      const rowsHtml = sortedEmployees
+        .map((e) => {
+          const row = [
+            e.personalNumber || "",
+            e.firstName || "",
+            e.fatherFirstName || "",
+            e.cnic || "",
+            e.mobileNumber || "",
+            getEnumName("designations", e.designation),
+            e.serviceType || "",
+            e.dateOfBirth ? new Date(e.dateOfBirth).toLocaleDateString() : "",
+            getEnumName("statuses", e.status),
+            getEnumName("grades", e.grade),
+            getEnumName("ranks", e.rank),
+            getEnumName("casts", e.cast),
+            getEnumName("stations", e.stations),
+            (e.address && e.address.line1) || "",
+            (e.address && e.address.muhala) || "",
+            getEnumName("tehsil", e.address?.tehsil),
+            getEnumName("district", e.address?.line2),
+            getEmployeeAssetsString(e._id),
+          ];
+          return `<tr>${row.map((c) => `<td>${String(c ?? "").replace(/</g, "&lt;")}</td>`).join("")}</tr>`;
+        })
+        .join("");
+
+      const html = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            ${style}
+            <title>Employees Export</title>
+          </head>
+          <body>
+            <h1>Employees Export</h1>
+            <table>
+              <thead>
+                <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+            <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 300); };</script>
+          </body>
+        </html>
+      `;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      toast.error("Failed to export PDF");
+    }
+  };
 
   const handleAddStation = () => {
     navigate("/stations");
@@ -415,6 +596,12 @@ const EmployeeGridContainer = () => {
           >
             List View
           </button>
+          <button
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+            onClick={() => setIsExportModalOpen(true)}
+          >
+            Export
+          </button>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">         
@@ -460,7 +647,21 @@ const EmployeeGridContainer = () => {
       )}
 
       <EmployeeGridTable
+        // data and pagination from parent hook (single source of truth)
         employees={sortedEmployees}
+        loading={loading}
+        error={error}
+        filters={filters}
+        pagination={pagination}
+        goToPage={goToPage}
+        nextPage={nextPage}
+        prevPage={prevPage}
+        changePageSize={changePageSize}
+        updateFilters={updateFilters}
+        clearFilters={clearFilters}
+        removeEmployee={removeEmployee}
+
+        // editing/ui props
         sortConfig={sortConfig}
         editingCell={editingCell}
         editingData={editingData}
@@ -480,6 +681,49 @@ const EmployeeGridContainer = () => {
         onRemoveImage={handleRemoveImage}
         onDataRefresh={removeEmployee}
       />
+
+      {isExportModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Export Data</h2>
+              <button
+                onClick={() => setIsExportModalOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close export dialog"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700 text-sm mb-4">Choose a format to export the currently visible table data.</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => { setIsExportModalOpen(false); exportCSV(); }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={() => { setIsExportModalOpen(false); exportPDF(); }}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium transition-colors"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={() => setIsExportModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="mt-3 text-xs text-gray-500">Note: Export respects current filters and page.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* <EmployeeGridPagination
         pagination={pagination}
