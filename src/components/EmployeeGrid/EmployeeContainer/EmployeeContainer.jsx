@@ -21,10 +21,14 @@ const EmployeeGridContainer = () => {
     loading,
     error,
     pagination,
+    filters,
     goToPage,
     nextPage,
     prevPage,
     changePageSize,
+    fetchEmployees,
+    modifyEmployee,
+    removeEmployee,
   } = useEmployees();
 
   // State management
@@ -276,9 +280,8 @@ const EmployeeGridContainer = () => {
         return;
       }
 
-      const result = await updateEmployee(updatedData, employee._id);
+      const result = await modifyEmployee(employee._id, updatedData);
       if (result.success) {
-        toast.success("Employee updated successfully");
         // Clear editing state for this employee after successful save
         setEditingCell(null);
         setEditingData(prev => {
@@ -286,8 +289,7 @@ const EmployeeGridContainer = () => {
           delete newData[employee._id];
           return newData;
         });
-        // Force page refresh to show updated data
-        window.location.reload();
+        // No need to refresh data as modifyEmployee updates the state directly
       } else {
         toast.error("Failed to update employee");
       }
@@ -318,10 +320,10 @@ const EmployeeGridContainer = () => {
         };
 
         // Save updated employee data
-        const result = await updateEmployee(updatedData, employee._id);
+        const result = await modifyEmployee(employee._id, updatedData);
         if (result.success) {
           toast.success("Image uploaded successfully");
-          window.location.reload(); // Refresh to show new image
+          // No need to refresh data as modifyEmployee updates the state directly
         } else {
           throw new Error(result.error || 'Failed to save employee data');
         }
@@ -345,10 +347,10 @@ const EmployeeGridContainer = () => {
         profileUrl: updatedImages.length > 0 ? updatedImages : [`https://ui-avatars.com/api/?name=${employee.firstName}+${employee.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`]
       };
 
-      const result = await updateEmployee(updatedData, employee._id);
+      const result = await modifyEmployee(employee._id, updatedData);
       if (result.success) {
         toast.success("Image removed successfully");
-        window.location.reload(); // Refresh to show updated images
+        // No need to refresh data as modifyEmployee updates the state directly
       } else {
         throw new Error(result.error || 'Failed to save employee data');
       }
@@ -476,6 +478,7 @@ const EmployeeGridContainer = () => {
         onImageClick={setImageModal}
         onImageUpload={handleImageUpload}
         onRemoveImage={handleRemoveImage}
+        onDataRefresh={removeEmployee}
       />
 
       {/* <EmployeeGridPagination
