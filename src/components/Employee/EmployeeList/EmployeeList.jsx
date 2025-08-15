@@ -626,6 +626,9 @@ const EmployeeList = ({
                             <div className="text-xs font-medium text-gray-900 truncate">
                               {employee.firstName} {employee.lastName}
                             </div>
+                            <div className="text-xs font-medium text-gray-700 truncate">
+                              {employee.fatherFirstName} 
+                            </div>
                             <div className="text-[10px] text-gray-500 truncate">
                               {employee.personalNumber || employee.pnumber}
                             </div>
@@ -809,7 +812,10 @@ const EmployeeList = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {employee.firstName} {employee.lastName}
+                        {employee.firstName}
+                      </h3>
+                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        {employee.fatherFirstName}
                       </h3>
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

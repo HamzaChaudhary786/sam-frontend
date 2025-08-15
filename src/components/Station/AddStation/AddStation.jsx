@@ -26,12 +26,12 @@ const SearchableSelect = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredOptions = options.filter((option) => {
-  const searchLower = searchTerm.toLowerCase();
-  return (
-    option.label.toLowerCase().includes(searchLower) ||
-    (option.subtitle && option.subtitle.toLowerCase().includes(searchLower))
-  );
-});
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      option.label.toLowerCase().includes(searchLower) ||
+      (option.subtitle && option.subtitle.toLowerCase().includes(searchLower))
+    );
+  });
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -163,6 +163,7 @@ const StationModal = ({
     latitude: "", // Changed from coordinates.lat to latitude (string type)
     longitude: "", // Changed from coordinates.lng to longitude (string type)
     stationImageUrl: [], // Changed from pictures to stationImageUrl to match schema
+    excludeStatistics: false, // Add this line
     stationIncharge: [
       {
         employee: "",
@@ -532,8 +533,6 @@ const StationModal = ({
             label: `${employee.firstName} ${employee.lastName || ""}`,
             // subtitle: employee.personalNumber || employee.pnumber,
             subtitle: `${employee.cnic} | ${employee.personalNumber} | ${employee.rank}`,
-
-            
           })),
         ];
         setEmployeeOptions(employeeOptions);
@@ -700,6 +699,7 @@ const StationModal = ({
         latitude: editData.latitude || "",
         longitude: editData.longitude || "",
         stationImageUrl: editData.stationImageUrl || [],
+        excludeStatistics: false, // Add this line
         stationIncharge: editData.stationIncharge || [
           {
             employee: "",
@@ -755,6 +755,7 @@ const StationModal = ({
         latitude: "",
         longitude: "",
         stationImageUrl: [],
+        excludeStatistics: false, // Add this line
         stationIncharge: [
           {
             employee: "",
@@ -1069,6 +1070,7 @@ const StationModal = ({
         latitude: formData.latitude,
         longitude: formData.longitude,
         stationImageUrl: uploadedUrls,
+        excludeStatistics: formData.excludeStatistics, // Add this line
         address: {
           line1: formData.address.line1,
           line2: formData.address.line2,
@@ -1099,6 +1101,7 @@ const StationModal = ({
           status: "",
           facilities: [],
           description: "",
+          excludeStatistics: false, // Add this line
           address: {
             line1: "",
             line2: "",
@@ -1307,6 +1310,27 @@ const StationModal = ({
                 placeholder="Optional description about the station..."
               />
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="excludeStatistics"
+                name="excludeStatistics"
+                checked={formData.excludeStatistics}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    excludeStatistics: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="excludeStatistics"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Exclude Statistics
+              </label>
+            </div>
 
             {/* Station Incharge */}
             <div className="border-t pt-4">
@@ -1364,7 +1388,7 @@ const StationModal = ({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Incharge Type 
+                        Incharge Type
                       </label>
                       <select
                         value={incharge.type}
@@ -1414,7 +1438,7 @@ const StationModal = ({
                       <h4 className="text-md font-medium text-gray-800">
                         Requirement {reqIndex + 1}
                       </h4>
-                      {formData.stationMinimumRequirements.length >=1 && (
+                      {formData.stationMinimumRequirements.length >= 1 && (
                         <button
                           type="button"
                           onClick={() => removeMinimumRequirement(reqIndex)}
@@ -1437,7 +1461,7 @@ const StationModal = ({
                           updateMinimumRequirement(
                             reqIndex,
                             "numberOfStaff",
-                            parseInt(e.target.value) 
+                            parseInt(e.target.value)
                           )
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1490,18 +1514,18 @@ const StationModal = ({
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Quantity 
+                              Quantity
                             </label>
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
-                                value={asset.quantity }
+                                value={asset.quantity}
                                 onChange={(e) =>
                                   updateAssetRequirement(
                                     reqIndex,
                                     assetIndex,
                                     "quantity",
-                                    parseInt(e.target.value) 
+                                    parseInt(e.target.value)
                                   )
                                 }
                                 min="1"
@@ -1599,7 +1623,7 @@ const StationModal = ({
                                     reqIndex,
                                     staffIndex,
                                     "numberOfPersonal",
-                                    parseInt(e.target.value) 
+                                    parseInt(e.target.value)
                                   )
                                 }
                                 className="w-full px-2 py-1 text-sm border h-[44px] border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -1661,7 +1685,7 @@ const StationModal = ({
                                   <div className="flex items-center gap-1">
                                     <input
                                       type="number"
-                                      value={asset.quantity }
+                                      value={asset.quantity}
                                       onChange={(e) =>
                                         updateStaffAssetRequirement(
                                           reqIndex,
@@ -1674,7 +1698,6 @@ const StationModal = ({
                                       min="1"
                                       className="flex-1 px-2 py-1 text-sm border h-[44px] border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                                       placeholder="Qty"
-                                      
                                     />
                                     {staff.assetRequirement.length > 1 && (
                                       <button

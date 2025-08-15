@@ -104,7 +104,9 @@ const PendingStationApprovals = ({ onEdit }) => {
     // From station filter
     if (filters.fromStation) {
       filtered = filtered.filter((assignment) => {
-        const fromStation = assignment.lastStation?.name || "";
+        // const fromStation = assignment.lastStation?.name || "";
+        const fromStation = assignment.lastStation?.[0]?.name || "";
+
         return fromStation.toLowerCase().includes(filters.fromStation.toLowerCase());
       });
     }
@@ -112,7 +114,9 @@ const PendingStationApprovals = ({ onEdit }) => {
     // To station filter
     if (filters.toStation) {
       filtered = filtered.filter((assignment) => {
-        const toStation = assignment.currentStation?.name || "";
+        // const toStation = assignment.currentStation?.name || "";
+        const toStation = assignment.currentStation?.[0]?.name || "";
+
         return toStation.toLowerCase().includes(filters.toStation.toLowerCase());
       });
     }
@@ -531,7 +535,7 @@ const PendingStationApprovals = ({ onEdit }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAssignments.map((assignment) => {
+                {filteredAssignments?.map((assignment) => {
                   const firstName = assignment.employee?.firstName || "";
                   const lastName = assignment.employee?.lastName || "";
                   const employeeName = `${firstName} ${lastName}`.trim() || "Unknown Employee";
@@ -569,7 +573,9 @@ const PendingStationApprovals = ({ onEdit }) => {
                               From:
                             </span>
                             <span className="text-gray-900">
-                              {assignment.lastStation?.name || "No Previous Station"}
+                              {/* {assignment?.lastStation?.name || "No Previous Station"} */}
+                                {assignment?.lastStation?.[0]?.name || "No Previous Station"}
+
                             </span>
                           </div>
                           <div className="flex items-center">
@@ -592,7 +598,9 @@ const PendingStationApprovals = ({ onEdit }) => {
                               To:
                             </span>
                             <span className="text-blue-900 font-semibold">
-                              {assignment.currentStation?.name || "Unknown Station"}
+                              {/* {assignment?.currentStation?.name || "Unknown Station"} */}
+                                {assignment?.currentStation?.[0]?.name || "Unknown Station"}
+
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
