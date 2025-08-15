@@ -11,10 +11,10 @@ const StationMap = () => {
 
     return (
         <div>
-            {/* Professional Back Button - Top Left Corner */}
+            {/* Professional Back Button - Bottom Right Corner */}
             <button
                 onClick={handleBackToDashboard}
-                className="fixed top-4 left-4 z-[1001] bg-white hover:bg-gray-50 border border-gray-200 shadow-lg rounded-lg px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-all duration-200 font-medium text-sm"
+                className="fixed bottom-4 right-4 z-[1001] bg-white hover:bg-gray-50 border border-gray-200 shadow-lg rounded-lg px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-all duration-200 font-medium text-sm"
                 title="Back to Dashboard"
             >
                 <svg 
