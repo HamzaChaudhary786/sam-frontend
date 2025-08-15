@@ -174,10 +174,10 @@ export const useEmployees = (initialFilters = {}) => {
   };
 
   // Clear filters
-  const clearFilters = () => {
-    setFilters({});
-    fetchEmployees({}, 1, pagination.limit);
-  };
+ const clearFilters = () => {
+  setFilters(initialFilters); // 🆕 Preserve initial filters when clearing
+  fetchEmployees(initialFilters, 1, pagination.limit);
+};
 
   // Load employees on mount
   useEffect(() => {

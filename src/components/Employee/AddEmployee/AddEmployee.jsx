@@ -180,7 +180,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     stations: "",
   });
 
-
   useEffect(() => {
     fetchStationLocations();
     fetchDistrictLocations();
@@ -231,8 +230,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof stationsValue === "string"
         ? stationsValue.trim() !== ""
         : typeof stationsValue === "object"
-          ? stationsValue._id
-          : false)
+        ? stationsValue._id
+        : false)
     );
   };
 
@@ -247,8 +246,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof statusValue === "string"
         ? statusValue.trim() !== ""
         : typeof statusValue === "object"
-          ? statusValue._id
-          : false)
+        ? statusValue._id
+        : false)
     );
   };
 
@@ -363,7 +362,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line2: editData.stations?.address?.line2 || "",
         city: editData.stations?.address?.city || "",
         tehsil: editData.stations?.address?.tehsil || "",
-
       });
       // setStationDistrict({
       //   district: editData.stations?.district || "",
@@ -388,7 +386,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         serviceType: "provincial",
         address: {
           line1: "",
-          line2: "",   // this is district 
+          line2: "", // this is district
           muhala: "",
           tehsil: "",
         },
@@ -400,16 +398,13 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line1: "",
         line2: "",
         city: "",
-        tehsil: ""
+        tehsil: "",
       });
       // setStationDistrict({
       //   district: "",
       // });
     }
   }, [editData, isEdit, enumsLoaded]);
-
-
-
 
   // CNIC validation function
   const validateCNIC = (cnic) => {
@@ -498,7 +493,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         line2: "",
         city: "",
         district: "",
-        tehsil: ""
+        tehsil: "",
       });
       // setStationDistrict({
       //   district: "",
@@ -561,7 +556,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
         ];
       }
-
 
       // Create JSON object with proper format - match your backend API structure
       const submitData = {
@@ -699,10 +693,11 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             pattern="[0-9]{13}"
             title="CNIC must be exactly 13 digits with no hyphens"
             maxLength="13"
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.cnic
-              ? "border-red-300 focus:border-red-500"
-              : "border-gray-300 focus:border-blue-500"
-              }`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              validationErrors.cnic
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-300 focus:border-blue-500"
+            }`}
           />
           {validationErrors.cnic && (
             <p className="mt-1 text-sm text-red-600">{validationErrors.cnic}</p>
@@ -799,7 +794,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             </label>
             <textarea
               rows={3}
-
               // type="text"
               name="address.line1"
               value={formData.address.line1}
@@ -808,7 +802,6 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
         </div>
         <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
           <div>
@@ -832,7 +825,11 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               onChange={handleChange}
               enumObject={stationLocations}
               required={true}
-              placeholder={loadingLocations ? "Loading locations..." : "Search and select tehsil..."}
+              placeholder={
+                loadingLocations
+                  ? "Loading locations..."
+                  : "Search and select tehsil..."
+              }
               readOnly={loadingLocations}
             />
 
@@ -850,82 +847,86 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         </div>
       </div>
 
-      {/* Place of Posting Section */}
-      <div className="border-t pt-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-3">
-          Place of Posting
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station *
-            </label>
-            <select
-              name="stations"
-              value={formData.stations}
-              onChange={handleLocationChange}
-              required
-              disabled={isStationsReadOnly()} // Use the helper function
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isStationsReadOnly()
-                ? "bg-gray-50 text-gray-600 cursor-not-allowed"
-                : ""
+      {/* Place of Posting Section - Only show in Edit mode */}
+      {isEdit && (
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">
+            Place of Posting
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station *
+              </label>
+              <select
+                name="stations"
+                value={formData.stations}
+                onChange={handleLocationChange}
+                required={isEdit} // Only required in edit mode
+                disabled={isStationsReadOnly()} // Use the helper function
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isStationsReadOnly()
+                    ? "bg-gray-50 text-gray-600 cursor-not-allowed"
+                    : ""
                 }`}
-            >
-              <option value="">
-                {locationLoading ? "Loading stations..." : "Select station"}
-              </option>
-              {Object.entries(locationEnum).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
+              >
+                <option value="">
+                  {locationLoading ? "Loading stations..." : "Select station"}
                 </option>
-              ))}
-            </select>
-            {isStationsReadOnly() && (
-              <p className="mt-1 text-xs text-gray-500">
-                Station field is read-only because a station is already assigned
-              </p>
-            )}
+                {Object.entries(locationEnum).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              {isStationsReadOnly() && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Station field is read-only because a station is already
+                  assigned
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station Address
+              </label>
+              <input
+                type="text"
+                value={stationAddress.line1}
+                readOnly
+                placeholder="Station address will appear here"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station Address
-            </label>
-            <input
-              type="text"
-              value={stationAddress.line1}
-              readOnly
-              placeholder="Station address will appear here"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station Address Mohalla
+              </label>
+              <input
+                type="text"
+                value={stationAddress.line2}
+                readOnly
+                placeholder="Station address line 2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Station City & Tehsil
+              </label>
+              <input
+                type="text"
+                value={`${stationAddress.city} - ${stationAddress.tehsil}`}
+                readOnly
+                placeholder="Station city"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+              />
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station Address Mohalla
-            </label>
-            <input
-              type="text"
-              value={stationAddress.line2}
-              readOnly
-              placeholder="Station address line 2"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station City & Tehsil
-            </label>
-            <input
-              type="text"
-              value={`${stationAddress.city} - ${stationAddress.tehsil}`}
-              readOnly
-              placeholder="Station city"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-4 border-t">
@@ -944,12 +945,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           {uploading
             ? "Uploading Photo..."
             : loading
-              ? isEdit
-                ? "Updating..."
-                : "Adding..."
-              : isEdit
-                ? "Update Employee"
-                : "Add Employee"}
+            ? isEdit
+              ? "Updating..."
+              : "Adding..."
+            : isEdit
+            ? "Update Employee"
+            : "Add Employee"}
         </button>
       </div>
     </form>
