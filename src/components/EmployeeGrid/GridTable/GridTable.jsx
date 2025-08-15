@@ -34,6 +34,7 @@ const EmployeeGridTable = ({
   onImageClick,
   onImageUpload,
   onRemoveImage,
+  onDataRefresh,
 }) => {
   // Use the employees hook for backend filtering and pagination
   const {
@@ -279,11 +280,16 @@ const EmployeeGridTable = ({
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteEmployee(deleteId);
-      window.location.reload();
-      // TODO: Instead of reloading, update the state to remove the employee
+      // Use the removeEmployee function from the hook which handles data refresh properly
+      if (onDataRefresh) {
+        await onDataRefresh(deleteId);
+      } else {
+        await deleteEmployee(deleteId);
+      }
+      toast.success("Employee deleted successfully");
     } catch (error) {
       console.error("Error deleting employee:", error);
+      toast.error("Failed to delete employee");
     } finally {
       setConfirmPopup(false);
       setDeleteId(null);
