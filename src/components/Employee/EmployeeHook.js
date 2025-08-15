@@ -124,10 +124,32 @@ export const useEmployees = (initialFilters = {}) => {
       const result = await updateEmployee(employeeData, id);
       
       if (result.success) {
-        // Update the employee in the current list
-        setEmployees(prev =>
-          Array.isArray(prev) ? prev.map(emp => emp._id === id ? result.data : emp) : []
-        );
+        // Deep merge helper to avoid losing unchanged fields when server returns partial data
+        const deepMerge = (target, source) => {
+          if (Array.isArray(source)) return source.slice();
+          if (source && typeof source === 'object') {
+            const output = { ...target };
+            for (const key of Object.keys(source)) {
+              output[key] = deepMerge(target ? target[key] : undefined, source[key]);
+            }
+            return output;
+          }
+          return source !== undefined ? source : target;
+        };
+
+        // Prefer server response; if partial, merge with existing state to keep full object intact
+        const serverData = result.data || {};
+        const fallbackData = employeeData || {};
+
+        setEmployees(prev => {
+          if (!Array.isArray(prev)) return [];
+          return prev.map(emp => {
+            if (emp._id !== id) return emp;
+            const mergedWithServer = deepMerge(emp, serverData);
+            // Ensure any locally edited fields not echoed by server are still reflected
+            return deepMerge(mergedWithServer, fallbackData);
+          });
+        });
         toast.success(`Employee "${employeeData.firstName || 'Employee'} ${employeeData.lastName || ''}" updated successfully!`.trim());
         return { success: true };
       } else {
@@ -151,8 +173,26 @@ export const useEmployees = (initialFilters = {}) => {
       const result = await deleteEmployee(id);
       
       if (result.success) {
-        // Refresh the current page to show updated data
-        await fetchEmployees(filters, pagination.currentPage, pagination.limit);
+        // Optimistically update local state without refetching
+        setEmployees(prev => {
+          if (!Array.isArray(prev)) return [];
+          return prev.filter(emp => emp._id !== id);
+        });
+        // Adjust pagination counts locally
+        setPagination(prev => {
+          const newTotalEmployees = Math.max(0, (prev.totalEmployees || 0) - 1);
+          const limit = prev.limit || 50;
+          const newTotalPages = Math.max(1, Math.ceil(newTotalEmployees / limit));
+          const newCurrentPage = Math.min(prev.currentPage || 1, newTotalPages);
+          return {
+            ...prev,
+            totalEmployees: newTotalEmployees,
+            totalPages: newTotalPages,
+            currentPage: newCurrentPage,
+            hasNext: newCurrentPage < newTotalPages,
+            hasPrev: newCurrentPage > 1,
+          };
+        });
         return { success: true };
       } else {
         setError(result.error);
@@ -174,10 +214,10 @@ export const useEmployees = (initialFilters = {}) => {
   };
 
   // Clear filters
-  const clearFilters = () => {
-    setFilters({});
-    fetchEmployees({}, 1, pagination.limit);
-  };
+ const clearFilters = () => {
+  setFilters(initialFilters); // 🆕 Preserve initial filters when clearing
+  fetchEmployees(initialFilters, 1, pagination.limit);
+};
 
   // Load employees on mount
   useEffect(() => {

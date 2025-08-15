@@ -4,7 +4,6 @@ import { AlertTriangle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import EmployeeFilters from "../../Employee/Filters.jsx";
 import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
-import { useEmployees } from "../../Employee/EmployeeHook.js";
 import Pagination from "../Pagination/Pagination.jsx";
 import useGridMultiSelect from "../../Employee/MultiSelectGrid.jsx";
 import MultiStationAssignmentForm from "../../Employee/Multipostingform.jsx";
@@ -17,6 +16,21 @@ import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 import { toast } from "react-toastify";
 
 const EmployeeGridTable = ({
+  // parent-managed state and methods (single source of truth)
+  employees,
+  loading,
+  error,
+  filters,
+  pagination,
+  goToPage,
+  nextPage,
+  prevPage,
+  changePageSize,
+  updateFilters,
+  clearFilters,
+  removeEmployee,
+
+  // editing and UI props
   sortConfig,
   editingCell,
   editingData,
@@ -36,21 +50,6 @@ const EmployeeGridTable = ({
   onRemoveImage,
   onDataRefresh,
 }) => {
-  // Use the employees hook for backend filtering and pagination
-  const {
-    employees,
-    loading,
-    error,
-    removeEmployee,
-    updateFilters,
-    clearFilters,
-    filters,
-    pagination,
-    goToPage,
-    nextPage,
-    prevPage,
-    changePageSize,
-  } = useEmployees();
   const [isMultiStationModalOpen, setIsMultiStationModalOpen] = useState(false);
   const [selectedEmployeesForPosting, setSelectedEmployeesForPosting] =
     useState([]);
@@ -694,113 +693,7 @@ const EmployeeGridTable = ({
     );
   };
 
-  const renderActionButtons = (employee, isEditing, isEditable) => {
-    const buttonBaseClasses = "px-2 py-1 text-xs rounded transition-colors";
-    const actionButtonClasses = "px-3 py-2 text-xs rounded-md transition";
-
-    return (
-      <div className="flex space-x-1">
-        {isEditing ? (
-          <>
-            <button
-              onClick={() => onSaveCell(employee)}
-              className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
-            >
-              Save
-            </button>
-            <button
-              onClick={() => handleCancelEditing(employee)}
-              className={`${buttonBaseClasses} bg-gray-600 text-white hover:bg-gray-700`}
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => toggleEditMode(employee._id)}
-                  className={`${buttonBaseClasses} ${
-                    isEditable
-                      ? "bg-orange-600 text-white hover:bg-orange-700"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
-                  title={isEditable ? "Disable editing" : "Enable editing"}
-                >
-                  {isEditable ? "Disable Edit" : "Edit"}
-                </button>
-
-                <button
-                  onClick={() => handleDelete(employee?._id)}
-                  className={`${buttonBaseClasses} bg-red-500 text-white hover:bg-red-600`}
-                >
-                  Delete
-                </button>
-
-                {isEditable &&
-                  editingData[employee._id] &&
-                  Object.keys(editingData[employee._id]).length > 0 && (
-                    <button
-                      onClick={() => onSaveCell(employee)}
-                      className={`${buttonBaseClasses} bg-green-600 text-white hover:bg-green-700`}
-                      title="Save all changes"
-                    >
-                      Save All
-                    </button>
-                  )}
-              </>
-            )}
-
-            <button
-              onClick={() => handleView(employee)}
-              className={`${actionButtonClasses} bg-green-700 text-white hover:bg-green-200`}
-            >
-              View Employee
-            </button>
-
-            <button
-              onClick={() => handleAssets(employee)}
-              className={`${actionButtonClasses} bg-cyan-700 text-white hover:bg-cyan-200`}
-            >
-              Assets
-            </button>
-            <button
-              onClick={() => handlePosting(employee)}
-              className={`${actionButtonClasses} bg-indigo-700 text-white hover:bg-indigo-200`}
-            >
-              Posting
-            </button>
-            <button
-              onClick={() => handleStatus(employee)}
-              className={`${actionButtonClasses} bg-teal-700 text-white hover:bg-teal-200`}
-            >
-              History
-            </button>
-            <button
-              onClick={() => handleAchievements(employee)}
-              className={`${actionButtonClasses} bg-purple-700 text-white hover:bg-purple-200`}
-            >
-              Achievements
-            </button>
-            <button
-              onClick={() => handleDeductions(employee)}
-              className={`${actionButtonClasses} bg-pink-700 text-white hover:bg-pink-200`}
-            >
-              Deductions
-            </button>
-
-            {/* Employee View Modal */}
-            <EmployeeViewModal
-              isOpen={isViewModalOpen}
-              onClose={handleCloseViewModal}
-              employee={selectedEmployee}
-            />
-          </>
-        )}
-      </div>
-    );
-  };
+  // Removed old horizontal action buttons; actions will be rendered vertically next to the checkbox
 
   const renderConfirmationModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -882,31 +775,35 @@ const EmployeeGridTable = ({
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header Grid - Updated to include checkbox column */}
-        <div className="grid grid-cols-11 grid-rows-2 gap-3 bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
-          <div className="flex items-center justify-center">
+        {/* Header Grid - Reordered to match requested layout */}
+        <div className="grid grid-cols-12 grid-rows-2  bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
+          <div className="mb-2">
             {renderSelectAllCheckbox()}
+            <span className="ml-3">Photo</span>
           </div>
-          <div>Photo</div>
+          <div>Actions</div>
+          <div>Status</div>
           <div>Personal #</div>
           <div>Name</div>
-          <div>Father's Name</div>
-          <div>CNIC</div>
+          <div>Station</div>
           <div>Mobile</div>
           <div>Designation</div>
-          <div>Service Type</div>
-          <div>Date of Birth</div>
-          <div>Assigned Assets</div> {/* NEW: Assets column */}
-          <div></div> {/* Empty cell for alignment */}
-          <div>Status</div>
-          <div>Grade</div>
           <div>Rank</div>
-          <div>Cast</div>
-          <div>Station</div>
-          <div>Address</div>
-          <div>Mohalla</div>
           <div>Tehsil</div>
           <div>District</div>
+          <div>Employee's</div>
+          <div></div> {/* Row 2 placeholder for Photo column */}
+          <div></div> {/* Row 2 placeholder for Actions column */}
+          <div>Date of Birth</div>
+          <div>CNIC</div>
+          <div>Father's Name</div>
+          <div>Service Type</div>
+          <div>Grade</div>
+          <div>Cast</div>
+          <div>Address</div>
+          <div>Mohalla</div>
+          <div></div>
+          <div className="text-center"> Assets</div>
         </div>
 
         {/* Employee Rows - Updated with checkboxes */}
@@ -917,29 +814,57 @@ const EmployeeGridTable = ({
           return (
             <div
               key={employee._id}
-              className={`grid grid-cols-11 grid-rows-3 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
+              className={`grid grid-cols-12 grid-rows-2 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
                 isSelected(employee._id) ? "bg-blue-50" : ""
               }`}
             >
+              {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
               {/* Checkbox - spans 2 rows */}
               <div className="row-span-2 flex items-center justify-center">
+              {renderImageCell(employee)}
                 {renderEmployeeCheckbox(employee)}
+                
               </div>
 
-              {/* Photo - spans 2 rows */}
-              <div className="row-span-2">{renderImageCell(employee)}</div>
+              {/* Vertical action buttons - spans 2 rows */}
+              <div className="row-span-2 flex flex-col items-stretch gap-2 py-1">
+                {isAdmin && (
+                  <button
+                    onClick={() => toggleEditMode(employee._id)}
+                    className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
+                      editableEmployees.has(employee._id)
+                        ? "bg-orange-600 text-white hover:bg-orange-700"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                    title={editableEmployees.has(employee._id) ? "Disable editing" : "Enable editing"}
+                  >
+                    {editableEmployees.has(employee._id) ? "Disable Edit" : "Edit"}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(employee?._id)}
+                  className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => handleView(employee)}
+                  className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                >
+                  View
+                </button>
+              </div>
 
-              {/* First row of data */}
+              {/* First row of data (reordered) */}
+              <div>{renderCell(employee, "status", "select", "statuses")}</div>
               <div>{renderCell(employee, "personalNumber", "input")}</div>
               <div>{renderCell(employee, "firstName", "input")}</div>
-              <div>{renderCell(employee, "fatherFirstName", "input")}</div>
-              <div>{renderCell(employee, "cnic", "input")}</div>
+              <div>{renderCell(employee, "stations", "select", "stations")}</div>
               <div>{renderCell(employee, "mobileNumber", "input")}</div>
-              <div>
-                {renderCell(employee, "designation", "select", "designations")}
-              </div>
-              <div>{renderCell(employee, "serviceType", "serviceType")}</div>
-              <div>{renderCell(employee, "dateOfBirth", "date")}</div>
+              <div>{renderCell(employee, "designation", "select", "designations")}</div>
+              <div>{renderCell(employee, "rank", "select", "ranks")}</div>
+              <div>{renderCell(employee, "address.tehsil", "select", "tehsil")}</div>
+              <div>{renderCell(employee, "address.line2", "select", "district")}</div>
 
               {/* NEW: Assets Column - spans 2 rows */}
               <div className="row-span-2 flex items-center p-1">
@@ -956,39 +881,50 @@ const EmployeeGridTable = ({
                 </div>
               </div>
 
-              {/* Second row of data */}
-              <div className="col-start-2 row-start-3">
-                {renderCell(employee, "status", "select", "statuses")}
-              </div>
-              <div className="col-start-3">
-                {renderCell(employee, "grade", "select", "grades")}
+              {/* Second row of data (paired under headers) */}
+              <div className="col-start-3 row-start-2">
+                {renderCell(employee, "dateOfBirth", "date")}
               </div>
               <div className="col-start-4">
-                {renderCell(employee, "rank", "select", "ranks")}
+                {renderCell(employee, "cnic", "input")}
               </div>
               <div className="col-start-5">
-                {renderCell(employee, "cast", "select", "casts")}
+                {renderCell(employee, "fatherFirstName", "input")}
               </div>
               <div className="col-start-6">
-                {renderCell(employee, "stations", "select", "stations")}
+                {renderCell(employee, "serviceType", "serviceType")}
               </div>
               <div className="col-start-7">
-                {renderCell(employee, "address.line1", "textarea")}
+                {renderCell(employee, "grade", "select", "grades")}
               </div>
               <div className="col-start-8">
-                {renderCell(employee, "address.muhala", "input")}
+                {renderCell(employee, "cast", "select", "casts")}
               </div>
               <div className="col-start-9">
-                {renderCell(employee, "address.tehsil", "select", "tehsil")}
+                {renderCell(employee, "address.line1", "textarea")}
               </div>
               <div className="col-start-10">
-                {renderCell(employee, "address.line2", "select", "district")}
+                {renderCell(employee, "address.muhala", "input")}
               </div>
+              {/* <div className="col-start-11 row-start-2"></div> */}
 
-              {/* Action buttons row - updated column positioning */}
-              <div className="col-start-3 row-start-3 col-span-8">
-                {renderActionButtons(employee, isEditing, isEditable)}
-              </div>
+              {/* Removed horizontal action row; actions shown vertically next to checkbox */}
+              {isEditing && (
+                <div className="col-start-11 row-start-2 flex gap-1 ">
+                  <button
+                    onClick={() => onSaveCell(employee)}
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 scale-y-[0.8]"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => handleCancelEditing(employee)}
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 scale-y-[0.8]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

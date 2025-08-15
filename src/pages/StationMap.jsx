@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MapLocation from '../components/Dashboard/MapComponent/MapLocation'
+import StationModal from '../components/Station/AddStation/AddStation.jsx'
+import { useStations } from '../components/Station/StationHook.js'
 
 const StationMap = () => {
     const navigate = useNavigate()
@@ -8,6 +10,56 @@ const StationMap = () => {
     const handleBackToDashboard = () => {
         navigate('/dashboard') // Adjust the path as needed for your dashboard route
     }
+
+    const {
+        createStation,
+        modifyStation,
+    } = useStations();
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editData, setEditData] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleEditStationFromMap = (location) => {
+        // map saved location structure to station structure expected by StationModal
+        const mappedStation = {
+            _id: location?.station?._id || location?._id,
+            name: location?.station?.name || location?.title || '',
+            tehsil: location?.station?.tehsil || '',
+            district: location?.station?.district || '',
+            status: location?.station?.status || location?.status || '',
+            facilities: location?.station?.facilities || location?.facilities || [],
+            description: location?.station?.description || location?.description || '',
+            address: location?.station?.address || location?.address || { line1: '', line2: '', city: '' },
+            latitude: (location?.coordinates?.lat ?? location?.latitude ?? '').toString(),
+            longitude: (location?.coordinates?.lng ?? location?.longitude ?? '').toString(),
+            stationImageUrl: location?.station?.stationImageUrl || location?.stationImageUrl || [],
+            stationIncharge: location?.station?.stationIncharge || location?.stationIncharge || [ { employee: '', type: '' } ],
+            stationMinimumRequirements: location?.station?.stationMinimumRequirements || location?.stationMinimumRequirements || [
+                { numberOfStaff: 0, assetRequirement: [ { assets: '', quantity: 1 } ], staffDetail: [ { designation: '', numberOfPersonal: 0, assetRequirement: [ { assets: '', quantity: 1 } ] } ] }
+            ],
+        };
+
+        setIsEditMode(true);
+        setEditData(mappedStation);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setEditData(null);
+    };
+
+    // Wrap modifyStation to trigger refresh of saved locations on success
+    const modifyStationAndRefresh = async (id, data) => {
+        const result = await modifyStation(id, data);
+        if (result?.success) {
+            setRefreshKey(prev => prev + 1);
+        }
+        return result;
+    };
 
     return (
         <div>
@@ -46,8 +98,19 @@ const StationMap = () => {
                 <MapLocation
                     onPositionChange={() => { }}
                     hidePanels={false}
+                    onEditStation={handleEditStationFromMap}
+                    refreshKey={refreshKey}
                 />
             </div>
+
+            <StationModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                isEdit={isEditMode}
+                editData={editData}
+                createStation={createStation}
+                modifyStation={modifyStationAndRefresh}
+            />
         </div>
     )
 }

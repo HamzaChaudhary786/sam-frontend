@@ -10,6 +10,7 @@ import {
   useMap,
   LayersControl,
   LayerGroup,
+  Tooltip,
 } from "react-leaflet";
 import L from "leaflet";
 import { locationAPI, externalAPI } from "../../../services/locationApi";
@@ -39,10 +40,10 @@ const createLocationIcon = (color = "#3b82f6") => {
 // Predefined marker colors for different purposes
 const MARKER_COLORS = {
   CLICKED: "#ef4444", // Red for clicked location
-  SAVED: "#22c55e", // Green for saved locations
-  SEARCH: "#3b82f6", // Blue for search results
-  REQUIREMENTS_NOT_MET: "#f59e0b", // Amber/Orange for stations not meeting requirements
-  REQUIREMENTS_MET: "#10b981", // Emerald green for stations meeting requirements
+  SAVED: "#3b82f6", // Blue for saved locations
+  SEARCH: "#8b5cf6", // Purple for search results
+  REQUIREMENTS_NOT_MET: "#dc2626", // Red for stations not meeting requirements
+  REQUIREMENTS_MET: "#16a34a", // Green for stations meeting requirements
   NO_REQUIREMENTS: "#6b7280", // Gray for stations with no requirements data
 };
 
@@ -98,6 +99,8 @@ const MapLocation = ({
   onPositionChange,
   hidePanels = false,
   stationData = [],
+  onEditStation = () => {},
+  refreshKey = 0,
 }) => {
   // State management - Updated default coordinates for Balochistan, Pakistan
   const [savedLocations, setSavedLocations] = useState([]);
@@ -129,7 +132,7 @@ const MapLocation = ({
     if (!hidePanels) {
       loadSavedLocations();
     }
-  }, [hidePanels]);
+  }, [hidePanels, refreshKey]);
 
   // Notify parent component when position changes
   useEffect(() => {
@@ -605,7 +608,7 @@ const MapLocation = ({
   }, [showSuggestions]);
 
   return (
-    <div className="w-full h-screen relative bg-gray-100">
+    <div className="w-full h-screen relative bg-gray-100 z-0">
       {/* Search Panel - Always visible */}
       <div className="absolute top-4 left-4 z-[1000] bg-white p-4 rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
         <h3 className="font-bold text-lg mb-3 text-gray-800">
@@ -939,11 +942,11 @@ const MapLocation = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteLocation(location._id);
+                            onEditStation(location);
                           }}
-                          className="text-red-500 hover:text-red-700 text-xs ml-2 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0"
+                          className="text-blue-600 hover:text-blue-800 text-xs ml-2 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"
                         >
-                          🗑️ Delete
+                          ✏️ Edit
                         </button>
                       </div>
                     </div>
@@ -1054,10 +1057,39 @@ const MapLocation = ({
                 position={[location.coordinates.lat, location.coordinates.lng]}
                 icon={createLocationIcon(markerColor)}
               >
+                <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`${
+                        requirementCheck.status === "requirements_met"
+                          ? "bg-green-500"
+                          : requirementCheck.status === "requirements_not_met"
+                          ? "bg-red-500"
+                          : "bg-gray-400"
+                      } inline-block w-2.5 h-2.5 rounded-full`}
+                    />
+                    <span className="text-xs font-semibold text-gray-900">
+                      {location?.title}
+                    </span>
+                  </div>
+                </Tooltip>
                 <Popup>
                   <div className="text-sm">
                     <h4 className="font-semibold flex items-center">
                       {getStatusIcon(requirementCheck.status)} {location.title}
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                        requirementCheck.status === "requirements_met"
+                          ? "bg-green-100 text-green-700"
+                          : requirementCheck.status === "requirements_not_met"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {requirementCheck.status === "requirements_met"
+                          ? "Requirements Met"
+                          : requirementCheck.status === "requirements_not_met"
+                          ? "Requirements Not Met"
+                          : "No Requirements"}
+                      </span>
                     </h4>
                     {location.description && (
                       <p className="text-gray-600 mt-1">
