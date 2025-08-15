@@ -12,6 +12,8 @@ import { getStationLocationsWithEnum } from "../lookUp.js";
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { getEmployees } from "../../Employee/EmployeeApi.js";
+import { getAllAssetAssignments } from "../../AssetAssignment/AssetApi.js";
 
 const StationList = () => {
   const {
@@ -56,6 +58,14 @@ const StationList = () => {
   // Multiple selection state
   const [selectedStations, setSelectedStations] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
+
+  // Export modal state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    includeStationDetails: true,
+    includeEmployees: false,
+    includeAssets: false,
+  });
 
   // Drill pages state
   const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
@@ -209,6 +219,262 @@ const StationList = () => {
     navigate("/stationimport");
   };
 
+  const handleOpenExport = () => {
+    setIsExportOpen(true);
+  };
+
+  const handleCloseExport = () => {
+    setIsExportOpen(false);
+  };
+
+  const handleToggleOption = (key) => {
+    setExportOptions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const escapeHtml = (str) => {
+    if (str == null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const getEmployeeAssetsString = async (employeeId) => {
+    try {
+      const result = await getAllAssetAssignments({ employee: employeeId });
+      if (result.success && result.data) {
+        const activeAssignments = result.data.filter(
+          (assignment) =>
+            assignment.isApproved &&
+            assignment.status === "Active" &&
+            !assignment.consumedDate &&
+            !assignment.returnedDate
+        );
+        const assetNames = [];
+        activeAssignments.forEach((assignment) => {
+          if (assignment.asset && Array.isArray(assignment.asset)) {
+            assignment.asset.forEach((asset) => {
+              if (asset && asset.name) assetNames.push(asset.name);
+            });
+          }
+        });
+        return assetNames.join(", ");
+      }
+    } catch (e) {
+      // ignore
+    }
+    return "";
+  };
+
+  const buildExportData = async () => {
+    const stationsOnPage = safeStations;
+    const includeEmployees = exportOptions.includeEmployees || exportOptions.includeAssets;
+
+    const stationData = [];
+    for (const station of stationsOnPage) {
+      const entry = { station, employees: [] };
+      if (includeEmployees) {
+        try {
+          const empRes = await getEmployees({ station: station._id, limit: 1000 });
+          const employees = empRes?.data?.employees || empRes?.data || [];
+          entry.employees = Array.isArray(employees) ? employees : [];
+        } catch (e) {
+          entry.employees = [];
+        }
+      }
+      // If including assets, enrich employees with assets string (batched)
+      if (exportOptions.includeAssets && entry.employees.length > 0) {
+        const batchSize = 10;
+        for (let i = 0; i < entry.employees.length; i += batchSize) {
+          const batch = entry.employees.slice(i, i + batchSize);
+          await Promise.all(
+            batch.map(async (emp) => {
+              emp.__assets = await getEmployeeAssetsString(emp._id);
+            })
+          );
+        }
+      }
+      stationData.push(entry);
+    }
+    return stationData;
+  };
+
+  const generateHtmlForExport = (data) => {
+    const style = `
+      <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { font-size: 20px; margin: 0 0 12px; }
+        h2 { font-size: 16px; margin: 16px 0 8px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; }
+        th { background: #f3f4f6; text-align: left; }
+        .section { page-break-inside: avoid; margin-bottom: 24px; }
+      </style>
+    `;
+
+    const sections = data
+      .map(({ station, employees }) => {
+        const parts = [];
+        // Station details
+        if (exportOptions.includeStationDetails) {
+          parts.push(`
+            <h2>Station: ${escapeHtml(station.name)}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Tehsil</th>
+                  <th>Address</th>
+                  <th>District</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${escapeHtml(station.name)}</td>
+                  <td>${escapeHtml(getStationLocationName(station.tehsil))}</td>
+                  <td>${escapeHtml(station.address?.line1 || "")}${station.address?.line2 ? ", " + escapeHtml(station.address.line2) : ""}${station.address?.city ? ", " + escapeHtml(station.address.city) : ""}</td>
+                  <td>${escapeHtml(station.district || "")}</td>
+                  <td>${escapeHtml(station.status || "")}</td>
+                </tr>
+              </tbody>
+            </table>
+          `);
+        }
+
+        if (exportOptions.includeEmployees && employees.length > 0) {
+          parts.push(`
+            <h3>Employees</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Personal #</th>
+                  <th>Designation</th>
+                  <th>Grade</th>
+                  <th>Service Type</th>
+                  ${exportOptions.includeAssets ? "<th>Assets</th>" : ""}
+                </tr>
+              </thead>
+              <tbody>
+                ${employees
+                  .map((e) => {
+                    const fullName = `${escapeHtml(e.firstName || "")} ${escapeHtml(e.lastName || "")}`.trim();
+                    const designation = e.designation?.title || e.designation || "";
+                    const grade = e.grade?.name || e.grade || "";
+                    const serviceType = e.serviceType || "";
+                    const assets = exportOptions.includeAssets ? `<td>${escapeHtml(e.__assets || "")}</td>` : "";
+                    return `<tr>
+                      <td>${fullName}</td>
+                      <td>${escapeHtml(e.personalNumber || "")}</td>
+                      <td>${escapeHtml(designation)}</td>
+                      <td>${escapeHtml(grade)}</td>
+                      <td>${escapeHtml(serviceType)}</td>
+                      ${assets}
+                    </tr>`;
+                  })
+                  .join("")}
+              </tbody>
+            </table>
+          `);
+        }
+
+        return `<div class="section">${parts.join("")}</div>`;
+      })
+      .join("");
+
+    return `<!doctype html><html><head><meta charset="utf-8" />${style}<title>Stations Export</title></head><body><h1>Stations Export</h1>${sections}</body></html>`;
+  };
+
+  const handleExport = async (format) => {
+    if (!exportOptions.includeStationDetails && !exportOptions.includeEmployees && !exportOptions.includeAssets) {
+      toast.error("Select at least one export option");
+      return;
+    }
+
+    try {
+      const data = await buildExportData();
+
+      if (format === "pdf") {
+        const html = generateHtmlForExport(data);
+        const win = window.open("", "_blank");
+        if (!win) {
+          toast.error("Popup blocked. Please allow popups to export PDF.");
+          return;
+        }
+        win.document.open();
+        win.document.write(html + '<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>');
+        win.document.close();
+      } else if (format === "xls") {
+        const XLSX = await import("xlsx");
+
+        const wb = XLSX.utils.book_new();
+
+        // Stations sheet
+        const stationHeaders = [
+          "Name",
+          "Tehsil",
+          "Address",
+          "District",
+          "Status",
+        ];
+        const stationRows = data.map(({ station }) => [
+          station?.name || "",
+          getStationLocationName(station?.tehsil),
+          [station?.address?.line1, station?.address?.line2, station?.address?.city]
+            .filter(Boolean)
+            .join(", "),
+          station?.district || "",
+          station?.status || "",
+        ]);
+        const stationSheet = XLSX.utils.aoa_to_sheet([stationHeaders, ...stationRows]);
+        XLSX.utils.book_append_sheet(wb, stationSheet, "Stations");
+
+        // Employees sheet (optional)
+        if (exportOptions.includeEmployees) {
+          const empHeaders = [
+            "Station",
+            "Employee Name",
+            "Personal #",
+            "Designation",
+            "Grade",
+            "Service Type",
+          ];
+          if (exportOptions.includeAssets) empHeaders.push("Assets");
+
+          const empRows = [];
+          data.forEach(({ station, employees }) => {
+            employees.forEach((e) => {
+              const fullName = `${e?.firstName || ""} ${e?.lastName || ""}`.trim();
+              const row = [
+                station?.name || "",
+                fullName,
+                e?.personalNumber || "",
+                e?.designation?.title || e?.designation || "",
+                e?.grade?.name || e?.grade || "",
+                e?.serviceType || "",
+              ];
+              if (exportOptions.includeAssets) row.push(e?.__assets || "");
+              empRows.push(row);
+            });
+          });
+
+          const empSheet = XLSX.utils.aoa_to_sheet([empHeaders, ...empRows]);
+          XLSX.utils.book_append_sheet(wb, empSheet, "Employees");
+        }
+
+        XLSX.writeFile(wb, "stations_export.xlsx");
+      }
+
+      setIsExportOpen(false);
+    } catch (err) {
+      console.error("Export failed", err);
+      toast.error("Failed to export");
+    }
+  };
+
   const handleEdit = (station) => {
     setIsEditMode(true);
     setEditData(station);
@@ -359,6 +625,12 @@ const StationList = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
           >
             Import Station File
+          </button>
+          <button
+            onClick={handleOpenExport}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+          >
+            Export
           </button>
         </div>
       </div>
@@ -827,6 +1099,67 @@ const StationList = () => {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {isExportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">Export Options</h2>
+            <div className="space-y-3 mb-4">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeStationDetails}
+                  onChange={() => handleToggleOption("includeStationDetails")}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Export current Station Details</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeEmployees}
+                  onChange={() => handleToggleOption("includeEmployees")}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Export Station Employees details</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeAssets}
+                  onChange={() => handleToggleOption("includeAssets")}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Include Station Assets</span>
+              </label>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleExport("pdf")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Export PDF
+                </button>
+                <button
+                  onClick={() => handleExport("xls")}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Export XLS
+                </button>
+              </div>
+              <button
+                onClick={handleCloseExport}
+                className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">Note: Only stations currently visible in the table (after filters and current page) will be exported.</p>
           </div>
         </div>
       )}
