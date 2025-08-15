@@ -6,6 +6,8 @@ import DrillUpPage from "../DrillUp/DrillUp.jsx";
 import DrillDownPage from "../DrillDown/DrillDown.jsx";
 import Pagination from "../Pagination/Pagination.jsx";
 import StationFilters from "../Filter.jsx";
+import StationEmployeeWrapper from "../Employeelist.jsx"; // 🆕 Add this
+import MobileStationEmployeeSimple from "../MobileEmployeeList.jsx"; // 🆕 Add this
 import { getStationLocationsWithEnum } from "../lookUp.js";
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -59,6 +61,9 @@ const StationList = () => {
   const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
   const [drillUpData, setDrillUpData] = useState(null);
   const [drillDownData, setDrillDownData] = useState(null);
+
+  // 🆕 Employee listing state - track which stations have expanded employee view
+  const [expandedStations, setExpandedStations] = useState(new Set());
 
   // Fetch station locations on component mount
   useEffect(() => {
@@ -251,6 +256,19 @@ const StationList = () => {
     setDrillDownData(null);
   };
 
+  // 🆕 Toggle employee listing for a station
+  const handleToggleEmployeeView = (stationId, show) => {
+    setExpandedStations(prev => {
+      const newSet = new Set(prev);
+      if (show) {
+        newSet.add(stationId);
+      } else {
+        newSet.delete(stationId);
+      }
+      return newSet;
+    });
+  };
+
   // Pagination handlers
   const handlePageChange = (page) => {
     if (setPage) {
@@ -418,153 +436,164 @@ const StationList = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {safeStations.map((station) => (
-                  <tr key={station._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedStations.has(station._id)}
-                        onChange={() => handleSelectStation(station._id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col items-start space-y-2">
-                        {/* Show main image if available */}
-                        {station.stationImageUrl &&
-                        station.stationImageUrl.length > 0 ? (
-                          <div className="relative">
-                            <img
-                              src={
-                                station.stationImageUrl[
-                                  imageIndexes[station._id] ?? 0
-                                ]
-                              }
-                              alt="Station"
-                              onClick={() =>
-                                setImageModal(
+                  <React.Fragment key={station._id}>
+                    {/* 🆕 Station Row - Your existing station row */}
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedStations.has(station._id)}
+                          onChange={() => handleSelectStation(station._id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col items-start space-y-2">
+                          {/* Show main image if available */}
+                          {station.stationImageUrl &&
+                          station.stationImageUrl.length > 0 ? (
+                            <div className="relative">
+                              <img
+                                src={
                                   station.stationImageUrl[
                                     imageIndexes[station._id] ?? 0
                                   ]
-                                )
-                              }
-                              className="h-16 w-16 rounded border object-cover cursor-pointer hover:scale-105 transition"
-                            />
-                            {station.stationImageUrl.length > 1 && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handlePrevImage(
-                                      station._id,
-                                      station.stationImageUrl.length
-                                    )
-                                  }
-                                  className="absolute top-1/2 -left-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
-                                >
-                                  ‹
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleNextImage(
-                                      station._id,
-                                      station.stationImageUrl.length
-                                    )
-                                  }
-                                  className="absolute top-1/2 -right-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
-                                >
-                                  ›
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <svg
-                              className="h-5 w-5 text-green-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                }
+                                alt="Station"
+                                onClick={() =>
+                                  setImageModal(
+                                    station.stationImageUrl[
+                                      imageIndexes[station._id] ?? 0
+                                    ]
+                                  )
+                                }
+                                className="h-16 w-16 rounded border object-cover cursor-pointer hover:scale-105 transition"
                               />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
-                          </div>
-                        )}
+                              {station.stationImageUrl.length > 1 && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handlePrevImage(
+                                        station._id,
+                                        station.stationImageUrl.length
+                                      )
+                                    }
+                                    className="absolute top-1/2 -left-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                                  >
+                                    ‹
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleNextImage(
+                                        station._id,
+                                        station.stationImageUrl.length
+                                      )
+                                    }
+                                    className="absolute top-1/2 -right-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                                  >
+                                    ›
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                              <svg
+                                className="h-5 w-5 text-green-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                            </div>
+                          )}
 
-                        <div className="pt-2">
-                          <div className="text-sm font-medium text-gray-900">
-                            {station.name}
+                          <div className="pt-2">
+                            <div className="text-sm font-medium text-gray-900">
+                              {station.name}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {getStationLocationName(station.tehsil)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {station.address?.line1}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {station.address?.line2 && `${station.address.line2}, `}
-                        {station.address?.city}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-2">
-                        <button
-                          onClick={() => handleDrillUp(station)}
-                          className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
-                          title="View employees at this station"
-                        >
-                          <TrendingDown className="h-3 w-3 mr-1" />
-                          Drill Down
-                        </button>
-                        <button
-                          onClick={() => handleDrillDown(station)}
-                          className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-                          title="View all stations in this tehsil"
-                        >
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          Drill Up
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => handleView(station)}
-                          className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleEdit(station)}
-                          className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(station._id)}
-                          className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {getStationLocationName(station.tehsil)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {station.address?.line1}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {station.address?.line2 && `${station.address.line2}, `}
+                          {station.address?.city}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col space-y-2">
+                          <button
+                            onClick={() => handleDrillUp(station)}
+                            className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                            title="View employees at this station"
+                          >
+                            <TrendingDown className="h-3 w-3 mr-1" />
+                            Drill Down
+                          </button>
+                          <button
+                            onClick={() => handleDrillDown(station)}
+                            className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                            title="View all stations in this tehsil"
+                          >
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Drill Up
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleView(station)}
+                            className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEdit(station)}
+                            className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(station._id)}
+                            className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 🆕 Employee Listing Rows - Using existing EmployeeList component */}
+                    <StationEmployeeWrapper
+                      stationId={station._id}
+                      stationName={station.name}
+                      showAll={expandedStations.has(station._id)}
+                      onToggleView={(show) => handleToggleEmployeeView(station._id, show)}
+                    />
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -637,12 +666,6 @@ const StationList = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
@@ -687,6 +710,20 @@ const StationList = () => {
                       </button>
                     </div>
 
+                    {/* 🆕 Employee Toggle Button */}
+                    <div className="grid grid-cols-1 gap-2 mb-2">
+                      <button
+                        onClick={() => handleToggleEmployeeView(station._id, !expandedStations.has(station._id))}
+                        className={`px-3 py-1 text-xs rounded-md text-center transition ${
+                          expandedStations.has(station._id)
+                            ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                        }`}
+                      >
+                        {expandedStations.has(station._id) ? "Hide Employees" : "Show Employees"}
+                      </button>
+                    </div>
+
                     {/* Drill Actions Row */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <button
@@ -715,6 +752,13 @@ const StationList = () => {
                       </button>
                     </div>
                   </div>
+
+                  {/* 🆕 Mobile Employee Listing - Simple redirect to main employee list */}
+                  <MobileStationEmployeeSimple
+                    stationId={station._id}
+                    stationName={station.name}
+                    isExpanded={expandedStations.has(station._id)}
+                  />
                 </div>
               </div>
             </div>
