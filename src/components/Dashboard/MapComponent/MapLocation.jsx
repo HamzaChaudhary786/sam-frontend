@@ -14,7 +14,7 @@ import {
 import L from "leaflet";
 import { locationAPI, externalAPI } from "../../../services/locationApi";
 import { getFixLocationData } from "./mapStationApi.js";
-
+// push & commit & type first
 // Fix for default markers in React-Leaflet and create proper location marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 
