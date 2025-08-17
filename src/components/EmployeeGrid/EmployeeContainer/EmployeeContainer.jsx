@@ -8,7 +8,7 @@ import { getRanksWithEnum } from "../../Employee/AddEmployee/Rank.js";
 import { getStatusWithEnum } from "../../Employee/AddEmployee/Status.js";
 import { getStationDistrictWithEnum } from "../../Station/District.js";
 import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
-import { getStations } from "../../Station/StationApi.js";
+import { getAllStationsWithoutPage, getStations } from "../../Station/StationApi.js";
 import { updateEmployee } from "../../Employee/EmployeeApi.js";
 import { uploadToCloudinary } from "../../Employee/AddEmployee/Cloudinary.js";
 import { toast } from "react-toastify";
@@ -94,7 +94,7 @@ const EmployeeGridContainer = () => {
           getStatusWithEnum(),
           getStationDistrictWithEnum(),
           getStationLocationsWithEnum(),
-          getStations(),
+          getAllStationsWithoutPage(),
         ]);
 
         const processEnumData = (response, key) => {

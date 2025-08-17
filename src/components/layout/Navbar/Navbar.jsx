@@ -35,7 +35,7 @@ const Navbar = () => {
 
   const formatLastLogin = (dateString) => {
     if (!dateString) return "Unknown";
-    
+
     try {
       const date = new Date(dateString);
       const now = new Date();
@@ -180,9 +180,8 @@ const Navbar = () => {
                 </svg>
                 <span className="hidden xs:inline">Menu</span>
                 <svg
-                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${
-                    isDropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
+                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${isDropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -198,11 +197,10 @@ const Navbar = () => {
 
               {/* Dropdown Menu with Animation */}
               <div
-                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${
-                  isDropdownOpen
-                    ? "opacity-100 scale-100 translate-y-0"
-                    : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-                }`}
+                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${isDropdownOpen
+                  ? "opacity-100 scale-100 translate-y-0"
+                  : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                  }`}
               >
                 {/* Dropdown Header with Close Button */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
@@ -239,7 +237,7 @@ const Navbar = () => {
                     </svg>
                     <span className="font-medium">Home</span>
                   </button>
-                  
+
                   <div className="my-2 border-t border-gray-100"></div>
 
                   <button
@@ -249,30 +247,8 @@ const Navbar = () => {
                     <svg className="h-5 w-5 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0V7a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                     </svg>
-                    <span>Employee (Tabular)</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/employees")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg className="h-5 w-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
                     <span>Employees</span>
                   </button>
-
-                  <button
-                    onClick={() => handleNavigation("/pendingapprovals")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg className="h-5 w-5 mr-3 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                    <span>Transfer Posting</span>
-                  </button>
-                  
-                  <div className="my-2 border-t border-gray-100"></div>
 
                   <button
                     onClick={() => handleNavigation("/stations")}
@@ -284,24 +260,15 @@ const Navbar = () => {
                     </svg>
                     <span>Stations</span>
                   </button>
-                    <button
-                    onClick={() => handleNavigation("/maalkhana")}
+
+                  <button
+                    onClick={() => handleNavigation("/pendingapprovals")}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                   >
-                    <svg className="h-5 w-5 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg className="h-5 w-5 mr-3 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    <span>Maal Khana</span>
-                  </button>
-                    <button
-                    onClick={() => handleNavigation("/stationimport")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg className="h-5 w-5 mr-3 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Station Import</span>
+                    <span>Transfer Posting</span>
                   </button>
 
                   <button
@@ -315,25 +282,14 @@ const Navbar = () => {
                   </button>
 
                   <button
-                    onClick={() => handleNavigation("/audit")}
+                    onClick={() => handleNavigation("/maalkhana")}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                   >
-                    <svg className="h-5 w-5 mr-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg className="h-5 w-5 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span>Audit Trail</span>
-                  </button>
-
-                  <div className="my-2 border-t border-gray-100"></div>
-
-                  <button
-                    onClick={() => handleNavigation("/lookup")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg className="h-5 w-5 mr-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span>Lookup</span>
+                    <span>Maal Khana</span>
                   </button>
 
                   <button
@@ -344,6 +300,16 @@ const Navbar = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span>Bulk Insert Lookup</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigation("/audit")}
+                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                  >
+                    <svg className="h-5 w-5 mr-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Audit Trail</span>
                   </button>
 
                   <button
@@ -395,9 +361,8 @@ const Navbar = () => {
 
       {/* Mobile backdrop with animation */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${
-          isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
+          }`}
         onClick={closeDropdown}
       />
     </nav>

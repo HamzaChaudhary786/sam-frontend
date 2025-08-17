@@ -136,18 +136,18 @@ const StationList = () => {
         let successCount = 0;
         let errorCount = 0;
         const errors = [];
-        
+
         for (const stationId of selectedStations) {
           try {
             // Validate ID format
             if (!stationId || typeof stationId !== 'string' || stationId.trim() === '') {
               throw new Error("Invalid station ID format");
             }
-            
+
             console.log("Attempting to delete station with ID:", stationId);
-            
+
             const result = await removeStation(stationId.trim());
-            
+
             if (result && result.success) {
               successCount++;
             } else {
@@ -160,10 +160,10 @@ const StationList = () => {
             errors.push(`${stationId}: ${error?.message || 'Unknown error'}`);
           }
         }
-        
+
         setSelectedStations(new Set());
         setSelectAll(false);
-        
+
         if (successCount > 0 && errorCount === 0) {
           toast.success(`Successfully deleted ${successCount} station(s)`);
         } else if (successCount > 0 && errorCount > 0) {
@@ -195,9 +195,9 @@ const StationList = () => {
     if (window.confirm("Are you sure you want to delete this station?")) {
       try {
         console.log("Attempting to delete station with ID:", id);
-        
+
         const result = await removeStation(id.trim());
-        
+
         if (result && result.success) {
           console.log("Station deleted successfully");
         } else {
@@ -360,13 +360,13 @@ const StationList = () => {
               </thead>
               <tbody>
                 ${employees
-                  .map((e) => {
-                    const fullName = `${escapeHtml(e.firstName || "")} ${escapeHtml(e.lastName || "")}`.trim();
-                    const designation = e.designation?.title || e.designation || "";
-                    const grade = e.grade?.name || e.grade || "";
-                    const serviceType = e.serviceType || "";
-                    const assets = exportOptions.includeAssets ? `<td>${escapeHtml(e.__assets || "")}</td>` : "";
-                    return `<tr>
+              .map((e) => {
+                const fullName = `${escapeHtml(e.firstName || "")} ${escapeHtml(e.lastName || "")}`.trim();
+                const designation = e.designation?.title || e.designation || "";
+                const grade = e.grade?.name || e.grade || "";
+                const serviceType = e.serviceType || "";
+                const assets = exportOptions.includeAssets ? `<td>${escapeHtml(e.__assets || "")}</td>` : "";
+                return `<tr>
                       <td>${fullName}</td>
                       <td>${escapeHtml(e.personalNumber || "")}</td>
                       <td>${escapeHtml(designation)}</td>
@@ -374,8 +374,8 @@ const StationList = () => {
                       <td>${escapeHtml(serviceType)}</td>
                       ${assets}
                     </tr>`;
-                  })
-                  .join("")}
+              })
+              .join("")}
               </tbody>
             </table>
           `);
@@ -641,6 +641,15 @@ const StationList = () => {
         </div>
       )}
 
+      {/* Station Filters Component */}
+      <StationFilters
+        filters={filters}
+        updateFilters={updateFilters}
+        clearFilters={clearFilters}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+      />
+
       {/* Bulk Actions Bar */}
       {selectedStations.size > 0 && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
@@ -664,15 +673,6 @@ const StationList = () => {
         </div>
       )}
 
-      {/* Station Filters Component */}
-      <StationFilters
-        filters={filters}
-        updateFilters={updateFilters}
-        clearFilters={clearFilters}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-      />
-
       {/* Station Table/Cards - Responsive */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {/* Desktop Table View - Only for screens 1200px+ */}
@@ -693,13 +693,13 @@ const StationList = () => {
                     Station Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tehsil
+                    Facilities
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Address
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Drill Actions
+                    Minimum Requirements
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -718,83 +718,104 @@ const StationList = () => {
                           onChange={() => handleSelectStation(station._id)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
+                        {/* Show main image if available */}
+                        {station.stationImageUrl &&
+                          station.stationImageUrl.length > 0 ? (
+                          <div className="relative">
+                            <img
+                              src={
+                                station.stationImageUrl[
+                                imageIndexes[station._id] ?? 0
+                                ]
+                              }
+                              alt="Station"
+                              onClick={() =>
+                                setImageModal(
+                                  station.stationImageUrl[
+                                  imageIndexes[station._id] ?? 0
+                                  ]
+                                )
+                              }
+                              className="h-16 w-16 rounded border object-cover cursor-pointer hover:scale-105 transition"
+                            />
+                            {station.stationImageUrl.length > 1 && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handlePrevImage(
+                                      station._id,
+                                      station.stationImageUrl.length
+                                    )
+                                  }
+                                  className="absolute top-1/2 -left-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                                >
+                                  ‹
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleNextImage(
+                                      station._id,
+                                      station.stationImageUrl.length
+                                    )
+                                  }
+                                  className="absolute top-1/2 -right-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
+                                >
+                                  ›
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg
+                              className="h-5 w-5 text-green-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">
-                          {/* Show main image if available */}
-                          {station.stationImageUrl &&
-                          station.stationImageUrl.length > 0 ? (
-                            <div className="relative">
-                              <img
-                                src={
-                                  station.stationImageUrl[
-                                    imageIndexes[station._id] ?? 0
-                                  ]
-                                }
-                                alt="Station"
-                                onClick={() =>
-                                  setImageModal(
-                                    station.stationImageUrl[
-                                      imageIndexes[station._id] ?? 0
-                                    ]
-                                  )
-                                }
-                                className="h-16 w-16 rounded border object-cover cursor-pointer hover:scale-105 transition"
-                              />
-                              {station.stationImageUrl.length > 1 && (
-                                <>
-                                  <button
-                                    onClick={() =>
-                                      handlePrevImage(
-                                        station._id,
-                                        station.stationImageUrl.length
-                                      )
-                                    }
-                                    className="absolute top-1/2 -left-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
-                                  >
-                                    ‹
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleNextImage(
-                                        station._id,
-                                        station.stationImageUrl.length
-                                      )
-                                    }
-                                    className="absolute top-1/2 -right-5 transform -translate-y-1/2 text-gray-600 hover:text-black"
-                                  >
-                                    ›
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                              <svg
-                                className="h-5 w-5 text-green-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                              </svg>
-                            </div>
-                          )}
 
                           <div className="pt-2">
                             <div className="text-sm font-medium text-gray-900">
                               {station.name}
+                            </div>
+                            <div className="text-sm text-gray-900">
+                              {/* Facilities */}
+                              {station?.stationIncharge &&
+                                station?.stationIncharge.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="flex flex-wrap gap-1">
+                                      {station?.stationIncharge?.map(
+                                        (itm, index) => (
+                                          <span
+                                            key={index}
+                                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                          >
+                                            {itm.employee} {itm.type}
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -802,10 +823,30 @@ const StationList = () => {
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {getStationLocationName(station.tehsil)}
+                          {/* Facilities */}
+                          {station?.facilities &&
+                            station?.facilities.length > 0 && (
+                              <div className="mt-2">
+                                <div className="flex flex-wrap gap-1">
+                                  {station?.facilities?.map(
+                                    (facility, index) => (
+                                      <span
+                                        key={index}
+                                        className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                      >
+                                        {facility}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          Tehsil: {getStationLocationName(station.tehsil)}
+                        </div>
                         <div className="text-sm text-gray-900">
                           {station.address?.line1}
                         </div>
@@ -816,7 +857,114 @@ const StationList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-2">
-                          <button
+                          {/* Minimum Requirements */}
+                          {station?.stationMinimumRequirements &&
+                            station?.stationMinimumRequirements.length > 0 && (
+                              <div className="mt-2">
+
+                                {station?.stationMinimumRequirements?.map(
+                                  (req, index) => (
+                                    <div
+                                      key={index}
+                                      className="text-xs text-gray-600 ml-2 mb-2"
+                                    >
+                                      {req.numberOfStaff && (
+                                        <p className="mb-1">
+                                          • Staff Required: {req?.numberOfStaff}
+                                        </p>
+                                      )}
+
+                                      {/* General Asset Requirements */}
+                                      {req?.assetRequirement &&
+                                        req?.assetRequirement.length > 0 && (
+                                          <div className="ml-2 mb-1">
+                                            <p className="font-medium text-gray-700 mb-1">
+                                              🛠️ General Assets:
+                                            </p>
+                                            {req?.assetRequirement?.map(
+                                              (assetReq, assetIndex) => (
+                                                <div
+                                                  key={assetIndex}
+                                                  className="ml-2 mb-1 p-1 bg-blue-50 rounded"
+                                                >
+                                                  <p>
+                                                    <span className="font-medium">
+                                                      {assetReq?.assets?.name || "Unknown Asset"}
+                                                    </span>
+                                                    {" × "}
+                                                    <span className="text-blue-600 font-medium">
+                                                      {assetReq?.quantity}
+                                                    </span>
+                                                  </p>
+                                                  <p className="text-xs text-gray-500 capitalize">
+                                                    Type: {assetReq?.assets?.type || "N/A"}
+                                                  </p>
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+
+                                      {/* Staff Details with their Asset Requirements */}
+                                      {req.staffDetail &&
+                                        req.staffDetail.length > 0 && (
+                                          <div className="ml-2">
+                                            <p className="font-medium text-gray-700 mb-1">
+                                              👤 Staff Details:
+                                            </p>
+                                            {req?.staffDetail?.map(
+                                              (staff, staffIndex) => (
+                                                <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
+                                                  <p className="mb-1">
+                                                    - {staff?.designation || "Staff"}
+                                                    : {staff?.numberOfPersonal} personnel
+                                                  </p>
+
+                                                  {/* Staff Asset Requirements */}
+                                                  {staff?.assetRequirement &&
+                                                    staff?.assetRequirement.length > 0 && (
+                                                      <div className="ml-2">
+                                                        <p className="text-xs font-medium text-gray-600 mb-1">
+                                                          🚗 Assigned Assets:
+                                                        </p>
+                                                        {staff?.assetRequirement?.map(
+                                                          (staffAsset, staffAssetIndex) => (
+                                                            <div
+                                                              key={staffAssetIndex}
+                                                              className="ml-2 mb-1 p-1 bg-yellow-50 rounded"
+                                                            >
+                                                              <p>
+                                                                <span className="font-medium">
+                                                                  {staffAsset?.assets?.name || "Unknown Asset"}
+                                                                </span>
+                                                                {" × "}
+                                                                <span className="text-orange-600 font-medium">
+                                                                  {staffAsset?.quantity}
+                                                                </span>
+                                                              </p>
+                                                              <p className="text-xs text-gray-500 capitalize">
+                                                                Type: {staffAsset?.assets?.type || "N/A"}
+                                                              </p>
+                                                            </div>
+                                                          )
+                                                        )}
+                                                      </div>
+                                                    )}
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                        </div>
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap text-sm font-medium">
+                        <div className="grid grid-cols-1 grid-rows-2 gap-1">
+                          <div className=" flex flex-row flex-wrap gap-1"> <button
                             onClick={() => handleDrillUp(station)}
                             className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
                             title="View employees at this station"
@@ -824,36 +972,34 @@ const StationList = () => {
                             <TrendingDown className="h-3 w-3 mr-1" />
                             Drill Down
                           </button>
-                          <button
-                            onClick={() => handleDrillDown(station)}
-                            className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-                            title="View all stations in this tehsil"
-                          >
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                            Drill Up
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => handleView(station)}
-                            className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleEdit(station)}
-                            className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(station._id)}
-                            className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                          >
-                            Delete
-                          </button>
+                            <button
+                              onClick={() => handleDrillDown(station)}
+                              className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                              title="View all stations in this tehsil"
+                            >
+                              <TrendingUp className="h-3 w-3 mr-1" />
+                              Drill Up
+                            </button></div>
+                          <div className=" flex flex-row flex-wrap gap-1" >
+                            <button
+                              onClick={() => handleView(station)}
+                              className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleEdit(station)}
+                              className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(station._id)}
+                              className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -986,11 +1132,10 @@ const StationList = () => {
                     <div className="grid grid-cols-1 gap-2 mb-2">
                       <button
                         onClick={() => handleToggleEmployeeView(station._id, !expandedStations.has(station._id))}
-                        className={`px-3 py-1 text-xs rounded-md text-center transition ${
-                          expandedStations.has(station._id)
+                        className={`px-3 py-1 text-xs rounded-md text-center transition ${expandedStations.has(station._id)
                             ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
                             : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                        }`}
+                          }`}
                       >
                         {expandedStations.has(station._id) ? "Hide Employees" : "Show Employees"}
                       </button>

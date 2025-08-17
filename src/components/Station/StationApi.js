@@ -12,12 +12,36 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Get all getAllStationsWithoutPage with optional filters and pagination
+export const getAllStationsWithoutPage = async (filters = {}) => {
+  try {
+    // // Build query string from filters
+    const queryParams = new URLSearchParams();
+
+    // // Add filter parameters
+    // if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
+
+    const queryString = queryParams.toString();
+    const url = `${API_URL}/stations/allStationsWithoutPage${queryString ? `?${queryString}` : ''}`;
+
+    const response = await axios.get(url, {
+      headers: getAuthHeaders()
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.result?.message || 'Failed to fetch stations'
+    };
+  }
+};
+
 // Get all stations with optional filters and pagination
 export const getStations = async (filters = {}) => {
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
-    
+
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
@@ -26,14 +50,14 @@ export const getStations = async (filters = {}) => {
     if (filters.district) queryParams.append('district', filters.district);
 
 
-    
+
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page.toString());
     if (filters.limit) queryParams.append('limit', filters.limit.toString());
-    
+
     const queryString = queryParams.toString();
     const url = `${API_URL}/stations${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
