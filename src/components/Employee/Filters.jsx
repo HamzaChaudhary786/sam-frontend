@@ -3,7 +3,7 @@ import { getDesignationsWithEnum } from "./AddEmployee/Designation.js";
 import { getGradesWithEnum } from "./AddEmployee/Grades.js";
 import { getCastsWithEnum } from "./AddEmployee/Cast.js";
 import { getRanksWithEnum } from "./AddEmployee/Rank.js";
-import { getStations } from "../Station/StationApi.js";
+import { getAllStationsWithoutPage, getStations } from "../Station/StationApi.js";
 import { getStationDistrictWithEnum } from "../Station/District.js";
 import { getStationLocationsWithEnum } from "../Station/lookUp.js";
 import { useLookupOptions } from "../../services/LookUp.js"; // 🆕 Add this import
@@ -118,20 +118,44 @@ const EmployeeFilters = ({
     setLoading((prev) => ({ ...prev, stations: false }));
   };
 
+  // Separate function to fetch stations
+  const fetchStationsWithoutPage = async () => {
+    setLoading((prev) => ({ ...prev, stations: true }));
+    try {
+
+      const response = await getAllStationsWithoutPage();
+      let allStations = [];
+
+      if (response && response.success && response.data) {
+        allStations = response.data.result || [];
+      }
+
+      const stationArray = allStations.map((station) => ({
+        _id: station._id,
+        name: `${station.name} ${station.tehsil}`, // Include address for better clarity
+      }));
+
+      setStationEnum(stationArray);
+
+    } catch (error) {
+      console.error("💥 Error fetching stations:", error);
+      setStationEnum([]);
+    }
+    setLoading((prev) => ({ ...prev, stations: false }));
+  };
+
   // Separate function to fetch districts
   const fetchDistricts = async () => {
     setLoading((prev) => ({ ...prev, districts: true }));
     try {
-      console.log("🚀 Fetching districts...");
-      const districtRes = await getStationDistrictWithEnum();
-      console.log("📊 District response:", districtRes);
 
+      const districtRes = await getStationDistrictWithEnum();
       if (districtRes && districtRes.success && districtRes.data) {
         const districtArray = Object.entries(districtRes.data).map(
           ([_id, name]) => ({ _id, name })
         );
         setDistrictEnum(districtArray);
-        console.log("✅ Set district array:", districtArray);
+
       } else {
         console.error("❌ Invalid district response:", districtRes);
         setDistrictEnum([]);
@@ -147,16 +171,16 @@ const EmployeeFilters = ({
   const fetchTehsils = async () => {
     setLoading((prev) => ({ ...prev, tehsils: true }));
     try {
-      console.log("🚀 Fetching tehsils...");
+
       const tehsilRes = await getStationLocationsWithEnum();
-      console.log("📊 Tehsil response:", tehsilRes);
+
 
       if (tehsilRes && tehsilRes.success && tehsilRes.data) {
         const tehsilArray = Object.entries(tehsilRes.data).map(
           ([_id, name]) => ({ _id, name })
         );
         setTehsilEnum(tehsilArray);
-        console.log("✅ Set tehsil array:", tehsilArray);
+
       } else {
         console.error("❌ Invalid tehsil response:", tehsilRes);
         setTehsilEnum([]);
@@ -181,12 +205,6 @@ const EmployeeFilters = ({
           getCastsWithEnum(),
           getRanksWithEnum(),
         ]);
-
-        console.log("📈 Existing API responses:");
-        console.log("Designation response:", desigRes);
-        console.log("Grade response:", gradeRes);
-        console.log("Cast response:", castRes);
-        console.log("Rank response:", rankRes);
 
         // Process existing responses
         if (desigRes.success && desigRes.data) {
@@ -219,13 +237,8 @@ const EmployeeFilters = ({
           setRankEnum(rankArray);
         }
 
-        // Now fetch the problematic ones separately with more detailed logging
-        console.log(
-          "🎯 Now fetching stations, districts, and tehsils separately..."
-        );
-
         // Fetch stations
-        await fetchStations();
+        await fetchStationsWithoutPage();
 
         // Fetch districts
         await fetchDistricts();
@@ -336,9 +349,8 @@ const EmployeeFilters = ({
             )}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 transition-transform ${
-              showFilters ? "rotate-180" : ""
-            }`}
+            className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? "rotate-180" : ""
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -355,9 +367,8 @@ const EmployeeFilters = ({
 
       {/* Filter Section - Responsive */}
       <div
-        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
-          showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
-        }`}
+        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
+          }`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base sm:text-lg font-medium text-gray-900">
@@ -635,8 +646,8 @@ const EmployeeFilters = ({
             >
               <option value="">All Asset Types</option>
               <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {assetTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+              {assetTypeOptions.map((option, idx) => (
+                <option key={`${option.value}-${idx}`} value={option.value}>
                   {option.label}
                 </option>
               ))}
