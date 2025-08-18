@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useStations } from "../StationHook.js";
 import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
-import DrillUpPage from "../DrillUp/DrillUp.jsx";
-import DrillDownPage from "../DrillDown/DrillDown.jsx";
+import DrillUpPage from "../DrillStation/DrillStation.jsx";
+import DrillTehsilPage from "../DrillTehsil/DrillTehsil.jsx";
 import Pagination from "../Pagination/Pagination.jsx";
 import StationFilters from "../Filter.jsx";
 import StationEmployeeWrapper from "../Employeelist.jsx"; // 🆕 Add this
@@ -654,7 +654,7 @@ const StationList = () => {
   // Render drill down page
   if (currentView === "drillDown" && drillDownData) {
     return (
-      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} onDrill={handleDrillUpTravel} />
+      <DrillTehsilPage tehsil={drillDownData.tehsil} onBack={handleBackToList} onDrill={handleDrillUpTravel} />
     );
   }
 

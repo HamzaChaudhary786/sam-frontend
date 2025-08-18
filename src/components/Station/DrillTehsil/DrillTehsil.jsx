@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
 
-const DrillDownPage = ({ tehsil, onBack, onDrill }) => {
+const DrillTehsilPage = ({ tehsil, onBack, onDrill }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -853,4 +853,4 @@ const DrillDownPage = ({ tehsil, onBack, onDrill }) => {
   );
 };
 
-export default DrillDownPage;
+export default DrillTehsilPage;

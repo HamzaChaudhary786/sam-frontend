@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Building, MapPin, Phone, User, Shield, Package, AlertTriangle, CheckCircle, XCircle, Camera, Wifi, Navigation, ArrowUp } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
 
-const DrillDownPage = ({ stationId, stationName, onBack, onDrill }) => {
+const DrillStationPage = ({ stationId, stationName, onBack, onDrill }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -789,4 +789,4 @@ const DrillDownPage = ({ stationId, stationName, onBack, onDrill }) => {
   );
 };
 
-export default DrillDownPage;
+export default DrillStationPage;
