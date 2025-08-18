@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useStations } from "../StationHook.js";
 import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
-import DrillUpPage from "../DrillUp/DrillUp.jsx";
-import DrillDownPage from "../DrillDown/DrillDown.jsx";
+import DrillStation from "../DrillStation/DrillStation.jsx";
+import DrillTehsilPage from "../DrillTehsil/DrillTehsil.jsx";
 import Pagination from "../Pagination/Pagination.jsx";
 import StationFilters from "../Filter.jsx";
 import StationEmployeeWrapper from "../Employeelist.jsx"; // 🆕 Add this
@@ -68,9 +68,9 @@ const StationList = () => {
   });
 
   // Drill pages state
-  const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
-  const [drillUpData, setDrillUpData] = useState(null);
-  const [drillDownData, setDrillDownData] = useState(null);
+  const [currentView, setCurrentView] = useState("list"); // 'list', 'drillStation', 'drillTehsil', 'drillDistrict'
+  const [drillStationData, setDrillStationData] = useState(null);
+  const [drillTehsilData, setDrillTehsilData] = useState(null);
   const [drillStation, setDrillStation] = useState(null);
 
   // 🆕 Employee listing state - track which stations have expanded employee view
@@ -541,44 +541,51 @@ const StationList = () => {
   };
 
   // Drill Up - Show employees by station ID
-  const handleDrillUp = (station) => {
+  const handleDrillStationGrid = (station) => {
     setDrillStation(station);
-    setDrillUpData({
+    setDrillStationData({
       stationId: station._id,
       stationName: station.name,
     });
-    setCurrentView("drillUp");
+    setCurrentView("drillStation");
   };
 
-  const handleDrillDownTravel = () => {
-    setDrillDownData({
+  const handleDrillTehsilFromStaion = () => {
+    setDrillTehsilData({
       tehsil: drillStation.tehsil,
     });
-    setCurrentView("drillDown");
+    setCurrentView("drillTehsil");
   };
 
-  const handleDrillUpTravel = () => {
-    setDrillUpData({
-      stationId: drillStation._id,
-      stationName: drillStation.name,
-    });
-    setCurrentView("drillUp");
+  const handleDrillStationFromTehsil = (staion) => {
+    if (staion == null) {
+      setDrillStationData({
+        stationId: drillStation._id,
+        stationName: drillStation.name,
+      });
+    } else {
+      setDrillStationData({
+        stationId: staion._id,
+        stationName: staion.name,
+      });
+    }
+    setCurrentView("drillStation");
   };
 
   // Drill Down - Show stations by tehsil
-  const handleDrillDown = (station) => {
+  const handleDrillTehsilGrid = (station) => {
     setDrillStation(station);
-    setDrillDownData({
+    setDrillTehsilData({
       tehsil: station.tehsil,
     });
-    setCurrentView("drillDown");
+    setCurrentView("drillTehsil");
   };
 
   // Back to main list
   const handleBackToList = () => {
     setCurrentView("list");
-    setDrillUpData(null);
-    setDrillDownData(null);
+    setDrillStationData(null);
+    setDrillTehsilData(null);
   };
 
   // 🆕 Toggle employee listing for a station
@@ -640,22 +647,31 @@ const StationList = () => {
   const safeStations = Array.isArray(stations) ? stations : [];
 
   // Render drill up page
-  if (currentView === "drillUp" && drillUpData) {
+  if (currentView === "drillStation" && drillStationData) {
     return (
-      <DrillUpPage
-        stationId={drillUpData.stationId}
-        stationName={drillUpData.stationName}
+      <DrillStation
+        stationId={drillStationData.stationId}
+        stationName={drillStationData.stationName}
         onBack={handleBackToList}
-        onDrill={handleDrillDownTravel}
+        onDrillTehsil={handleDrillTehsilFromStaion}
       />
     );
   }
 
   // Render drill down page
-  if (currentView === "drillDown" && drillDownData) {
+  if (currentView === "drillTehsil" && drillTehsilData) {
     return (
-      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} onDrill={handleDrillUpTravel} />
+      <DrillTehsilPage
+        tehsil={drillTehsilData.tehsil}
+        onBack={handleBackToList}
+        onDrillStation={handleDrillStationFromTehsil}
+      />
     );
+  }
+
+  // Render drill down page
+  if (currentView === "drillDistrict") {
+    return <div className="p-3 sm:p-6"> TODO: District level Summary </div>;
   }
 
   if (loading) {
@@ -903,8 +919,13 @@ const StationList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                         <span> Tehsil: {getStationLocationName(station.tehsil)}</span>
-                          <span className="ml-2">District: {getStationLocationName(station.district)}</span>
+                          <span>
+                            {" "}
+                            Tehsil: {getStationLocationName(station.tehsil)}
+                          </span>
+                          <span className="ml-2">
+                            District: {getStationLocationName(station.district)}
+                          </span>
                         </div>
                         <div className="text-sm text-gray-900">
                           {station.address?.line1}
@@ -1050,7 +1071,7 @@ const StationList = () => {
                           <div className=" flex flex-row flex-wrap gap-1">
                             {" "}
                             <button
-                              onClick={() => handleDrillUp(station)}
+                              onClick={() => handleDrillStationGrid(station)}
                               className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
                               title="View employees at this station"
                             >
@@ -1058,14 +1079,13 @@ const StationList = () => {
                               Drill Down
                             </button>
                             <button
-                              onClick={() => handleDrillDown(station)}
+                              onClick={() => handleDrillTehsilGrid(station)}
                               className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
                               title="View all stations in this tehsil"
                             >
                               <TrendingUp className="h-3 w-3 mr-1" />
                               Drill Up
                             </button>
-                          
                             <button
                               onClick={() => handleView(station)}
                               className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
@@ -1253,14 +1273,14 @@ const StationList = () => {
                     {/* Drill Actions Row */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <button
-                        onClick={() => handleDrillUp(station)}
+                        onClick={() => handleDrillStationGrid(station)}
                         className="flex items-center justify-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200"
                       >
                         <TrendingDown className="h-3 w-3 mr-1" />
                         Drill Down
                       </button>
                       <button
-                        onClick={() => handleDrillDown(station)}
+                        onClick={() => handleDrillTehsilGrid(station)}
                         className="flex items-center justify-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
                       >
                         <TrendingUp className="h-3 w-3 mr-1" />
