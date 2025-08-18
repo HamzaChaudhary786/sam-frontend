@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Building, MapPin, Phone, User, Shield, Package, AlertTriangle, CheckCircle, XCircle, Camera, Wifi, Navigation, ArrowUp } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
 
-const DrillStationPage = ({ stationId, stationName, onBack, onDrill }) => {
+const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,7 +87,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrill }) => {
             Back to Stations
           </button>
           <button
-            onClick={onDrill}
+            onClick={onDrillTehsil}
             className="flex items-center text-Red-600 hover:text-blue-800 mr-4"
           >
             <ArrowUp className="h-5 w-5 mr-1" />
@@ -126,7 +126,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrill }) => {
             Back to Stations
           </button>
           <button
-            onClick={onDrill}
+            onClick={onDrillTehsil}
             className="flex items-center text-Red-600 hover:text-blue-800 mr-4"
           >
             <ArrowUp className="h-5 w-5 mr-1" />
