@@ -338,8 +338,8 @@ const BulkStationAssignment = () => {
             `Successfully created ${successCount} station assignments! They are now pending approval.`,
             { autoClose: 5000 }
           );
-
           navigate("/pendingapprovals");
+          window.location.reload(); // Add this line
         }
 
         if (errorCount > 0) {
@@ -575,11 +575,14 @@ const BulkStationAssignment = () => {
                   </td>
                   <td className="px-6 py-4 relative">
                     <div className="flex items-center">
-                        <div className="flex-1 min-w-0">
-                    <div>{assignment.employee?.stations?.name || "not assigned"}</div>
-                    <div>{assignment.employee?.stations?.tehsil}</div>
-                    <div>{assignment.employee?.stations?.district}</div>
-                    </div>
+                      <div className="flex-1 min-w-0">
+                        <div>
+                          {assignment.employee?.stations?.name ||
+                            "not assigned"}
+                        </div>
+                        <div>{assignment.employee?.stations?.tehsil}</div>
+                        <div>{assignment.employee?.stations?.district}</div>
+                      </div>
                     </div>
                   </td>
 

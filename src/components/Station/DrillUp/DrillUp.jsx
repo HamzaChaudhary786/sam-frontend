@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Users, Building, MapPin, Phone, User, Shield, Package, AlertTriangle, CheckCircle, XCircle, Camera, Wifi, Navigation } from 'lucide-react';
+import { ArrowLeft, Users, Building, MapPin, Phone, User, Shield, Package, AlertTriangle, CheckCircle, XCircle, Camera, Wifi, Navigation, ArrowUp } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
 
-const DrillDownPage = ({ stationId, stationName, onBack }) => {
+const DrillDownPage = ({ stationId, stationName, onBack, onDrill }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,6 +86,13 @@ const DrillDownPage = ({ stationId, stationName, onBack }) => {
             <ArrowLeft className="h-5 w-5 mr-1" />
             Back to Stations
           </button>
+          <button
+            onClick={onDrill}
+            className="flex items-center text-Red-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowUp className="h-5 w-5 mr-1" />
+            Drill Up
+          </button>
         </div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <p className="text-yellow-800">No data available for this station</p>
@@ -117,6 +124,13 @@ const DrillDownPage = ({ stationId, stationName, onBack }) => {
           >
             <ArrowLeft className="h-5 w-5 mr-1" />
             Back to Stations
+          </button>
+          <button
+            onClick={onDrill}
+            className="flex items-center text-Red-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowUp className="h-5 w-5 mr-1" />
+            Drill Up
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">

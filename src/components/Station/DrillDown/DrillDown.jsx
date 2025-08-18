@@ -26,11 +26,12 @@ import {
   ChevronRight,
   Wifi,
   Zap,
-  Lock
+  Lock,
+  ArrowDown
 } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
 
-const DrillDownPage = ({ tehsil, onBack }) => {
+const DrillDownPage = ({ tehsil, onBack, onDrill }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -548,6 +549,13 @@ const DrillDownPage = ({ tehsil, onBack }) => {
             <ArrowLeft className="h-5 w-5 mr-1" />
             Back to Stations
           </button>
+          <button
+            onClick={onDrill}
+            className="flex items-center text-Green-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowDown className="h-5 w-5 mr-1" />
+            Drill Down
+          </button>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-red-800">Error: {error}</p>
@@ -575,6 +583,13 @@ const DrillDownPage = ({ tehsil, onBack }) => {
           >
             <ArrowLeft className="h-5 w-5 mr-1" />
             Back to Stations
+          </button>
+          <button
+            onClick={onDrill}
+            className="flex items-center text-Red-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowDown className="h-5 w-5 mr-1" />
+            Drill Down
           </button>
           <div className="flex items-center">
             <Building className="h-8 w-8 text-blue-600 mr-3" />

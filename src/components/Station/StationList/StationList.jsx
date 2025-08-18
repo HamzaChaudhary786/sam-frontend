@@ -71,6 +71,7 @@ const StationList = () => {
   const [currentView, setCurrentView] = useState("list"); // 'list', 'drillUp', 'drillDown'
   const [drillUpData, setDrillUpData] = useState(null);
   const [drillDownData, setDrillDownData] = useState(null);
+  const [drillStation, setDrillStation] = useState(null);
 
   // 🆕 Employee listing state - track which stations have expanded employee view
   const [expandedStations, setExpandedStations] = useState(new Set());
@@ -541,6 +542,7 @@ const StationList = () => {
 
   // Drill Up - Show employees by station ID
   const handleDrillUp = (station) => {
+    setDrillStation(station);
     setDrillUpData({
       stationId: station._id,
       stationName: station.name,
@@ -548,8 +550,24 @@ const StationList = () => {
     setCurrentView("drillUp");
   };
 
+  const handleDrillDownTravel = () => {
+    setDrillDownData({
+      tehsil: drillStation.tehsil,
+    });
+    setCurrentView("drillDown");
+  };
+
+  const handleDrillUpTravel = () => {
+    setDrillUpData({
+      stationId: drillStation._id,
+      stationName: drillStation.name,
+    });
+    setCurrentView("drillUp");
+  };
+
   // Drill Down - Show stations by tehsil
   const handleDrillDown = (station) => {
+    setDrillStation(station);
     setDrillDownData({
       tehsil: station.tehsil,
     });
@@ -628,6 +646,7 @@ const StationList = () => {
         stationId={drillUpData.stationId}
         stationName={drillUpData.stationName}
         onBack={handleBackToList}
+        onDrill={handleDrillDownTravel}
       />
     );
   }
@@ -635,7 +654,7 @@ const StationList = () => {
   // Render drill down page
   if (currentView === "drillDown" && drillDownData) {
     return (
-      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} />
+      <DrillDownPage tehsil={drillDownData.tehsil} onBack={handleBackToList} onDrill={handleDrillUpTravel} />
     );
   }
 

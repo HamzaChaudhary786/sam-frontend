@@ -3,13 +3,17 @@ import { getDesignationsWithEnum } from "./AddEmployee/Designation.js";
 import { getGradesWithEnum } from "./AddEmployee/Grades.js";
 import { getCastsWithEnum } from "./AddEmployee/Cast.js";
 import { getRanksWithEnum } from "./AddEmployee/Rank.js";
-import { getAllStationsWithoutPage, getStations } from "../Station/StationApi.js";
+import {
+  getAllStationsWithoutPage,
+  getStations,
+} from "../Station/StationApi.js";
 import { getStationDistrictWithEnum } from "../Station/District.js";
 import { getStationLocationsWithEnum } from "../Station/lookUp.js";
 import { useLookupOptions } from "../../services/LookUp.js";
 import { STATUS_ENUM } from "./AddEmployee/EmployeeConstants";
 import { SearchableMultiSelect } from "./searchableMultiselect.jsx"; // 🆕 Import the new component
 import { MultiTextInput } from "./MultiTextInput"; // 🆕 Import the multi-text input component
+import { getEmployees } from "./EmployeeApi.js";
 
 // Add this after your imports
 const SERVICE_TYPE_ENUM = {
@@ -38,21 +42,23 @@ const EmployeeFilters = ({
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
 
   // 🆕 Convert asset type options to the format expected by SearchableMultiSelect
-  const assetTypeEnumOptions = assetTypeOptions.map(option => ({
+  const assetTypeEnumOptions = assetTypeOptions.map((option) => ({
     _id: option.value,
-    name: option.label
+    name: option.label,
   }));
 
   // 🆕 Convert SERVICE_TYPE_ENUM to options array
-  const serviceTypeOptions = Object.entries(SERVICE_TYPE_ENUM).map(([key, value]) => ({
-    _id: value,
-    name: key === 'NA' ? 'N/A' : key.charAt(0) + key.slice(1).toLowerCase()
-  }));
+  const serviceTypeOptions = Object.entries(SERVICE_TYPE_ENUM).map(
+    ([key, value]) => ({
+      _id: value,
+      name: key === "NA" ? "N/A" : key.charAt(0) + key.slice(1).toLowerCase(),
+    })
+  );
 
   // 🆕 Convert STATUS_ENUM to options array
-  const statusOptions = Object.values(STATUS_ENUM).map(status => ({
+  const statusOptions = Object.values(STATUS_ENUM).map((status) => ({
     _id: status,
-    name: status.charAt(0).toUpperCase() + status.slice(1)
+    name: status.charAt(0).toUpperCase() + status.slice(1),
   }));
 
   // Loading states for debugging
@@ -61,23 +67,175 @@ const EmployeeFilters = ({
     districts: false,
     tehsils: false,
   });
+  const [suggestions, setSuggestions] = useState({
+    name: [],
+    personalNumber: [],
+    cnic: [],
+  });
+
+  const [isSearching, setIsSearching] = useState({
+    name: false,
+    personalNumber: false,
+    cnic: false,
+  });
+
+  const searchEmployeeNames = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, name: [] }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, name: true }));
+
+    try {
+      const result = await getEmployees({
+        name: query,
+        limit: 10,
+      });
+
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
+        const names = employees
+          .map((emp) => `${emp.firstName} ${emp.lastName}`)
+          .filter(Boolean);
+        setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
+      }
+    } catch (error) {
+      console.error("Error searching employee names:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, name: false }));
+    }
+  };
+
+  const searchPersonalNumbers = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, personalNumber: [] }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, personalNumber: true }));
+
+    try {
+      const result = await getEmployees({
+        personalNumber: query,
+        limit: 10,
+      });
+
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
+        const personalNumbers = employees
+          .map((emp) => emp.personalNumber || emp.pnumber)
+          .filter(Boolean);
+        setSuggestions((prev) => ({
+          ...prev,
+          personalNumber: [...new Set(personalNumbers)],
+        }));
+      }
+    } catch (error) {
+      console.error("Error searching personal numbers:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, personalNumber: false }));
+    }
+  };
+
+  const searchCNICs = async (query) => {
+    if (!query.trim() || query.length < 3) {
+      setSuggestions((prev) => ({ ...prev, cnic: [] }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, cnic: true }));
+
+    try {
+      const result = await getEmployees({
+        cnic: query,
+        limit: 10,
+      });
+
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
+        const cnics = employees.map((emp) => emp.cnic).filter(Boolean);
+        setSuggestions((prev) => ({ ...prev, cnic: [...new Set(cnics)] }));
+      }
+    } catch (error) {
+      console.error("Error searching CNICs:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, cnic: false }));
+    }
+  };
 
   // 🆕 Updated filter state to handle arrays for multi-select and multi-text inputs
   const [filterForm, setFilterForm] = useState({
-    name: Array.isArray(filters.name) ? filters.name : (filters.name ? [filters.name] : []),
-    address: Array.isArray(filters.address) ? filters.address : (filters.address ? [filters.address] : []),
-    cast: Array.isArray(filters.cast) ? filters.cast : (filters.cast ? [filters.cast] : []),
-    rank: Array.isArray(filters.rank) ? filters.rank : (filters.rank ? [filters.rank] : []),
-    station: Array.isArray(filters.station) ? filters.station : (filters.station ? [filters.station] : []),
-    district: Array.isArray(filters.district) ? filters.district : (filters.district ? [filters.district] : []),
-    tehsil: Array.isArray(filters.tehsil) ? filters.tehsil : (filters.tehsil ? [filters.tehsil] : []),
-    status: Array.isArray(filters.status) ? filters.status : (filters.status ? [filters.status] : []),
-    designation: Array.isArray(filters.designation) ? filters.designation : (filters.designation ? [filters.designation] : []),
-    grade: Array.isArray(filters.grade) ? filters.grade : (filters.grade ? [filters.grade] : []),
-    personalNumber: Array.isArray(filters.personalNumber) ? filters.personalNumber : (filters.personalNumber ? [filters.personalNumber] : []),
-    cnic: Array.isArray(filters.cnic) ? filters.cnic : (filters.cnic ? [filters.cnic] : []),
-    assetType: Array.isArray(filters.assetType) ? filters.assetType : (filters.assetType ? [filters.assetType] : []),
-    serviceType: Array.isArray(filters.serviceType) ? filters.serviceType : (filters.serviceType ? [filters.serviceType] : []),
+    name: Array.isArray(filters.name)
+      ? filters.name
+      : filters.name
+      ? [filters.name]
+      : [],
+    address: Array.isArray(filters.address)
+      ? filters.address
+      : filters.address
+      ? [filters.address]
+      : [],
+    cast: Array.isArray(filters.cast)
+      ? filters.cast
+      : filters.cast
+      ? [filters.cast]
+      : [],
+    rank: Array.isArray(filters.rank)
+      ? filters.rank
+      : filters.rank
+      ? [filters.rank]
+      : [],
+    station: Array.isArray(filters.station)
+      ? filters.station
+      : filters.station
+      ? [filters.station]
+      : [],
+    district: Array.isArray(filters.district)
+      ? filters.district
+      : filters.district
+      ? [filters.district]
+      : [],
+    tehsil: Array.isArray(filters.tehsil)
+      ? filters.tehsil
+      : filters.tehsil
+      ? [filters.tehsil]
+      : [],
+    status: Array.isArray(filters.status)
+      ? filters.status
+      : filters.status
+      ? [filters.status]
+      : [],
+    designation: Array.isArray(filters.designation)
+      ? filters.designation
+      : filters.designation
+      ? [filters.designation]
+      : [],
+    grade: Array.isArray(filters.grade)
+      ? filters.grade
+      : filters.grade
+      ? [filters.grade]
+      : [],
+    personalNumber: Array.isArray(filters.personalNumber)
+      ? filters.personalNumber
+      : filters.personalNumber
+      ? [filters.personalNumber]
+      : [],
+    cnic: Array.isArray(filters.cnic)
+      ? filters.cnic
+      : filters.cnic
+      ? [filters.cnic]
+      : [],
+    assetType: Array.isArray(filters.assetType)
+      ? filters.assetType
+      : filters.assetType
+      ? [filters.assetType]
+      : [],
+    serviceType: Array.isArray(filters.serviceType)
+      ? filters.serviceType
+      : filters.serviceType
+      ? [filters.serviceType]
+      : [],
   });
 
   // Separate function to fetch stations
@@ -211,20 +369,76 @@ const EmployeeFilters = ({
   // Update filterForm when filters prop changes
   useEffect(() => {
     setFilterForm({
-      name: Array.isArray(filters.name) ? filters.name : (filters.name ? [filters.name] : []),
-      address: Array.isArray(filters.address) ? filters.address : (filters.address ? [filters.address] : []),
-      cast: Array.isArray(filters.cast) ? filters.cast : (filters.cast ? [filters.cast] : []),
-      rank: Array.isArray(filters.rank) ? filters.rank : (filters.rank ? [filters.rank] : []),
-      station: Array.isArray(filters.station) ? filters.station : (filters.station ? [filters.station] : []),
-      district: Array.isArray(filters.district) ? filters.district : (filters.district ? [filters.district] : []),
-      tehsil: Array.isArray(filters.tehsil) ? filters.tehsil : (filters.tehsil ? [filters.tehsil] : []),
-      status: Array.isArray(filters.status) ? filters.status : (filters.status ? [filters.status] : []),
-      designation: Array.isArray(filters.designation) ? filters.designation : (filters.designation ? [filters.designation] : []),
-      grade: Array.isArray(filters.grade) ? filters.grade : (filters.grade ? [filters.grade] : []),
-      personalNumber: Array.isArray(filters.personalNumber) ? filters.personalNumber : (filters.personalNumber ? [filters.personalNumber] : []),
-      cnic: Array.isArray(filters.cnic) ? filters.cnic : (filters.cnic ? [filters.cnic] : []),
-      assetType: Array.isArray(filters.assetType) ? filters.assetType : (filters.assetType ? [filters.assetType] : []),
-      serviceType: Array.isArray(filters.serviceType) ? filters.serviceType : (filters.serviceType ? [filters.serviceType] : []),
+      name: Array.isArray(filters.name)
+        ? filters.name
+        : filters.name
+        ? [filters.name]
+        : [],
+      address: Array.isArray(filters.address)
+        ? filters.address
+        : filters.address
+        ? [filters.address]
+        : [],
+      cast: Array.isArray(filters.cast)
+        ? filters.cast
+        : filters.cast
+        ? [filters.cast]
+        : [],
+      rank: Array.isArray(filters.rank)
+        ? filters.rank
+        : filters.rank
+        ? [filters.rank]
+        : [],
+      station: Array.isArray(filters.station)
+        ? filters.station
+        : filters.station
+        ? [filters.station]
+        : [],
+      district: Array.isArray(filters.district)
+        ? filters.district
+        : filters.district
+        ? [filters.district]
+        : [],
+      tehsil: Array.isArray(filters.tehsil)
+        ? filters.tehsil
+        : filters.tehsil
+        ? [filters.tehsil]
+        : [],
+      status: Array.isArray(filters.status)
+        ? filters.status
+        : filters.status
+        ? [filters.status]
+        : [],
+      designation: Array.isArray(filters.designation)
+        ? filters.designation
+        : filters.designation
+        ? [filters.designation]
+        : [],
+      grade: Array.isArray(filters.grade)
+        ? filters.grade
+        : filters.grade
+        ? [filters.grade]
+        : [],
+      personalNumber: Array.isArray(filters.personalNumber)
+        ? filters.personalNumber
+        : filters.personalNumber
+        ? [filters.personalNumber]
+        : [],
+      cnic: Array.isArray(filters.cnic)
+        ? filters.cnic
+        : filters.cnic
+        ? [filters.cnic]
+        : [],
+      assetType: Array.isArray(filters.assetType)
+        ? filters.assetType
+        : filters.assetType
+        ? [filters.assetType]
+        : [],
+      serviceType: Array.isArray(filters.serviceType)
+        ? filters.serviceType
+        : filters.serviceType
+        ? [filters.serviceType]
+        : [],
     });
   }, [filters]);
 
@@ -240,19 +454,26 @@ const EmployeeFilters = ({
   const handleApplyFilters = () => {
     const activeFilters = {};
     if (filterForm.name.length > 0) activeFilters.name = filterForm.name;
-    if (filterForm.address.length > 0) activeFilters.address = filterForm.address;
+    if (filterForm.address.length > 0)
+      activeFilters.address = filterForm.address;
     if (filterForm.cast.length > 0) activeFilters.cast = filterForm.cast;
     if (filterForm.rank.length > 0) activeFilters.rank = filterForm.rank;
-    if (filterForm.station.length > 0) activeFilters.station = filterForm.station;
-    if (filterForm.district.length > 0) activeFilters.district = filterForm.district;
+    if (filterForm.station.length > 0)
+      activeFilters.station = filterForm.station;
+    if (filterForm.district.length > 0)
+      activeFilters.district = filterForm.district;
     if (filterForm.tehsil.length > 0) activeFilters.tehsil = filterForm.tehsil;
     if (filterForm.status.length > 0) activeFilters.status = filterForm.status;
-    if (filterForm.designation.length > 0) activeFilters.designation = filterForm.designation;
+    if (filterForm.designation.length > 0)
+      activeFilters.designation = filterForm.designation;
     if (filterForm.grade.length > 0) activeFilters.grade = filterForm.grade;
-    if (filterForm.personalNumber.length > 0) activeFilters.personalNumber = filterForm.personalNumber;
+    if (filterForm.personalNumber.length > 0)
+      activeFilters.personalNumber = filterForm.personalNumber;
     if (filterForm.cnic.length > 0) activeFilters.cnic = filterForm.cnic;
-    if (filterForm.assetType.length > 0) activeFilters.assetType = filterForm.assetType;
-    if (filterForm.serviceType.length > 0) activeFilters.serviceType = filterForm.serviceType;
+    if (filterForm.assetType.length > 0)
+      activeFilters.assetType = filterForm.assetType;
+    if (filterForm.serviceType.length > 0)
+      activeFilters.serviceType = filterForm.serviceType;
 
     updateFilters(activeFilters);
     setShowFilters(false);
@@ -302,8 +523,9 @@ const EmployeeFilters = ({
             )}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? "rotate-180" : ""
-              }`}
+            className={`w-5 h-5 text-gray-500 transition-transform ${
+              showFilters ? "rotate-180" : ""
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -320,8 +542,9 @@ const EmployeeFilters = ({
 
       {/* Filter Section - Responsive */}
       <div
-        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
-          }`}
+        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
+          showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
+        }`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base sm:text-lg font-medium text-gray-900">
@@ -344,9 +567,17 @@ const EmployeeFilters = ({
             name="name"
             value={filterForm.name}
             onChange={handleFilterChange}
-            placeholder="Type employee name and press Enter..."
+            placeholder="Type employee name..."
             minLength={2}
             maxLength={50}
+            enableSuggestions={true}
+            onSearch={searchEmployeeNames}
+            suggestions={suggestions.name}
+            isSearching={isSearching.name}
+            searchPlaceholder="Type to search employee names..."
+            emptyMessage="No employee names found"
+            minSearchLength={2}
+            onSuggestionSelect={(suggestion) => suggestion}
           />
 
           {/* 🆕 Address Filter - Now MultiTextInput */}
@@ -394,11 +625,19 @@ const EmployeeFilters = ({
             name="personalNumber"
             value={filterForm.personalNumber}
             onChange={handleFilterChange}
-            placeholder="Type personal number and press Enter..."
+            placeholder="Type personal number..."
             minLength={3}
             maxLength={20}
             pattern={/^[A-Za-z0-9\-_]+$/}
             patternMessage="Only letters, numbers, hyphens and underscores allowed"
+            enableSuggestions={true}
+            onSearch={searchPersonalNumbers}
+            suggestions={suggestions.personalNumber}
+            isSearching={isSearching.personalNumber}
+            searchPlaceholder="Type to search personal numbers..."
+            emptyMessage="No personal numbers found"
+            minSearchLength={2}
+            onSuggestionSelect={(suggestion) => suggestion}
           />
 
           {/* 🆕 CNIC Filter - Now MultiTextInput */}
@@ -407,11 +646,19 @@ const EmployeeFilters = ({
             name="cnic"
             value={filterForm.cnic}
             onChange={handleFilterChange}
-            placeholder="Type CNIC and press Enter..."
+            placeholder="Type CNIC..."
             minLength={13}
             maxLength={15}
             pattern={/^[0-9\-]+$/}
             patternMessage="Only numbers and hyphens allowed"
+            enableSuggestions={true}
+            onSearch={searchCNICs}
+            suggestions={suggestions.cnic}
+            isSearching={isSearching.cnic}
+            searchPlaceholder="Type to search CNICs..."
+            emptyMessage="No CNICs found"
+            minSearchLength={3}
+            onSuggestionSelect={(suggestion) => suggestion}
           />
 
           {/* 🆕 Status Filter - Now SearchableMultiSelect */}
