@@ -105,7 +105,7 @@ const StationList = () => {
 
   // Multiple selection handlers
   const handleSelectStation = (stationId) => {
-    setSelectedStations(prev => {
+    setSelectedStations((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(stationId)) {
         newSet.delete(stationId);
@@ -120,7 +120,7 @@ const StationList = () => {
     if (selectAll) {
       setSelectedStations(new Set());
     } else {
-      setSelectedStations(new Set(safeStations.map(station => station._id)));
+      setSelectedStations(new Set(safeStations.map((station) => station._id)));
     }
     setSelectAll(!selectAll);
   };
@@ -131,7 +131,11 @@ const StationList = () => {
       return;
     }
 
-    if (window.confirm(`Are you sure you want to delete ${selectedStations.size} station(s)?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedStations.size} station(s)?`
+      )
+    ) {
       try {
         let successCount = 0;
         let errorCount = 0;
@@ -140,7 +144,11 @@ const StationList = () => {
         for (const stationId of selectedStations) {
           try {
             // Validate ID format
-            if (!stationId || typeof stationId !== 'string' || stationId.trim() === '') {
+            if (
+              !stationId ||
+              typeof stationId !== "string" ||
+              stationId.trim() === ""
+            ) {
               throw new Error("Invalid station ID format");
             }
 
@@ -152,12 +160,12 @@ const StationList = () => {
               successCount++;
             } else {
               errorCount++;
-              errors.push(`${stationId}: ${result?.error || 'Unknown error'}`);
+              errors.push(`${stationId}: ${result?.error || "Unknown error"}`);
             }
           } catch (error) {
             console.error(`Failed to delete station ${stationId}:`, error);
             errorCount++;
-            errors.push(`${stationId}: ${error?.message || 'Unknown error'}`);
+            errors.push(`${stationId}: ${error?.message || "Unknown error"}`);
           }
         }
 
@@ -167,7 +175,9 @@ const StationList = () => {
         if (successCount > 0 && errorCount === 0) {
           toast.success(`Successfully deleted ${successCount} station(s)`);
         } else if (successCount > 0 && errorCount > 0) {
-          toast.warning(`Deleted ${successCount} station(s), failed to delete ${errorCount}`);
+          toast.warning(
+            `Deleted ${successCount} station(s), failed to delete ${errorCount}`
+          );
           console.log("Errors:", errors);
         } else {
           toast.error("Failed to delete selected stations");
@@ -187,7 +197,7 @@ const StationList = () => {
 
   const handleDelete = async (id) => {
     // Validate ID format
-    if (!id || typeof id !== 'string' || id.trim() === '') {
+    if (!id || typeof id !== "string" || id.trim() === "") {
       toast.error("Invalid station ID");
       return;
     }
@@ -270,14 +280,18 @@ const StationList = () => {
 
   const buildExportData = async () => {
     const stationsOnPage = safeStations;
-    const includeEmployees = exportOptions.includeEmployees || exportOptions.includeAssets;
+    const includeEmployees =
+      exportOptions.includeEmployees || exportOptions.includeAssets;
 
     const stationData = [];
     for (const station of stationsOnPage) {
       const entry = { station, employees: [] };
       if (includeEmployees) {
         try {
-          const empRes = await getEmployees({ station: station._id, limit: 1000 });
+          const empRes = await getEmployees({
+            station: station._id,
+            limit: 1000,
+          });
           const employees = empRes?.data?.employees || empRes?.data || [];
           entry.employees = Array.isArray(employees) ? employees : [];
         } catch (e) {
@@ -335,7 +349,13 @@ const StationList = () => {
                 <tr>
                   <td>${escapeHtml(station.name)}</td>
                   <td>${escapeHtml(getStationLocationName(station.tehsil))}</td>
-                  <td>${escapeHtml(station.address?.line1 || "")}${station.address?.line2 ? ", " + escapeHtml(station.address.line2) : ""}${station.address?.city ? ", " + escapeHtml(station.address.city) : ""}</td>
+                  <td>${escapeHtml(station.address?.line1 || "")}${
+            station.address?.line2
+              ? ", " + escapeHtml(station.address.line2)
+              : ""
+          }${
+            station.address?.city ? ", " + escapeHtml(station.address.city) : ""
+          }</td>
                   <td>${escapeHtml(station.district || "")}</td>
                   <td>${escapeHtml(station.status || "")}</td>
                 </tr>
@@ -360,13 +380,18 @@ const StationList = () => {
               </thead>
               <tbody>
                 ${employees
-              .map((e) => {
-                const fullName = `${escapeHtml(e.firstName || "")} ${escapeHtml(e.lastName || "")}`.trim();
-                const designation = e.designation?.title || e.designation || "";
-                const grade = e.grade?.name || e.grade || "";
-                const serviceType = e.serviceType || "";
-                const assets = exportOptions.includeAssets ? `<td>${escapeHtml(e.__assets || "")}</td>` : "";
-                return `<tr>
+                  .map((e) => {
+                    const fullName = `${escapeHtml(
+                      e.firstName || ""
+                    )} ${escapeHtml(e.lastName || "")}`.trim();
+                    const designation =
+                      e.designation?.title || e.designation || "";
+                    const grade = e.grade?.name || e.grade || "";
+                    const serviceType = e.serviceType || "";
+                    const assets = exportOptions.includeAssets
+                      ? `<td>${escapeHtml(e.__assets || "")}</td>`
+                      : "";
+                    return `<tr>
                       <td>${fullName}</td>
                       <td>${escapeHtml(e.personalNumber || "")}</td>
                       <td>${escapeHtml(designation)}</td>
@@ -374,8 +399,8 @@ const StationList = () => {
                       <td>${escapeHtml(serviceType)}</td>
                       ${assets}
                     </tr>`;
-              })
-              .join("")}
+                  })
+                  .join("")}
               </tbody>
             </table>
           `);
@@ -389,7 +414,11 @@ const StationList = () => {
   };
 
   const handleExport = async (format) => {
-    if (!exportOptions.includeStationDetails && !exportOptions.includeEmployees && !exportOptions.includeAssets) {
+    if (
+      !exportOptions.includeStationDetails &&
+      !exportOptions.includeEmployees &&
+      !exportOptions.includeAssets
+    ) {
       toast.error("Select at least one export option");
       return;
     }
@@ -405,7 +434,10 @@ const StationList = () => {
           return;
         }
         win.document.open();
-        win.document.write(html + '<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>');
+        win.document.write(
+          html +
+            "<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>"
+        );
         win.document.close();
       } else if (format === "xls") {
         const XLSX = await import("xlsx");
@@ -423,13 +455,20 @@ const StationList = () => {
         const stationRows = data.map(({ station }) => [
           station?.name || "",
           getStationLocationName(station?.tehsil),
-          [station?.address?.line1, station?.address?.line2, station?.address?.city]
+          [
+            station?.address?.line1,
+            station?.address?.line2,
+            station?.address?.city,
+          ]
             .filter(Boolean)
             .join(", "),
           station?.district || "",
           station?.status || "",
         ]);
-        const stationSheet = XLSX.utils.aoa_to_sheet([stationHeaders, ...stationRows]);
+        const stationSheet = XLSX.utils.aoa_to_sheet([
+          stationHeaders,
+          ...stationRows,
+        ]);
         XLSX.utils.book_append_sheet(wb, stationSheet, "Stations");
 
         // Employees sheet (optional)
@@ -447,7 +486,9 @@ const StationList = () => {
           const empRows = [];
           data.forEach(({ station, employees }) => {
             employees.forEach((e) => {
-              const fullName = `${e?.firstName || ""} ${e?.lastName || ""}`.trim();
+              const fullName = `${e?.firstName || ""} ${
+                e?.lastName || ""
+              }`.trim();
               const row = [
                 station?.name || "",
                 fullName,
@@ -524,7 +565,7 @@ const StationList = () => {
 
   // 🆕 Toggle employee listing for a station
   const handleToggleEmployeeView = (stationId, show) => {
-    setExpandedStations(prev => {
+    setExpandedStations((prev) => {
       const newSet = new Set(prev);
       if (show) {
         newSet.add(stationId);
@@ -720,19 +761,19 @@ const StationList = () => {
                         />
                         {/* Show main image if available */}
                         {station.stationImageUrl &&
-                          station.stationImageUrl.length > 0 ? (
+                        station.stationImageUrl.length > 0 ? (
                           <div className="relative">
                             <img
                               src={
                                 station.stationImageUrl[
-                                imageIndexes[station._id] ?? 0
+                                  imageIndexes[station._id] ?? 0
                                 ]
                               }
                               alt="Station"
                               onClick={() =>
                                 setImageModal(
                                   station.stationImageUrl[
-                                  imageIndexes[station._id] ?? 0
+                                    imageIndexes[station._id] ?? 0
                                   ]
                                 )
                               }
@@ -788,11 +829,9 @@ const StationList = () => {
                             </svg>
                           </div>
                         )}
-
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">
-
                           <div className="pt-2">
                             <div className="text-sm font-medium text-gray-900">
                               {station.name}
@@ -807,9 +846,9 @@ const StationList = () => {
                                         (itm, index) => (
                                           <span
                                             key={index}
-                                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                            // className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
                                           >
-                                            {itm.employee} {itm.type}
+                                            {/* {itm.employee} {itm.type} */}
                                           </span>
                                         )
                                       )}
@@ -845,13 +884,15 @@ const StationList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          Tehsil: {getStationLocationName(station.tehsil)}
+                         <span> Tehsil: {getStationLocationName(station.tehsil)}</span>
+                          <span className="ml-2">District: {getStationLocationName(station.district)}</span>
                         </div>
                         <div className="text-sm text-gray-900">
                           {station.address?.line1}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {station.address?.line2 && `${station.address.line2}, `}
+                          {station.address?.line2 &&
+                            `${station.address.line2}, `}
                           {station.address?.city}
                         </div>
                       </td>
@@ -861,7 +902,6 @@ const StationList = () => {
                           {station?.stationMinimumRequirements &&
                             station?.stationMinimumRequirements.length > 0 && (
                               <div className="mt-2">
-
                                 {station?.stationMinimumRequirements?.map(
                                   (req, index) => (
                                     <div
@@ -889,7 +929,8 @@ const StationList = () => {
                                                 >
                                                   <p>
                                                     <span className="font-medium">
-                                                      {assetReq?.assets?.name || "Unknown Asset"}
+                                                      {assetReq?.assets?.name ||
+                                                        "Unknown Asset"}
                                                     </span>
                                                     {" × "}
                                                     <span className="text-blue-600 font-medium">
@@ -897,7 +938,9 @@ const StationList = () => {
                                                     </span>
                                                   </p>
                                                   <p className="text-xs text-gray-500 capitalize">
-                                                    Type: {assetReq?.assets?.type || "N/A"}
+                                                    Type:{" "}
+                                                    {assetReq?.assets?.type ||
+                                                      "N/A"}
                                                   </p>
                                                 </div>
                                               )
@@ -914,36 +957,57 @@ const StationList = () => {
                                             </p>
                                             {req?.staffDetail?.map(
                                               (staff, staffIndex) => (
-                                                <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
+                                                <div
+                                                  key={staffIndex}
+                                                  className="ml-2 mb-2 p-1 bg-gray-50 rounded"
+                                                >
                                                   <p className="mb-1">
-                                                    - {staff?.designation || "Staff"}
-                                                    : {staff?.numberOfPersonal} personnel
+                                                    -{" "}
+                                                    {staff?.designation ||
+                                                      "Staff"}
+                                                    : {staff?.numberOfPersonal}{" "}
+                                                    personnel
                                                   </p>
 
                                                   {/* Staff Asset Requirements */}
                                                   {staff?.assetRequirement &&
-                                                    staff?.assetRequirement.length > 0 && (
+                                                    staff?.assetRequirement
+                                                      .length > 0 && (
                                                       <div className="ml-2">
                                                         <p className="text-xs font-medium text-gray-600 mb-1">
                                                           🚗 Assigned Assets:
                                                         </p>
                                                         {staff?.assetRequirement?.map(
-                                                          (staffAsset, staffAssetIndex) => (
+                                                          (
+                                                            staffAsset,
+                                                            staffAssetIndex
+                                                          ) => (
                                                             <div
-                                                              key={staffAssetIndex}
+                                                              key={
+                                                                staffAssetIndex
+                                                              }
                                                               className="ml-2 mb-1 p-1 bg-yellow-50 rounded"
                                                             >
                                                               <p>
                                                                 <span className="font-medium">
-                                                                  {staffAsset?.assets?.name || "Unknown Asset"}
+                                                                  {staffAsset
+                                                                    ?.assets
+                                                                    ?.name ||
+                                                                    "Unknown Asset"}
                                                                 </span>
                                                                 {" × "}
                                                                 <span className="text-orange-600 font-medium">
-                                                                  {staffAsset?.quantity}
+                                                                  {
+                                                                    staffAsset?.quantity
+                                                                  }
                                                                 </span>
                                                               </p>
                                                               <p className="text-xs text-gray-500 capitalize">
-                                                                Type: {staffAsset?.assets?.type || "N/A"}
+                                                                Type:{" "}
+                                                                {staffAsset
+                                                                  ?.assets
+                                                                  ?.type ||
+                                                                  "N/A"}
                                                               </p>
                                                             </div>
                                                           )
@@ -963,15 +1027,17 @@ const StationList = () => {
                         </div>
                       </td>
                       <td className="px-1 py-1 whitespace-nowrap text-sm font-medium">
-                        <div className="grid grid-cols-1 grid-rows-2 gap-1">
-                          <div className=" flex flex-row flex-wrap gap-1"> <button
-                            onClick={() => handleDrillUp(station)}
-                            className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
-                            title="View employees at this station"
-                          >
-                            <TrendingDown className="h-3 w-3 mr-1" />
-                            Drill Down
-                          </button>
+                        <div className="grid  gap-1">
+                          <div className=" flex flex-row flex-wrap gap-1">
+                            {" "}
+                            <button
+                              onClick={() => handleDrillUp(station)}
+                              className="flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                              title="View employees at this station"
+                            >
+                              <TrendingDown className="h-3 w-3 mr-1" />
+                              Drill Down
+                            </button>
                             <button
                               onClick={() => handleDrillDown(station)}
                               className="flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
@@ -979,8 +1045,8 @@ const StationList = () => {
                             >
                               <TrendingUp className="h-3 w-3 mr-1" />
                               Drill Up
-                            </button></div>
-                          <div className=" flex flex-row flex-wrap gap-1" >
+                            </button>
+                          
                             <button
                               onClick={() => handleView(station)}
                               className="px-3 py-1 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
@@ -993,12 +1059,12 @@ const StationList = () => {
                             >
                               Edit
                             </button>
-                            <button
+                            {/* <button
                               onClick={() => handleDelete(station._id)}
                               className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
                             >
                               Delete
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </td>
@@ -1009,7 +1075,9 @@ const StationList = () => {
                       stationId={station._id}
                       stationName={station.name}
                       showAll={expandedStations.has(station._id)}
-                      onToggleView={(show) => handleToggleEmployeeView(station._id, show)}
+                      onToggleView={(show) =>
+                        handleToggleEmployeeView(station._id, show)
+                      }
                     />
                   </React.Fragment>
                 ))}
@@ -1031,14 +1099,21 @@ const StationList = () => {
                 />
                 <div className="flex-shrink-0 relative">
                   {/* Station Image */}
-                  {station.stationImageUrl && station.stationImageUrl.length > 0 ? (
+                  {station.stationImageUrl &&
+                  station.stationImageUrl.length > 0 ? (
                     <div className="relative">
                       <img
-                        src={station.stationImageUrl[imageIndexes[station._id] ?? 0]}
+                        src={
+                          station.stationImageUrl[
+                            imageIndexes[station._id] ?? 0
+                          ]
+                        }
                         alt="Station"
                         onClick={() =>
                           setImageModal(
-                            station.stationImageUrl[imageIndexes[station._id] ?? 0]
+                            station.stationImageUrl[
+                              imageIndexes[station._id] ?? 0
+                            ]
                           )
                         }
                         className="h-12 w-12 rounded border object-cover cursor-pointer hover:scale-105 transition"
@@ -1047,7 +1122,10 @@ const StationList = () => {
                         <>
                           <button
                             onClick={() =>
-                              handlePrevImage(station._id, station.stationImageUrl.length)
+                              handlePrevImage(
+                                station._id,
+                                station.stationImageUrl.length
+                              )
                             }
                             className="absolute -left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
                             style={{ fontSize: "10px" }}
@@ -1056,7 +1134,10 @@ const StationList = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleNextImage(station._id, station.stationImageUrl.length)
+                              handleNextImage(
+                                station._id,
+                                station.stationImageUrl.length
+                              )
                             }
                             className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
                             style={{ fontSize: "10px" }}
@@ -1067,7 +1148,8 @@ const StationList = () => {
                             className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
                             style={{ fontSize: "8px" }}
                           >
-                            {(imageIndexes[station._id] ?? 0) + 1}/{station.stationImageUrl.length}
+                            {(imageIndexes[station._id] ?? 0) + 1}/
+                            {station.stationImageUrl.length}
                           </div>
                         </>
                       )}
@@ -1131,13 +1213,21 @@ const StationList = () => {
                     {/* 🆕 Employee Toggle Button */}
                     <div className="grid grid-cols-1 gap-2 mb-2">
                       <button
-                        onClick={() => handleToggleEmployeeView(station._id, !expandedStations.has(station._id))}
-                        className={`px-3 py-1 text-xs rounded-md text-center transition ${expandedStations.has(station._id)
+                        onClick={() =>
+                          handleToggleEmployeeView(
+                            station._id,
+                            !expandedStations.has(station._id)
+                          )
+                        }
+                        className={`px-3 py-1 text-xs rounded-md text-center transition ${
+                          expandedStations.has(station._id)
                             ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
                             : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                          }`}
+                        }`}
                       >
-                        {expandedStations.has(station._id) ? "Hide Employees" : "Show Employees"}
+                        {expandedStations.has(station._id)
+                          ? "Hide Employees"
+                          : "Show Employees"}
                       </button>
                     </div>
 
@@ -1304,7 +1394,10 @@ const StationList = () => {
                 Cancel
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-3">Note: Only stations currently visible in the table (after filters and current page) will be exported.</p>
+            <p className="text-xs text-gray-500 mt-3">
+              Note: Only stations currently visible in the table (after filters
+              and current page) will be exported.
+            </p>
           </div>
         </div>
       )}

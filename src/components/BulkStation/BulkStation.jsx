@@ -446,7 +446,10 @@ const BulkStationAssignment = () => {
                   Employee
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Station
+                  From Station
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  To Station
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   From Date
@@ -570,6 +573,16 @@ const BulkStationAssignment = () => {
                       </div>
                     )}
                   </td>
+                  <td className="px-6 py-4 relative">
+                    <div className="flex items-center">
+                        <div className="flex-1 min-w-0">
+                    <div>{assignment.employee?.stations?.name || "not assigned"}</div>
+                    <div>{assignment.employee?.stations?.tehsil}</div>
+                    <div>{assignment.employee?.stations?.district}</div>
+                    </div>
+                    </div>
+                  </td>
+
                   <td className="px-6 py-4 relative">
                     {assignment.station ? (
                       <div className="flex items-center">
