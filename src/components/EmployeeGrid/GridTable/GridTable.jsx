@@ -305,22 +305,35 @@ const EmployeeGridTable = ({
 
     const backendFilters = {};
 
-    if (filters.name) backendFilters.name = filters.name;
-    if (filters.address) backendFilters.address = filters.address;
-    if (filters.personalNumber)
+    // Handle array filters (multi-select and multi-text inputs)
+    if (filters.name && filters.name.length > 0)
+      backendFilters.name = filters.name;
+    if (filters.address && filters.address.length > 0)
+      backendFilters.address = filters.address;
+    if (filters.personalNumber && filters.personalNumber.length > 0)
       backendFilters.personalNumber = filters.personalNumber;
-    if (filters.cnic) backendFilters.cnic = filters.cnic;
-    if (filters.cast) backendFilters.cast = filters.cast;
-    if (filters.rank) backendFilters.rank = filters.rank;
-    if (filters.status) backendFilters.status = filters.status;
-    if (filters.designation) backendFilters.designation = filters.designation;
-    if (filters.grade) backendFilters.grade = filters.grade;
-    if (filters.station) backendFilters.station = filters.station;
-    if (filters.district) backendFilters.district = filters.district;
-    if (filters.tehsil) backendFilters.tehsil = filters.tehsil;
-    if (filters.assetType) backendFilters.assetType = filters.assetType;
-    if (filters.serviceType) backendFilters.serviceType = filters.serviceType;
-
+    if (filters.cnic && filters.cnic.length > 0)
+      backendFilters.cnic = filters.cnic;
+    if (filters.cast && filters.cast.length > 0)
+      backendFilters.cast = filters.cast;
+    if (filters.rank && filters.rank.length > 0)
+      backendFilters.rank = filters.rank;
+    if (filters.status && filters.status.length > 0)
+      backendFilters.status = filters.status;
+    if (filters.designation && filters.designation.length > 0)
+      backendFilters.designation = filters.designation;
+    if (filters.grade && filters.grade.length > 0)
+      backendFilters.grade = filters.grade;
+    if (filters.station && filters.station.length > 0)
+      backendFilters.station = filters.station;
+    if (filters.district && filters.district.length > 0)
+      backendFilters.district = filters.district;
+    if (filters.tehsil && filters.tehsil.length > 0)
+      backendFilters.tehsil = filters.tehsil;
+    if (filters.assetType && filters.assetType.length > 0)
+      backendFilters.assetType = filters.assetType;
+    if (filters.serviceType && filters.serviceType.length > 0)
+      backendFilters.serviceType = filters.serviceType;
 
     updateFilters(backendFilters);
   };
@@ -821,9 +834,8 @@ const EmployeeGridTable = ({
               {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
               {/* Checkbox - spans 2 rows */}
               <div className="row-span-2 flex items-center justify-center">
-              {renderImageCell(employee)}
+                {renderImageCell(employee)}
                 {renderEmployeeCheckbox(employee)}
-                
               </div>
 
               {/* Vertical action buttons - spans 2 rows */}
@@ -836,9 +848,15 @@ const EmployeeGridTable = ({
                         ? "bg-orange-600 text-white hover:bg-orange-700"
                         : "bg-blue-600 text-white hover:bg-blue-700"
                     }`}
-                    title={editableEmployees.has(employee._id) ? "Disable editing" : "Enable editing"}
+                    title={
+                      editableEmployees.has(employee._id)
+                        ? "Disable editing"
+                        : "Enable editing"
+                    }
                   >
-                    {editableEmployees.has(employee._id) ? "Disable Edit" : "Edit"}
+                    {editableEmployees.has(employee._id)
+                      ? "Disable Edit"
+                      : "Edit"}
                   </button>
                 )}
                 <button
@@ -859,12 +877,20 @@ const EmployeeGridTable = ({
               <div>{renderCell(employee, "status", "select", "statuses")}</div>
               <div>{renderCell(employee, "personalNumber", "input")}</div>
               <div>{renderCell(employee, "firstName", "input")}</div>
-              <div>{renderCell(employee, "stations", "select", "stations")}</div>
+              <div>
+                {renderCell(employee, "stations", "select", "stations")}
+              </div>
               <div>{renderCell(employee, "mobileNumber", "input")}</div>
-              <div>{renderCell(employee, "designation", "select", "designations")}</div>
+              <div>
+                {renderCell(employee, "designation", "select", "designations")}
+              </div>
               <div>{renderCell(employee, "rank", "select", "ranks")}</div>
-              <div>{renderCell(employee, "address.tehsil", "select", "tehsil")}</div>
-              <div>{renderCell(employee, "address.line2", "select", "district")}</div>
+              <div>
+                {renderCell(employee, "address.tehsil", "select", "tehsil")}
+              </div>
+              <div>
+                {renderCell(employee, "address.line2", "select", "district")}
+              </div>
 
               {/* NEW: Assets Column - spans 2 rows */}
               <div className="row-span-2 flex items-center p-1">

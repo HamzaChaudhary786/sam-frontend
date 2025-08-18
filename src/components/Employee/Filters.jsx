@@ -6,8 +6,10 @@ import { getRanksWithEnum } from "./AddEmployee/Rank.js";
 import { getAllStationsWithoutPage, getStations } from "../Station/StationApi.js";
 import { getStationDistrictWithEnum } from "../Station/District.js";
 import { getStationLocationsWithEnum } from "../Station/lookUp.js";
-import { useLookupOptions } from "../../services/LookUp.js"; // 🆕 Add this import
+import { useLookupOptions } from "../../services/LookUp.js";
 import { STATUS_ENUM } from "./AddEmployee/EmployeeConstants";
+import { SearchableMultiSelect } from "./searchableMultiselect.jsx"; // 🆕 Import the new component
+import { MultiTextInput } from "./MultiTextInput"; // 🆕 Import the multi-text input component
 
 // Add this after your imports
 const SERVICE_TYPE_ENUM = {
@@ -35,6 +37,24 @@ const EmployeeFilters = ({
   // 🆕 Get asset type options using the lookup hook
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
 
+  // 🆕 Convert asset type options to the format expected by SearchableMultiSelect
+  const assetTypeEnumOptions = assetTypeOptions.map(option => ({
+    _id: option.value,
+    name: option.label
+  }));
+
+  // 🆕 Convert SERVICE_TYPE_ENUM to options array
+  const serviceTypeOptions = Object.entries(SERVICE_TYPE_ENUM).map(([key, value]) => ({
+    _id: value,
+    name: key === 'NA' ? 'N/A' : key.charAt(0) + key.slice(1).toLowerCase()
+  }));
+
+  // 🆕 Convert STATUS_ENUM to options array
+  const statusOptions = Object.values(STATUS_ENUM).map(status => ({
+    _id: status,
+    name: status.charAt(0).toUpperCase() + status.slice(1)
+  }));
+
   // Loading states for debugging
   const [loading, setLoading] = useState({
     stations: false,
@@ -42,87 +62,28 @@ const EmployeeFilters = ({
     tehsils: false,
   });
 
-  // Filter state
+  // 🆕 Updated filter state to handle arrays for multi-select and multi-text inputs
   const [filterForm, setFilterForm] = useState({
-    name: filters.name || "",
-    address: filters.address || "",
-    cast: filters.cast || "",
-    rank: filters.rank || "",
-    station: filters.station || "",
-    district: filters.district || "",
-    tehsil: filters.tehsil || "",
-    status: filters.status || "",
-    designation: filters.designation || "",
-    grade: filters.grade || "",
-    personalNumber: filters.personalNumber || "",
-    cnic: filters.cnic || "",
-    assetType: filters.assetType || "", // 🆕 Asset type filter
-    serviceType: filters.serviceType || "", // 🆕 Add this line
+    name: Array.isArray(filters.name) ? filters.name : (filters.name ? [filters.name] : []),
+    address: Array.isArray(filters.address) ? filters.address : (filters.address ? [filters.address] : []),
+    cast: Array.isArray(filters.cast) ? filters.cast : (filters.cast ? [filters.cast] : []),
+    rank: Array.isArray(filters.rank) ? filters.rank : (filters.rank ? [filters.rank] : []),
+    station: Array.isArray(filters.station) ? filters.station : (filters.station ? [filters.station] : []),
+    district: Array.isArray(filters.district) ? filters.district : (filters.district ? [filters.district] : []),
+    tehsil: Array.isArray(filters.tehsil) ? filters.tehsil : (filters.tehsil ? [filters.tehsil] : []),
+    status: Array.isArray(filters.status) ? filters.status : (filters.status ? [filters.status] : []),
+    designation: Array.isArray(filters.designation) ? filters.designation : (filters.designation ? [filters.designation] : []),
+    grade: Array.isArray(filters.grade) ? filters.grade : (filters.grade ? [filters.grade] : []),
+    personalNumber: Array.isArray(filters.personalNumber) ? filters.personalNumber : (filters.personalNumber ? [filters.personalNumber] : []),
+    cnic: Array.isArray(filters.cnic) ? filters.cnic : (filters.cnic ? [filters.cnic] : []),
+    assetType: Array.isArray(filters.assetType) ? filters.assetType : (filters.assetType ? [filters.assetType] : []),
+    serviceType: Array.isArray(filters.serviceType) ? filters.serviceType : (filters.serviceType ? [filters.serviceType] : []),
   });
-
-  // Separate function to fetch stations
-  const fetchStations = async () => {
-    setLoading((prev) => ({ ...prev, stations: true }));
-    try {
-      console.log("🚀 Fetching all stations...");
-
-      let allStations = [];
-      let currentPage = 1;
-      let totalPages = 1;
-
-      // Keep fetching until we get all pages
-      do {
-        console.log(`📄 Fetching page ${currentPage}...`);
-
-        // Modify your getStations call to include page parameter
-        // You might need to update the API call depending on how your backend handles pagination
-        const stationRes = await getStations({ page: currentPage });
-        console.log(`📊 Station response for page ${currentPage}:`, stationRes);
-
-        if (stationRes && stationRes.success && stationRes.data) {
-          // Extract stations from current page
-          if (
-            stationRes.data.stations &&
-            Array.isArray(stationRes.data.stations)
-          ) {
-            allStations = [...allStations, ...stationRes.data.stations];
-            totalPages = stationRes.data.totalPages || 1;
-            currentPage++;
-          } else {
-            break; // No more data
-          }
-        } else {
-          console.error(
-            `❌ Invalid station response for page ${currentPage}:`,
-            stationRes
-          );
-          break;
-        }
-      } while (currentPage <= totalPages);
-
-      // Now map all stations to the format needed for dropdown
-      const stationArray = allStations.map((station) => ({
-        _id: station._id,
-        name: station.name,
-      }));
-
-      setStationEnum(stationArray);
-      console.log(
-        `✅ Fetched all ${allStations.length} stations:`,
-        stationArray
-      );
-    } catch (error) {
-      console.error("💥 Error fetching stations:", error);
-      setStationEnum([]);
-    }
-    setLoading((prev) => ({ ...prev, stations: false }));
-  };
 
   // Separate function to fetch stations
   const fetchStationsWithoutPage = async () => {
     setLoading((prev) => ({ ...prev, stations: true }));
     try {
-
       const response = await getAllStationsWithoutPage();
       let allStations = [];
 
@@ -136,7 +97,6 @@ const EmployeeFilters = ({
       }));
 
       setStationEnum(stationArray);
-
     } catch (error) {
       console.error("💥 Error fetching stations:", error);
       setStationEnum([]);
@@ -148,14 +108,12 @@ const EmployeeFilters = ({
   const fetchDistricts = async () => {
     setLoading((prev) => ({ ...prev, districts: true }));
     try {
-
       const districtRes = await getStationDistrictWithEnum();
       if (districtRes && districtRes.success && districtRes.data) {
         const districtArray = Object.entries(districtRes.data).map(
           ([_id, name]) => ({ _id, name })
         );
         setDistrictEnum(districtArray);
-
       } else {
         console.error("❌ Invalid district response:", districtRes);
         setDistrictEnum([]);
@@ -171,16 +129,13 @@ const EmployeeFilters = ({
   const fetchTehsils = async () => {
     setLoading((prev) => ({ ...prev, tehsils: true }));
     try {
-
       const tehsilRes = await getStationLocationsWithEnum();
-
 
       if (tehsilRes && tehsilRes.success && tehsilRes.data) {
         const tehsilArray = Object.entries(tehsilRes.data).map(
           ([_id, name]) => ({ _id, name })
         );
         setTehsilEnum(tehsilArray);
-
       } else {
         console.error("❌ Invalid tehsil response:", tehsilRes);
         setTehsilEnum([]);
@@ -256,20 +211,20 @@ const EmployeeFilters = ({
   // Update filterForm when filters prop changes
   useEffect(() => {
     setFilterForm({
-      name: filters.name || "",
-      address: filters.address || "",
-      cast: filters.cast || "",
-      rank: filters.rank || "",
-      station: filters.station || "",
-      district: filters.district || "",
-      tehsil: filters.tehsil || "",
-      status: filters.status || "",
-      designation: filters.designation || "",
-      grade: filters.grade || "",
-      personalNumber: filters.personalNumber || "",
-      cnic: filters.cnic || "",
-      assetType: filters.assetType || "", // 🆕 Asset type
-      serviceType: filters.serviceType || "", // 🆕 Add this line
+      name: Array.isArray(filters.name) ? filters.name : (filters.name ? [filters.name] : []),
+      address: Array.isArray(filters.address) ? filters.address : (filters.address ? [filters.address] : []),
+      cast: Array.isArray(filters.cast) ? filters.cast : (filters.cast ? [filters.cast] : []),
+      rank: Array.isArray(filters.rank) ? filters.rank : (filters.rank ? [filters.rank] : []),
+      station: Array.isArray(filters.station) ? filters.station : (filters.station ? [filters.station] : []),
+      district: Array.isArray(filters.district) ? filters.district : (filters.district ? [filters.district] : []),
+      tehsil: Array.isArray(filters.tehsil) ? filters.tehsil : (filters.tehsil ? [filters.tehsil] : []),
+      status: Array.isArray(filters.status) ? filters.status : (filters.status ? [filters.status] : []),
+      designation: Array.isArray(filters.designation) ? filters.designation : (filters.designation ? [filters.designation] : []),
+      grade: Array.isArray(filters.grade) ? filters.grade : (filters.grade ? [filters.grade] : []),
+      personalNumber: Array.isArray(filters.personalNumber) ? filters.personalNumber : (filters.personalNumber ? [filters.personalNumber] : []),
+      cnic: Array.isArray(filters.cnic) ? filters.cnic : (filters.cnic ? [filters.cnic] : []),
+      assetType: Array.isArray(filters.assetType) ? filters.assetType : (filters.assetType ? [filters.assetType] : []),
+      serviceType: Array.isArray(filters.serviceType) ? filters.serviceType : (filters.serviceType ? [filters.serviceType] : []),
     });
   }, [filters]);
 
@@ -281,47 +236,45 @@ const EmployeeFilters = ({
     }));
   };
 
+  // 🆕 Updated handleApplyFilters to handle arrays for all text inputs
   const handleApplyFilters = () => {
     const activeFilters = {};
-    if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.address.trim())
-      activeFilters.address = filterForm.address.trim();
-    if (filterForm.cast) activeFilters.cast = filterForm.cast;
-    if (filterForm.rank) activeFilters.rank = filterForm.rank;
-    if (filterForm.station) activeFilters.station = filterForm.station;
-    if (filterForm.district) activeFilters.district = filterForm.district;
-    if (filterForm.tehsil) activeFilters.tehsil = filterForm.tehsil;
-    if (filterForm.status) activeFilters.status = filterForm.status;
-    if (filterForm.designation)
-      activeFilters.designation = filterForm.designation;
-    if (filterForm.grade) activeFilters.grade = filterForm.grade;
-    if (filterForm.personalNumber.trim())
-      activeFilters.personalNumber = filterForm.personalNumber.trim();
-    if (filterForm.cnic.trim()) activeFilters.cnic = filterForm.cnic.trim();
-    if (filterForm.assetType) activeFilters.assetType = filterForm.assetType; // 🆕 Asset type
-    if (filterForm.serviceType)
-      activeFilters.serviceType = filterForm.serviceType; // 🆕 Add this line
+    if (filterForm.name.length > 0) activeFilters.name = filterForm.name;
+    if (filterForm.address.length > 0) activeFilters.address = filterForm.address;
+    if (filterForm.cast.length > 0) activeFilters.cast = filterForm.cast;
+    if (filterForm.rank.length > 0) activeFilters.rank = filterForm.rank;
+    if (filterForm.station.length > 0) activeFilters.station = filterForm.station;
+    if (filterForm.district.length > 0) activeFilters.district = filterForm.district;
+    if (filterForm.tehsil.length > 0) activeFilters.tehsil = filterForm.tehsil;
+    if (filterForm.status.length > 0) activeFilters.status = filterForm.status;
+    if (filterForm.designation.length > 0) activeFilters.designation = filterForm.designation;
+    if (filterForm.grade.length > 0) activeFilters.grade = filterForm.grade;
+    if (filterForm.personalNumber.length > 0) activeFilters.personalNumber = filterForm.personalNumber;
+    if (filterForm.cnic.length > 0) activeFilters.cnic = filterForm.cnic;
+    if (filterForm.assetType.length > 0) activeFilters.assetType = filterForm.assetType;
+    if (filterForm.serviceType.length > 0) activeFilters.serviceType = filterForm.serviceType;
 
     updateFilters(activeFilters);
     setShowFilters(false);
   };
 
+  // 🆕 Updated handleClearFilters to reset arrays for all text inputs
   const handleClearFilters = () => {
     setFilterForm({
-      name: "",
-      address: "",
-      cast: "",
-      rank: "",
-      station: "",
-      district: "",
-      tehsil: "",
-      status: "",
-      designation: "",
-      grade: "",
-      personalNumber: "",
-      cnic: "",
-      assetType: "", // 🆕 Asset type
-      serviceType: "", // 🆕 Add this line
+      name: [],
+      address: [],
+      cast: [],
+      rank: [],
+      station: [],
+      district: [],
+      tehsil: [],
+      status: [],
+      designation: [],
+      grade: [],
+      personalNumber: [],
+      cnic: [],
+      assetType: [],
+      serviceType: [],
     });
     clearFilters();
   };
@@ -385,274 +338,193 @@ const EmployeeFilters = ({
 
         {/* Filter Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={filterForm.name}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="e.g., Hamza"
-            />
-          </div>
+          {/* 🆕 Name Filter - Now MultiTextInput */}
+          <MultiTextInput
+            label="Name"
+            name="name"
+            value={filterForm.name}
+            onChange={handleFilterChange}
+            placeholder="Type employee name and press Enter..."
+            minLength={2}
+            maxLength={50}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={filterForm.address}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="e.g., Street, Muhala, City"
-            />
-          </div>
-          {/* Tehsil Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tehsil
-            </label>
-            <select
-              name="tehsil"
-              value={filterForm.tehsil}
-              onChange={handleFilterChange}
-              disabled={loading.tehsils}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100"
-            >
-              <option value="">
-                {loading.tehsils ? "Loading..." : `All Tehsils`}
-              </option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {tehsilEnum.map((tehsil) => (
-                <option key={tehsil._id} value={tehsil._id}>
-                  {tehsil.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* District Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              District
-            </label>
-            <select
-              name="district"
-              value={filterForm.district}
-              onChange={handleFilterChange}
-              disabled={loading.districts}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100"
-            >
-              <option value="">
-                {loading.districts ? "Loading..." : `All Districts`}
-              </option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {districtEnum.map((district) => (
-                <option key={district._id} value={district._id}>
-                  {district.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Address Filter - Now MultiTextInput */}
+          <MultiTextInput
+            label="Address"
+            name="address"
+            value={filterForm.address}
+            onChange={handleFilterChange}
+            placeholder="Type address and press Enter..."
+            minLength={3}
+            maxLength={100}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Personal Number
-            </label>
-            <input
-              type="text"
-              name="personalNumber"
-              value={filterForm.personalNumber}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="e.g., Emp-234"
-            />
-          </div>
+          {/* 🆕 Tehsil Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Tehsil"
+            name="tehsil"
+            value={filterForm.tehsil}
+            onChange={handleFilterChange}
+            options={tehsilEnum}
+            placeholder="Select tehsils..."
+            loading={loading.tehsils}
+            searchPlaceholder="Search tehsils..."
+            emptyMessage="No tehsils found"
+            allowNA={true}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CNIC
-            </label>
-            <input
-              type="text"
-              name="cnic"
-              value={filterForm.cnic}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="e.g., 1234567891010"
-            />
-          </div>
+          {/* 🆕 District Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="District"
+            name="district"
+            value={filterForm.district}
+            onChange={handleFilterChange}
+            options={districtEnum}
+            placeholder="Select districts..."
+            loading={loading.districts}
+            searchPlaceholder="Search districts..."
+            emptyMessage="No districts found"
+            allowNA={true}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              name="status"
-              value={filterForm.status}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Status</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {Object.values(STATUS_ENUM).map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Personal Number Filter - Now MultiTextInput */}
+          <MultiTextInput
+            label="Personal Number"
+            name="personalNumber"
+            value={filterForm.personalNumber}
+            onChange={handleFilterChange}
+            placeholder="Type personal number and press Enter..."
+            minLength={3}
+            maxLength={20}
+            pattern={/^[A-Za-z0-9\-_]+$/}
+            patternMessage="Only letters, numbers, hyphens and underscores allowed"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Designation
-            </label>
-            <select
-              name="designation"
-              value={filterForm.designation}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Designations</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {designationEnum.map((designation) => (
-                <option key={designation._id} value={designation._id}>
-                  {designation.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 CNIC Filter - Now MultiTextInput */}
+          <MultiTextInput
+            label="CNIC"
+            name="cnic"
+            value={filterForm.cnic}
+            onChange={handleFilterChange}
+            placeholder="Type CNIC and press Enter..."
+            minLength={13}
+            maxLength={15}
+            pattern={/^[0-9\-]+$/}
+            patternMessage="Only numbers and hyphens allowed"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Grade
-            </label>
-            <select
-              name="grade"
-              value={filterForm.grade}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Grades</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {gradeEnum.map((grade) => (
-                <option key={grade._id} value={grade._id}>
-                  {grade.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Status Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Status"
+            name="status"
+            value={filterForm.status}
+            onChange={handleFilterChange}
+            options={statusOptions}
+            placeholder="Select status..."
+            loading={false}
+            searchPlaceholder="Search status..."
+            emptyMessage="No status found"
+            allowNA={true}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cast
-            </label>
-            <select
-              name="cast"
-              value={filterForm.cast}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Casts</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {castEnum.map((cast) => (
-                <option key={cast._id} value={cast._id}>
-                  {cast.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Designation Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Designation"
+            name="designation"
+            value={filterForm.designation}
+            onChange={handleFilterChange}
+            options={designationEnum}
+            placeholder="Select designations..."
+            loading={false}
+            searchPlaceholder="Search designations..."
+            emptyMessage="No designations found"
+            allowNA={true}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Rank
-            </label>
-            <select
-              name="rank"
-              value={filterForm.rank}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Ranks</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {rankEnum.map((rank) => (
-                <option key={rank._id} value={rank._id}>
-                  {rank.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* 🆕 Service Type Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Service Type
-            </label>
-            <select
-              name="serviceType"
-              value={filterForm.serviceType}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Service Types</option>
-              <option value={SERVICE_TYPE_ENUM.NA}>N/A</option>
+          {/* 🆕 Grade Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Grade"
+            name="grade"
+            value={filterForm.grade}
+            onChange={handleFilterChange}
+            options={gradeEnum}
+            placeholder="Select grades..."
+            loading={false}
+            searchPlaceholder="Search grades..."
+            emptyMessage="No grades found"
+            allowNA={true}
+          />
 
-              <option value={SERVICE_TYPE_ENUM.FEDERAL}>Federal</option>
-              <option value={SERVICE_TYPE_ENUM.PROVINCIAL}>Provincial</option>
-            </select>
-          </div>
+          {/* 🆕 Cast Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Cast"
+            name="cast"
+            value={filterForm.cast}
+            onChange={handleFilterChange}
+            options={castEnum}
+            placeholder="Select casts..."
+            loading={false}
+            searchPlaceholder="Search casts..."
+            emptyMessage="No casts found"
+            allowNA={true}
+          />
 
-          {/* Station Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Posting Station
-            </label>
-            <select
-              name="station"
-              value={filterForm.station}
-              onChange={handleFilterChange}
-              disabled={loading.stations}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100"
-            >
-              <option value="">
-                {loading.stations ? "Loading..." : `All Stations`}
-              </option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {stationEnum.map((station) => (
-                <option key={station._id} value={station._id}>
-                  {station.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Rank Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Rank"
+            name="rank"
+            value={filterForm.rank}
+            onChange={handleFilterChange}
+            options={rankEnum}
+            placeholder="Select ranks..."
+            loading={false}
+            searchPlaceholder="Search ranks..."
+            emptyMessage="No ranks found"
+            allowNA={true}
+          />
 
-          {/* 🆕 Asset Type Filter using useLookupOptions */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asset Type
-            </label>
-            <select
-              name="assetType"
-              value={filterForm.assetType}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">All Asset Types</option>
-              <option value="NA">N/A</option> {/* 🆕 Add this line */}
-              {assetTypeOptions.map((option, idx) => (
-                <option key={`${option.value}-${idx}`} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 🆕 Service Type Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Service Type"
+            name="serviceType"
+            value={filterForm.serviceType}
+            onChange={handleFilterChange}
+            options={serviceTypeOptions}
+            placeholder="Select service types..."
+            loading={false}
+            searchPlaceholder="Search service types..."
+            emptyMessage="No service types found"
+            allowNA={false} // NA is already included in the options
+          />
+
+          {/* 🆕 Station Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Posting Station"
+            name="station"
+            value={filterForm.station}
+            onChange={handleFilterChange}
+            options={stationEnum}
+            placeholder="Select stations..."
+            loading={loading.stations}
+            searchPlaceholder="Search stations..."
+            emptyMessage="No stations found"
+            allowNA={true}
+          />
+
+          {/* 🆕 Asset Type Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Asset Type"
+            name="assetType"
+            value={filterForm.assetType}
+            onChange={handleFilterChange}
+            options={assetTypeEnumOptions}
+            placeholder="Select asset types..."
+            loading={false}
+            searchPlaceholder="Search asset types..."
+            emptyMessage="No asset types found"
+            allowNA={true}
+          />
         </div>
 
         {/* Filter Action Buttons */}

@@ -221,6 +221,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
   // Helper function to determine if stations field should be read-only
   const isStationsReadOnly = () => {
+    return true;
     if (!isEdit) return false; // Never read-only in add mode
 
     // Check if stations data exists and is not null/empty
@@ -706,14 +707,13 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mobile Number *
+            Mobile Number 
           </label>
           <input
             type="text"
             name="mobileNumber"
             value={formData.mobileNumber}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -758,7 +758,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           value={formData.designation}
           onChange={handleChange}
           enumObject={designationEnum}
-          required={true}
+          required={false}
           placeholder="Select designation"
         />
 
@@ -824,7 +824,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               value={formData.address.tehsil}
               onChange={handleChange}
               enumObject={stationLocations}
-              required={true}
+              required={false}
               placeholder={
                 loadingLocations
                   ? "Loading locations..."
@@ -840,7 +840,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
               value={formData.address.line2}
               onChange={handleChange}
               enumObject={districtLocations}
-              required={true}
+              required={false}
               placeholder="Search and select district..."
             />
           </div>
@@ -856,7 +856,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Station *
+                Station 
               </label>
               <select
                 name="stations"
