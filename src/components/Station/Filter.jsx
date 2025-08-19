@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { getStationLocationsWithEnum } from "./lookUp.js";
 import { getStationStatusWithEnum } from "./stationstatus.js";
 import { getStationDistrictWithEnum } from "./District.js";
+import { SearchableMultiSelect } from "../Employee/searchableMultiselect.jsx"; // 🆕 Import the SearchableMultiSelect component
+import { MultiTextInput } from "../Employee/MultiTextInput.jsx"; // 🆕 Import the MultiTextInput component
+import { getStations } from "./StationApi.js"; // 🆕 Import for station name suggestions
 
 const StationFilters = ({
   filters,
@@ -10,19 +13,80 @@ const StationFilters = ({
   showFilters,
   setShowFilters,
 }) => {
+  // 🆕 Updated filter state to handle arrays for multi-select inputs
   const [filterForm, setFilterForm] = useState({
-    name: filters.name || "",
-    tehsil: filters.tehsil || "",
-    address: filters.address || "",
-    status: filters.status || "",
-    district: filters.district || "",
+    name: Array.isArray(filters.name)
+      ? filters.name
+      : filters.name
+      ? [filters.name]
+      : [],
+    tehsil: Array.isArray(filters.tehsil)
+      ? filters.tehsil
+      : filters.tehsil
+      ? [filters.tehsil]
+      : [],
+    address: Array.isArray(filters.address)
+      ? filters.address
+      : filters.address
+      ? [filters.address]
+      : [],
+    status: Array.isArray(filters.status)
+      ? filters.status
+      : filters.status
+      ? [filters.status]
+      : [],
+    district: Array.isArray(filters.district)
+      ? filters.district
+      : filters.district
+      ? [filters.district]
+      : [],
   });
 
-  const [stationLocations, setStationLocations] = useState({});
-  const [stationStatuses, setStationStatuses] = useState({});
-  const [stationDistrict, setStationDistrict] = useState({});
+  // 🆕 Convert enum objects to arrays for SearchableMultiSelect
+  const [stationLocations, setStationLocations] = useState([]);
+  const [stationStatuses, setStationStatuses] = useState([]);
+  const [stationDistrict, setStationDistrict] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingStatuses, setLoadingStatuses] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+
+  // 🆕 Suggestions for name input only (address kept simple)
+  const [suggestions, setSuggestions] = useState({
+    name: [],
+  });
+
+  const [isSearching, setIsSearching] = useState({
+    name: false,
+  });
+
+  // 🆕 Search station names function
+  const searchStationNames = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, name: [] }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, name: true }));
+
+    try {
+      const result = await getStations({
+        name: query,
+        limit: 10,
+      });
+
+      if (result.success) {
+        const stations = result.data.stations || result.data || [];
+        const names = stations
+          .map((station) => station.name)
+          .filter(Boolean);
+        setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
+      }
+    } catch (error) {
+      console.error("Error searching station names:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, name: false }));
+    }
+  };
 
   // Fetch station locations and statuses on component mount
   useEffect(() => {
@@ -34,62 +98,106 @@ const StationFilters = ({
   // Update form when filters change externally
   useEffect(() => {
     setFilterForm({
-      name: filters.name || "",
-      tehsil: filters.tehsil || "",
-      address: filters.address || "",
-      status: filters.status || "",
-      district: filters.district || "",
+      name: Array.isArray(filters.name)
+        ? filters.name
+        : filters.name
+        ? [filters.name]
+        : [],
+      tehsil: Array.isArray(filters.tehsil)
+        ? filters.tehsil
+        : filters.tehsil
+        ? [filters.tehsil]
+        : [],
+      address: Array.isArray(filters.address)
+        ? filters.address
+        : filters.address
+        ? [filters.address]
+        : [],
+      status: Array.isArray(filters.status)
+        ? filters.status
+        : filters.status
+        ? [filters.status]
+        : [],
+      district: Array.isArray(filters.district)
+        ? filters.district
+        : filters.district
+        ? [filters.district]
+        : [],
     });
   }, [filters]);
 
-  // Fetch station locations from API
+  // 🆕 Fetch station locations from API and convert to array format
   const fetchStationLocations = async () => {
     setLoadingLocations(true);
     try {
       const result = await getStationLocationsWithEnum();
       if (result.success) {
-        setStationLocations(result.data);
+        // Convert object to array format for SearchableMultiSelect
+        const locationsArray = Object.entries(result.data).map(([id, name]) => ({
+          _id: id,
+          name: name,
+        }));
+        setStationLocations(locationsArray);
       } else {
         console.error("Error fetching station locations:", result.error);
+        setStationLocations([]);
       }
     } catch (error) {
       console.error("Error fetching station locations:", error);
+      setStationLocations([]);
     } finally {
       setLoadingLocations(false);
     }
   };
 
-  // Fetch station statuses from API
+  // 🆕 Fetch station statuses from API and convert to array format
   const fetchStationStatuses = async () => {
     setLoadingStatuses(true);
     try {
       const result = await getStationStatusWithEnum();
       if (result.success) {
-        setStationStatuses(result.data);
+        // Convert object to array format for SearchableMultiSelect
+        const statusesArray = Object.entries(result.data).map(([id, name]) => ({
+          _id: id,
+          name: name,
+        }));
+        setStationStatuses(statusesArray);
       } else {
         console.error("Error fetching station statuses:", result.error);
+        setStationStatuses([]);
       }
     } catch (error) {
       console.error("Error fetching station statuses:", error);
+      setStationStatuses([]);
     } finally {
       setLoadingStatuses(false);
     }
   };
+
+  // 🆕 Fetch station districts from API and convert to array format
   const fetchStationDistrict = async () => {
-    setLoadingStatuses(true);
+    setLoadingDistricts(true);
     try {
       const result = await getStationDistrictWithEnum();
       if (result.success) {
-        setStationDistrict(result.data);
+        // Convert object to array format for SearchableMultiSelect
+        const districtsArray = Object.entries(result.data).map(([id, name]) => ({
+          _id: id,
+          name: name,
+        }));
+        setStationDistrict(districtsArray);
       } else {
-        console.error("Error fetching station statuses:", result.error);
+        console.error("Error fetching station districts:", result.error);
+        setStationDistrict([]);
       }
     } catch (error) {
-      console.error("Error fetching station statuses:", error);
+      console.error("Error fetching station districts:", error);
+      setStationDistrict([]);
     } finally {
-      setLoadingStatuses(false);
+      setLoadingDistricts(false);
     }
-  };  
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilterForm((prev) => ({
@@ -98,27 +206,27 @@ const StationFilters = ({
     }));
   };
 
+  // Updated handleApplyFilters to handle arrays
   const handleApplyFilters = () => {
     const activeFilters = {};
-    if (filterForm.name.trim()) activeFilters.name = filterForm.name.trim();
-    if (filterForm.tehsil.trim())
-      activeFilters.tehsil = filterForm.tehsil.trim();
-    if (filterForm.address.trim())
-      activeFilters.address = filterForm.address.trim();
-    if (filterForm.status.trim())
-      activeFilters.status = filterForm.status.trim();
-    if (filterForm.district.trim())
-      activeFilters.district = filterForm.district.trim();
+    if (filterForm.name.length > 0) activeFilters.name = filterForm.name;
+    if (filterForm.tehsil.length > 0) activeFilters.tehsil = filterForm.tehsil;
+    if (filterForm.address.length > 0) activeFilters.address = filterForm.address;
+    if (filterForm.status.length > 0) activeFilters.status = filterForm.status;
+    if (filterForm.district.length > 0) activeFilters.district = filterForm.district;
+
     updateFilters(activeFilters);
+    setShowFilters(false);
   };
 
+  // Updated handleClearFilters to reset arrays
   const handleClearFilters = () => {
     setFilterForm({
-      name: "",
-      tehsil: "",
-      address: "",
-      status: "",
-      district: "",
+      name: [],
+      tehsil: [],
+      address: [],
+      status: [],
+      district: [],
     });
     clearFilters();
   };
@@ -126,6 +234,23 @@ const StationFilters = ({
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleApplyFilters();
+    }
+  };
+
+  // 🆕 Helper function to get display name for selected filters
+  const getDisplayName = (filterType, id) => {
+    switch (filterType) {
+      case 'tehsil':
+        const tehsil = stationLocations.find(item => item._id === id);
+        return tehsil ? tehsil.name : id;
+      case 'status':
+        const status = stationStatuses.find(item => item._id === id);
+        return status ? status.name : id;
+      case 'district':
+        const district = stationDistrict.find(item => item._id === id);
+        return district ? district.name : id;
+      default:
+        return id;
     }
   };
 
@@ -181,120 +306,78 @@ const StationFilters = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {/* Station Name Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Station Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={filterForm.name}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., Gulshan"
-            />
-          </div>
+          {/* 🆕 Station Name Filter - Now MultiTextInput with suggestions */}
+          <MultiTextInput
+            label="Station Name"
+            name="name"
+            value={filterForm.name}
+            onChange={handleFilterChange}
+            placeholder="Type station name..."
+            minLength={2}
+            maxLength={50}
+            enableSuggestions={true}
+            onSearch={searchStationNames}
+            suggestions={suggestions.name}
+            isSearching={isSearching.name}
+            searchPlaceholder="Type to search station names..."
+            emptyMessage="No station names found"
+            minSearchLength={2}
+            onSuggestionSelect={(suggestion) => suggestion}
+          />
 
-          {/* Tehsil Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tehsil
-            </label>
-            <select
-              name="tehsil"
-              value={filterForm.tehsil}
-              onChange={handleFilterChange}
-              disabled={loadingLocations}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">
-                {loadingLocations ? "Loading..." : "All Tehsils"}
-              </option>
-              {Object.entries(stationLocations).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            {loadingLocations && (
-              <p className="text-xs text-gray-500 mt-1">
-                Loading station locations...
-              </p>
-            )}
-          </div>
+          {/* 🆕 Tehsil Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Tehsil"
+            name="tehsil"
+            value={filterForm.tehsil}
+            onChange={handleFilterChange}
+            options={stationLocations}
+            placeholder="Select tehsils..."
+            loading={loadingLocations}
+            searchPlaceholder="Search tehsils..."
+            emptyMessage="No tehsils found"
+            allowNA={true}
+          />
 
-          {/* Address Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={filterForm.address}
-              onChange={handleFilterChange}
-              onKeyPress={handleKeyPress}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., Main Street"
-            />
-          </div>
+          {/* Address Filter - MultiTextInput without suggestions */}
+          <MultiTextInput
+            label="Address"
+            name="address"
+            value={filterForm.address}
+            onChange={handleFilterChange}
+            placeholder="Type address and press Enter..."
+            minLength={3}
+            maxLength={100}
+            enableSuggestions={false}
+          />
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              name="status"
-              value={filterForm.status}
-              onChange={handleFilterChange}
-              disabled={loadingStatuses}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">
-                {loadingStatuses ? "Loading..." : "All Statuses"}
-              </option>
-              {Object.entries(stationStatuses).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            {loadingStatuses && (
-              <p className="text-xs text-gray-500 mt-1">
-                Loading station statuses...
-              </p>
-            )}
-          </div>
+          {/* 🆕 Status Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="Status"
+            name="status"
+            value={filterForm.status}
+            onChange={handleFilterChange}
+            options={stationStatuses}
+            placeholder="Select status..."
+            loading={loadingStatuses}
+            searchPlaceholder="Search status..."
+            emptyMessage="No status found"
+            allowNA={true}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              District
-            </label>
-            <select
-              name="district"
-              value={filterForm.district}
-              onChange={handleFilterChange}
-              disabled={loadingStatuses}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">
-                {loadingStatuses ? "Loading..." : "All Districts"}
-              </option>
-              {Object.entries(stationDistrict).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            {loadingStatuses && (
-              <p className="text-xs text-gray-500 mt-1">
-                Loading station statuses...
-              </p>
-            )}
-          </div>
+          {/* 🆕 District Filter - Now SearchableMultiSelect */}
+          <SearchableMultiSelect
+            label="District"
+            name="district"
+            value={filterForm.district}
+            onChange={handleFilterChange}
+            options={stationDistrict}
+            placeholder="Select districts..."
+            loading={loadingDistricts}
+            searchPlaceholder="Search districts..."
+            emptyMessage="No districts found"
+            allowNA={true}
+          />
         </div>
 
         {/* Filter Action Buttons - Moved below the grid */}
@@ -313,20 +396,27 @@ const StationFilters = ({
           </button>
         </div>
 
-        {/* Active Filters Display */}
+        {/* 🆕 Updated Active Filters Display to handle arrays */}
         {Object.keys(filters).length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-gray-600 font-medium">
                 Active filters:
               </span>
-              {filters.name && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Name: {filters.name}
+              
+              {/* Name filters */}
+              {filters.name && Array.isArray(filters.name) && filters.name.map((name, index) => (
+                <span key={`name-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Name: {name}
                   <button
                     onClick={() => {
+                      const newNames = filters.name.filter((_, i) => i !== index);
                       const newFilters = { ...filters };
-                      delete newFilters.name;
+                      if (newNames.length === 0) {
+                        delete newFilters.name;
+                      } else {
+                        newFilters.name = newNames;
+                      }
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -334,14 +424,21 @@ const StationFilters = ({
                     ×
                   </button>
                 </span>
-              )}
-              {filters.tehsil && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Tehsil: {stationLocations[filters.tehsil] || filters.tehsil}
+              ))}
+
+              {/* Tehsil filters */}
+              {filters.tehsil && Array.isArray(filters.tehsil) && filters.tehsil.map((tehsilId, index) => (
+                <span key={`tehsil-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Tehsil: {getDisplayName('tehsil', tehsilId)}
                   <button
                     onClick={() => {
+                      const newTehsils = filters.tehsil.filter((_, i) => i !== index);
                       const newFilters = { ...filters };
-                      delete newFilters.tehsil;
+                      if (newTehsils.length === 0) {
+                        delete newFilters.tehsil;
+                      } else {
+                        newFilters.tehsil = newTehsils;
+                      }
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -349,14 +446,21 @@ const StationFilters = ({
                     ×
                   </button>
                 </span>
-              )}
-              {filters.address && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Address: {filters.address}
+              ))}
+
+              {/* Address filters */}
+              {filters.address && Array.isArray(filters.address) && filters.address.map((address, index) => (
+                <span key={`address-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Address: {address}
                   <button
                     onClick={() => {
+                      const newAddresses = filters.address.filter((_, i) => i !== index);
                       const newFilters = { ...filters };
-                      delete newFilters.address;
+                      if (newAddresses.length === 0) {
+                        delete newFilters.address;
+                      } else {
+                        newFilters.address = newAddresses;
+                      }
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -364,14 +468,21 @@ const StationFilters = ({
                     ×
                   </button>
                 </span>
-              )}
-              {filters.status && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Status: {stationStatuses[filters.status] || filters.status}
+              ))}
+
+              {/* Status filters */}
+              {filters.status && Array.isArray(filters.status) && filters.status.map((statusId, index) => (
+                <span key={`status-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Status: {getDisplayName('status', statusId)}
                   <button
                     onClick={() => {
+                      const newStatuses = filters.status.filter((_, i) => i !== index);
                       const newFilters = { ...filters };
-                      delete newFilters.status;
+                      if (newStatuses.length === 0) {
+                        delete newFilters.status;
+                      } else {
+                        newFilters.status = newStatuses;
+                      }
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -379,14 +490,21 @@ const StationFilters = ({
                     ×
                   </button>
                 </span>
-              )}
-              {filters.district && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  District: {filters.district}
+              ))}
+
+              {/* District filters */}
+              {filters.district && Array.isArray(filters.district) && filters.district.map((districtId, index) => (
+                <span key={`district-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  District: {getDisplayName('district', districtId)}
                   <button
                     onClick={() => {
+                      const newDistricts = filters.district.filter((_, i) => i !== index);
                       const newFilters = { ...filters };
-                      delete newFilters.district;
+                      if (newDistricts.length === 0) {
+                        delete newFilters.district;
+                      } else {
+                        newFilters.district = newDistricts;
+                      }
                       updateFilters(newFilters);
                     }}
                     className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -394,7 +512,7 @@ const StationFilters = ({
                     ×
                   </button>
                 </span>
-              )}
+              ))}
             </div>
           </div>
         )}

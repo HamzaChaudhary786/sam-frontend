@@ -259,6 +259,27 @@ const EmployeeGridContainer = () => {
     return result;
   };
 
+const saveAllCell = async () => {
+  const employeeIds = Object.keys(editingData);
+  if (employeeIds.length === 0) return;
+
+  try {
+    // Save all edited employees in parallel
+    await Promise.all(
+      employeeIds.map(async (employeeId) => {
+        const employee = employees.find((emp) => emp._id === employeeId);
+        if (employee) {
+          await saveCell(employee);
+        }
+      })
+    );
+    toast.success("All changes saved!");
+  } catch (error) {
+    toast.error("Failed to save all changes");
+    console.error(error);
+  }
+};
+
   const saveCell = async (employee) => {
     try {
       // Get the editing data for this specific employee
@@ -674,6 +695,7 @@ const EmployeeGridContainer = () => {
         onCancelEditing={cancelAllEditing}
         onCellChange={handleCellChange}
         onSaveCell={saveCell}
+        onSaveAll={saveAllCell}
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}
         onImageClick={setImageModal}

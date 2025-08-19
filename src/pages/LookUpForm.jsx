@@ -1,18 +1,33 @@
-// Complete LookupPage with bulk add functionality and searchable filter
+// Complete LookupPage with multi-select filters and searchable suggestions
 import React, { useState, useEffect, useCallback } from "react";
 import { useLookups } from "../services/LookUp.js";
 import LookupModal from "../components/LookUpForm/LookUpForm.jsx";
 import BulkLookupModal from "../components/LookUpForm/BulkLookup.jsx";
 import { lookupEnum } from "../constants/Enum.js";
-import { EnumSelect } from "../components/SearchableDropdown.jsx";
+import { SearchableMultiSelect } from "../components/Employee/searchableMultiselect.jsx"; // 🆕 Import multi-select component
+import { MultiTextInput } from "../components/Employee/MultiTextInput"; // 🆕 Import multi-text input component
 
 const LookupPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
+  const [showFilters, setShowFilters] = useState(true); // For mobile responsiveness
+
+  // 🆕 Multi-select filter state
+  const [filterForm, setFilterForm] = useState({
+    name: [], // Multi-text input with suggestions
+    type: [], // Multi-select dropdown
+  });
+
+  // 🆕 Suggestions state for name search
+  const [suggestions, setSuggestions] = useState({
+    name: [],
+  });
+
+  const [isSearching, setIsSearching] = useState({
+    name: false,
+  });
 
   const {
     lookups,
@@ -26,8 +41,8 @@ const LookupPage = () => {
     modifyLookup,
     removeLookup,
     goToPage,
-    searchLookups,
-    filterByType,
+    searchLookupNames, // 🆕 New method for suggestions
+    updateFilters, // 🆕 New method for updating filters
     clearFilters,
     getAllUniqueTypes,
     getPaginationInfo,
@@ -36,55 +51,68 @@ const LookupPage = () => {
     hasActiveFilters
   } = useLookups();
 
-  // Debounced search to avoid too many API calls
-  const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
+  // 🆕 Convert lookupEnum array to dropdown format for SearchableMultiSelect
+  const lookupTypeOptions = lookupEnum.map((type) => ({
+    _id: type,
+    name: type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, ' $1'),
+  }));
 
-  // Helper function to get enum value from key/index (same as modals)
-  const getEnumValue = (keyOrValue) => {
-    // If it's already a valid enum value, return it
-    if (Object.values(lookupEnum).includes(keyOrValue)) {
-      return keyOrValue;
+  // 🆕 Search lookup names function for suggestions
+  const searchLookupNamesForSuggestions = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, name: [] }));
+      return;
     }
-    
-    // If it's a key, get the corresponding value
-    if (lookupEnum[keyOrValue]) {
-      return lookupEnum[keyOrValue];
-    }
-    
-    // If it's an index (number), get the value at that index
-    if (typeof keyOrValue === 'number' || !isNaN(keyOrValue)) {
-      const enumValues = Object.values(lookupEnum);
-      const index = parseInt(keyOrValue);
-      if (index >= 0 && index < enumValues.length) {
-        return enumValues[index];
+
+    setIsSearching((prev) => ({ ...prev, name: true }));
+
+    try {
+      // If searchLookupNames doesn't exist in the hook, use direct API call
+      if (typeof searchLookupNames === 'function') {
+        const names = await searchLookupNames(query, { limit: 10 });
+        setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
+      } else {
+        // Fallback: filter from current lookups data
+        const filteredNames = lookups
+          .filter(lookup => 
+            lookup.name && 
+            lookup.name.toLowerCase().includes(query.toLowerCase())
+          )
+          .map(lookup => lookup.name)
+          .slice(0, 10);
+        setSuggestions((prev) => ({ ...prev, name: [...new Set(filteredNames)] }));
       }
+    } catch (error) {
+      console.error("Error searching lookup names:", error);
+      // Fallback to filtering current data on error
+      const filteredNames = lookups
+        .filter(lookup => 
+          lookup.name && 
+          lookup.name.toLowerCase().includes(query.toLowerCase())
+        )
+        .map(lookup => lookup.name)
+        .slice(0, 10);
+      setSuggestions((prev) => ({ ...prev, name: [...new Set(filteredNames)] }));
+    } finally {
+      setIsSearching((prev) => ({ ...prev, name: false }));
     }
-    
-    // Return as-is if we can't determine the correct value
-    return keyOrValue;
   };
 
-  const debouncedSearch = useCallback((value) => {
-    if (searchDebounceTimer) {
-      clearTimeout(searchDebounceTimer);
-    }
-    
-    const timer = setTimeout(() => {
-      console.log('Executing debounced search:', value);
-      searchLookups(value);
-    }, 300); // Wait 300ms after user stops typing
-    
-    setSearchDebounceTimer(timer);
-  }, [searchLookups, searchDebounceTimer]);
-
-  // Cleanup timeout on unmount
+  // 🆕 Update filterForm when currentFilters change
   useEffect(() => {
-    return () => {
-      if (searchDebounceTimer) {
-        clearTimeout(searchDebounceTimer);
-      }
-    };
-  }, [searchDebounceTimer]);
+    setFilterForm({
+      name: Array.isArray(currentFilters.search) 
+        ? currentFilters.search 
+        : currentFilters.search 
+        ? [currentFilters.search] 
+        : [],
+      type: Array.isArray(currentFilters.lookupType)
+        ? currentFilters.lookupType
+        : currentFilters.lookupType
+        ? [currentFilters.lookupType]
+        : [],
+    });
+  }, [currentFilters]);
 
   const handleAddClick = () => {
     setEditData(null);
@@ -120,7 +148,6 @@ const LookupPage = () => {
 
   const handleBulkModalSuccess = async (response) => {
     setIsBulkModalOpen(false);
-    // Refresh the lookups list after bulk creation
     fetchLookups();
   };
 
@@ -134,52 +161,77 @@ const LookupPage = () => {
     setIsBulkModalOpen(false);
   };
 
-  const handleSearch = (value) => {
-    console.log('Search input changed:', value);
-    setSearchTerm(value);
-    
-    // Use debounced search for better performance
-    if (value.trim() === '') {
-      // If empty, search immediately
-      searchLookups('');
-    } else {
-      // Otherwise, debounce
-      debouncedSearch(value);
-    }
-  };
-
+  // 🆕 Handle filter changes with debugging
   const handleFilterChange = (e) => {
-    const { value } = e.target;
-    console.log('Filter type changed (raw value):', value);
-    
-    // Convert enum key/index to proper enum value
-    const enumValue = getEnumValue(value);
-    console.log('Filter type converted to enum value:', enumValue);
-    
-    setFilterType(value); // Store the display value for UI
-    filterByType(enumValue); // Use the enum value for filtering
+    const { name, value } = e.target;
+    console.log(`Filter change - ${name}:`, value); // Debug log
+    setFilterForm((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      console.log('Updated filterForm:', updated); // Debug log
+      return updated;
+    });
   };
 
+  // 🆕 Apply filters with proper state handling
+  const handleApplyFilters = async () => {
+    const activeFilters = {};
+    
+    console.log('Current filterForm before applying:', filterForm); // Debug log
+    
+    if (filterForm.name.length > 0) {
+      activeFilters.search = filterForm.name;
+      console.log('Adding search filter:', filterForm.name);
+    }
+    
+    if (filterForm.type.length > 0) {
+      activeFilters.lookupType = filterForm.type;
+      console.log('Adding lookupType filter:', filterForm.type);
+    }
+    
+    console.log('Final activeFilters being sent:', activeFilters); // Debug log
+    
+    // Update filters - this will trigger useEffect in the hook automatically
+    updateFilters(activeFilters);
+    
+    setShowFilters(false); // Hide on mobile after applying
+  };
+
+  // 🆕 Clear all filters with proper state handling
   const clearAllFilters = () => {
     console.log('Clearing all filters from page');
-    setSearchTerm("");
-    setFilterType("");
+    setFilterForm({
+      name: [],
+      type: [],
+    });
+    
+    // Clear filters - this will trigger useEffect in the hook automatically
     clearFilters();
   };
 
   const uniqueTypes = getAllUniqueTypes();
   const paginationInfo = getPaginationInfo();
 
+  // 🆕 Helper function to get display name for selected filters
+  const getDisplayName = (filterType, id) => {
+    if (filterType === 'type') {
+      const typeOption = lookupTypeOptions.find(item => item._id === id);
+      return typeOption ? typeOption.name : id;
+    }
+    return id;
+  };
+
   // Debug current state
   useEffect(() => {
     console.log('Current filters:', currentFilters);
-    console.log('Search term state:', searchTerm);
-    console.log('Filter type state:', filterType);
+    console.log('Filter form state:', filterForm);
     console.log('Total items:', totalItems);
-  }, [currentFilters, searchTerm, filterType, totalItems]);
+  }, [currentFilters, filterForm, totalItems]);
 
   // Pagination component
-  const   Pagination = () => {
+  const Pagination = () => {
     if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {
@@ -349,73 +401,167 @@ const LookupPage = () => {
           </div>
         )}
 
-        {/* Filters and Search */}
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-                {searchTerm && <span className="text-xs text-blue-600 ml-2">({searchTerm.length} chars)</span>}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search by name or type..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => handleSearch('')}
-                    className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                    title="Clear search"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex-1">
-              <EnumSelect
-                label="Filter by Type"
-                name="filterType"
-                value={filterType}
-                onChange={handleFilterChange}
-                enumObject={lookupEnum}
-                required={false}
-                placeholder="Search and select type to filter"
-                disabled={typesLoading}
-                allowClear={true}
-              />
-              {typesLoading && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Loading types from all pages...
-                </p>
+        {/* 🆕 Mobile Filter Toggle Button */}
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+          >
+            <span className="text-sm font-medium text-gray-700">
+              Filter Lookups
+              {hasActiveFilters() && (
+                <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                  {(filterForm.name.length + filterForm.type.length)}
+                </span>
               )}
-            </div>
+            </span>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform ${
+                showFilters ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* 🆕 Enhanced Filters Section */}
+        <div
+          className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
+            showFilters || window.innerWidth >= 1024 ? "block" : "hidden lg:block"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Filter Lookups</h3>
+            {/* Active filter count */}
+            {hasActiveFilters() && (
+              <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+                {(filterForm.name.length + filterForm.type.length)} active filter
+                {(filterForm.name.length + filterForm.type.length) !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
-          
-          {/* Active filters indicator */}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* 🆕 Name Filter - MultiTextInput with suggestions */}
+            <MultiTextInput
+              label="Search Names"
+              name="name"
+              value={filterForm.name}
+              onChange={handleFilterChange}
+              placeholder="Type lookup name..."
+              minLength={2}
+              maxLength={50}
+              enableSuggestions={true}
+              onSearch={searchLookupNamesForSuggestions}
+              suggestions={suggestions.name}
+              isSearching={isSearching.name}
+              searchPlaceholder="Type to search lookup names..."
+              emptyMessage="No lookup names found"
+              minSearchLength={2}
+              onSuggestionSelect={(suggestion) => suggestion}
+              debug={true}
+            />
+
+            {/* 🆕 Type Filter - SearchableMultiSelect */}
+            <SearchableMultiSelect
+              label="Filter by Type"
+              name="type"
+              value={filterForm.type}
+              onChange={handleFilterChange}
+              options={lookupTypeOptions}
+              placeholder="Select types..."
+              loading={typesLoading}
+              searchPlaceholder="Search types..."
+              emptyMessage="No types found"
+              allowNA={false}
+            />
+          </div>
+
+          {/* 🆕 Filter Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">
+            <button
+              onClick={handleApplyFilters}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors text-sm font-medium"
+            >
+              Apply Filters
+            </button>
+            <button
+              onClick={clearAllFilters}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors text-sm font-medium"
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          {/* 🆕 Active Filters Display */}
           {hasActiveFilters() && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-2 text-blue-600">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-                  </svg>
-                  <span>Filters active - Showing {totalItems} matching result{totalItems !== 1 ? 's' : ''}</span>
-                </div>
-                <button 
-                  onClick={clearAllFilters}
-                  className="text-blue-600 hover:text-blue-800 underline text-sm"
-                >
-                  Clear all filters
-                </button>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-gray-600 font-medium">
+                  Active filters:
+                </span>
+                
+                {/* Name filters */}
+                {filterForm.name.map((name, index) => (
+                  <span key={`name-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Name: {name}
+                    <button
+                      onClick={() => {
+                        const newNames = filterForm.name.filter((_, i) => i !== index);
+                        setFilterForm(prev => ({ ...prev, name: newNames }));
+                        // Auto-apply filter
+                        if (newNames.length === 0) {
+                          const newFilters = { ...currentFilters };
+                          delete newFilters.search;
+                          updateFilters(newFilters);
+                        } else {
+                          updateFilters({ ...currentFilters, search: newNames });
+                        }
+                      }}
+                      className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+
+                {/* Type filters */}
+                {filterForm.type.map((typeId, index) => (
+                  <span key={`type-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Type: {getDisplayName('type', typeId)}
+                    <button
+                      onClick={() => {
+                        const newTypes = filterForm.type.filter((_, i) => i !== index);
+                        setFilterForm(prev => ({ ...prev, type: newTypes }));
+                        // Auto-apply filter
+                        if (newTypes.length === 0) {
+                          const newFilters = { ...currentFilters };
+                          delete newFilters.lookupType;
+                          updateFilters(newFilters);
+                        } else {
+                          updateFilters({ ...currentFilters, lookupType: newTypes });
+                        }
+                      }}
+                      className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
               </div>
             </div>
           )}
         </div>
+
         {/* Lookups Table */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -461,15 +607,9 @@ const LookupPage = () => {
                         </svg>
                         <p className="text-lg font-medium">No lookups found</p>
                         <p className="text-sm">
-                          {searchTerm || filterType ? (
+                          {hasActiveFilters() ? (
                             <>
                               No results match your search criteria
-                              {searchTerm && (
-                                <><br />Search term: "<span className="font-medium text-blue-600">{searchTerm}</span>"</>
-                              )}
-                              {filterType && (
-                                <><br />Filter type: "<span className="font-medium text-blue-600">{filterType}</span>"</>
-                              )}
                               <br />
                               <button 
                                 onClick={clearAllFilters}
@@ -495,7 +635,7 @@ const LookupPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          getEnumValue(filterType) === item.lookupType 
+                          filterForm.type.includes(item.lookupType)
                             ? 'bg-blue-200 text-blue-900 ring-2 ring-blue-300' 
                             : 'bg-blue-100 text-blue-800'
                         }`}>

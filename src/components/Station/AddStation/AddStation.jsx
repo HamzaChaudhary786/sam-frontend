@@ -49,9 +49,8 @@ const SearchableSelect = ({
 
       <div className="relative">
         <div
-          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-          }`}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+            }`}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           <div className="flex justify-between items-center">
@@ -61,9 +60,8 @@ const SearchableSelect = ({
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ${
-                isOpen ? "transform rotate-180" : ""
-              }`}
+              className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "transform rotate-180" : ""
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -96,11 +94,10 @@ const SearchableSelect = ({
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}
-                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                      value === option.value
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-900"
-                    }`}
+                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${value === option.value
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-900"
+                      }`}
                     onClick={() => handleSelect(option.value)}
                   >
                     <div className="font-medium">{option.label}</div>
@@ -148,6 +145,8 @@ const StationModal = ({
   const [loadingDesignations, setLoadingDesignations] = useState(false);
   const [position, setPosition] = useState({ lat: null, lng: null });
   const [hideLocationPanels, setHideLocationPanels] = useState(false);
+  const [lockLocation, setLockLocation] = useState(true);
+
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
@@ -272,12 +271,12 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: [
-                  ...item.assetRequirement,
-                  { assets: "", quantity: 1 },
-                ],
-              }
+              ...item,
+              assetRequirement: [
+                ...item.assetRequirement,
+                { assets: "", quantity: 1 },
+              ],
+            }
             : item
       ),
     }));
@@ -290,11 +289,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: item.assetRequirement.filter(
-                  (_, ai) => ai !== assetIndex
-                ),
-              }
+              ...item,
+              assetRequirement: item.assetRequirement.filter(
+                (_, ai) => ai !== assetIndex
+              ),
+            }
             : item
       ),
     }));
@@ -307,11 +306,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: item.assetRequirement.map((asset, ai) =>
-                  ai === assetIndex ? { ...asset, [field]: value } : asset
-                ),
-              }
+              ...item,
+              assetRequirement: item.assetRequirement.map((asset, ai) =>
+                ai === assetIndex ? { ...asset, [field]: value } : asset
+              ),
+            }
             : item
       ),
     }));
@@ -324,16 +323,16 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: [
-                  ...item.staffDetail,
-                  {
-                    designation: "",
-                    numberOfPersonal: 0,
-                    assetRequirement: [{ assets: "", quantity: 1 }],
-                  },
-                ],
-              }
+              ...item,
+              staffDetail: [
+                ...item.staffDetail,
+                {
+                  designation: "",
+                  numberOfPersonal: 0,
+                  assetRequirement: [{ assets: "", quantity: 1 }],
+                },
+              ],
+            }
             : item
       ),
     }));
@@ -346,11 +345,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.filter(
-                  (_, si) => si !== staffIndex
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.filter(
+                (_, si) => si !== staffIndex
+              ),
+            }
             : item
       ),
     }));
@@ -363,11 +362,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex ? { ...staff, [field]: value } : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex ? { ...staff, [field]: value } : staff
+              ),
+            }
             : item
       ),
     }));
@@ -380,19 +379,19 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: [
-                          ...staff.assetRequirement,
-                          { assets: "", quantity: 1 },
-                        ],
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: [
+                      ...staff.assetRequirement,
+                      { assets: "", quantity: 1 },
+                    ],
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -405,18 +404,18 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: staff.assetRequirement.filter(
-                          (_, ai) => ai !== assetIndex
-                        ),
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: staff.assetRequirement.filter(
+                      (_, ai) => ai !== assetIndex
+                    ),
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -435,21 +434,21 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: staff.assetRequirement.map(
-                          (asset, ai) =>
-                            ai === assetIndex
-                              ? { ...asset, [field]: value }
-                              : asset
-                        ),
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: staff.assetRequirement.map(
+                      (asset, ai) =>
+                        ai === assetIndex
+                          ? { ...asset, [field]: value }
+                          : asset
+                    ),
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -497,9 +496,8 @@ const StationModal = ({
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${
-        import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-      }&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+        }&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = () => setMapLoaded(true);
@@ -564,9 +562,8 @@ const StationModal = ({
           ...assetsData.map((asset) => ({
             value: asset._id,
             label: asset.name,
-            subtitle: `${asset.type}${
-              asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
-            }${asset.vehicleNumber ? ` - ${asset.vehicleNumber}` : ""}`,
+            subtitle: `${asset.type}${asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
+              }${asset.vehicleNumber ? ` - ${asset.vehicleNumber}` : ""}`,
           })),
         ];
         setAssetOptions(assetOptions);
@@ -683,6 +680,9 @@ const StationModal = ({
 
   // Initialize form data for editing
   useEffect(() => {
+
+    setLockLocation(true); // ADD THIS LINE
+
     if (isEdit && editData) {
       setFormData({
         name: editData.name || "",
@@ -979,6 +979,11 @@ const StationModal = ({
 
   // Handle manual coordinate input
   const handleCoordinateChange = (e) => {
+
+    if (isEdit && lockLocation) {
+      return;
+    }
+
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -1181,6 +1186,10 @@ const StationModal = ({
   };
 
   useEffect(() => {
+
+    if (isEdit && lockLocation) {
+      return;
+    }
     if (position.lat && position.lng) {
       setFormData((prev) => ({
         ...prev,
@@ -1188,7 +1197,7 @@ const StationModal = ({
         longitude: position.lng.toString(),
       }));
     }
-  }, [position]);
+  }, [position, isEdit, lockLocation]);
 
   if (!isOpen) return null;
 
@@ -1840,6 +1849,28 @@ const StationModal = ({
               </div>
             </div>
 
+            {isEdit && (
+              <div className="border-t pt-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="lockLocation"
+                    checked={lockLocation}
+                    onChange={(e) => setLockLocation(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="lockLocation" className="text-sm font-medium text-gray-700">
+                    🔒 Lock current location (prevent coordinate changes)
+                  </label>
+                </div>
+                {lockLocation && (
+                  <p className="text-xs text-gray-500 mt-1 ml-7">
+                    Location is locked. Uncheck to allow coordinate modifications.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Coordinates */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
@@ -1858,7 +1889,9 @@ const StationModal = ({
                     name="latitude"
                     value={formData.latitude}
                     onChange={handleCoordinateChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isEdit && lockLocation} // ADD THIS LINE
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit && lockLocation ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`} // ADD CONDITIONAL STYLING
                     placeholder="e.g., 31.5204"
                   />
                 </div>
@@ -1872,7 +1905,9 @@ const StationModal = ({
                     name="longitude"
                     value={formData.longitude}
                     onChange={handleCoordinateChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isEdit && lockLocation} // ADD THIS LINE
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit && lockLocation ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`} // ADD CONDITIONAL STYLING
                     placeholder="e.g., 74.3587"
                   />
                 </div>
@@ -1882,6 +1917,7 @@ const StationModal = ({
                 <MapLocation
                   onPositionChange={setPosition}
                   hidePanels={hideLocationPanels}
+                  disabled={isEdit && lockLocation}
                 />
               </div>
             </div>
@@ -1906,8 +1942,8 @@ const StationModal = ({
                   ? "Updating..."
                   : "Adding..."
                 : isEdit
-                ? "Update Station"
-                : "Add Station"}
+                  ? "Update Station"
+                  : "Add Station"}
             </button>
           </div>
         </form>
