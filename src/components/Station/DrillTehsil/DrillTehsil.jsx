@@ -31,6 +31,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
+import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
 
 const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [data, setData] = useState(null);
@@ -38,6 +39,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [error, setError] = useState(null);
   const [selectedStation, setSelectedStation] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showDistrictView, setShowDistrictView] = useState(false);
 
   useEffect(() => {
     fetchComprehensiveTehsilData();
@@ -74,6 +76,72 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     }
   };
 
+  const handleDrillUpToDistrict = () => {
+    setShowDistrictView(true);
+  };
+
+  // Add this function after handleBackFromDistrict
+const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/employee/tehsil-to-district?tehsil=${selectedTehsil}&district=${district}&page=1&limit=10`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch tehsil to district data");
+    }
+
+    const result = await response.json();
+    console.log("Tehsil to District API Response:", result);
+    
+    // Update the component data with the new tehsil data
+    setData(result.data);
+    
+    // Optional: You might want to update the URL or state to reflect the new tehsil
+    // This depends on how your routing is set up
+    
+  } catch (err) {
+    setError(err.message);
+    console.error("Tehsil to District API Error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Handler to go back from district view
+  const handleBackFromDistrict = () => {
+    setShowDistrictView(false);
+  };
+
+  if (showDistrictView) {
+  return (
+    <DrillDistrictPage
+      district={data?.districtInfo?.name}
+      tehsil={tehsil}
+      onBack={handleBackFromDistrict}
+      onDrillTehsil={(selectedTehsil) => {
+        // Navigate back to tehsil view and call the tehsil-to-district API
+        setShowDistrictView(false);
+        
+        // Call the tehsil-to-district API
+        fetchTehsilToDistrictData(selectedTehsil, data?.districtInfo?.name);
+        
+        console.log("Drilling down to tehsil:", selectedTehsil);
+      }}
+    />
+  );
+}
+
   const handleStationSelect = (station) => {
     setSelectedStation(selectedStation?._id === station._id ? null : station);
   };
@@ -108,7 +176,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         {/* Drill-up Options */}
         {data.drillUpOptions.canDrillUp && (
           <div className="mt-3 pt-3 border-t border-gray-200">
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            <button
+              onClick={handleDrillUpToDistrict}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
               {data.drillUpOptions.buttonText}
             </button>
             <div className="mt-2 text-xs text-gray-500">
@@ -779,13 +850,12 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
             </div>
           </div>
           <button
-            onClick={() => alert('Under construction District - Drill Up functionality')}
+            onClick={handleDrillUpToDistrict}
             className="flex items-center text-Red-600 hover:text-blue-800 ml-4"
           >
             <ArrowUp className="h-5 w-5 mr-1" />
             Drill Up
           </button>
-
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <Clock className="h-4 w-4" />
