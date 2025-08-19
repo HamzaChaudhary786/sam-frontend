@@ -31,6 +31,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
+import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
 
 const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [data, setData] = useState(null);
@@ -38,6 +39,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [error, setError] = useState(null);
   const [selectedStation, setSelectedStation] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showDistrictView, setShowDistrictView] = useState(false);
 
   useEffect(() => {
     fetchComprehensiveTehsilData();
@@ -74,6 +76,72 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     }
   };
 
+  const handleDrillUpToDistrict = () => {
+    setShowDistrictView(true);
+  };
+
+  // Add this function after handleBackFromDistrict
+  const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/employee/tehsil-to-district?tehsil=${selectedTehsil}&district=${district}&page=1&limit=10`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch tehsil to district data");
+      }
+
+      const result = await response.json();
+      console.log("Tehsil to District API Response:", result);
+
+      // Update the component data with the new tehsil data
+      setData(result.data);
+
+      // Optional: You might want to update the URL or state to reflect the new tehsil
+      // This depends on how your routing is set up
+
+    } catch (err) {
+      setError(err.message);
+      console.error("Tehsil to District API Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler to go back from district view
+  const handleBackFromDistrict = () => {
+    setShowDistrictView(false);
+  };
+
+  if (showDistrictView) {
+    return (
+      <DrillDistrictPage
+        district={data?.districtInfo?.name}
+        tehsil={tehsil}
+        onBack={handleBackFromDistrict}
+        onDrillTehsil={(selectedTehsil) => {
+
+          alert("Under Contruction (In Progress...)")
+          // setShowDistrictView(!showDistrictView);
+          // setActiveTab("overview");
+          // fetchTehsilToDistrictData(selectedTehsil, data?.districtInfo?.name);
+
+          console.log("Drilling down to tehsil:", selectedTehsil);
+        }}
+      />
+    );
+  }
+
   const handleStationSelect = (station) => {
     setSelectedStation(selectedStation?._id === station._id ? null : station);
   };
@@ -108,7 +176,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         {/* Drill-up Options */}
         {data.drillUpOptions.canDrillUp && (
           <div className="mt-3 pt-3 border-t border-gray-200">
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            <button
+              onClick={handleDrillUpToDistrict}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
               {data.drillUpOptions.buttonText}
             </button>
             <div className="mt-2 text-xs text-gray-500">
@@ -256,16 +327,15 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-blue-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byDesignation
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byDesignation
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -295,15 +365,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     <div
                       className="bg-purple-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          (count /
-                            Math.max(
-                              ...Object.values(
-                                data.allStationEmployeeSummary.breakdown.byGrade
-                              )
-                            )) *
+                        width: `${(count /
+                          Math.max(
+                            ...Object.values(
+                              data.allStationEmployeeSummary.breakdown.byGrade
+                            )
+                          )) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -333,16 +402,15 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-green-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byServiceType
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byServiceType
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -370,15 +438,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     <div
                       className="bg-indigo-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          (count /
-                            Math.max(
-                              ...Object.values(
-                                data.allStationEmployeeSummary.breakdown.byCast
-                              )
-                            )) *
+                        width: `${(count /
+                          Math.max(
+                            ...Object.values(
+                              data.allStationEmployeeSummary.breakdown.byCast
+                            )
+                          )) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -407,18 +474,17 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     <div
                       className="bg-emerald-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          count > 0
-                            ? (count /
-                                Math.max(
-                                  ...Object.values(
-                                    data.allStationEmployeeSummary.breakdown
-                                      .byAge
-                                  )
-                                )) *
-                              100
-                            : 0
-                        }%`,
+                        width: `${count > 0
+                          ? (count /
+                            Math.max(
+                              ...Object.values(
+                                data.allStationEmployeeSummary.breakdown
+                                  .byAge
+                              )
+                            )) *
+                          100
+                          : 0
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -508,11 +574,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                         {station.name}
                       </h4>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          station.totalEmployees > 0
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 text-xs rounded-full ${station.totalEmployees > 0
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {station.totalEmployees} employees
                       </span>
@@ -557,11 +622,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   </div>
                   <div className="text-center">
                     <p
-                      className={`text-lg font-bold ${
-                        station.totalEmployees > 0
-                          ? "text-blue-600"
-                          : "text-red-600"
-                      }`}
+                      className={`text-lg font-bold ${station.totalEmployees > 0
+                        ? "text-blue-600"
+                        : "text-red-600"
+                        }`}
                     >
                       {station.totalEmployees}
                     </p>
@@ -671,11 +735,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <p
-                        className={`text-lg font-bold ${
-                          station.meetsStaffRequirement
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                        className={`text-lg font-bold ${station.meetsStaffRequirement
+                          ? "text-green-600"
+                          : "text-red-600"
+                          }`}
                       >
                         {station.meetsStaffRequirement ? "Yes" : "No"}
                       </p>
@@ -779,13 +842,12 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
             </div>
           </div>
           <button
-            onClick={() => alert('Under construction District - Drill Up functionality')}
+            onClick={handleDrillUpToDistrict}
             className="flex items-center text-Red-600 hover:text-blue-800 ml-4"
           >
             <ArrowUp className="h-5 w-5 mr-1" />
             Drill Up
           </button>
-
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <Clock className="h-4 w-4" />
@@ -810,11 +872,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
                 {tab.label}
@@ -910,11 +971,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.serviceType === "federal"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.serviceType === "federal"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {employee.serviceType}
                       </span>
@@ -1062,7 +1122,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   ((data.summary.totalStations -
                     data.stationsNotMeetingRequirements.count) /
                     data.summary.totalStations) *
-                    100
+                  100
                 )}
                 %
               </span>
@@ -1081,41 +1141,41 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         {/* Recommendations */}
         {(data.summary.stationsWithoutEmployees > 0 ||
           data.stationsNotMeetingRequirements.count > 0) && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
-              Action Items
-            </h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              {data.summary.stationsWithoutEmployees > 0 && (
-                <li>
-                  • Urgent: Assign staff to{" "}
-                  {data.summary.stationsWithoutEmployees} stations with zero
-                  employees
-                </li>
-              )}
-              {data.stationsNotMeetingRequirements.count > 0 && (
-                <li>
-                  • Priority: Address staff shortages in{" "}
-                  {data.stationsNotMeetingRequirements.count} stations not
-                  meeting requirements
-                </li>
-              )}
-              {data.summary.totalStationAssets === 0 && (
-                <li>
-                  • Review: No station assets recorded - verify asset management
-                  system
-                </li>
-              )}
-              {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
-                <li>
-                  • Data Quality: Update missing age information for better
-                  analytics
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
+                Action Items
+              </h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {data.summary.stationsWithoutEmployees > 0 && (
+                  <li>
+                    • Urgent: Assign staff to{" "}
+                    {data.summary.stationsWithoutEmployees} stations with zero
+                    employees
+                  </li>
+                )}
+                {data.stationsNotMeetingRequirements.count > 0 && (
+                  <li>
+                    • Priority: Address staff shortages in{" "}
+                    {data.stationsNotMeetingRequirements.count} stations not
+                    meeting requirements
+                  </li>
+                )}
+                {data.summary.totalStationAssets === 0 && (
+                  <li>
+                    • Review: No station assets recorded - verify asset management
+                    system
+                  </li>
+                )}
+                {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
+                  <li>
+                    • Data Quality: Update missing age information for better
+                    analytics
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
       </div>
     </div>
   );

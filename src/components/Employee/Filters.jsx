@@ -79,90 +79,113 @@ const EmployeeFilters = ({
     cnic: false,
   });
 
-  const searchEmployeeNames = async (query) => {
-    if (!query.trim() || query.length < 2) {
-      setSuggestions((prev) => ({ ...prev, name: [] }));
-      return;
+ // ✅ COMPLETE FRONTEND FIX
+// Replace your existing searchPersonalNumbers and searchCNICs functions with these:
+
+const searchPersonalNumbers = async (query) => {
+  if (!query.trim() || query.length < 2) {
+    setSuggestions((prev) => ({ ...prev, personalNumber: [] }));
+    return;
+  }
+
+  setIsSearching((prev) => ({ ...prev, personalNumber: true }));
+
+  try {
+    // ✅ FIX: Use 'name' parameter instead of 'personalNumber'
+    // The backend's name search includes personalNumber in the $or query
+    const result = await getEmployees({
+      name: query,  // This searches firstName, lastName, personalNumber, and cnic
+      limit: 10,
+    });
+
+    if (result.success) {
+      const employees = result.data.employees || result.data || [];
+      
+      // ✅ Extract only personal numbers and filter them client-side
+      const personalNumbers = employees
+        .map((emp) => emp.personalNumber)
+        .filter(Boolean) // Remove null/undefined values
+        .filter(pNum => pNum.toLowerCase().includes(query.toLowerCase())) // Only personal numbers that match our query
+        .slice(0, 10); // Limit suggestions
+        
+      setSuggestions((prev) => ({
+        ...prev,
+        personalNumber: [...new Set(personalNumbers)], // Remove duplicates
+      }));
     }
+  } catch (error) {
+    console.error("Error searching personal numbers:", error);
+  } finally {
+    setIsSearching((prev) => ({ ...prev, personalNumber: false }));
+  }
+};
 
-    setIsSearching((prev) => ({ ...prev, name: true }));
+const searchCNICs = async (query) => {
+  if (!query.trim() || query.length < 3) {
+    setSuggestions((prev) => ({ ...prev, cnic: [] }));
+    return;
+  }
 
-    try {
-      const result = await getEmployees({
-        name: query,
-        limit: 10,
-      });
+  setIsSearching((prev) => ({ ...prev, cnic: true }));
 
-      if (result.success) {
-        const employees = result.data.employees || result.data || [];
-        const names = employees
-          .map((emp) => `${emp.firstName} ${emp.lastName}`)
-          .filter(Boolean);
-        setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
-      }
-    } catch (error) {
-      console.error("Error searching employee names:", error);
-    } finally {
-      setIsSearching((prev) => ({ ...prev, name: false }));
+  try {
+    // ✅ FIX: Use 'name' parameter instead of 'cnic'
+    // The backend's name search includes cnic in the $or query
+    const result = await getEmployees({
+      name: query,  // This searches firstName, lastName, personalNumber, and cnic
+      limit: 10,
+    });
+
+    if (result.success) {
+      const employees = result.data.employees || result.data || [];
+      
+      // ✅ Extract only CNICs and filter them client-side
+      const cnics = employees
+        .map((emp) => emp.cnic)
+        .filter(Boolean) // Remove null/undefined values
+        .filter(cnic => cnic.toLowerCase().includes(query.toLowerCase())) // Only CNICs that match our query
+        .slice(0, 10); // Limit suggestions
+        
+      setSuggestions((prev) => ({ 
+        ...prev, 
+        cnic: [...new Set(cnics)] // Remove duplicates
+      }));
     }
-  };
+  } catch (error) {
+    console.error("Error searching CNICs:", error);
+  } finally {
+    setIsSearching((prev) => ({ ...prev, cnic: false }));
+  }
+};
 
-  const searchPersonalNumbers = async (query) => {
-    if (!query.trim() || query.length < 2) {
-      setSuggestions((prev) => ({ ...prev, personalNumber: [] }));
-      return;
+// ✅ Keep your name search as is (it's already working)
+const searchEmployeeNames = async (query) => {
+  if (!query.trim() || query.length < 2) {
+    setSuggestions((prev) => ({ ...prev, name: [] }));
+    return;
+  }
+
+  setIsSearching((prev) => ({ ...prev, name: true }));
+
+  try {
+    const result = await getEmployees({
+      name: query,
+      limit: 10,
+    });
+
+    if (result.success) {
+      const employees = result.data.employees || result.data || [];
+      const names = employees
+        .map((emp) => `${emp.firstName} ${emp.lastName}`)
+        .filter(Boolean);
+      setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
     }
-
-    setIsSearching((prev) => ({ ...prev, personalNumber: true }));
-
-    try {
-      const result = await getEmployees({
-        personalNumber: query,
-        limit: 10,
-      });
-
-      if (result.success) {
-        const employees = result.data.employees || result.data || [];
-        const personalNumbers = employees
-          .map((emp) => emp.personalNumber || emp.pnumber)
-          .filter(Boolean);
-        setSuggestions((prev) => ({
-          ...prev,
-          personalNumber: [...new Set(personalNumbers)],
-        }));
-      }
-    } catch (error) {
-      console.error("Error searching personal numbers:", error);
-    } finally {
-      setIsSearching((prev) => ({ ...prev, personalNumber: false }));
-    }
-  };
-
-  const searchCNICs = async (query) => {
-    if (!query.trim() || query.length < 3) {
-      setSuggestions((prev) => ({ ...prev, cnic: [] }));
-      return;
-    }
-
-    setIsSearching((prev) => ({ ...prev, cnic: true }));
-
-    try {
-      const result = await getEmployees({
-        cnic: query,
-        limit: 10,
-      });
-
-      if (result.success) {
-        const employees = result.data.employees || result.data || [];
-        const cnics = employees.map((emp) => emp.cnic).filter(Boolean);
-        setSuggestions((prev) => ({ ...prev, cnic: [...new Set(cnics)] }));
-      }
-    } catch (error) {
-      console.error("Error searching CNICs:", error);
-    } finally {
-      setIsSearching((prev) => ({ ...prev, cnic: false }));
-    }
-  };
+  } catch (error) {
+    console.error("Error searching employee names:", error);
+  } finally {
+    setIsSearching((prev) => ({ ...prev, name: false }));
+  }
+};
 
   // 🆕 Updated filter state to handle arrays for multi-select and multi-text inputs
   const [filterForm, setFilterForm] = useState({

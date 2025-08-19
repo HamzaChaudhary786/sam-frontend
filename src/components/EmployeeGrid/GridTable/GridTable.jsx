@@ -43,6 +43,7 @@ const EmployeeGridTable = ({
   onCancelEditing,
   onCellChange,
   onSaveCell,
+  onSaveAll,
   onPrevImage,
   onNextImage,
   onImageClick,
@@ -372,6 +373,14 @@ const EmployeeGridTable = ({
     setIsViewModalOpen(false);
     setSelectedEmployee(null);
   };
+
+  {/* Employee View Modal */}
+  <EmployeeViewModal
+    isOpen={isViewModalOpen}
+    onClose={handleCloseViewModal}
+    employee={selectedEmployee}
+  />
+
 
   // Pagination handlers remain the same
   const handlePageChange = (page) => {
@@ -773,6 +782,21 @@ const EmployeeGridTable = ({
     );
   }
 
+  const handleSaveAll = () => {
+    onSaveAll();
+    toast.success("All changes saved!");
+  };
+
+  const handleCancelAll = () => {
+    Object.keys(editingData).forEach((employeeId) => {
+      const employee = safeEmployees.find((emp) => emp._id === employeeId);
+      if (employee) {
+        onCancelEditing(employee._id);
+      }
+    });
+    toast.info("All changes cancelled.");
+  };
+
   // Main render with multi-select functionality
   return (
     <div>
@@ -785,6 +809,24 @@ const EmployeeGridTable = ({
 
       {/* Bulk Actions Bar - exactly like EmployeeList */}
       {renderBulkActionsBar()}
+
+      {/* Save All Button for multiple edits */}
+      {Object.keys(editingData).length > 0 && (
+        <div className="flex justify-end gap-2 mb-2">
+          <button
+            onClick={handleSaveAll}
+            className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
+          >
+            Save All Changes
+          </button>
+          <button
+            onClick={handleCancelAll}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+          >
+            Cancel All Changes
+          </button>
+        </div>
+      )}
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -839,7 +881,7 @@ const EmployeeGridTable = ({
               </div>
 
               {/* Vertical action buttons - spans 2 rows */}
-              <div className="row-span-2 flex flex-col items-stretch gap-2 py-1">
+              <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
                 {isAdmin && (
                   <button
                     onClick={() => toggleEditMode(employee._id)}
@@ -859,18 +901,37 @@ const EmployeeGridTable = ({
                       : "Edit"}
                   </button>
                 )}
-                <button
+                {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
                 >
                   Delete
-                </button>
-                <button
-                  onClick={() => handleView(employee)}
-                  className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
-                >
-                  View
-                </button>
+                </button> */}
+                 {!isEditing && (
+                  <button
+                   onClick={() => handleView(employee)}
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                  >
+                    View
+                 </button>
+                 )}
+                {/* Removed horizontal action row; actions shown vertically next to checkbox */}
+                {isEditing && (
+                  <>
+                    <button
+                      onClick={() => onSaveCell(employee)}
+                      className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => handleCancelEditing(employee)}
+                      className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* First row of data (reordered) */}
@@ -932,25 +993,7 @@ const EmployeeGridTable = ({
               <div className="col-start-10">
                 {renderCell(employee, "address.muhala", "input")}
               </div>
-              {/* <div className="col-start-11 row-start-2"></div> */}
-
-              {/* Removed horizontal action row; actions shown vertically next to checkbox */}
-              {isEditing && (
-                <div className="col-start-11 row-start-2 flex gap-1 ">
-                  <button
-                    onClick={() => onSaveCell(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 scale-y-[0.8]"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => handleCancelEditing(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 scale-y-[0.8]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <div className="col-start-11 row-start-2"></div>
             </div>
           );
         })}
@@ -969,6 +1012,25 @@ const EmployeeGridTable = ({
           </div>
         )}
       </div>
+
+      {/* Save All Button for multiple edits */}
+      {Object.keys(editingData).length > 0 && (
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={handleSaveAll}
+            className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
+          >
+            Save All Changes
+          </button>
+          <button
+            onClick={handleCancelAll}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+          >
+            Cancel All Changes
+          </button>
+        </div>
+      )}
+
       <MultiStationAssignmentForm
         selectedEmployees={selectedEmployeesForPosting}
         isOpen={isMultiStationModalOpen}
@@ -2088,12 +2150,6 @@ export default EmployeeGridTable;
 //         )}
 //       </div>
 
-//       {/* Employee View Modal */}
-//       <EmployeeViewModal
-//         isOpen={isViewModalOpen}
-//         onClose={handleCloseViewModal}
-//         employee={selectedEmployee}
-//       />
 
 //       {/* Confirmation Modal */}
 //       {confirmPopup && renderConfirmationModal()}

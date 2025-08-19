@@ -103,6 +103,16 @@ const PendingStationApprovals = ({ onEdit }) => {
           .includes(filters.department.toLowerCase());
       });
     }
+    if (filters.date) {
+      filtered = filtered.filter((assignment) => {
+        // Replace "createdAt" with your actual date field
+        const assignmentDate = new Date(assignment.createdAt)
+          .toISOString()
+          .split("T")[0]; // format YYYY-MM-DD
+
+        return assignmentDate === filters.date;
+      });
+    }
 
     // From station filter
     if (filters.fromStation) {
@@ -146,7 +156,7 @@ const PendingStationApprovals = ({ onEdit }) => {
       employeeName: "",
       fromStation: "",
       toStation: "",
-      dateRange: "",
+      date: "",
     });
   };
 
@@ -305,7 +315,7 @@ const PendingStationApprovals = ({ onEdit }) => {
       toast.error(error.message);
     }
   };
-  
+
   const handleReject = async (assignmentId) => {
     if (
       !window.confirm(
@@ -487,24 +497,19 @@ const PendingStationApprovals = ({ onEdit }) => {
             />
           </div>
 
-          {/* <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date Range
+              Date
             </label>
-            <select
-              name="dateRange"
-              value={filters.dateRange}
+            <input
+              type="date"
+              name="date"
+              value={filters.date || ""}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="">All Time</option>
-              {dateRangeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div> */}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
         </div>
         <div className="flex items-center justify-end space-x-4 mt-5">
           {selectedAssignments.size > 0 && (
@@ -515,7 +520,7 @@ const PendingStationApprovals = ({ onEdit }) => {
               Approve Selected ({selectedAssignments.size})
             </button>
           )}
-           {selectedAssignments.size > 0 && (
+          {selectedAssignments.size > 0 && (
             <button
               onClick={() => handleBulkDelete(Array.from(selectedAssignments))}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
@@ -523,7 +528,7 @@ const PendingStationApprovals = ({ onEdit }) => {
               Delete Selected ({selectedAssignments.size})
             </button>
           )}
-           {selectedAssignments.size > 0 && (
+          {selectedAssignments.size > 0 && (
             <button
               onClick={() => handleBulkReject(Array.from(selectedAssignments))}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

@@ -52,9 +52,13 @@ function LocationMarker({
   onLocationSelect,
   clickedPosition,
   showMarker = true,
+  disabled = false,
 }) {
   useMapEvents({
     click(e) {
+      if (disabled) {
+        return;
+      }
       const { lat, lng } = e.latlng;
       onLocationSelect({ lat, lng });
     },
@@ -73,6 +77,15 @@ function LocationMarker({
           Lat: {clickedPosition.lat.toFixed(6)}
           <br />
           Lng: {clickedPosition.lng.toFixed(6)}
+
+          {disabled && (
+            <>
+              <br />
+              <span className="text-red-500 font-medium">
+                🔒 Location is locked
+              </span>
+            </>
+          )}
         </div>
       </Popup>
     </Marker>
@@ -99,8 +112,9 @@ const MapLocation = ({
   onPositionChange,
   hidePanels = false,
   stationData = [],
-  onEditStation = () => {},
+  onEditStation = () => { },
   refreshKey = 0,
+  disabled = false,
 }) => {
   // State management - Updated default coordinates for Balochistan, Pakistan
   const [savedLocations, setSavedLocations] = useState([]);
@@ -136,11 +150,14 @@ const MapLocation = ({
 
   // Notify parent component when position changes
   useEffect(() => {
+
+    if (disabled) {
+      return;
+    }
     if (clickedPosition?.lat && clickedPosition?.lng) {
       onPositionChange(clickedPosition);
     }
-  }, [clickedPosition, onPositionChange]);
-
+  }, [clickedPosition, onPositionChange, disabled]);
   useEffect(() => {
     const fetchData = async () => {
       const data = await getFixLocationData();
@@ -374,6 +391,10 @@ const MapLocation = ({
    */
   const handleLocationSelect = useCallback(
     async (coordinates) => {
+
+      if (disabled) {
+        return;
+      }
       setClickedPosition(coordinates);
       setError("");
 
@@ -398,7 +419,7 @@ const MapLocation = ({
         }
       }
     },
-    [hidePanels]
+    [hidePanels, disabled]
   );
 
   /**
@@ -1024,7 +1045,7 @@ const MapLocation = ({
               />
             </LayerGroup>
           </LayersControl.Overlay>
-          
+
           <LayersControl.Overlay name="🚗 Traffic (when available)">
             <TileLayer
               attribution="&copy; OpenStreetMap contributors"
@@ -1042,6 +1063,7 @@ const MapLocation = ({
           onLocationSelect={handleLocationSelect}
           clickedPosition={clickedPosition}
           showMarker={!hidePanels} // Only show clicked marker if panels are visible
+          disabled={disabled}
         />
 
         {/* Display saved locations - Only if panels are not hidden */}
@@ -1060,13 +1082,12 @@ const MapLocation = ({
                 <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`${
-                        requirementCheck.status === "requirements_met"
-                          ? "bg-green-500"
-                          : requirementCheck.status === "requirements_not_met"
+                      className={`${requirementCheck.status === "requirements_met"
+                        ? "bg-green-500"
+                        : requirementCheck.status === "requirements_not_met"
                           ? "bg-red-500"
                           : "bg-gray-400"
-                      } inline-block w-2.5 h-2.5 rounded-full`}
+                        } inline-block w-2.5 h-2.5 rounded-full`}
                     />
                     <span className="text-xs font-semibold text-gray-900">
                       {location?.title}
@@ -1077,18 +1098,17 @@ const MapLocation = ({
                   <div className="text-sm">
                     <h4 className="font-semibold flex items-center">
                       {getStatusIcon(requirementCheck.status)} {location.title}
-                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                        requirementCheck.status === "requirements_met"
-                          ? "bg-green-100 text-green-700"
-                          : requirementCheck.status === "requirements_not_met"
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${requirementCheck.status === "requirements_met"
+                        ? "bg-green-100 text-green-700"
+                        : requirementCheck.status === "requirements_not_met"
                           ? "bg-red-100 text-red-700"
                           : "bg-gray-100 text-gray-700"
-                      }`}>
+                        }`}>
                         {requirementCheck.status === "requirements_met"
                           ? "Requirements Met"
                           : requirementCheck.status === "requirements_not_met"
-                          ? "Requirements Not Met"
-                          : "No Requirements"}
+                            ? "Requirements Not Met"
+                            : "No Requirements"}
                       </span>
                     </h4>
                     {location.description && (

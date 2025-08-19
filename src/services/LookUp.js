@@ -24,10 +24,10 @@ export const useLookups = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage] = useState(10);
   
-  // Filter state
+  // 🆕 Updated filter state to support arrays
   const [filters, setFilters] = useState({
-    search: '',
-    lookupType: '',
+    search: [], // Changed to array for multi-text input
+    lookupType: [], // Changed to array for multi-select
     isActive: undefined,
     sortBy: 'createdAt',
     sortOrder: 'desc'
@@ -53,15 +53,25 @@ export const useLookups = () => {
     }
   };
 
-  // Improved fetch function with better error handling
+  // 🆕 Updated fetch function to handle array filters properly (improved array handling)
   const fetchLookups = useCallback(async () => {
     setLoading(true);
     setError('');
     
     try {
-      // Clean up filters - remove empty values
+      // Clean up filters - handle arrays properly and convert to API format
       const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== undefined && value !== null) {
+        if (key === 'search' || key === 'lookupType') {
+          // Handle array fields - convert to comma-separated string for API
+          if (Array.isArray(value) && value.length > 0) {
+            // Filter out empty strings and join with comma
+            const filteredValues = value.filter(v => v && v.toString().trim());
+            if (filteredValues.length > 0) {
+              acc[key] = filteredValues.join(','); // Send as comma-separated string
+              console.log(`Converting ${key} array to string:`, filteredValues, '->', acc[key]);
+            }
+          }
+        } else if (value !== '' && value !== undefined && value !== null) {
           acc[key] = value;
         }
         return acc;
@@ -73,7 +83,7 @@ export const useLookups = () => {
         ...cleanFilters
       };
 
-      console.log('Fetching with filters:', queryFilters); // Debug log
+      console.log('Final queryFilters being sent to API:', queryFilters); // Debug log
 
       const response = await getLookupsWithFilters(queryFilters);
       
@@ -95,10 +105,24 @@ export const useLookups = () => {
     }
   }, [currentPage, itemsPerPage, filters]);
 
-  // Initialize data
+  // Initialize data and watch for filter changes
   useEffect(() => {
+    console.log('useEffect triggered - filters changed:', filters); // Debug log
     fetchLookups();
   }, [fetchLookups]);
+
+  // 🆕 Additional useEffect to ensure filters trigger fetch (backup)
+  useEffect(() => {
+    console.log('Filters state changed, triggering fetch:', filters);
+    // Add small delay to ensure state has settled
+    const timer = setTimeout(() => {
+      if (currentPage === 1) { // Only fetch if we're on page 1, otherwise let the main useEffect handle it
+        fetchLookups();
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [filters.search, filters.lookupType, filters.isActive]); // Watch specific filter properties
 
   // Initialize types only once
   useEffect(() => {
@@ -168,17 +192,87 @@ export const useLookups = () => {
     }
   };
 
-  // Improved search and filter methods
-  const searchLookups = (searchTerm) => {
-    console.log('Searching for:', searchTerm); // Debug log
-    setFilters(prev => ({ ...prev, search: searchTerm.trim() }));
-    setCurrentPage(1); // Reset to first page when searching
+  // 🆕 Updated search and filter methods to handle arrays
+  const searchLookups = (searchTerms) => {
+    console.log('Searching for:', searchTerms);
+    const searchArray = Array.isArray(searchTerms) ? searchTerms : [searchTerms].filter(Boolean);
+    setFilters(prev => ({ ...prev, search: searchArray }));
+    setCurrentPage(1);
   };
 
-  const filterByType = (lookupType) => {
-    console.log('Filtering by type:', lookupType); // Debug log
-    setFilters(prev => ({ ...prev, lookupType }));
+  const filterByType = (lookupTypes) => {
+    console.log('Filtering by types:', lookupTypes);
+    const typeArray = Array.isArray(lookupTypes) ? lookupTypes : [lookupTypes].filter(Boolean);
+    setFilters(prev => ({ ...prev, lookupType: typeArray }));
     setCurrentPage(1);
+  };
+
+  // 🆕 New method to update filters directly (for form components)
+  const updateFilters = (newFilters) => {
+    console.log('Updating filters:', newFilters);
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setCurrentPage(1);
+  };
+
+  // 🆕 Add search suggestions method (fetch from all pages)
+  const searchLookupNames = async (query, options = {}) => {
+    if (!query.trim() || query.length < 2) {
+      return [];
+    }
+
+    try {
+      const queryFilters = {
+        search: query, // Use single string for search suggestions
+        limit: 100, // Get more results to search through
+        page: 1,
+        sortBy: 'name',
+        sortOrder: 'asc'
+      };
+
+      console.log('Searching for suggestions:', queryFilters);
+
+      const response = await getLookupsWithFilters(queryFilters);
+      
+      if (response && response.success) {
+        let allLookups = response.result || [];
+        
+        // If there are multiple pages, fetch all pages for better suggestions
+        if (response.totalPages > 1) {
+          const additionalPromises = [];
+          for (let page = 2; page <= Math.min(response.totalPages, 5); page++) { // Limit to first 5 pages for performance
+            const pageFilters = {
+              ...queryFilters,
+              page: page
+            };
+            additionalPromises.push(
+              getLookupsWithFilters(pageFilters)
+                .then(pageResponse => pageResponse.success ? pageResponse.result : [])
+                .catch(err => {
+                  console.error(`Error fetching suggestions page ${page}:`, err);
+                  return [];
+                })
+            );
+          }
+          
+          const additionalResults = await Promise.all(additionalPromises);
+          additionalResults.forEach(pageResults => {
+            allLookups = allLookups.concat(pageResults);
+          });
+        }
+        
+        // Filter and return unique names
+        const names = allLookups
+          .map(lookup => lookup.name)
+          .filter(Boolean)
+          .filter(name => name.toLowerCase().includes(query.toLowerCase()));
+        
+        return [...new Set(names)].slice(0, options.limit || 10); // Remove duplicates and limit results
+      }
+      return [];
+    } catch (error) {
+      console.error('Error searching lookup names:', error);
+      return [];
+    }
   };
 
   const filterByStatus = (isActive) => {
@@ -190,11 +284,12 @@ export const useLookups = () => {
     setFilters(prev => ({ ...prev, sortBy, sortOrder }));
   };
 
+  // 🆕 Updated clearFilters to reset arrays
   const clearFilters = () => {
-    console.log('Clearing all filters'); // Debug log
+    console.log('Clearing all filters');
     setFilters({
-      search: '',
-      lookupType: '',
+      search: [],
+      lookupType: [],
       isActive: undefined,
       sortBy: 'createdAt',
       sortOrder: 'desc'
@@ -234,10 +329,10 @@ export const useLookups = () => {
     await fetchAllUniqueTypes();
   };
 
-  // Helper to check if any filters are active
+  // 🆕 Updated hasActiveFilters to check arrays
   const hasActiveFilters = () => {
-    return filters.search !== '' || 
-           filters.lookupType !== '' || 
+    return (Array.isArray(filters.search) && filters.search.length > 0) || 
+           (Array.isArray(filters.lookupType) && filters.lookupType.length > 0) || 
            filters.isActive !== undefined;
   };
 
@@ -270,8 +365,10 @@ export const useLookups = () => {
     
     // Search and filter methods
     searchLookups,
+    searchLookupNames, // 🆕 New method for suggestions
     filterByType,
     filterByStatus,
+    updateFilters, // 🆕 New method for direct filter updates
     sortLookups,
     clearFilters,
     
@@ -436,7 +533,6 @@ export const useLookupOptions = (lookupType, options = {}) => {
     }
   };
 };
-
 
 export const useLookupAssetStatusOption = (lookupType, options = {}) => {
   const [lookupStatusOptions, setLookupStatusOptions] = useState([]);
@@ -750,4 +846,3 @@ export default {
   fetchLookupOptions,
   useMultipleLookupOptions
 };
-
