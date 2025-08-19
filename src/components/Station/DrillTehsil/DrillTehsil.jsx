@@ -81,42 +81,42 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   };
 
   // Add this function after handleBackFromDistrict
-const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
-  setLoading(true);
-  setError(null);
+  const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
+    setLoading(true);
+    setError(null);
 
-  try {
-    const response = await fetch(
-      `${BACKEND_URL}/employee/tehsil-to-district?tehsil=${selectedTehsil}&district=${district}&page=1&limit=10`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/employee/tehsil-to-district?tehsil=${selectedTehsil}&district=${district}&page=1&limit=10`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch tehsil to district data");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch tehsil to district data");
+      const result = await response.json();
+      console.log("Tehsil to District API Response:", result);
+
+      // Update the component data with the new tehsil data
+      setData(result.data);
+
+      // Optional: You might want to update the URL or state to reflect the new tehsil
+      // This depends on how your routing is set up
+
+    } catch (err) {
+      setError(err.message);
+      console.error("Tehsil to District API Error:", err);
+    } finally {
+      setLoading(false);
     }
-
-    const result = await response.json();
-    console.log("Tehsil to District API Response:", result);
-    
-    // Update the component data with the new tehsil data
-    setData(result.data);
-    
-    // Optional: You might want to update the URL or state to reflect the new tehsil
-    // This depends on how your routing is set up
-    
-  } catch (err) {
-    setError(err.message);
-    console.error("Tehsil to District API Error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Handler to go back from district view
   const handleBackFromDistrict = () => {
@@ -124,23 +124,23 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
   };
 
   if (showDistrictView) {
-  return (
-    <DrillDistrictPage
-      district={data?.districtInfo?.name}
-      tehsil={tehsil}
-      onBack={handleBackFromDistrict}
-      onDrillTehsil={(selectedTehsil) => {
-        // Navigate back to tehsil view and call the tehsil-to-district API
-        setShowDistrictView(false);
-        
-        // Call the tehsil-to-district API
-        fetchTehsilToDistrictData(selectedTehsil, data?.districtInfo?.name);
-        
-        console.log("Drilling down to tehsil:", selectedTehsil);
-      }}
-    />
-  );
-}
+    return (
+      <DrillDistrictPage
+        district={data?.districtInfo?.name}
+        tehsil={tehsil}
+        onBack={handleBackFromDistrict}
+        onDrillTehsil={(selectedTehsil) => {
+
+          alert("Under Contruction (In Progress...)")
+          // setShowDistrictView(!showDistrictView);
+          // setActiveTab("overview");
+          // fetchTehsilToDistrictData(selectedTehsil, data?.districtInfo?.name);
+
+          console.log("Drilling down to tehsil:", selectedTehsil);
+        }}
+      />
+    );
+  }
 
   const handleStationSelect = (station) => {
     setSelectedStation(selectedStation?._id === station._id ? null : station);
@@ -327,16 +327,15 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                   <div
                     className="bg-blue-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byDesignation
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byDesignation
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -366,15 +365,14 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                     <div
                       className="bg-purple-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          (count /
-                            Math.max(
-                              ...Object.values(
-                                data.allStationEmployeeSummary.breakdown.byGrade
-                              )
-                            )) *
+                        width: `${(count /
+                          Math.max(
+                            ...Object.values(
+                              data.allStationEmployeeSummary.breakdown.byGrade
+                            )
+                          )) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -404,16 +402,15 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                   <div
                     className="bg-green-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byServiceType
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byServiceType
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -441,15 +438,14 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                     <div
                       className="bg-indigo-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          (count /
-                            Math.max(
-                              ...Object.values(
-                                data.allStationEmployeeSummary.breakdown.byCast
-                              )
-                            )) *
+                        width: `${(count /
+                          Math.max(
+                            ...Object.values(
+                              data.allStationEmployeeSummary.breakdown.byCast
+                            )
+                          )) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -478,18 +474,17 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                     <div
                       className="bg-emerald-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          count > 0
-                            ? (count /
-                                Math.max(
-                                  ...Object.values(
-                                    data.allStationEmployeeSummary.breakdown
-                                      .byAge
-                                  )
-                                )) *
-                              100
-                            : 0
-                        }%`,
+                        width: `${count > 0
+                          ? (count /
+                            Math.max(
+                              ...Object.values(
+                                data.allStationEmployeeSummary.breakdown
+                                  .byAge
+                              )
+                            )) *
+                          100
+                          : 0
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -579,11 +574,10 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                         {station.name}
                       </h4>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          station.totalEmployees > 0
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 text-xs rounded-full ${station.totalEmployees > 0
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {station.totalEmployees} employees
                       </span>
@@ -628,11 +622,10 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                   </div>
                   <div className="text-center">
                     <p
-                      className={`text-lg font-bold ${
-                        station.totalEmployees > 0
-                          ? "text-blue-600"
-                          : "text-red-600"
-                      }`}
+                      className={`text-lg font-bold ${station.totalEmployees > 0
+                        ? "text-blue-600"
+                        : "text-red-600"
+                        }`}
                     >
                       {station.totalEmployees}
                     </p>
@@ -742,11 +735,10 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <p
-                        className={`text-lg font-bold ${
-                          station.meetsStaffRequirement
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                        className={`text-lg font-bold ${station.meetsStaffRequirement
+                          ? "text-green-600"
+                          : "text-red-600"
+                          }`}
                       >
                         {station.meetsStaffRequirement ? "Yes" : "No"}
                       </p>
@@ -880,11 +872,10 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
                 {tab.label}
@@ -980,11 +971,10 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.serviceType === "federal"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.serviceType === "federal"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {employee.serviceType}
                       </span>
@@ -1132,7 +1122,7 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
                   ((data.summary.totalStations -
                     data.stationsNotMeetingRequirements.count) /
                     data.summary.totalStations) *
-                    100
+                  100
                 )}
                 %
               </span>
@@ -1151,41 +1141,41 @@ const fetchTehsilToDistrictData = async (selectedTehsil, district) => {
         {/* Recommendations */}
         {(data.summary.stationsWithoutEmployees > 0 ||
           data.stationsNotMeetingRequirements.count > 0) && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
-              Action Items
-            </h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              {data.summary.stationsWithoutEmployees > 0 && (
-                <li>
-                  • Urgent: Assign staff to{" "}
-                  {data.summary.stationsWithoutEmployees} stations with zero
-                  employees
-                </li>
-              )}
-              {data.stationsNotMeetingRequirements.count > 0 && (
-                <li>
-                  • Priority: Address staff shortages in{" "}
-                  {data.stationsNotMeetingRequirements.count} stations not
-                  meeting requirements
-                </li>
-              )}
-              {data.summary.totalStationAssets === 0 && (
-                <li>
-                  • Review: No station assets recorded - verify asset management
-                  system
-                </li>
-              )}
-              {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
-                <li>
-                  • Data Quality: Update missing age information for better
-                  analytics
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
+                Action Items
+              </h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {data.summary.stationsWithoutEmployees > 0 && (
+                  <li>
+                    • Urgent: Assign staff to{" "}
+                    {data.summary.stationsWithoutEmployees} stations with zero
+                    employees
+                  </li>
+                )}
+                {data.stationsNotMeetingRequirements.count > 0 && (
+                  <li>
+                    • Priority: Address staff shortages in{" "}
+                    {data.stationsNotMeetingRequirements.count} stations not
+                    meeting requirements
+                  </li>
+                )}
+                {data.summary.totalStationAssets === 0 && (
+                  <li>
+                    • Review: No station assets recorded - verify asset management
+                    system
+                  </li>
+                )}
+                {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
+                  <li>
+                    • Data Quality: Update missing age information for better
+                    analytics
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
       </div>
     </div>
   );

@@ -145,7 +145,7 @@ const StationModal = ({
   const [loadingDesignations, setLoadingDesignations] = useState(false);
   const [position, setPosition] = useState({ lat: null, lng: null });
   const [hideLocationPanels, setHideLocationPanels] = useState(false);
-  const [lockLocation, setLockLocation] = useState(false);
+  const [lockLocation, setLockLocation] = useState(true);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -681,7 +681,7 @@ const StationModal = ({
   // Initialize form data for editing
   useEffect(() => {
 
-    setLockLocation(false); // ADD THIS LINE
+    setLockLocation(true); // ADD THIS LINE
 
     if (isEdit && editData) {
       setFormData({
