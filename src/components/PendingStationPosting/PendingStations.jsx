@@ -5,9 +5,9 @@ import {
   getPendingApprovals,
   approveStationAssignment,
   deleteStationAssignment,
+  rejectStationAssignment,
 } from "../StationAssignment/StationAssignmentApi.js";
 import { useNavigate } from "react-router-dom";
-
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -35,8 +35,7 @@ const PendingStationApprovals = ({ onEdit }) => {
     { value: "quarter", label: "This Quarter" },
   ];
 
-    const navigate = useNavigate();
-  
+  const navigate = useNavigate();
 
   // Fetch pending approvals
   const fetchPendingApprovals = async () => {
@@ -89,7 +88,9 @@ const PendingStationApprovals = ({ onEdit }) => {
         const firstName = assignment.employee?.firstName || "";
         const lastName = assignment.employee?.lastName || "";
         const fullName = `${firstName} ${lastName}`.trim();
-        return fullName.toLowerCase().includes(filters.employeeName.toLowerCase());
+        return fullName
+          .toLowerCase()
+          .includes(filters.employeeName.toLowerCase());
       });
     }
 
@@ -97,7 +98,9 @@ const PendingStationApprovals = ({ onEdit }) => {
     if (filters.department) {
       filtered = filtered.filter((assignment) => {
         const department = assignment.employee?.department?.name || "";
-        return department.toLowerCase().includes(filters.department.toLowerCase());
+        return department
+          .toLowerCase()
+          .includes(filters.department.toLowerCase());
       });
     }
 
@@ -107,7 +110,9 @@ const PendingStationApprovals = ({ onEdit }) => {
         // const fromStation = assignment.lastStation?.name || "";
         const fromStation = assignment.lastStation?.[0]?.name || "";
 
-        return fromStation.toLowerCase().includes(filters.fromStation.toLowerCase());
+        return fromStation
+          .toLowerCase()
+          .includes(filters.fromStation.toLowerCase());
       });
     }
 
@@ -117,7 +122,9 @@ const PendingStationApprovals = ({ onEdit }) => {
         // const toStation = assignment.currentStation?.name || "";
         const toStation = assignment.currentStation?.[0]?.name || "";
 
-        return toStation.toLowerCase().includes(filters.toStation.toLowerCase());
+        return toStation
+          .toLowerCase()
+          .includes(filters.toStation.toLowerCase());
       });
     }
 
@@ -148,7 +155,7 @@ const PendingStationApprovals = ({ onEdit }) => {
     const firstName = assignment.employee?.firstName || "";
     const lastName = assignment.employee?.lastName || "";
     const employeeName = `${firstName} ${lastName}`.trim() || "this employee";
-    
+
     if (
       !window.confirm(
         `Are you sure you want to approve the station assignment for ${employeeName}?`
@@ -161,7 +168,8 @@ const PendingStationApprovals = ({ onEdit }) => {
       const result = await approveStationAssignment(assignment._id);
       if (result.success) {
         toast.success("Station assignment approved successfully");
-        setRefreshTrigger(prev => prev + 1);
+        // setRefreshTrigger(prev => prev + 1);
+        window.location.reload(); // Add this line
       } else {
         toast.error(result.error);
       }
@@ -186,10 +194,10 @@ const PendingStationApprovals = ({ onEdit }) => {
     }
 
     try {
-      const promises = selectedIds.map(id => approveStationAssignment(id));
+      const promises = selectedIds.map((id) => approveStationAssignment(id));
       const results = await Promise.all(promises);
-      
-      const successful = results.filter(result => result.success).length;
+
+      const successful = results.filter((result) => result.success).length;
       const failed = results.length - successful;
 
       if (successful > 0) {
@@ -199,9 +207,78 @@ const PendingStationApprovals = ({ onEdit }) => {
         toast.error(`${failed} assignment(s) failed to approve`);
       }
 
-      setRefreshTrigger(prev => prev + 1);
+      // setRefreshTrigger(prev => prev + 1);
+      window.location.reload(); // Add this line
     } catch (error) {
       toast.error("Error occurred during bulk approval");
+    }
+  };
+  const handleBulkDelete = async (selectedIds) => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select assignments to delete");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedIds.length} selected assignment(s)?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const promises = selectedIds.map((id) => deleteStationAssignment(id));
+      const results = await Promise.all(promises);
+
+      const successful = results.filter((result) => result.success).length;
+      const failed = results.length - successful;
+
+      if (successful > 0) {
+        toast.success(`${successful} assignment(s) deleted successfully`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} assignment(s) failed to delete`);
+      }
+
+      // setRefreshTrigger(prev => prev + 1);
+      window.location.reload(); // Add this line
+    } catch (error) {
+      toast.error("Error occurred during bulk deletion");
+    }
+  };
+  const handleBulkReject = async (selectedIds) => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select assignments to reject");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to reject ${selectedIds.length} selected assignment(s)?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const promises = selectedIds.map((id) => rejectStationAssignment(id));
+      const results = await Promise.all(promises);
+
+      const successful = results.filter((result) => result.success).length;
+      const failed = results.length - successful;
+
+      if (successful > 0) {
+        toast.success(`${successful} assignment(s) rejected successfully`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} assignment(s) failed to reject`);
+      }
+
+      // setRefreshTrigger(prev => prev + 1);
+      window.location.reload(); // Add this line
+    } catch (error) {
+      toast.error("Error occurred during bulk rejection");
     }
   };
 
@@ -219,7 +296,31 @@ const PendingStationApprovals = ({ onEdit }) => {
       const result = await deleteStationAssignment(assignmentId);
       if (result.success) {
         toast.success("Station assignment deleted successfully");
-        setRefreshTrigger(prev => prev + 1);
+        // setRefreshTrigger(prev => prev + 1);
+        window.location.reload(); // Add this line
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  
+  const handleReject = async (assignmentId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to reject this station assignment request?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const result = await rejectStationAssignment(assignmentId);
+      if (result.success) {
+        toast.success("Station assignment rejected successfully");
+        // setRefreshTrigger(prev => prev + 1);
+        window.location.reload(); // Add this line
       } else {
         toast.error(result.error);
       }
@@ -244,12 +345,12 @@ const PendingStationApprovals = ({ onEdit }) => {
 
   // Check if filters are active
   const hasActiveFilters = () => {
-    return Object.values(filters).some(value => value !== "");
+    return Object.values(filters).some((value) => value !== "");
   };
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedAssignments(new Set(filteredAssignments.map(a => a._id)));
+      setSelectedAssignments(new Set(filteredAssignments.map((a) => a._id)));
     } else {
       setSelectedAssignments(new Set());
     }
@@ -405,22 +506,38 @@ const PendingStationApprovals = ({ onEdit }) => {
             </select>
           </div> */}
         </div>
-         <div className="flex items-center justify-end space-x-4 mt-5">
-            {selectedAssignments.size > 0 && (
-              <button
-                onClick={() => handleBulkApprove(Array.from(selectedAssignments))}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              >
-                Approve Selected ({selectedAssignments.size})
-              </button>
-            )}
-            {/* <button
+        <div className="flex items-center justify-end space-x-4 mt-5">
+          {selectedAssignments.size > 0 && (
+            <button
+              onClick={() => handleBulkApprove(Array.from(selectedAssignments))}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              Approve Selected ({selectedAssignments.size})
+            </button>
+          )}
+           {selectedAssignments.size > 0 && (
+            <button
+              onClick={() => handleBulkDelete(Array.from(selectedAssignments))}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete Selected ({selectedAssignments.size})
+            </button>
+          )}
+           {selectedAssignments.size > 0 && (
+            <button
+              onClick={() => handleBulkReject(Array.from(selectedAssignments))}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Reject Selected ({selectedAssignments.size})
+            </button>
+          )}
+          {/* <button
               onClick={() => setRefreshTrigger(prev => prev + 1)}
               className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
             >
               Refresh
             </button> */}
-              <button
+          <button
             className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleBulkStationAssignment}
           >
@@ -440,17 +557,17 @@ const PendingStationApprovals = ({ onEdit }) => {
             <span className="hidden lg:inline">Bulk Station Assignment</span>
             <span className="lg:hidden">Bulk Assignment</span>
           </button>
-            <div className="flex items-center space-x-2">
-              {hasActiveFilters() && (
-                <button
-                  onClick={clearFilters}
-                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
+          <div className="flex items-center space-x-2">
+            {hasActiveFilters() && (
+              <button
+                onClick={clearFilters}
+                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
+        </div>
       </div>
 
       {/* Content Section */}
@@ -510,7 +627,7 @@ const PendingStationApprovals = ({ onEdit }) => {
                     <input
                       type="checkbox"
                       checked={
-                        filteredAssignments.length > 0 && 
+                        filteredAssignments.length > 0 &&
                         selectedAssignments.size === filteredAssignments.length
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
@@ -538,15 +655,21 @@ const PendingStationApprovals = ({ onEdit }) => {
                 {filteredAssignments?.map((assignment) => {
                   const firstName = assignment.employee?.firstName || "";
                   const lastName = assignment.employee?.lastName || "";
-                  const employeeName = `${firstName} ${lastName}`.trim() || "Unknown Employee";
-                  
+                  const employeeName =
+                    `${firstName} ${lastName}`.trim() || "Unknown Employee";
+
                   return (
                     <tr key={assignment._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={selectedAssignments.has(assignment._id)}
-                          onChange={(e) => handleSelectAssignment(assignment._id, e.target.checked)}
+                          onChange={(e) =>
+                            handleSelectAssignment(
+                              assignment._id,
+                              e.target.checked
+                            )
+                          }
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
@@ -574,8 +697,8 @@ const PendingStationApprovals = ({ onEdit }) => {
                             </span>
                             <span className="text-gray-900">
                               {/* {assignment?.lastStation?.name || "No Previous Station"} */}
-                                {assignment?.lastStation?.[0]?.name || "No Previous Station"}
-
+                              {assignment?.lastStation?.[0]?.name ||
+                                "No Previous Station"}
                             </span>
                           </div>
                           <div className="flex items-center">
@@ -599,8 +722,8 @@ const PendingStationApprovals = ({ onEdit }) => {
                             </span>
                             <span className="text-blue-900 font-semibold">
                               {/* {assignment?.currentStation?.name || "Unknown Station"} */}
-                                {assignment?.currentStation?.[0]?.name || "Unknown Station"}
-
+                              {assignment?.currentStation?.[0]?.name ||
+                                "Unknown Station"}
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
@@ -614,7 +737,8 @@ const PendingStationApprovals = ({ onEdit }) => {
                         </div>
                         {assignment.editBy && (
                           <div className="text-xs text-gray-500">
-                            Requested by: {assignment.editBy.firstName} {assignment.editBy.lastName}
+                            Requested by: {assignment.editBy.firstName}{" "}
+                            {assignment.editBy.lastName}
                           </div>
                         )}
                       </td>
@@ -688,6 +812,26 @@ const PendingStationApprovals = ({ onEdit }) => {
                               />
                             </svg>
                             Delete
+                          </button>
+                          <button
+                            onClick={() => handleReject(assignment._id)}
+                            className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                            title="Delete Assignment"
+                          >
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            Reject
                           </button>
                         </div>
                       </td>

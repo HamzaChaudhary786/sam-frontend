@@ -187,6 +187,37 @@ export const deleteStationAssignment = async (assignmentId) => {
     return { success: false, error: error.message };
   }
 };
+export const rejectStationAssignment = async (assignmentId) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/station-history/${assignmentId}/reject`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          rejectedBy: getCurrentUserId(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data.data || data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to reject station assignment",
+      };
+    }
+  } catch (error) {
+    console.error("Error rejecting station assignment:", error);
+    return { success: false, error: error.message };
+  }
+};
 
 // Approve station assignment - similar to salary deduction approve pattern
 export const approveStationAssignment = async (assignmentId) => {

@@ -43,6 +43,7 @@ const EmployeeGridTable = ({
   onCancelEditing,
   onCellChange,
   onSaveCell,
+  onSaveAll,
   onPrevImage,
   onNextImage,
   onImageClick,
@@ -305,22 +306,35 @@ const EmployeeGridTable = ({
 
     const backendFilters = {};
 
-    if (filters.name) backendFilters.name = filters.name;
-    if (filters.address) backendFilters.address = filters.address;
-    if (filters.personalNumber)
+    // Handle array filters (multi-select and multi-text inputs)
+    if (filters.name && filters.name.length > 0)
+      backendFilters.name = filters.name;
+    if (filters.address && filters.address.length > 0)
+      backendFilters.address = filters.address;
+    if (filters.personalNumber && filters.personalNumber.length > 0)
       backendFilters.personalNumber = filters.personalNumber;
-    if (filters.cnic) backendFilters.cnic = filters.cnic;
-    if (filters.cast) backendFilters.cast = filters.cast;
-    if (filters.rank) backendFilters.rank = filters.rank;
-    if (filters.status) backendFilters.status = filters.status;
-    if (filters.designation) backendFilters.designation = filters.designation;
-    if (filters.grade) backendFilters.grade = filters.grade;
-    if (filters.station) backendFilters.station = filters.station;
-    if (filters.district) backendFilters.district = filters.district;
-    if (filters.tehsil) backendFilters.tehsil = filters.tehsil;
-    if (filters.assetType) backendFilters.assetType = filters.assetType;
-    if (filters.serviceType) backendFilters.serviceType = filters.serviceType;
-
+    if (filters.cnic && filters.cnic.length > 0)
+      backendFilters.cnic = filters.cnic;
+    if (filters.cast && filters.cast.length > 0)
+      backendFilters.cast = filters.cast;
+    if (filters.rank && filters.rank.length > 0)
+      backendFilters.rank = filters.rank;
+    if (filters.status && filters.status.length > 0)
+      backendFilters.status = filters.status;
+    if (filters.designation && filters.designation.length > 0)
+      backendFilters.designation = filters.designation;
+    if (filters.grade && filters.grade.length > 0)
+      backendFilters.grade = filters.grade;
+    if (filters.station && filters.station.length > 0)
+      backendFilters.station = filters.station;
+    if (filters.district && filters.district.length > 0)
+      backendFilters.district = filters.district;
+    if (filters.tehsil && filters.tehsil.length > 0)
+      backendFilters.tehsil = filters.tehsil;
+    if (filters.assetType && filters.assetType.length > 0)
+      backendFilters.assetType = filters.assetType;
+    if (filters.serviceType && filters.serviceType.length > 0)
+      backendFilters.serviceType = filters.serviceType;
 
     updateFilters(backendFilters);
   };
@@ -359,6 +373,14 @@ const EmployeeGridTable = ({
     setIsViewModalOpen(false);
     setSelectedEmployee(null);
   };
+
+  {/* Employee View Modal */}
+  <EmployeeViewModal
+    isOpen={isViewModalOpen}
+    onClose={handleCloseViewModal}
+    employee={selectedEmployee}
+  />
+
 
   // Pagination handlers remain the same
   const handlePageChange = (page) => {
@@ -760,6 +782,21 @@ const EmployeeGridTable = ({
     );
   }
 
+  const handleSaveAll = () => {
+    onSaveAll();
+    toast.success("All changes saved!");
+  };
+
+  const handleCancelAll = () => {
+    Object.keys(editingData).forEach((employeeId) => {
+      const employee = safeEmployees.find((emp) => emp._id === employeeId);
+      if (employee) {
+        onCancelEditing(employee._id);
+      }
+    });
+    toast.info("All changes cancelled.");
+  };
+
   // Main render with multi-select functionality
   return (
     <div>
@@ -772,6 +809,24 @@ const EmployeeGridTable = ({
 
       {/* Bulk Actions Bar - exactly like EmployeeList */}
       {renderBulkActionsBar()}
+
+      {/* Save All Button for multiple edits */}
+      {Object.keys(editingData).length > 0 && (
+        <div className="flex justify-end gap-2 mb-2">
+          <button
+            onClick={handleSaveAll}
+            className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
+          >
+            Save All Changes
+          </button>
+          <button
+            onClick={handleCancelAll}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+          >
+            Cancel All Changes
+          </button>
+        </div>
+      )}
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -821,13 +876,12 @@ const EmployeeGridTable = ({
               {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
               {/* Checkbox - spans 2 rows */}
               <div className="row-span-2 flex items-center justify-center">
-              {renderImageCell(employee)}
+                {renderImageCell(employee)}
                 {renderEmployeeCheckbox(employee)}
-                
               </div>
 
               {/* Vertical action buttons - spans 2 rows */}
-              <div className="row-span-2 flex flex-col items-stretch gap-2 py-1">
+              <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
                 {isAdmin && (
                   <button
                     onClick={() => toggleEditMode(employee._id)}
@@ -836,35 +890,68 @@ const EmployeeGridTable = ({
                         ? "bg-orange-600 text-white hover:bg-orange-700"
                         : "bg-blue-600 text-white hover:bg-blue-700"
                     }`}
-                    title={editableEmployees.has(employee._id) ? "Disable editing" : "Enable editing"}
+                    title={
+                      editableEmployees.has(employee._id)
+                        ? "Disable editing"
+                        : "Enable editing"
+                    }
                   >
-                    {editableEmployees.has(employee._id) ? "Disable Edit" : "Edit"}
+                    {editableEmployees.has(employee._id)
+                      ? "Disable Edit"
+                      : "Edit"}
                   </button>
                 )}
-                <button
+                {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
                 >
                   Delete
-                </button>
-                <button
-                  onClick={() => handleView(employee)}
-                  className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
-                >
-                  View
-                </button>
+                </button> */}
+                 {!isEditing && (
+                  <button
+                   onClick={() => handleView(employee)}
+                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                  >
+                    View
+                 </button>
+                 )}
+                {/* Removed horizontal action row; actions shown vertically next to checkbox */}
+                {isEditing && (
+                  <>
+                    <button
+                      onClick={() => onSaveCell(employee)}
+                      className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => handleCancelEditing(employee)}
+                      className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* First row of data (reordered) */}
               <div>{renderCell(employee, "status", "select", "statuses")}</div>
               <div>{renderCell(employee, "personalNumber", "input")}</div>
               <div>{renderCell(employee, "firstName", "input")}</div>
-              <div>{renderCell(employee, "stations", "select", "stations")}</div>
+              <div>
+                {renderCell(employee, "stations", "select", "stations")}
+              </div>
               <div>{renderCell(employee, "mobileNumber", "input")}</div>
-              <div>{renderCell(employee, "designation", "select", "designations")}</div>
+              <div>
+                {renderCell(employee, "designation", "select", "designations")}
+              </div>
               <div>{renderCell(employee, "rank", "select", "ranks")}</div>
-              <div>{renderCell(employee, "address.tehsil", "select", "tehsil")}</div>
-              <div>{renderCell(employee, "address.line2", "select", "district")}</div>
+              <div>
+                {renderCell(employee, "address.tehsil", "select", "tehsil")}
+              </div>
+              <div>
+                {renderCell(employee, "address.line2", "select", "district")}
+              </div>
 
               {/* NEW: Assets Column - spans 2 rows */}
               <div className="row-span-2 flex items-center p-1">
@@ -906,25 +993,7 @@ const EmployeeGridTable = ({
               <div className="col-start-10">
                 {renderCell(employee, "address.muhala", "input")}
               </div>
-              {/* <div className="col-start-11 row-start-2"></div> */}
-
-              {/* Removed horizontal action row; actions shown vertically next to checkbox */}
-              {isEditing && (
-                <div className="col-start-11 row-start-2 flex gap-1 ">
-                  <button
-                    onClick={() => onSaveCell(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 scale-y-[0.8]"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => handleCancelEditing(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 scale-y-[0.8]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <div className="col-start-11 row-start-2"></div>
             </div>
           );
         })}
@@ -943,6 +1012,25 @@ const EmployeeGridTable = ({
           </div>
         )}
       </div>
+
+      {/* Save All Button for multiple edits */}
+      {Object.keys(editingData).length > 0 && (
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={handleSaveAll}
+            className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
+          >
+            Save All Changes
+          </button>
+          <button
+            onClick={handleCancelAll}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+          >
+            Cancel All Changes
+          </button>
+        </div>
+      )}
+
       <MultiStationAssignmentForm
         selectedEmployees={selectedEmployeesForPosting}
         isOpen={isMultiStationModalOpen}
@@ -2062,12 +2150,6 @@ export default EmployeeGridTable;
 //         )}
 //       </div>
 
-//       {/* Employee View Modal */}
-//       <EmployeeViewModal
-//         isOpen={isViewModalOpen}
-//         onClose={handleCloseViewModal}
-//         employee={selectedEmployee}
-//       />
 
 //       {/* Confirmation Modal */}
 //       {confirmPopup && renderConfirmationModal()}

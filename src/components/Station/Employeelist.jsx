@@ -10,7 +10,7 @@ const StationEmployeeWrapper = ({
   // Create filters for this specific station
   const employeeFilters = {
     station: stationId,
-    limit: showAll ? 100 : 5, // Show 5 employees when collapsed, 100 when expanded
+    limit: showAll ? 500 : 5, // Show 5 employees when collapsed, 100 when expanded
   };
 
   // If not showing, return the toggle row
@@ -20,7 +20,10 @@ const StationEmployeeWrapper = ({
         <td className="px-6 py-3">
           <div className="flex items-center text-xs text-blue-600 font-medium">
             <span className="mr-2">👥 Employees</span>
+                        <span className="mr-2"> 10 </span>
+
           </div>
+          
         </td>
         <td className="px-6 py-3" colSpan="4">
           <div className="text-sm text-gray-600">
