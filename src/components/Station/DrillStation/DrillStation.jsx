@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Building, MapPin, Phone, User, Shield, Package, AlertTriangle, CheckCircle, XCircle, Camera, Wifi, Navigation, ArrowUp } from 'lucide-react';
 import { BACKEND_URL } from '../../../constants/api';
+import { IoEyeSharp } from "react-icons/io5";
+import EmployeeViewModal from '../../Employee/ViewEmployee/ViewEmployee';
 
 const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isViewEmployee, setIsViewEmployee] = useState(false)
+  const [isEmployee, setIsEmployee] = useState()
+
+  const handleClose = () => {
+    setIsViewEmployee(!isViewEmployee)
+  }
 
   useEffect(() => {
     fetchStationEmployees();
@@ -14,7 +22,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
   const fetchStationEmployees = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${BACKEND_URL}/employee/station-drill-down-summary?stationId=${stationId}`, {
         method: 'GET',
@@ -101,11 +109,11 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
     );
   }
 
-  const { 
-    stationInfo, 
-    employeeSummary, 
-    employeeList, 
-    inCharges, 
+  const {
+    stationInfo,
+    employeeSummary,
+    employeeList,
+    inCharges,
     minimumRequirements,
     stationAssetsSummary,
     employeeAssetsSummary,
@@ -173,11 +181,10 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
               <Shield className="h-5 w-5 text-purple-600 mr-2" />
               <div>
                 <p className="text-sm text-gray-600">Status</p>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  stationInfo.status === 'active' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${stationInfo.status === 'active'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
                   {stationInfo.status}
                 </span>
               </div>
@@ -223,8 +230,8 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {stationInfo.images.map((image, index) => (
                   <div key={index} className="relative group">
-                    <img 
-                      src={image} 
+                    <img
+                      src={image}
                       alt={`Station image ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
                       onClick={() => window.open(image, '_blank')}
@@ -242,7 +249,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
       {minimumRequirements && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Minimum Requirements vs Current Status</h3>
-          
+
           {/* Staff Requirements */}
           {minimumRequirements.staff && (
             <div className="mb-6">
@@ -255,10 +262,9 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   <span className="text-sm text-gray-600">
                     Required: <span className="font-semibold">{minimumRequirements.staff.required}</span>
                   </span>
-                  <span className={`text-sm font-semibold ${
-                    minimumRequirements.staff.shortage > 0 ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {minimumRequirements.staff.shortage > 0 
+                  <span className={`text-sm font-semibold ${minimumRequirements.staff.shortage > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                    {minimumRequirements.staff.shortage > 0
                       ? `Shortage: ${minimumRequirements.staff.shortage}`
                       : 'Fully Staffed'
                     }
@@ -285,9 +291,8 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                     </div>
                   </div>
                 </div>
-                <div className={`p-4 rounded-lg ${
-                  minimumRequirements.staff.shortage > 0 ? 'bg-red-50' : 'bg-green-50'
-                }`}>
+                <div className={`p-4 rounded-lg ${minimumRequirements.staff.shortage > 0 ? 'bg-red-50' : 'bg-green-50'
+                  }`}>
                   <div className="flex items-center">
                     {minimumRequirements.staff.shortage > 0 ? (
                       <XCircle className="h-6 w-6 text-red-600 mr-2" />
@@ -298,11 +303,10 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                       <p className="text-sm text-gray-600">
                         {minimumRequirements.staff.shortage > 0 ? 'Shortage' : 'Status'}
                       </p>
-                      <p className={`text-xl font-bold ${
-                        minimumRequirements.staff.shortage > 0 ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {minimumRequirements.staff.shortage > 0 
-                          ? minimumRequirements.staff.shortage 
+                      <p className={`text-xl font-bold ${minimumRequirements.staff.shortage > 0 ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                        {minimumRequirements.staff.shortage > 0
+                          ? minimumRequirements.staff.shortage
                           : 'Complete'
                         }
                       </p>
@@ -498,7 +502,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Distribution</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
+
             {/* By Designation */}
             {employeeSummary.breakdown.byDesignation && Object.keys(employeeSummary.breakdown.byDesignation).length > 0 && (
               <div>
@@ -507,7 +511,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byDesignation).map(([designation, count]) => (
                     <div key={designation} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700">{designation}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -522,7 +526,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byGrade).map(([grade, count]) => (
                     <div key={grade} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700">{grade}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -537,7 +541,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byServiceType).map(([serviceType, count]) => (
                     <div key={serviceType} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700">{serviceType}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -552,7 +556,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byAge).map(([ageGroup, count]) => (
                     <div key={ageGroup} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700">{ageGroup}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -567,7 +571,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byCast).map(([cast, count]) => (
                     <div key={cast} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700">{cast}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -582,7 +586,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                   {Object.entries(employeeSummary.breakdown.byStatus).map(([status, count]) => (
                     <div key={status} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm text-gray-700 capitalize">{status}</span>
-                      <span className="font-medium text-gray-900">{count}</span>
+                      <span className="font-medium text-gray-900">{`${count} / ${employeeSummary.total}`}</span>
                     </div>
                   ))}
                 </div>
@@ -641,6 +645,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                     </th>
                   </tr>
                 </thead>
+                {console.log(employeeList, "all employee data")}
                 <tbody className="bg-white divide-y divide-gray-200">
                   {employeeList.map((employee) => (
                     <tr key={employee._id} className="hover:bg-gray-50">
@@ -648,15 +653,15 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                             <span className="text-blue-600 font-medium text-sm">
-                              {employee.name?.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
+                              {employee.firstName?.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
                             </span>
                           </div>
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee.name}
+                            <div className="text-sm font-medium text-gray-700">
+                              Name: {employee.firstName}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Father: {employee.fatherName}
+                              Father: {employee.fatherFirstName}
                             </div>
                             {employee.age && (
                               <div className="text-sm text-gray-500">
@@ -684,20 +689,37 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                           {employee.mobileNumber || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
+                      <td className="px-6 py-4 whitespace-nowrap flex flex-row gap-x-3 ">
+                        <div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.status === 'active'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
-                          {employee.status}
-                        </span>
+                            }`}>
+                            {employee.status}
+                          </span>
+                        </div>
+                        <div className='py-0.5 px-1.5 cursor-pointer bg-blue-600 text-white flex flex-row items-center gap-x-2 rounded-3xl' onClick={() => {
+                          setIsEmployee(employee)
+                          setIsViewEmployee(!isViewEmployee)
+
+                        }}>
+                          <IoEyeSharp />
+
+                          view
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div>
+            <EmployeeViewModal
+              isOpen={isViewEmployee}
+              onClose={handleClose}
+              employee={isEmployee} />
           </div>
 
           {/* Mobile Cards */}
@@ -715,11 +737,10 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                       <h3 className="text-sm font-medium text-gray-900">
                         {employee.name}
                       </h3>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        employee.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}>
                         {employee.status}
                       </span>
                     </div>

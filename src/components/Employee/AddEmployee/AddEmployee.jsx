@@ -14,6 +14,8 @@ import { getRanksWithEnum } from "./Rank.js";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 import { getStationDistrictWithEnum } from "../../Station/District.js";
 import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
+import { MultiEnumSelect } from "../../Multiselect.jsx";
+import { getTrainingsWithEnum } from "./Training.js";
 const API_URL = BACKEND_URL;
 
 // Fixed Multiple Image upload component
@@ -139,6 +141,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
   const [profile, setProfile] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
   const [enumsLoaded, setEnumsLoaded] = useState(false);
+  const [trainingEnum, setTrainingEnum] = useState({});
 
   // Separate state for station address (for display only)
   const [stationAddress, setStationAddress] = useState({
@@ -170,6 +173,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     mobileNumber: "",
     grade: "",
     serviceType: "provincial",
+    training: [], // Add this new field
     address: {
       line1: "",
       line2: "",
@@ -260,13 +264,14 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     // First, fetch the enums
     const fetchEnums = async () => {
       try {
-        const [castRes, desigRes, gradeRes, statusRes, Rank] =
+        const [castRes, desigRes, gradeRes, statusRes, Rank, trainingRes] =
           await Promise.all([
             getCastsWithEnum(),
             getDesignationsWithEnum(),
             getGradesWithEnum(),
             getStatusWithEnum(),
             getRanksWithEnum(),
+            getTrainingsWithEnum(), // Add this line
           ]);
 
         if (castRes.success) {
@@ -276,6 +281,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         if (gradeRes.success) setGradeEnum(gradeRes.data);
         if (statusRes.success) setStatusEnum(statusRes.data);
         if (Rank.success) setRankEnum(Rank.data);
+        if (trainingRes.success) setTrainingEnum(trainingRes.data); // Add this line
 
         setEnumsLoaded(true);
       } catch (error) {
@@ -320,6 +326,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         lastName: editData.lastName || "",
         fatherFirstName: editData.fatherFirstName || "",
         fatherLastName: editData.fatherLastName || "",
+        training: editData.training || [],
         cast:
           typeof editData.cast === "object"
             ? editData.cast?._id
@@ -382,6 +389,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         statusDescription: "",
         designation: "",
         mobileNumber: "",
+        training: [],
         grade: "",
         rank: "",
         serviceType: "provincial",
@@ -459,6 +467,14 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         }));
       }
     }
+  };
+
+  const handleTrainingsEnumChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      training: value,
+    }));
   };
 
   // Handle location change with auto-fill station address (separate from personal address)
@@ -618,8 +634,16 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             onChange={handleChange}
             required
             placeholder="EMP-12345"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            readOnly={isEdit}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
+            }`}
           />
+          {isEdit && (
+            <p className="mt-1 text-xs text-gray-500">
+              Personal number cannot be changed in edit
+            </p>
+          )}
         </div>
 
         <div>
@@ -694,20 +718,26 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             pattern="[0-9]{13}"
             title="CNIC must be exactly 13 digits with no hyphens"
             maxLength="13"
+            readOnly={isEdit}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               validationErrors.cnic
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-300 focus:border-blue-500"
-            }`}
+            } ${isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""}`}
           />
           {validationErrors.cnic && (
             <p className="mt-1 text-sm text-red-600">{validationErrors.cnic}</p>
+          )}
+          {isEdit && (
+            <p className="mt-1 text-xs text-gray-500">
+              CNIC cannot be changed in edit
+            </p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mobile Number 
+            Mobile Number
           </label>
           <input
             type="text"
@@ -727,8 +757,16 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             name="dateOfBirth"
             value={formData.dateOfBirth}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            readOnly={isEdit}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
+            }`}
           />
+          {isEdit && (
+            <p className="mt-1 text-xs text-gray-500">
+              Date of birth cannot be changed in edit
+            </p>
+          )}
         </div>
       </div>
 
@@ -780,6 +818,17 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           required={false}
           placeholder="Select rank"
         />
+        <div className="grid grid-cols-1 gap-4">
+          <MultiEnumSelect
+            label="Employee Trainings"
+            name="training"
+            value={formData.training}
+            onChange={handleTrainingsEnumChange}
+            enumObject={trainingEnum}
+            placeholder="Search and select trainings..."
+            readOnly={false}
+          />
+        </div>
       </div>
 
       {/* Personal Address Section */}
@@ -856,7 +905,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Station 
+                Station
               </label>
               <select
                 name="stations"

@@ -54,13 +54,13 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
     if (typeof designationId === 'object' && designationId?.name) {
       return designationId.name;
     }
-    
+
     // If it's an ID, find the name from designationEnum
     if (designationEnum && Array.isArray(designationEnum)) {
       const designation = designationEnum.find(d => d._id === designationId);
       return designation?.name || designationId || "N/A";
     }
-    
+
     return designationId || "N/A";
   };
 
@@ -69,35 +69,35 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
     if (typeof gradeId === 'object' && gradeId?.name) {
       return gradeId.name;
     }
-    
+
     // If it's an ID, find the name from gradeEnum
     if (gradeEnum && Array.isArray(gradeEnum)) {
       const grade = gradeEnum.find(g => g._id === gradeId);
       return grade?.name || gradeId || "N/A";
     }
-    
+
     return gradeId || "N/A";
   };
 
   if (!isOpen || !employee) return null;
 
   // Get profile images array or fallback to empty array
-  const profileImages = Array.isArray(employee.profileUrl) 
-    ? employee.profileUrl 
-    : employee.profileUrl 
-      ? [employee.profileUrl] 
+  const profileImages = Array.isArray(employee.profileUrl)
+    ? employee.profileUrl
+    : employee.profileUrl
+      ? [employee.profileUrl]
       : [];
 
   const currentImage = profileImages[currentImageIndex] || "/default-avatar.png";
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === 0 ? profileImages.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === profileImages.length - 1 ? 0 : prev + 1
     );
   };
@@ -138,7 +138,7 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                   className="h-32 w-32 rounded-full object-cover border-4 border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={openImageModal}
                 />
-                
+
                 {/* Navigation arrows - show only if multiple images */}
                 {profileImages.length > 1 && (
                   <>
@@ -177,15 +177,14 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                 </p>
                 <div className="mt-2">
                   <span
-                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                      employee.status === "active"
+                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${employee.status === "active"
                         ? "bg-green-100 text-green-800"
                         : employee.status === "retired"
-                        ? "bg-blue-100 text-blue-800"
-                        : employee.status === "terminated"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
+                          ? "bg-blue-100 text-blue-800"
+                          : employee.status === "terminated"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
                   >
                     {employee.status?.charAt(0).toUpperCase() +
                       employee.status?.slice(1)}
@@ -247,7 +246,7 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                     Cast
                   </label>
                   <p className="text-sm text-gray-900">
-                    {employee.cast?.name || "N/A"}
+                    {employee.cast?.name || employee.cast || "N/A"}
                   </p>
                 </div>
                 <div>
@@ -255,7 +254,7 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                     Father's Name
                   </label>
                   <p className="text-sm text-gray-900">
-                    {employee.fatherFirstName && employee.fatherLastName 
+                    {employee.fatherFirstName && employee.fatherLastName
                       ? `${employee.fatherFirstName} ${employee.fatherLastName}`
                       : employee.fatherFirstName || employee.fatherLastName || "N/A"}
                   </p>
@@ -398,11 +397,10 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                   {employee.assets.map((asset, index) => (
                     <div
                       key={index}
-                      className={`rounded-lg p-4 ${
-                        asset.asset?.type === "weapons"
+                      className={`rounded-lg p-4 ${asset.asset?.type === "weapons"
                           ? "bg-red-50 border border-red-200"
                           : "bg-blue-50 border border-blue-200"
-                      }`}
+                        }`}
                     >
                       {/* Asset content remains the same as in your original code */}
                       <div className="flex items-center mb-3">
@@ -448,7 +446,7 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
               alt={`${employee.firstName} ${employee.lastName} - Full Size`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             {/* Navigation arrows for full-size modal */}
             {profileImages.length > 1 && (
               <>

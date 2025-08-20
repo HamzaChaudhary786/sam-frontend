@@ -11,7 +11,8 @@ export const lookupEnum = [
   "deductionType",
   "achievementType",
   "assetStatus",
-  "assetTypes"
+  "assetTypes",
+  "training"
 
 ];
 

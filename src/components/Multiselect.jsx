@@ -144,7 +144,7 @@ export const MultiEnumSelect = ({
                 ref={searchInputRef}
                 type="text"
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Search facilities..."
+                placeholder="Search options..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
@@ -179,7 +179,7 @@ export const MultiEnumSelect = ({
                 })
               ) : (
                 <div className="px-3 py-2 text-sm text-gray-500">
-                  No facilities found
+                  No option found
                 </div>
               )}
             </div>
@@ -188,7 +188,7 @@ export const MultiEnumSelect = ({
             {value.length > 0 && (
               <div className="px-3 py-2 border-t border-gray-200 bg-gray-50">
                 <span className="text-xs text-gray-600">
-                  {value.length} facilit{value.length !== 1 ? 'ies' : 'y'} selected
+                  {value.length} option{value.length !== 1 ? 'ies' : 'y'} selected
                 </span>
               </div>
             )}
@@ -198,7 +198,7 @@ export const MultiEnumSelect = ({
 
       {/* Helper text */}
       <p className="text-xs text-gray-500 mt-1">
-        Select multiple facilities. Click to expand and search.
+        Select multiple options. Click to expand and search.
       </p>
     </div>
   );
