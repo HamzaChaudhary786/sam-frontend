@@ -5,11 +5,26 @@ import { createStatusAssignment } from "../StatusAssignment/StatusAssignmentApi.
 import { getStatusWithEnum } from "./AddEmployee/Status.js";
 import { role_admin } from "../../constants/Enum.js";
 
-const MultiStatusAssignmentForm = ({ 
-  selectedEmployees = [], 
-  isOpen = false, 
-  onSuccess, 
-  onCancel 
+// Add this function after your imports and before the component
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }); // Returns format: DD/MM/YYYY
+  } catch (error) {
+    return "Invalid Date";
+  }
+};
+
+const MultiStatusAssignmentForm = ({
+  selectedEmployees = [],
+  isOpen = false,
+  onSuccess,
+  onCancel,
 }) => {
   // State for dynamic status options
   const [statusOptions, setStatusOptions] = useState({});
@@ -27,6 +42,9 @@ const MultiStatusAssignmentForm = ({
     isApproved: false,
     approvalComment: "",
     disciplinaryAction: false,
+    dateOfBirth: "",
+    cnic: "",
+    personalNumber: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +57,8 @@ const MultiStatusAssignmentForm = ({
         const storedUserType = localStorage.getItem("userType");
         const userData = localStorage.getItem("userData");
         const parsedUserData = userData ? JSON.parse(userData) : null;
-        const currentUserType = storedUserType || parsedUserData?.userType || "";
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
 
         setUserType(currentUserType);
         setIsAdmin(currentUserType === role_admin);
@@ -53,6 +72,94 @@ const MultiStatusAssignmentForm = ({
     checkUserRole();
   }, []);
 
+  // Function to get current user data from localStorage
+  const getCurrentUser = () => {
+    try {
+      const userData = localStorage.getItem("userData");
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error("Error getting user data:", error);
+      return null;
+    }
+  };
+
+  const buildChangedFields = (employee, formData) => {
+    const changedFields = [];
+
+    // Status change
+    if (formData.currentStatus && formData.currentStatus !== employee.status) {
+      changedFields.push({
+        oldStatus: {
+          fromType: "employee",
+          fromFieldName: "status",
+          fromFieldValue: employee.status || null,
+        },
+        currentStatus: {
+          toType: "employee",
+          toFieldName: "status",
+          toFieldValue: formData.currentStatus,
+        },
+      });
+    }
+
+    // Date of Birth change
+    if (formData.dateOfBirth) {
+      const employeeDOB = employee.dateOfBirth
+        ? new Date(employee.dateOfBirth).toISOString().split("T")[0]
+        : null;
+      if (formData.dateOfBirth !== employeeDOB) {
+        changedFields.push({
+          oldStatus: {
+            fromType: "employee",
+            fromFieldName: "dateOfBirth",
+            fromFieldValue: employee.dateOfBirth || null,
+          },
+          currentStatus: {
+            toType: "employee",
+            toFieldName: "dateOfBirth",
+            toFieldValue: formData.dateOfBirth,
+          },
+        });
+      }
+    }
+
+    // CNIC change
+    if (formData.cnic && formData.cnic !== employee.cnic) {
+      changedFields.push({
+        oldStatus: {
+          fromType: "employee",
+          fromFieldName: "cnic",
+          fromFieldValue: employee.cnic || null,
+        },
+        currentStatus: {
+          toType: "employee",
+          toFieldName: "cnic",
+          toFieldValue: formData.cnic,
+        },
+      });
+    }
+
+    // Personal Number change
+    if (
+      formData.personalNumber &&
+      formData.personalNumber !== (employee.personalNumber || employee.pnumber)
+    ) {
+      changedFields.push({
+        oldStatus: {
+          fromType: "employee",
+          fromFieldName: "personalNumber",
+          fromFieldValue: employee.personalNumber || employee.pnumber || null,
+        },
+        currentStatus: {
+          toType: "employee",
+          toFieldName: "personalNumber",
+          toFieldValue: formData.personalNumber,
+        },
+      });
+    }
+
+    return changedFields;
+  };
   // Fetch status options from API
   const fetchStatusOptions = async () => {
     setIsLoadingStatuses(true);
@@ -83,6 +190,9 @@ const MultiStatusAssignmentForm = ({
       isApproved: false,
       approvalComment: "",
       disciplinaryAction: false,
+      dateOfBirth: "",
+      cnic: "",
+      personalNumber: "",
     });
     setProcessingResults(null);
   };
@@ -99,6 +209,35 @@ const MultiStatusAssignmentForm = ({
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Get current user
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser._id) {
+      toast.error("User information not found. Please login again.");
+      return;
+    }
+
+    // Check if any fields are being updated
+    const hasChanges = selectedEmployees.some((employee) => {
+      const employeeDOB = employee.dateOfBirth
+        ? new Date(employee.dateOfBirth).toISOString().split("T")[0]
+        : null;
+      return (
+        (formData.currentStatus &&
+          formData.currentStatus !== employee.status) ||
+        (formData.dateOfBirth && formData.dateOfBirth !== employeeDOB) ||
+        (formData.cnic && formData.cnic !== employee.cnic) ||
+        (formData.personalNumber &&
+          formData.personalNumber !==
+            (employee.personalNumber || employee.pnumber))
+      );
+    });
+
+    if (!hasChanges) {
+      toast.error("Please make at least one change to the selected employees");
+      return;
+    }
+
     setIsSubmitting(true);
     setProcessingResults(null);
 
@@ -112,20 +251,34 @@ const MultiStatusAssignmentForm = ({
       // Process each employee
       for (const employee of selectedEmployees) {
         try {
+          const changedFields = buildChangedFields(employee, formData);
+
           const submitData = {
             employee: employee._id,
-            currentStatus: formData.currentStatus,
-            lastStatus: employee.status || "active", // Use employee's current status
-            from: formData.from ? new Date(formData.from).toISOString() : new Date().toISOString(),
+            editBy: currentUser._id,
+            currentStatus: formData.currentStatus || employee.status, // Always include current status
+            lastStatus: employee.status || null, // Current employee status becomes last status
+            changedFields: changedFields, // Add changed fields array
+            from: formData.from
+              ? new Date(formData.from).toISOString()
+              : new Date().toISOString(),
             to: formData.to ? new Date(formData.to).toISOString() : null,
             description: formData.description,
             disciplinaryAction: formData.disciplinaryAction,
+
             // Only include approval fields when user is admin
             ...(isAdmin && {
               isApproved: formData.isApproved,
               approvalComment: formData.approvalComment,
             }),
           };
+
+          console.log(
+            "Submitting data for employee:",
+            employee.firstName,
+            employee.lastName
+          );
+          console.log("Submit data:", submitData);
 
           const result = await createStatusAssignment(submitData);
 
@@ -153,20 +306,23 @@ const MultiStatusAssignmentForm = ({
         }
 
         // Small delay to prevent overwhelming the server
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       setProcessingResults(results);
 
       // Show appropriate toast messages
       if (results.successful.length > 0 && results.failed.length === 0) {
-        toast.success(`✅ Successfully created status assignments for all ${results.successful.length} employees`);
+        toast.success(
+          `✅ Successfully created status assignments for all ${results.successful.length} employees`
+        );
       } else if (results.successful.length > 0 && results.failed.length > 0) {
-        toast.warning(`⚠️ Created ${results.successful.length} assignments, failed ${results.failed.length}`);
+        toast.warning(
+          `⚠️ Created ${results.successful.length} assignments, failed ${results.failed.length}`
+        );
       } else {
         toast.error(`❌ Failed to create status assignments for all employees`);
       }
-
     } catch (error) {
       console.error("Multi status assignment error:", error);
       toast.error("Error processing status assignments");
@@ -212,7 +368,7 @@ const MultiStatusAssignmentForm = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
@@ -256,7 +412,10 @@ const MultiStatusAssignmentForm = ({
             <div className="max-h-32 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {selectedEmployees.map((employee, index) => (
-                  <div key={employee._id || index} className="text-sm text-blue-700">
+                  <div
+                    key={employee._id || index}
+                    className="text-sm text-blue-700"
+                  >
                     <span className="font-medium">
                       {employee.firstName} {employee.lastName}
                     </span>
@@ -264,7 +423,20 @@ const MultiStatusAssignmentForm = ({
                       ({employee.personalNumber || employee.pnumber})
                     </span>
                     <div className="text-xs text-blue-600">
-                      Current: {statusOptions[employee.status] || employee.status || "N/A"}
+                      Current Status:{" "}
+                      {statusOptions[employee.status] ||
+                        employee.status ||
+                        "N/A"}
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      Current DOB: {formatDate(employee.dateOfBirth) || "N/A"}
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      Current CNIC: {employee.cnic || "N/A"}
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      Current Personal Number:{" "}
+                      {employee.personalNumber || "N/A"}
                     </div>
                   </div>
                 ))}
@@ -279,7 +451,7 @@ const MultiStatusAssignmentForm = ({
                 <h3 className="text-sm font-medium text-gray-800 mb-3">
                   Processing Results
                 </h3>
-                
+
                 {processingResults.successful.length > 0 && (
                   <div className="mb-3">
                     <h4 className="text-sm font-medium text-green-700 mb-2">
@@ -303,8 +475,12 @@ const MultiStatusAssignmentForm = ({
                     <div className="max-h-20 overflow-y-auto">
                       {processingResults.failed.map((item, index) => (
                         <div key={index} className="text-xs text-red-600">
-                          <div>{item.employee} ({item.personalNumber})</div>
-                          <div className="text-red-500 ml-2">Error: {item.error}</div>
+                          <div>
+                            {item.employee} ({item.personalNumber})
+                          </div>
+                          <div className="text-red-500 ml-2">
+                            Error: {item.error}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -317,20 +493,22 @@ const MultiStatusAssignmentForm = ({
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* New Status */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Status *
+                New Status (Optional)
               </label>
               <select
                 name="currentStatus"
                 value={formData.currentStatus}
                 onChange={handleChange}
-                required
                 disabled={isLoadingStatuses}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">
-                  {isLoadingStatuses ? "Loading statuses..." : "Select new status"}
+                  {isLoadingStatuses
+                    ? "Loading statuses..."
+                    : "Select new status (optional)"}
                 </option>
                 {Object.entries(statusOptions).map(([id, name]) => (
                   <option key={id} value={name}>
@@ -339,8 +517,61 @@ const MultiStatusAssignmentForm = ({
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                This status will be assigned to all selected employees
+                Leave empty if you don't want to change the status
               </p>
+            </div>
+
+            {/* Personal Information Section */}
+            <div className="border-t border-gray-200 pt-4 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Personal Information Updates (Optional)
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Date of Birth */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date of Birth (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+
+                {/* Personal Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Personal Number (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="personalNumber"
+                    value={formData.personalNumber}
+                    onChange={handleChange}
+                    placeholder="Enter personal number"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* CNIC - Full Width */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  CNIC (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="cnic"
+                  value={formData.cnic}
+                  onChange={handleChange}
+                  placeholder="Enter CNIC number (e.g., 1234512345671)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                />
+              </div>
             </div>
 
             {/* Disciplinary Action Checkbox */}
@@ -498,7 +729,7 @@ const MultiStatusAssignmentForm = ({
               >
                 Cancel
               </button>
-              
+
               {processingResults ? (
                 <button
                   type="button"
@@ -511,19 +742,35 @@ const MultiStatusAssignmentForm = ({
                 <button
                   type="submit"
                   disabled={
-                    isSubmitting || 
+                    isSubmitting ||
                     isLoadingStatuses ||
-                    !formData.currentStatus || 
-                    !formData.from || 
+                    !formData.from ||
                     !formData.description ||
-                    (isAdmin && formData.isApproved && !formData.approvalComment)
+                    (isAdmin &&
+                      formData.isApproved &&
+                      !formData.approvalComment)
                   }
                   className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 transition-colors flex items-center gap-2"
                 >
                   {isSubmitting && (
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                   )}
                   {isSubmitting

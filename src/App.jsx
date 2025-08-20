@@ -25,6 +25,8 @@ import AuditTrailPage from './pages/Audit.jsx';
 import StationImport from './pages/StationImport.jsx';
 import MaalKhana from './pages/MaalKhana.jsx'
 import PendingStationApprovals from './components/PendingStationPosting/PendingStations.jsx';
+import StationAssetAssignment from './pages/StationAssetAssignment.jsx';
+
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -197,6 +199,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <AssetsPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/stationassets"
+          element={
+            <ProtectedRoute>
+              <StationAssetAssignment />
             </ProtectedRoute>
           }
         />

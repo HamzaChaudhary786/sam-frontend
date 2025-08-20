@@ -556,6 +556,9 @@ const StationList = () => {
     });
     setCurrentView("drillTehsil");
   };
+  const handleStationAssets = (station) => {
+    navigate("/stationassets", { state: { station } });
+  };
 
   const handleDrillStationFromTehsil = (staion) => {
     if (staion == null) {
@@ -1104,6 +1107,26 @@ const StationList = () => {
                             >
                               Delete
                             </button> */}
+                            <button
+                              onClick={() => handleStationAssets(station)}
+                              className="px-3 py-1 text-xs rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
+                              title="Manage station assets"
+                            >
+                              <svg
+                                className="w-3 h-3 mr-1 inline"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                />
+                              </svg>
+                              Assets
+                            </button>
                           </div>
                         </div>
                       </td>
@@ -1290,6 +1313,12 @@ const StationList = () => {
 
                     {/* Delete Action Row */}
                     <div className="grid grid-cols-1 gap-2">
+                      <button
+                        onClick={() => handleStationAssets(station)}
+                        className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 text-center"
+                      >
+                        Assets
+                      </button>
                       <button
                         onClick={() => handleDelete(station._id)}
                         className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
