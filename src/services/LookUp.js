@@ -22,7 +22,7 @@ export const useLookups = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage] = useState(10);
+const [itemsPerPage, setItemsPerPage] = useState(500);
   
   // 🆕 Updated filter state to support arrays
   const [filters, setFilters] = useState({
@@ -336,6 +336,13 @@ export const useLookups = () => {
            filters.isActive !== undefined;
   };
 
+  const changePageSize = (newSize) => {
+  console.log("🔍 useLookups changing page size to:", newSize);
+  setItemsPerPage(newSize);
+  setCurrentPage(1); // Reset to first page
+  // fetchLookups will be triggered automatically by useEffect
+};
+
   return {
     // Data
     lookups,
@@ -346,6 +353,8 @@ export const useLookups = () => {
     currentPage,
     totalPages,
     totalItems,
+     itemsPerPage,     // ADD this line
+     changePageSize,   // ADD this line
     
     // Types
     allUniqueTypes,

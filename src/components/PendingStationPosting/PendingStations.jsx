@@ -8,6 +8,8 @@ import {
   rejectStationAssignment,
 } from "../StationAssignment/StationAssignmentApi.js";
 import { useNavigate } from "react-router-dom";
+import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
+import { useGlobalStationView } from "../Station/GlobalStationView.jsx";
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -15,6 +17,7 @@ const PendingStationApprovals = ({ onEdit }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { openStationView } = useGlobalStationView();
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -700,11 +703,13 @@ const PendingStationApprovals = ({ onEdit }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               From:
                             </span>
-                            <span className="text-gray-900">
-                              {/* {assignment?.lastStation?.name || "No Previous Station"} */}
+                            <ClickableStationName
+                              station={assignment?.lastStation?.[0]}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
                               {assignment?.lastStation?.[0]?.name ||
                                 "No Previous Station"}
-                            </span>
+                            </ClickableStationName>
                           </div>
                           <div className="flex items-center">
                             <svg
@@ -725,11 +730,13 @@ const PendingStationApprovals = ({ onEdit }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               To:
                             </span>
-                            <span className="text-blue-900 font-semibold">
-                              {/* {assignment?.currentStation?.name || "Unknown Station"} */}
+                            <ClickableStationName
+                              station={assignment?.currentStation?.[0]}
+                              className="text-blue-900 font-semibold hover:text-blue-700 cursor-pointer hover:underline"
+                            >
                               {assignment?.currentStation?.[0]?.name ||
                                 "Unknown Station"}
-                            </span>
+                            </ClickableStationName>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Effective: {formatDate(assignment.fromDate)}

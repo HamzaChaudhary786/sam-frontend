@@ -24,6 +24,8 @@ const AssetModal = ({
   const initialFormState = {
     name: "",
     type: "",
+    assetNumber: "", // Add this
+    category: "", // Add category field
     // Weapon fields
     weaponNumber: "",
     // Pistol fields
@@ -53,10 +55,42 @@ const AssetModal = ({
   const [formData, setFormData] = useState(initialFormState);
   console.log(editData, "hahahahahahahahaha this is edit data");
 
-  // Convert options arrays to enum objects for EnumSelect
+  const getCategoryOptions = (assetType) => {
+    if (!assetType) return [];
+
+    const type = assetType.toLowerCase();
+
+    let detectedCategory = "";
+
+    if (/round|bore|bor|mm|magazine/.test(type)) {
+      detectedCategory = "round";
+    } else if (/cabin|truck|motorcycle|bowser/.test(type)) {
+      detectedCategory = "vehicle";
+    } else if (/gun|rifle|ak|g3|lmg|mp5|rpd|rpg|draganov|sniper/.test(type)) {
+      detectedCategory = "weapons";
+    } else if (/pistol|tt/.test(type)) {
+      detectedCategory = "pistol";
+    } else {
+      detectedCategory = "weapons";
+    }
+
+    const allCategories = [
+      { value: "weapons", label: "Weapons" },
+      { value: "pistol", label: "Pistol" },
+      { value: "vehicle", label: "Vehicle" },
+      { value: "round", label: "Round" },
+    ];
+
+    return allCategories.sort((a, b) => {
+      if (a.value === detectedCategory) return -1;
+      if (b.value === detectedCategory) return 1;
+      return 0;
+    });
+  };
+
   const assetTypeEnum = React.useMemo(() => {
     const enumObj = {};
-    assetTypeOptions?.forEach(option => {
+    assetTypeOptions?.forEach((option) => {
       enumObj[option.value] = option.label;
     });
     return enumObj;
@@ -64,11 +98,20 @@ const AssetModal = ({
 
   const assetStatusEnum = React.useMemo(() => {
     const enumObj = {};
-    assetStatusOptions?.forEach(option => {
+    assetStatusOptions?.forEach((option) => {
       enumObj[option.value] = option.label;
     });
     return enumObj;
   }, [assetStatusOptions]);
+
+  const categoryEnum = React.useMemo(() => {
+    const categoryOptions = getCategoryOptions(formData.type);
+    const enumObj = {};
+    categoryOptions.forEach((option) => {
+      enumObj[option.value] = option.label;
+    });
+    return enumObj;
+  }, [formData.type]);
 
   useEffect(() => {
     if (isEdit && editData) {
@@ -85,6 +128,8 @@ const AssetModal = ({
       setFormData({
         name: editData.name || "",
         type: editData.type || "",
+        assetNumber: editData.assetNumber || "", // Add this line
+        category: editData.category || "",
         weaponNumber: editData.weaponNumber || "",
         pistolNumber: editData.pistolNumber || "",
         vehicleNumber: editData.vehicleNumber || "",
@@ -121,12 +166,22 @@ const AssetModal = ({
 
   const handleTypeChange = (e) => {
     const newType = e.target.value;
-    // Reset all type-specific fields when type changes
+    const selectedTypeLabel =
+      assetTypeOptions?.find((option) => option.value === newType)?.label ||
+      newType;
+
+    // Get the auto-detected category
+    const categoryOptions = getCategoryOptions(newType);
+    const autoSelectedCategory =
+      categoryOptions.length > 0 ? categoryOptions[0].value : "";
+
     setFormData((prev) => ({
       ...initialFormState,
-      name: prev.name,
+      name: selectedTypeLabel,
+      assetNumber: prev.assetNumber,
       type: newType,
-      assetStatus: prev.assetStatus, // Preserve asset status
+      category: autoSelectedCategory,
+      assetStatus: prev.assetStatus,
       condition: prev.condition,
       purchaseDate: prev.purchaseDate,
       supplier: prev.supplier,
@@ -174,7 +229,9 @@ const AssetModal = ({
 
       const submitData = {
         name: formData.name,
+        assetNumber: formData.assetNumber,
         type: formData.type,
+        category: formData.category,
         condition: formData.condition,
         assetStatus: formData.assetStatus,
         purchaseDate: formData.purchaseDate,
@@ -184,8 +241,7 @@ const AssetModal = ({
         assetImageUrl: uploadedUrls,
       };
 
-      // Add type-specific fields based on selected type
-      switch (formData.type) {
+      switch (formData.category) {
         case "weapons":
           submitData.weaponNumber = formData.weaponNumber;
           submitData.pistolNumber = "";
@@ -257,10 +313,10 @@ const AssetModal = ({
   };
 
   const renderTypeSpecificFields = () => {
-    switch (formData.type) {
+    switch (formData.category) {
       case "weapons":
         return (
-          <div className="border-t pt-4">
+          <div className="">
             <h3 className="text-lg font-medium text-red-800 mb-4">
               Weapon Information
             </h3>
@@ -297,7 +353,7 @@ const AssetModal = ({
 
       case "pistol":
         return (
-          <div className="border-t pt-4">
+          <div className="">
             <h3 className="text-lg font-medium text-orange-800 mb-4">
               Pistol Information
             </h3>
@@ -334,7 +390,7 @@ const AssetModal = ({
 
       case "vehicle":
         return (
-          <div className="border-t pt-4">
+          <div className="">
             <h3 className="text-lg font-medium text-blue-800 mb-4">
               Vehicle Information
             </h3>
@@ -443,9 +499,8 @@ const AssetModal = ({
 
       case "round":
         return (
-          <div className="border-t pt-4">
+          <div className="">
             <h3 className="text-lg font-medium text-green-800 mb-4">
-              {" "}
               Round Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -541,7 +596,6 @@ const AssetModal = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
               <EnumSelect
                 label="Asset Type"
@@ -553,22 +607,50 @@ const AssetModal = ({
                 placeholder="Search and select asset type..."
               />
             </div>
-        
+
+            <div>
+              <EnumSelect
+                label="Asset Category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                enumObject={categoryEnum}
+                required={formData.type ? true : false} // Required only if type is selected
+                placeholder={
+                  formData.type
+                    ? "Search and select asset category..."
+                    : "Select asset type first..."
+                }
+                disabled={!formData.type} // Disable if no type selected
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Asset Number *
               </label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="assetNumber"
+                value={formData.assetNumber}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="e.g., Black Hawk"
+                placeholder="e.g.,  AK001, VH001, etc."
               />
             </div>
+            <div className="w-full">
+              <EnumSelect
+                label="Asset Status"
+                name="assetStatus"
+                value={formData.assetStatus}
+                onChange={handleChange}
+                enumObject={assetStatusEnum}
+                required={true}
+                placeholder="Search and select asset status..."
+              />
             </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -601,6 +683,8 @@ const AssetModal = ({
             )}
           </div>
 
+          {renderTypeSpecificFields()}
+
           <div className="flex flex-row gap-2">
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -613,17 +697,6 @@ const AssetModal = ({
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="e.g., Good, Fair, Excellent"
-              />
-            </div>
-            <div className="w-full">
-              <EnumSelect
-                label="Asset Status"
-                name="assetStatus"
-                value={formData.assetStatus}
-                onChange={handleChange}
-                enumObject={assetStatusEnum}
-                required={true}
-                placeholder="Search and select asset status..."
               />
             </div>
           </div>
@@ -669,8 +742,6 @@ const AssetModal = ({
               placeholder="Enter supplier name"
             />
           </div>
-
-          {renderTypeSpecificFields()}
 
           <div className={formData.type ? "border-t pt-4" : ""}>
             <label className="block text-sm font-medium text-gray-700 mb-1">

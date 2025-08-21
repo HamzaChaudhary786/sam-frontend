@@ -15,7 +15,7 @@ export const useEmployees = (initialFilters = {}) => {
     totalEmployees: 0,
     hasNext: false,
     hasPrev: false,
-    limit: 50, // Default items per page
+    limit: 500, // Default items per page
   });
 
   // Fetch all employees with current filters and pagination

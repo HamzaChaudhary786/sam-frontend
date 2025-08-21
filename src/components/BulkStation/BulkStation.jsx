@@ -9,6 +9,8 @@ import {
   getEmployeeCurrentStation,
 } from "./StationApi.js";
 import { getStations } from "../Station/StationApi.js";
+import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
+
 const BulkStationAssignment = () => {
   const navigate = useNavigate();
 
@@ -577,8 +579,13 @@ const BulkStationAssignment = () => {
                     <div className="flex items-center">
                       <div className="flex-1 min-w-0">
                         <div>
-                          {assignment.employee?.stations?.name ||
-                            "not assigned"}
+                          <ClickableStationName
+                            station={assignment.employee?.stations}
+                            className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                          >
+                            {assignment.employee?.stations?.name ||
+                              "not assigned"}
+                          </ClickableStationName>
                         </div>
                         <div>{assignment.employee?.stations?.tehsil}</div>
                         <div>{assignment.employee?.stations?.district}</div>
@@ -591,7 +598,12 @@ const BulkStationAssignment = () => {
                       <div className="flex items-center">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {assignment.station.name}
+                            <ClickableStationName
+                              station={assignment.station}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {assignment.station.name}
+                            </ClickableStationName>
                           </div>
                         </div>
                         <button

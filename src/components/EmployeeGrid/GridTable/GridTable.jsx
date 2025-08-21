@@ -1069,7 +1069,7 @@ const EmployeeGridTable = ({
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
         showPageSizeOptions={true}
-        pageSizeOptions={[5, 10, 20, 50, 200, 500]}
+        pageSizeOptions={[500, 10, 20, 50, 200, 5]}
       />
     </div>
   );

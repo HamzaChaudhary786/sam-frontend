@@ -6,6 +6,7 @@ import BulkLookupModal from "../components/LookUpForm/BulkLookup.jsx";
 import { lookupEnum } from "../constants/Enum.js";
 import { SearchableMultiSelect } from "../components/Employee/searchableMultiselect.jsx"; // 🆕 Import multi-select component
 import { MultiTextInput } from "../components/Employee/MultiTextInput"; // 🆕 Import multi-text input component
+import LookupPagination from "../components/LookUpForm/Pagination.jsx"; // Adjust path as needed
 
 const LookupPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,18 +44,21 @@ const LookupPage = () => {
     goToPage,
     searchLookupNames, // 🆕 New method for suggestions
     updateFilters, // 🆕 New method for updating filters
+    itemsPerPage, // ADD this line
+    changePageSize, // ADD this line
     clearFilters,
     getAllUniqueTypes,
     getPaginationInfo,
     fetchLookups,
     currentFilters,
-    hasActiveFilters
+    hasActiveFilters,
   } = useLookups();
 
   // 🆕 Convert lookupEnum array to dropdown format for SearchableMultiSelect
   const lookupTypeOptions = lookupEnum.map((type) => ({
     _id: type,
-    name: type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, ' $1'),
+    name:
+      type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, " $1"),
   }));
 
   // 🆕 Search lookup names function for suggestions
@@ -68,31 +72,39 @@ const LookupPage = () => {
 
     try {
       // If searchLookupNames doesn't exist in the hook, use direct API call
-      if (typeof searchLookupNames === 'function') {
+      if (typeof searchLookupNames === "function") {
         const names = await searchLookupNames(query, { limit: 10 });
         setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
       } else {
         // Fallback: filter from current lookups data
         const filteredNames = lookups
-          .filter(lookup => 
-            lookup.name && 
-            lookup.name.toLowerCase().includes(query.toLowerCase())
+          .filter(
+            (lookup) =>
+              lookup.name &&
+              lookup.name.toLowerCase().includes(query.toLowerCase())
           )
-          .map(lookup => lookup.name)
+          .map((lookup) => lookup.name)
           .slice(0, 10);
-        setSuggestions((prev) => ({ ...prev, name: [...new Set(filteredNames)] }));
+        setSuggestions((prev) => ({
+          ...prev,
+          name: [...new Set(filteredNames)],
+        }));
       }
     } catch (error) {
       console.error("Error searching lookup names:", error);
       // Fallback to filtering current data on error
       const filteredNames = lookups
-        .filter(lookup => 
-          lookup.name && 
-          lookup.name.toLowerCase().includes(query.toLowerCase())
+        .filter(
+          (lookup) =>
+            lookup.name &&
+            lookup.name.toLowerCase().includes(query.toLowerCase())
         )
-        .map(lookup => lookup.name)
+        .map((lookup) => lookup.name)
         .slice(0, 10);
-      setSuggestions((prev) => ({ ...prev, name: [...new Set(filteredNames)] }));
+      setSuggestions((prev) => ({
+        ...prev,
+        name: [...new Set(filteredNames)],
+      }));
     } finally {
       setIsSearching((prev) => ({ ...prev, name: false }));
     }
@@ -101,10 +113,10 @@ const LookupPage = () => {
   // 🆕 Update filterForm when currentFilters change
   useEffect(() => {
     setFilterForm({
-      name: Array.isArray(currentFilters.search) 
-        ? currentFilters.search 
-        : currentFilters.search 
-        ? [currentFilters.search] 
+      name: Array.isArray(currentFilters.search)
+        ? currentFilters.search
+        : currentFilters.search
+        ? [currentFilters.search]
         : [],
       type: Array.isArray(currentFilters.lookupType)
         ? currentFilters.lookupType
@@ -135,9 +147,14 @@ const LookupPage = () => {
       try {
         await removeLookup(id, name);
       } catch (error) {
-        console.error('Delete failed:', error);
+        console.error("Delete failed:", error);
       }
     }
+  };
+  const handlePageSizeChange = (newPageSize) => {
+    console.log("🔍 Lookup page size change requested:", newPageSize);
+    // Use the hook's method instead of local state
+    changePageSize(newPageSize);
   };
 
   const handleModalSuccess = async () => {
@@ -170,7 +187,7 @@ const LookupPage = () => {
         ...prev,
         [name]: value,
       };
-      console.log('Updated filterForm:', updated); // Debug log
+      console.log("Updated filterForm:", updated); // Debug log
       return updated;
     });
   };
@@ -178,35 +195,35 @@ const LookupPage = () => {
   // 🆕 Apply filters with proper state handling
   const handleApplyFilters = async () => {
     const activeFilters = {};
-    
-    console.log('Current filterForm before applying:', filterForm); // Debug log
-    
+
+    console.log("Current filterForm before applying:", filterForm); // Debug log
+
     if (filterForm.name.length > 0) {
       activeFilters.search = filterForm.name;
-      console.log('Adding search filter:', filterForm.name);
+      console.log("Adding search filter:", filterForm.name);
     }
-    
+
     if (filterForm.type.length > 0) {
       activeFilters.lookupType = filterForm.type;
-      console.log('Adding lookupType filter:', filterForm.type);
+      console.log("Adding lookupType filter:", filterForm.type);
     }
-    
-    console.log('Final activeFilters being sent:', activeFilters); // Debug log
-    
+
+    console.log("Final activeFilters being sent:", activeFilters); // Debug log
+
     // Update filters - this will trigger useEffect in the hook automatically
     updateFilters(activeFilters);
-    
+
     setShowFilters(false); // Hide on mobile after applying
   };
 
   // 🆕 Clear all filters with proper state handling
   const clearAllFilters = () => {
-    console.log('Clearing all filters from page');
+    console.log("Clearing all filters from page");
     setFilterForm({
       name: [],
       type: [],
     });
-    
+
     // Clear filters - this will trigger useEffect in the hook automatically
     clearFilters();
   };
@@ -216,8 +233,8 @@ const LookupPage = () => {
 
   // 🆕 Helper function to get display name for selected filters
   const getDisplayName = (filterType, id) => {
-    if (filterType === 'type') {
-      const typeOption = lookupTypeOptions.find(item => item._id === id);
+    if (filterType === "type") {
+      const typeOption = lookupTypeOptions.find((item) => item._id === id);
       return typeOption ? typeOption.name : id;
     }
     return id;
@@ -225,128 +242,12 @@ const LookupPage = () => {
 
   // Debug current state
   useEffect(() => {
-    console.log('Current filters:', currentFilters);
-    console.log('Filter form state:', filterForm);
-    console.log('Total items:', totalItems);
+    console.log("Current filters:", currentFilters);
+    console.log("Filter form state:", filterForm);
+    console.log("Total items:", totalItems);
   }, [currentFilters, filterForm, totalItems]);
 
   // Pagination component
-  const Pagination = () => {
-    if (totalPages <= 1) return null;
-
-    const getPageNumbers = () => {
-      const pages = [];
-      const maxVisible = 5;
-      
-      if (totalPages <= maxVisible) {
-        for (let i = 1; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        if (currentPage <= 3) {
-          for (let i = 1; i <= 4; i++) {
-            pages.push(i);
-          }
-          pages.push('...');
-          pages.push(totalPages);
-        } else if (currentPage >= totalPages - 2) {
-          pages.push(1);
-          pages.push('...');
-          for (let i = totalPages - 3; i <= totalPages; i++) {
-            pages.push(i);
-          }
-        } else {
-          pages.push(1);
-          pages.push('...');
-          for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-            pages.push(i);
-          }
-          pages.push('...');
-          pages.push(totalPages);
-        }
-      }
-      
-      return pages;
-    };
-
-    return (
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
-        <div className="flex justify-between flex-1 sm:hidden">
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={!paginationInfo.hasPreviousPage}
-            className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={!paginationInfo.hasNextPage}
-            className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing{' '}
-              <span className="font-medium">{paginationInfo.startItem}</span>{' '}
-              to{' '}
-              <span className="font-medium">{paginationInfo.endItem}</span>{' '}
-              of{' '}
-              <span className="font-medium">{totalItems}</span> results
-              {hasActiveFilters() && (
-                <span className="ml-2 text-blue-600">(filtered)</span>
-              )}
-            </p>
-          </div>
-          <div>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={!paginationInfo.hasPreviousPage}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              
-              {getPageNumbers().map((page, index) => (
-                page === '...' ? (
-                  <span
-                    key={`ellipsis-${index}`}
-                    className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300"
-                  >
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
-                      currentPage === page
-                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              ))}
-              
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={!paginationInfo.hasNextPage}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </nav>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -354,16 +255,30 @@ const LookupPage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lookup Management</h1>
-            <p className="text-gray-600 mt-1">Manage system lookup values and configurations</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Lookup Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Manage system lookup values and configurations
+            </p>
           </div>
           <div className="flex space-x-3">
             <button
               onClick={handleBulkAddClick}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors duration-200 flex items-center space-x-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
               <span>Bulk Add</span>
             </button>
@@ -371,8 +286,18 @@ const LookupPage = () => {
               onClick={handleAddClick}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors duration-200 flex items-center space-x-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               <span>Add New Lookup</span>
             </button>
@@ -384,13 +309,21 @@ const LookupPage = () => {
           <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
                 <p className="text-red-800">{error}</p>
-                <button 
+                <button
                   onClick={fetchLookups}
                   className="mt-2 text-sm bg-red-100 hover:bg-red-200 px-3 py-1 rounded transition-colors"
                 >
@@ -411,7 +344,7 @@ const LookupPage = () => {
               Filter Lookups
               {hasActiveFilters() && (
                 <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                  {(filterForm.name.length + filterForm.type.length)}
+                  {filterForm.name.length + filterForm.type.length}
                 </span>
               )}
             </span>
@@ -436,16 +369,22 @@ const LookupPage = () => {
         {/* 🆕 Enhanced Filters Section */}
         <div
           className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
-            showFilters || window.innerWidth >= 1024 ? "block" : "hidden lg:block"
+            showFilters || window.innerWidth >= 1024
+              ? "block"
+              : "hidden lg:block"
           }`}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Filter Lookups</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Filter Lookups
+            </h3>
             {/* Active filter count */}
             {hasActiveFilters() && (
               <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
-                {(filterForm.name.length + filterForm.type.length)} active filter
-                {(filterForm.name.length + filterForm.type.length) !== 1 ? "s" : ""}
+                {filterForm.name.length + filterForm.type.length} active filter
+                {filterForm.name.length + filterForm.type.length !== 1
+                  ? "s"
+                  : ""}
               </span>
             )}
           </div>
@@ -509,22 +448,30 @@ const LookupPage = () => {
                 <span className="text-sm text-gray-600 font-medium">
                   Active filters:
                 </span>
-                
+
                 {/* Name filters */}
                 {filterForm.name.map((name, index) => (
-                  <span key={`name-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span
+                    key={`name-${index}`}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
                     Name: {name}
                     <button
                       onClick={() => {
-                        const newNames = filterForm.name.filter((_, i) => i !== index);
-                        setFilterForm(prev => ({ ...prev, name: newNames }));
+                        const newNames = filterForm.name.filter(
+                          (_, i) => i !== index
+                        );
+                        setFilterForm((prev) => ({ ...prev, name: newNames }));
                         // Auto-apply filter
                         if (newNames.length === 0) {
                           const newFilters = { ...currentFilters };
                           delete newFilters.search;
                           updateFilters(newFilters);
                         } else {
-                          updateFilters({ ...currentFilters, search: newNames });
+                          updateFilters({
+                            ...currentFilters,
+                            search: newNames,
+                          });
                         }
                       }}
                       className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -536,19 +483,27 @@ const LookupPage = () => {
 
                 {/* Type filters */}
                 {filterForm.type.map((typeId, index) => (
-                  <span key={`type-${index}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Type: {getDisplayName('type', typeId)}
+                  <span
+                    key={`type-${index}`}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    Type: {getDisplayName("type", typeId)}
                     <button
                       onClick={() => {
-                        const newTypes = filterForm.type.filter((_, i) => i !== index);
-                        setFilterForm(prev => ({ ...prev, type: newTypes }));
+                        const newTypes = filterForm.type.filter(
+                          (_, i) => i !== index
+                        );
+                        setFilterForm((prev) => ({ ...prev, type: newTypes }));
                         // Auto-apply filter
                         if (newTypes.length === 0) {
                           const newFilters = { ...currentFilters };
                           delete newFilters.lookupType;
                           updateFilters(newFilters);
                         } else {
-                          updateFilters({ ...currentFilters, lookupType: newTypes });
+                          updateFilters({
+                            ...currentFilters,
+                            lookupType: newTypes,
+                          });
                         }
                       }}
                       className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200"
@@ -590,11 +545,28 @@ const LookupPage = () => {
                   <tr>
                     <td colSpan="5" className="text-center py-12">
                       <div className="flex justify-center items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
-                        <span className="text-gray-600">Loading lookups...</span>
+                        <span className="text-gray-600">
+                          Loading lookups...
+                        </span>
                       </div>
                     </td>
                   </tr>
@@ -602,8 +574,18 @@ const LookupPage = () => {
                   <tr>
                     <td colSpan="5" className="text-center py-12">
                       <div className="text-gray-500">
-                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
                         </svg>
                         <p className="text-lg font-medium">No lookups found</p>
                         <p className="text-sm">
@@ -611,7 +593,7 @@ const LookupPage = () => {
                             <>
                               No results match your search criteria
                               <br />
-                              <button 
+                              <button
                                 onClick={clearAllFilters}
                                 className="mt-2 text-blue-600 hover:text-blue-800 underline"
                               >
@@ -627,42 +609,51 @@ const LookupPage = () => {
                   </tr>
                 ) : (
                   lookups.map((item, index) => (
-                    <tr key={item._id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                    <tr
+                      key={item._id}
+                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {item.name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          filterForm.type.includes(item.lookupType)
-                            ? 'bg-blue-200 text-blue-900 ring-2 ring-blue-300' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            filterForm.type.includes(item.lookupType)
+                              ? "bg-blue-200 text-blue-900 ring-2 ring-blue-300"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
                           {item.lookupType}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          item.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {item.isActive ? 'Active' : 'Inactive'}
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            item.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {item.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
+                        {item.createdAt
+                          ? new Date(item.createdAt).toLocaleDateString()
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button 
-                          onClick={() => handleEditClick(item)} 
+                        <button
+                          onClick={() => handleEditClick(item)}
                           className="text-indigo-600 hover:text-indigo-900 mr-4 transition-colors"
                         >
                           Edit
                         </button>
-                        <button 
-                          onClick={() => handleDeleteClick(item._id, item.name)} 
+                        <button
+                          onClick={() => handleDeleteClick(item._id, item.name)}
                           className="text-red-600 hover:text-red-900 transition-colors"
                         >
                           Delete
@@ -674,9 +665,18 @@ const LookupPage = () => {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
-          <Pagination />
+          <LookupPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={itemsPerPage} // Use itemsPerPage from hook instead of local pageSize
+            onPageChange={goToPage}
+            onPageSizeChange={handlePageSizeChange}
+            hasActiveFilters={hasActiveFilters()}
+            loading={loading}
+          />
         </div>
 
         {/* Modals */}
