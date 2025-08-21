@@ -1104,7 +1104,7 @@ const DrillDistrictPage = ({
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Count:</span>
-                      <span className="font-medium">{facility.count}</span>
+                      <span className="font-medium">{`${facility.count} / ${data?.districtInfo?.totalFacilities}`}</span>
                     </div>
                   </div>
                 </div>
@@ -1112,6 +1112,8 @@ const DrillDistrictPage = ({
             </div>
           </div>
         )}
+
+        {console.log(data, "district level data ")}
 
         {tehsilData.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -1130,19 +1132,19 @@ const DrillDistrictPage = ({
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Stations:</span>
-                      <span className="font-medium">{tehsilItem.totalStations || 0}</span>
+                      <span className="font-medium">{`${tehsilItem.totalStations || 0} / ${data?.districtInfo?.totalStations}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Employees:</span>
-                      <span className="font-medium">{tehsilItem.totalEmployees || 0}</span>
+                      <span className="font-medium">{`${tehsilItem.totalEmployees || 0} / ${data?.districtInfo?.totalEmployees}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Assets:</span>
-                      <span className="font-medium">{tehsilItem.totalAssets || 0}</span>
+                      <span className="font-medium">{`${tehsilItem.totalAssets || 0} / ${data?.districtInfo?.totalAssets}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Non-compliant Stations:</span>
-                      <span className="font-medium">{tehsilItem.stationsNotMeetingRequirements || 0}</span>
+                      <span className="font-medium">{`${tehsilItem.stationsNotMeetingRequirements || 0} / ${data?.districtInfo?.totalStations}`}</span>
                     </div>
                   </div>
                   <button
@@ -1226,7 +1228,7 @@ const DrillDistrictPage = ({
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{count}</span>
+                    <span className="text-sm font-medium text-gray-900">{`${count} / ${data?.districtInfo?.totalDesignations}`}</span>
                   </div>
                 </div>
               ))}
@@ -1253,7 +1255,7 @@ const DrillDistrictPage = ({
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{count}</span>
+                    <span className="text-sm font-medium text-gray-900">{`${count} / ${data?.districtInfo?.totalGrades}`}</span>
                   </div>
                 </div>
               ))}
@@ -1330,7 +1332,7 @@ const DrillDistrictPage = ({
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{count}</span>
+                    <span className="text-sm font-medium text-gray-900">{`${count} / ${data?.districtInfo?.totalFacilities}`}</span>
                   </div>
                 </div>
               ))}

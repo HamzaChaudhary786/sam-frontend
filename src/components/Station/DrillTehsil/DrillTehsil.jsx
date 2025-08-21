@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
 import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
+import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
+import { IoEyeSharp } from "react-icons/io5";
 
 const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [data, setData] = useState(null);
@@ -40,6 +42,12 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [showDistrictView, setShowDistrictView] = useState(false);
+  const [isViewEmployee, setIsViewEmployee] = useState(false)
+  const [isEmployee, setIsEmployee] = useState()
+
+  const handleClose = () => {
+    setIsViewEmployee(!isViewEmployee)
+  }
 
   useEffect(() => {
     fetchComprehensiveTehsilData();
@@ -191,7 +199,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
           </div>
         )}
       </div>
-
+      {console.log(data, "my data is ")}
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-md border">
@@ -293,7 +301,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                 {getFacilityIcon(facility)}
                 <div className="ml-2">
                   <div className="text-xs text-gray-600">{facility}</div>
-                  <div className="text-sm font-bold text-gray-900">{count}</div>
+                  <div className="text-sm font-bold text-gray-900">{`${count} / ${data?.allStationsFacilitiesSummary?.total}`}</div>
                 </div>
               </div>
             )
@@ -340,7 +348,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-900">
-                  {count}
+                  {`${count} / ${Object.keys(data?.allStationEmployeeSummary?.breakdown?.byDesignation || {}).length}`}
                 </span>
               </div>
             </div>
@@ -377,7 +385,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     ></div>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {count}
+                    {`${count} / ${Object.keys(data?.allStationEmployeeSummary?.breakdown?.byGrade || {}).length}`}
                   </span>
                 </div>
               </div>
@@ -450,7 +458,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     ></div>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {count}
+                    {`${count} / ${Object.keys(data?.allStationEmployeeSummary?.breakdown?.byCast || {}).length}`}
                   </span>
                 </div>
               </div>
@@ -489,7 +497,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     ></div>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {count}
+                    {`${count} / ${Object.keys(data?.employees || {}).length}`}
                   </span>
                 </div>
               </div>
@@ -932,6 +940,9 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Contact
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -941,33 +952,33 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                       <div className="flex items-center">
                         <img
                           src={employee.profileUrl?.[0]}
-                          alt={employee.name}
+                          alt={employee?.firstName}
                           className="h-10 w-10 rounded-full"
                         />
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {employee.name}
+                            {employee?.firstName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {employee.fatherName}
+                            {employee?.fatherFirstName}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {employee.personalNumber}
+                      {employee?.personalNumber}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {employee.cnic}
+                      {employee?.cnic}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {employee.designation}
+                      {employee?.designation}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {employee.grade}
+                      {employee?.grade}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                      {employee.cast}
+                      {employee?.cast}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -988,10 +999,28 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                         {employee.mobileNumber}
                       </div>
                     </td>
+                    <td>
+                      <div className='py-0.5 px-1.5 cursor-pointer bg-blue-600 text-white flex flex-row items-center gap-x-2 rounded-3xl' onClick={() => {
+                        setIsEmployee(employee)
+                        setIsViewEmployee(!isViewEmployee)
+
+                      }}>
+                        <IoEyeSharp />
+
+                        view
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div>
+            <EmployeeViewModal
+              isOpen={isViewEmployee}
+              onClose={handleClose}
+              employee={isEmployee} />
           </div>
 
           {/* Pagination Info */}
