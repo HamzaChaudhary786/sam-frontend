@@ -5,7 +5,7 @@ const Pagination = ({
   onPageChange, 
   onPageSizeChange,
   showPageSizeOptions = true,
-  pageSizeOptions = [5, 10, 20, 50, 100, 200, 500]
+  pageSizeOptions = [500, 10, 20, 50, 100, 200, 5]
 }) => {
   const {
     currentPage,

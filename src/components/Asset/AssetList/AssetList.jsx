@@ -26,7 +26,7 @@ const AssetsList = () => {
   
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
-  const [pageSize, setPageSize] = useState(50); // Add this line
+  const [pageSize, setPageSize] = useState(500); // Add this line
 
 
   // Modal state

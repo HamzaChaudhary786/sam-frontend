@@ -26,6 +26,8 @@ import StationImport from './pages/StationImport.jsx';
 import MaalKhana from './pages/MaalKhana.jsx'
 import PendingStationApprovals from './components/PendingStationPosting/PendingStations.jsx';
 import StationAssetAssignment from './pages/StationAssetAssignment.jsx';
+import { GlobalStationViewProvider } from './components/Station/GlobalStationView.jsx'; // Adjust path as needed
+
 
 
 // Authentication utility functions
@@ -354,9 +356,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+        <GlobalStationViewProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </GlobalStationViewProvider>
   );
 }
 

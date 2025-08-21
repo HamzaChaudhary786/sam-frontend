@@ -6,7 +6,7 @@ export const useAssets = (initialFilters = {}) => {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ limit: 50, ...initialFilters });
+  const [filters, setFilters] = useState({ limit: 500, ...initialFilters });
 
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -127,13 +127,13 @@ export const useAssets = (initialFilters = {}) => {
   };
 
   const clearFilters = () => {
-    const defaultFilters = { page: 1, limit: 50 };
+    const defaultFilters = { page: 1, limit: 500 };
     setFilters(defaultFilters);
     fetchAssets(defaultFilters);
   };
 
   useEffect(() => {
-    fetchAssets({ limit: 50, page: 1 });
+    fetchAssets({ limit: 500, page: 1 });
   }, []);
 
   return {

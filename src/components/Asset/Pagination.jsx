@@ -4,7 +4,7 @@ const Pagination = ({
   currentPage, 
   totalPages, 
   onPageChange, 
-  pageSize = 50, 
+  pageSize = 500, 
   onPageSizeChange,
   totalItems = 0
 }) => {
@@ -12,7 +12,7 @@ const Pagination = ({
   if (totalPages === 0) return null;
 
   // Page size options
-  const pageSizeOptions = [5, 10, 20, 50, 100];
+  const pageSizeOptions = [500, 50, 20, 10, 5];
 
   // Calculate showing range
   const startItem = (currentPage - 1) * pageSize + 1;

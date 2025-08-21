@@ -6,6 +6,7 @@ import {
   deleteStationAssignment,
   approveStationAssignment,
 } from "../StationAssignmentApi.js";
+import ClickableStationName from "../../Station/ClickableStationView.jsx"; // Adjust path as needed
 
 const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
@@ -376,10 +377,13 @@ const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               From:
                             </span>
-                            <span className="text-gray-900">
+                            <ClickableStationName
+                              station={assignment.lastStation}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
                               {assignment.lastStation?.name ||
                                 "No Previous Station"}
-                            </span>
+                            </ClickableStationName>
                           </div>
                           <div className="flex items-center">
                             <svg
@@ -400,10 +404,13 @@ const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               To:
                             </span>
-                            <span className="text-blue-900 font-semibold">
+                            <ClickableStationName
+                              station={assignment.currentStation}
+                              className="text-blue-900 font-semibold hover:text-blue-700 cursor-pointer hover:underline"
+                            >
                               {assignment.currentStation?.name ||
                                 "Unknown Station"}
-                            </span>
+                            </ClickableStationName>
                           </div>
                         </div>
                       </td>
