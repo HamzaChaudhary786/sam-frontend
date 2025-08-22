@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import StatusAssignmentForm from "../components/StatusAssignment/AddStatus/AddStatus.jsx";
 import StatusAssignmentList from "../components/StatusAssignment/StatusList/StatusList.jsx";
+import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
+
 
 const StatusAssignmentPage = () => {
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ const StatusAssignmentPage = () => {
 
   // Handle form success
   const handleFormSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setEditingStatus(null);
     setShowModal(false);
   };
@@ -89,13 +91,16 @@ const StatusAssignmentPage = () => {
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Managing status assignments for{" "}
-            <span className="font-medium">
+            <ClickableEmployeeName
+              employee={employee}
+              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+            >
               {employee.firstName} {employee.lastName}
-            </span>{" "}
+            </ClickableEmployeeName>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleAddNew}

@@ -79,6 +79,8 @@ const AssetModal = ({
       { value: "pistol", label: "Pistol" },
       { value: "vehicle", label: "Vehicle" },
       { value: "round", label: "Round" },
+      { value: "other", label: "Other" },
+
     ];
 
     return allCategories.sort((a, b) => {

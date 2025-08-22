@@ -219,13 +219,13 @@ const SalaryDeductionForm = ({
                 ? "Edit Salary Deduction"
                 : "Add Salary Deduction"}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            {/* <p className="text-sm text-gray-600 mt-1">
               {editingDeduction ? "Update" : "Create"} salary deduction for{" "}
               <span className="font-medium">
                 {employee.firstName} {employee.lastName}
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
-            </p>
+            </p> */}
             {editingDeduction && !isAdmin && (
               <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
                 Note: Only administrators can modify approval settings

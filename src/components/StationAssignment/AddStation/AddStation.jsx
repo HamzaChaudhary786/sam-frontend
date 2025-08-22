@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { createStationAssignment, updateStationAssignment } from "../StationAssignmentApi.js";
 import { useLocationEnum } from "../../../components/Employee/AddEmployee/LocationHook.js";
 
+
 const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState({
     currentStation: "",
@@ -136,13 +137,13 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
             <h2 className="text-xl font-bold text-gray-900">
               {editingAssignment ? "Edit Station Assignment" : "New Station Assignment"}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            {/* <p className="text-sm text-gray-600 mt-1">
               {editingAssignment ? "Update" : "Create"} station assignment for{" "}
               <span className="font-medium">
                 {employee.firstName} {employee.lastName}
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
-            </p>
+            </p> */}
           </div>
           <button
             onClick={handleCancel}

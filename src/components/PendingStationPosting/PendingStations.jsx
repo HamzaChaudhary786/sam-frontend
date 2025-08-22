@@ -10,6 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
 import { useGlobalStationView } from "../Station/GlobalStationView.jsx";
+import ClickableEmployeeName from "../Employee/ClickableName.jsx"; // Adjust path as needed
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -684,7 +685,12 @@ const PendingStationApprovals = ({ onEdit }) => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
                           <div className="text-sm font-medium text-gray-900">
-                            {employeeName}
+                            <ClickableEmployeeName
+                              employee={assignment.employee}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {employeeName}
+                            </ClickableEmployeeName>
                           </div>
                           <div className="text-sm text-gray-500">
                             ID: {assignment.employee?.personalNumber || "N/A"}

@@ -422,13 +422,13 @@ const StatusAssignmentForm = ({
                 ? "Edit Status Assignment"
                 : "New Status Assignment"}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            {/* <p className="text-sm text-gray-600 mt-1">
               {editingStatus ? "Update" : "Create"} status assignment for{" "}
               <span className="font-medium">
                 {employee.firstName} {employee.lastName}
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
-            </p>
+            </p> */}
             {editingStatus && !isAdmin && (
               <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
                 Note: Only administrators can modify approval settings

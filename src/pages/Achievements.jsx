@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AchievementForm from "../components/Acheivements/AddAchievements/AddAchievements.jsx";
 import AchievementList from "../components/Acheivements/AchievementList/AchievementList.jsx";
+import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
 
 const AchievementPage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const AchievementPage = () => {
 
   // Handle form success
   const handleFormSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setEditingAchievement(null);
     setShowModal(false);
   };
@@ -89,13 +90,16 @@ const AchievementPage = () => {
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Managing achievements for{" "}
-            <span className="font-medium">
+            <ClickableEmployeeName
+              employee={employee}
+              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+            >
               {employee.firstName} {employee.lastName}
-            </span>{" "}
+            </ClickableEmployeeName>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleAddNew}

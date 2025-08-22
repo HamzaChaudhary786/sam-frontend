@@ -188,13 +188,13 @@ const AchievementForm = ({
             <h2 className="text-xl font-bold text-gray-900">
               {editingAchievement ? "Edit Achievement" : "Add New Achievement"}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            {/* <p className="text-sm text-gray-600 mt-1">
               {editingAchievement ? "Update" : "Create"} achievement for{" "}
               <span className="font-medium">
                 {employee.firstName} {employee.lastName}
               </span>{" "}
               ({employee.personalNumber || employee.pnumber})
-            </p>
+            </p> */}
             {editingAchievement && !isAdmin && (
               <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
                 Note: Only administrators can modify approval settings

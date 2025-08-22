@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import StationAssignmentForm from "../components/StationAssignment/AddStation/AddStation.jsx";
 import StationAssignmentList from "../components/StationAssignment/StationList/StationList.jsx";
+import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
+
 
 const StationAssignmentPage = () => {
   const navigate = useNavigate();
@@ -88,12 +90,15 @@ const StationAssignmentPage = () => {
             Station Assignment Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Managing station assignments for{" "}
-            <span className="font-medium">
-              {employee.firstName} {employee.lastName}
-            </span>{" "}
-            ({employee.personalNumber || employee.pnumber})
-          </p>
+  Managing Station assignments for{" "}
+  <ClickableEmployeeName 
+    employee={employee}
+    className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+  >
+    {employee.firstName} {employee.lastName}
+  </ClickableEmployeeName>{" "}
+  ({employee.personalNumber || employee.pnumber})
+</p>
         </div>
         
         <div className="flex gap-3">

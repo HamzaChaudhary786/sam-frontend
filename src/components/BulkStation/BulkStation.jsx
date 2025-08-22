@@ -10,6 +10,7 @@ import {
 } from "./StationApi.js";
 import { getStations } from "../Station/StationApi.js";
 import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
+import ClickableEmployeeName from "../Employee/ClickableName.jsx"; // Adjust path as needed
 
 const BulkStationAssignment = () => {
   const navigate = useNavigate();
@@ -480,8 +481,13 @@ const BulkStationAssignment = () => {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {assignment.employee.firstName}{" "}
-                            {assignment.employee.lastName}
+                            <ClickableEmployeeName
+                              employee={assignment.employee}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {assignment.employee.firstName}{" "}
+                              {assignment.employee.lastName}
+                            </ClickableEmployeeName>
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {assignment.employee.personalNumber ||
