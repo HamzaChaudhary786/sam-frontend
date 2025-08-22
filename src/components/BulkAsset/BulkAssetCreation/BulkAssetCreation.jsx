@@ -92,7 +92,7 @@ const BulkAssetCreation = () => {
 
   // Asset row handlers
   const handleAssetChange = (rowId, field, value) => {
-    setAssetRows(prev => prev.map(row => 
+    setAssetRows(prev => prev.map(row =>
       row.id === rowId ? { ...row, [field]: value } : row
     ));
   };
@@ -227,7 +227,7 @@ const BulkAssetCreation = () => {
   // Handle image upload to Cloudinary
   const uploadImages = async (images) => {
     const uploadedUrls = [];
-    
+
     for (const image of images) {
       if (typeof image === "string") {
         uploadedUrls.push(image);
@@ -236,12 +236,12 @@ const BulkAssetCreation = () => {
           const formData = new FormData();
           formData.append("file", image);
           formData.append("upload_preset", "Assets"); // Replace with your preset
-          
+
           const response = await fetch(
             "https://api.cloudinary.com/v1_1/dxisw0kcc/image/upload",
             { method: "POST", body: formData }
           );
-          
+
           const result = await response.json();
           if (result.secure_url) {
             uploadedUrls.push(result.secure_url);
@@ -251,14 +251,14 @@ const BulkAssetCreation = () => {
         }
       }
     }
-    
+
     return uploadedUrls;
   };
 
   // Save all data
   const handleSaveAll = async () => {
     console.log("=== STARTING BULK ASSET CREATION ===");
-    
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       toast.error(`Please fix the following errors:\n${validationErrors.join('\n')}`);
@@ -348,7 +348,7 @@ const BulkAssetCreation = () => {
 
       if (result.success) {
         toast.success(`Successfully created ${flatAssetList.length} assets in batch!`);
-        
+
         // Reset form or navigate
         setTimeout(() => {
           if (window.confirm("Assets created successfully! Would you like to create another batch?")) {
@@ -435,34 +435,34 @@ const BulkAssetCreation = () => {
         loading={loading}
       />
 
-       <div className="flex gap-3">
-          <button
-            onClick={handleCancelAll}
-            disabled={loading}
-            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md font-medium transition-colors"
-          >
-            Cancel All
-          </button>
-          <button
-            onClick={handleSaveAll}
-            disabled={loading || assetRows.length === 0}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-md font-medium flex items-center transition-colors"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Save All ({assetRows.reduce((sum, row) => sum + parseInt(row.quantity || 0), 0)} assets)
-              </>
-            )}
-          </button>
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md p-4 flex gap-3 justify-end z-50">
+        <button
+          onClick={handleCancelAll}
+          disabled={loading}
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md font-medium transition-colors"
+        >
+          Cancel All
+        </button>
+        <button
+          onClick={handleSaveAll}
+          disabled={loading || assetRows.length === 0}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-md font-medium flex items-center transition-colors"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save All ({assetRows.reduce((sum, row) => sum + parseInt(row.quantity || 0), 0)} assets)
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Asset Rows Component */}
       <BulkAssetRows

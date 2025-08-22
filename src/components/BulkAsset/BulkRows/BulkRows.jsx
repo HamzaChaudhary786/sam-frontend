@@ -1,16 +1,16 @@
 import React from "react";
-import { 
+import {
   useLookupOptions,
-  useLookupAssetStatusOption 
+  useLookupAssetStatusOption
 } from "../../../services/LookUp.js";
 
-const BulkAssetRows = ({ 
-  assetRows, 
-  onAssetChange, 
-  onAddRow, 
-  onRemoveRow, 
-  loading, 
-  filters 
+const BulkAssetRows = ({
+  assetRows,
+  onAssetChange,
+  onAddRow,
+  onRemoveRow,
+  loading,
+  filters
 }) => {
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
   const { options: assetStatusOptions } = useLookupAssetStatusOption("assetStatus");
@@ -70,7 +70,7 @@ const BulkAssetRows = ({
   // Define which fields to show for each category
   const getCategoryFields = (category) => {
     const commonFields = ['type', 'category', 'quantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
-    
+
     switch (category) {
       case 'weapons':
         return [...commonFields, 'weaponNumber', 'availableQuantity'];
@@ -90,7 +90,7 @@ const BulkAssetRows = ({
   // Get dynamic table headers based on what fields are visible across all rows
   const getVisibleHeaders = () => {
     const allVisibleFields = new Set();
-    
+
     assetRows.forEach(row => {
       const categoryFields = getCategoryFields(row.category);
       categoryFields.forEach(field => allVisibleFields.add(field));
@@ -103,7 +103,7 @@ const BulkAssetRows = ({
 
     // Return fields in a logical order
     const fieldOrder = ['type', 'category', 'quantity', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'availableQuantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
-    
+
     return fieldOrder.filter(field => allVisibleFields.has(field));
   };
 
@@ -477,14 +477,13 @@ const BulkAssetRows = ({
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-visible">
+    <div className="bg-white shadow-md rounded-lg overflow-visible mb-10 relative">
       <div className="flex items-center justify-between p-6 border-b border-gray-200">
         <h3 className="text-lg font-medium text-gray-900">Asset Details</h3>
         <button
           onClick={onAddRow}
           disabled={loading}
-          className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
-        >
+          className="fixed top-24 right-10 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors shadow-lg z-50">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -509,12 +508,12 @@ const BulkAssetRows = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {assetRows.map((row, index) => {
               const rowFields = getCategoryFields(row.category);
-              
+
               return (
                 <tr key={row.id} className="hover:bg-gray-50">
                   {visibleHeaders.map(field => {
                     const shouldShowField = rowFields.includes(field);
-                    
+
                     return (
                       <td key={field} className="px-6 py-4">
                         {shouldShowField ? (
@@ -525,7 +524,7 @@ const BulkAssetRows = ({
                       </td>
                     );
                   })}
-                  
+
                   {/* Actions */}
                   <td className="px-6 py-4">
                     <button
