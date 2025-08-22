@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SalaryDeductionForm from "../components/SalaryDeduction/AddDeduction/AddDeduction.jsx";
 import SalaryDeductionList from "../components/SalaryDeduction/DeductionList/DeductionList.jsx";
+import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
 
 const SalaryDeductionPage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const SalaryDeductionPage = () => {
 
   // Handle form success
   const handleFormSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setEditingDeduction(null);
     setShowModal(false);
   };
@@ -88,14 +89,17 @@ const SalaryDeductionPage = () => {
             Salary Deduction Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Managing salary deductions for{" "}
-            <span className="font-medium">
+            Managing deductions for{" "}
+            <ClickableEmployeeName
+              employee={employee}
+              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+            >
               {employee.firstName} {employee.lastName}
-            </span>{" "}
+            </ClickableEmployeeName>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleAddNew}

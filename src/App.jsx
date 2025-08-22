@@ -24,9 +24,12 @@ import EmployeeGridContainer from './pages/EmployeeGridContainer.jsx'
 import AuditTrailPage from './pages/Audit.jsx';
 import StationImport from './pages/StationImport.jsx';
 import MaalKhana from './pages/MaalKhana.jsx'
+import BulkAssetCreation from './components/BulkAsset/BulkAssetCreation/BulkAssetCreation.jsx';
 import PendingStationApprovals from './components/PendingStationPosting/PendingStations.jsx';
 import StationAssetAssignment from './pages/StationAssetAssignment.jsx';
-import { GlobalStationViewProvider } from './components/Station/GlobalStationView.jsx'; // Adjust path as needed
+import { GlobalStationViewProvider } from './components/Station/GlobalStationView.jsx';
+import { GlobalEmployeeViewProvider } from './components/Employee/GlobalEmployeeView.jsx'; // 🆕 Add this
+
 
 
 
@@ -277,6 +280,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/bulk-asset"
+          element={
+            <ProtectedRoute>
+              <BulkAssetCreation />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/editgrid"
           element={
@@ -356,10 +367,12 @@ const AppContent = () => {
 
 function App() {
   return (
-        <GlobalStationViewProvider>
-      <Router>
-        <AppContent />
-      </Router>
+     <GlobalStationViewProvider>
+      <GlobalEmployeeViewProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </GlobalEmployeeViewProvider>
     </GlobalStationViewProvider>
   );
 }

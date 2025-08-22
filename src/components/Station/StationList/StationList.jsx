@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getEmployees } from "../../Employee/EmployeeApi.js";
 import { getAllAssetAssignments } from "../../AssetAssignment/AssetApi.js";
+import ClickableStationName from "../ClickableStationView.jsx"; // Adjust path as needed
 
 const StationList = () => {
   const {
@@ -871,9 +872,14 @@ const StationList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">
                           <div className="pt-2">
-                            <div className="text-sm font-medium text-gray-900">
-                              {station.name}
-                            </div>
+                            <h3 className="text-sm font-medium text-gray-900 truncate">
+                              <ClickableStationName
+                                station={station}
+                                className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                              >
+                                {station.name}
+                              </ClickableStationName>
+                            </h3>
                             <div className="text-sm text-gray-900">
                               {/* Facilities */}
                               {station?.stationIncharge &&
@@ -1236,9 +1242,14 @@ const StationList = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-900 truncate">
-                      {station.name}
-                    </h3>
+                    <div className="text-sm font-medium text-gray-900">
+                      <ClickableStationName
+                        station={station}
+                        className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                      >
+                        {station.name}
+                      </ClickableStationName>
+                    </div>
                   </div>
 
                   <div className="mt-1 space-y-1">

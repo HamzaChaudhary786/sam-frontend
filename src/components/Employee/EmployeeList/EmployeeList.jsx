@@ -16,6 +16,7 @@ import MultiAchievementForm from "../MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../MultiAsset.jsx";
 import { useEmployeeAssets } from "../EmployeeAsset.js";
+import ClickableEmployeeName from "../ClickableName.jsx";
 
 const EmployeeList = ({
   initialFilters = {}, // 🆕 Accept initial filters from parent
@@ -624,10 +625,15 @@ const EmployeeList = ({
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-medium text-gray-900 truncate">
-                              {employee.firstName} {employee.lastName}
+                              <ClickableEmployeeName
+                                employee={employee}
+                                className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                              >
+                                {employee.firstName} {employee.lastName}
+                              </ClickableEmployeeName>
                             </div>
                             <div className="text-xs font-medium text-gray-700 truncate">
-                              {employee.fatherFirstName} 
+                              {employee.fatherFirstName}
                             </div>
                             <div className="text-[10px] text-gray-500 truncate">
                               {employee.personalNumber || employee.pnumber}
@@ -812,10 +818,15 @@ const EmployeeList = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {employee.firstName}
-                      </h3>
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        <ClickableEmployeeName
+                          employee={employee}
+                          className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                        >
+                          {employee.firstName}
+                        </ClickableEmployeeName>
+                         <h3 className="text-sm font-medium text-gray-900 truncate">
                         {employee.fatherFirstName}
+                      </h3>
                       </h3>
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
