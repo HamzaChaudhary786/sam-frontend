@@ -6,11 +6,12 @@ import AssetFilters from "../Filter.jsx";
 import { useLookupOptions } from "../../../services/LookUp.js";
 import Pagination from "../Pagination.jsx";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const AssetsList = () => {
   const {
     assets,
-    pagination: { currentPage, totalPages, hasNext, hasPrev,totalAssets },
+    pagination: { currentPage, totalPages, hasNext, hasPrev, totalAssets },
     setPage,
     loading,
     error,
@@ -20,10 +21,12 @@ const AssetsList = () => {
     filters,
     fetchAssets,
   } = useAssets();
-  
+
+
+  const navigate = useNavigate()
   const { options: assetTypeOptions } = useLookupOptions("assetTypes");
   const { options: assetStatusOptions } = useLookupOptions("assetStatuses");
-  
+
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
   const [pageSize, setPageSize] = useState(500); // Add this line
@@ -64,18 +67,18 @@ const AssetsList = () => {
     });
   };
   const handlePageChange = (page) => {
-  if (page >= 1 && page <= totalPages) {
-    setPage(page);
-    // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-};
+    if (page >= 1 && page <= totalPages) {
+      setPage(page);
+      // Scroll to top when page changes
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
   const handlePageSizeChange = (newPageSize) => {
-  setPageSize(newPageSize);
-  // Update filters with new page size and reset to page 1
-  const newFilters = { ...filters, limit: newPageSize, page: 1 };
-  updateFilters(newFilters);
-};
+    setPageSize(newPageSize);
+    // Update filters with new page size and reset to page 1
+    const newFilters = { ...filters, limit: newPageSize, page: 1 };
+    updateFilters(newFilters);
+  };
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -97,18 +100,18 @@ const AssetsList = () => {
         let successCount = 0;
         let errorCount = 0;
         const errors = [];
-        
+
         for (const assetId of selectedAssets) {
           try {
             // Validate ID format
             if (!assetId || typeof assetId !== 'string' || assetId.trim() === '') {
               throw new Error("Invalid asset ID format");
             }
-            
+
             console.log("Attempting to delete asset with ID:", assetId);
-            
+
             const result = await removeAsset(assetId.trim());
-            
+
             if (result && result.success) {
               successCount++;
             } else {
@@ -121,10 +124,10 @@ const AssetsList = () => {
             errors.push(`${assetId}: ${error?.message || 'Unknown error'}`);
           }
         }
-        
+
         setSelectedAssets(new Set());
         setSelectAll(false);
-        
+
         if (successCount > 0 && errorCount === 0) {
           toast.success(`Successfully deleted ${successCount} asset(s)`);
         } else if (successCount > 0 && errorCount > 0) {
@@ -156,9 +159,9 @@ const AssetsList = () => {
     if (window.confirm("Are you sure you want to delete this asset?")) {
       try {
         console.log("Attempting to delete asset with ID:", id);
-        
+
         const result = await removeAsset(id.trim());
-        
+
         if (result && result.success) {
           console.log("Asset deleted successfully");
         } else {
@@ -247,12 +250,37 @@ const AssetsList = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Assets Management
         </h1>
-        <button
-          onClick={handleAddAsset}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
-        >
-          Add Asset
-        </button>
+        <div className="flex flex-row gap-x-2 items-center ">
+          <button
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+            onClick={() => {
+              navigate('/bulk-asset')
+            }}
+          >
+            <svg
+              className="w-4 h-4 mr-2 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+            <span className="hidden lg:inline">Bulk Assets</span>
+            <span className="lg:hidden">Bulk Assets</span>
+          </button>
+          <button
+            onClick={handleAddAsset}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+          >
+            Add Asset
+          </button>
+        </div>
+
       </div>
 
       {error && (
@@ -397,24 +425,22 @@ const AssetsList = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="space-y-2">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            asset.type === "vehicles"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-purple-100 text-purple-800"
-                          }`}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.type === "vehicles"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-purple-100 text-purple-800"
+                            }`}
                         >
                           {getAssetTypeLabel(asset.type)}
                         </span>
                         {asset.assetStatus && (
                           <div>
                             <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                asset.assetStatus === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : asset.assetStatus === "maintenance"
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.assetStatus === "active"
+                                ? "bg-green-100 text-green-800"
+                                : asset.assetStatus === "maintenance"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-red-100 text-red-800"
-                              }`}
+                                }`}
                             >
                               {getAssetStatusLabel(asset.assetStatus)}
                             </span>
@@ -545,23 +571,21 @@ const AssetsList = () => {
                   <div className="mt-1 space-y-1">
                     <div className="flex flex-wrap gap-2">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          asset.type === "vehicles"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.type === "vehicles"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-purple-100 text-purple-800"
+                          }`}
                       >
                         {getAssetTypeLabel(asset.type)}
                       </span>
                       {asset.assetStatus && (
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            asset.assetStatus === "active"
-                              ? "bg-green-100 text-green-800"
-                              : asset.assetStatus === "maintenance"
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.assetStatus === "active"
+                            ? "bg-green-100 text-green-800"
+                            : asset.assetStatus === "maintenance"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {getAssetStatusLabel(asset.assetStatus)}
                         </span>
@@ -616,13 +640,13 @@ const AssetsList = () => {
 
       {/* Pagination Component */}
       <Pagination
-  currentPage={currentPage}
-  totalPages={totalPages}
-  onPageChange={handlePageChange}
-  pageSize={pageSize}                    // NEW
-  onPageSizeChange={handlePageSizeChange} // NEW
-  totalItems={totalAssets || 0}          // NEW (from pagination object)
-/>
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}                    // NEW
+        onPageSizeChange={handlePageSizeChange} // NEW
+        totalItems={totalAssets || 0}          // NEW (from pagination object)
+      />
 
       {/* Add/Edit Asset Modal */}
       <AssetModal

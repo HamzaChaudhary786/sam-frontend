@@ -207,9 +207,8 @@ const Navbar = () => {
                 </svg>
                 <span className="hidden xs:inline">Menu</span>
                 <svg
-                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${
-                    isDropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
+                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${isDropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -225,11 +224,10 @@ const Navbar = () => {
 
               {/* Dropdown Menu with Animation */}
               <div
-                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${
-                  isDropdownOpen
-                    ? "opacity-100 scale-100 translate-y-0"
-                    : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-                }`}
+                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${isDropdownOpen
+                  ? "opacity-100 scale-100 translate-y-0"
+                  : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                  }`}
               >
                 {/* Dropdown Header with Close Button */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
@@ -302,6 +300,33 @@ const Navbar = () => {
                   </button>
 
                   <div className="my-2 border-t border-gray-100"></div>
+
+                  <button
+                    onClick={() => handleNavigation("/bulk-asset")}
+                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                  >
+                    <div className="flex flex-row ">
+                      <svg
+                        className="h-5 w-5 mr-3 text-purple-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        />
+                      </svg>
+                      <span>Bulk Assets</span>
+                    </div>
+                    <div className=" flex justify-end">
+                      <div className="h-2 w-2 rounded-full bg-green-600">
+
+                      </div>
+                    </div>
+                  </button>
 
                   <button
                     onClick={() => handleNavigation("/editgrid")}
@@ -524,9 +549,8 @@ const Navbar = () => {
 
       {/* Mobile backdrop with animation */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${
-          isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
+          }`}
         onClick={closeDropdown}
       />
     </nav>

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AssetForm from "../components/AssetAssignment/AddAsset/AddAsset.jsx";
 import AssetList from "../components/AssetAssignment/ViewAssetList/AssetList.jsx";
+import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
 
 const AssetPage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const AssetPage = () => {
 
   // Handle form success
   const handleFormSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setEditingAsset(null);
     setShowModal(false);
   };
@@ -84,18 +85,19 @@ const AssetPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Asset Management
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Asset Management</h1>
           <p className="text-sm text-gray-600 mt-1">
             Managing asset assignments for{" "}
-            <span className="font-medium">
+            <ClickableEmployeeName
+              employee={employee}
+              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+            >
               {employee.firstName} {employee.lastName}
-            </span>{" "}
+            </ClickableEmployeeName>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleAddNew}
