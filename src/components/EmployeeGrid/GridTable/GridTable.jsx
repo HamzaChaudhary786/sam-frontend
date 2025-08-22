@@ -12,7 +12,7 @@ import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
 import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
-
+import { useEmployeeAchievements } from "../../Employee/EmployeeAchievement.js"
 import { toast } from "react-toastify";
 
 const EmployeeGridTable = ({
@@ -88,12 +88,16 @@ const EmployeeGridTable = ({
   const { getEmployeeAssetsString, loading: assetsLoading } =
     useEmployeeAssets(safeEmployees);
 
+  const { getEmployeeAchievementsString, loading: achievementsLoading } = useEmployeeAchievements(safeEmployees, true); // Set to true for only approved
+
+
   function handleMultiPosting(selectedEmployeeObjects) {
-    console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
     setSelectedEmployeesForPosting(selectedEmployeeObjects);
     setIsMultiStationModalOpen(true);
   }
+
+
 
   // Handle multi station assignment success
   const handleMultiStationSuccess = () => {
@@ -109,7 +113,6 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForPosting([]);
   };
   function handleMultiDeduction(selectedEmployeeObjects) {
-    console.log("🚀 Multi-deduction triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForDeduction(selectedEmployeeObjects);
     setIsMultiDeductionModalOpen(true);
   }
@@ -127,7 +130,6 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForDeduction([]);
   };
   function handleMultiAchievement(selectedEmployeeObjects) {
-    console.log("🚀 Multi-achievement triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForAchievement(selectedEmployeeObjects);
     setIsMultiAchievementModalOpen(true);
   }
@@ -160,10 +162,7 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForStatus([]);
   };
   function handleMultiAsset(selectedEmployeeObjects) {
-    console.log(
-      "🚀 Multi-asset assignment triggered!",
-      selectedEmployeeObjects
-    );
+
     setSelectedEmployeesForAsset(selectedEmployeeObjects);
     setIsMultiAssetModalOpen(true);
   }
@@ -236,8 +235,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-      ? 1
-      : 0;
+        ? 1
+        : 0;
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -302,7 +301,6 @@ const EmployeeGridTable = ({
   };
 
   const handleApplyFilters = (filters) => {
-    console.log("🔍 Applying filters:", filters);
 
     const backendFilters = {};
 
@@ -374,7 +372,7 @@ const EmployeeGridTable = ({
     setSelectedEmployee(null);
   };
 
-  {/* Employee View Modal */}
+  {/* Employee View Modal */ }
   <EmployeeViewModal
     isOpen={isViewModalOpen}
     onClose={handleCloseViewModal}
@@ -531,9 +529,8 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                statusClasses[value] || statusClasses.default
-              }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
+                }`}
             >
               {displayName}
             </span>
@@ -575,17 +572,20 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
-      isAdmin && isEditable
-        ? "cursor-pointer hover:bg-gray-100"
-        : "cursor-default"
-    }`;
+    const cellClasses = `p-1 rounded min-h-6 flex items-start ${isAdmin && isEditable
+      ? "cursor-pointer hover:bg-gray-100"
+      : "cursor-default"
+      }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-      ? "Click Edit button to enable editing"
-      : "Double-click to edit";
+        ? "Click Edit button to enable editing"
+        : "Double-click to edit";
+
+    // Check if this is an address-related field
+    const isAddressField =
+      fieldKey.includes("address") || fieldKey.toLowerCase().includes("muhala");
 
     return (
       <>
@@ -602,7 +602,10 @@ const EmployeeGridTable = ({
             title={titleText}
           >
             <div
-              className="max-w-32 truncate"
+              className={`${isAddressField
+                ? "whitespace-normal break-words w-full" // show full text, wrap to next line
+                : "max-w-32 truncate" // default truncate for others
+                }`}
               title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}
             >
               {renderDisplayCell(employee, fieldKey, fieldType, enumType)}
@@ -612,6 +615,7 @@ const EmployeeGridTable = ({
       </>
     );
   };
+
 
   const renderImageCell = (employee) => {
     const currentImageIndex = imageIndexes[employee._id] || 0;
@@ -830,103 +834,81 @@ const EmployeeGridTable = ({
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header Grid - Reordered to match requested layout */}
-        <div className="grid grid-cols-12 grid-rows-2  bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
-          <div className="mb-2">
-            {renderSelectAllCheckbox()}
-            <span className="ml-3">Photo</span>
-          </div>
-          <div>Actions</div>
-          <div>Status</div>
-          <div>Personal #</div>
+        {/* Header */}
+        <div className="grid grid-cols-15 bg-black/75 text-white text-xs lg:text-sm font-bold uppercase tracking-wider p-3">
+          <div className="flex items-center row-span-2">{renderSelectAllCheckbox()}<span className="ml-2">Photo</span></div>
+          <div className="row-span-2">Actions</div>
           <div>Name</div>
+          <div>Service Type</div>
+          <div>Personal #</div>
           <div>Station</div>
           <div>Mobile</div>
-          <div>Designation</div>
+          <div className="row-span-2">Address</div>
           <div>Rank</div>
-          <div>Tehsil</div>
           <div>District</div>
-          <div>Employee's</div>
-          <div></div> {/* Row 2 placeholder for Photo column */}
-          <div></div> {/* Row 2 placeholder for Actions column */}
+          <div>Awards</div>
           <div>Date of Birth</div>
-          <div>CNIC</div>
+          <div>Deduction</div>
+          <div>Status</div>
+          <div>Training</div>
           <div>Father's Name</div>
-          <div>Service Type</div>
-          <div>Grade</div>
           <div>Cast</div>
-          <div>Address</div>
+          <div>CNIC</div>
           <div>Mohalla</div>
-          <div></div>
-          <div className="text-center"> Assets</div>
+          <div>Grade</div>
+          <div>Tehsil</div>
+          <div>Designation</div>
+          <div className="ml-3">Assets</div>
         </div>
 
-        {/* Employee Rows - Updated with checkboxes */}
+        {/* Employee Rows */}
         {safeEmployees?.map((employee) => {
           const isEditing = editingCell?.rowId === employee._id;
-          const isEditable = editableEmployees.has(employee._id);
-
           return (
             <div
               key={employee._id}
-              className={`grid grid-cols-12 grid-rows-2 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
-                isSelected(employee._id) ? "bg-blue-50" : ""
-              }`}
+              className={`grid grid-cols-15 text-left text-xs font-medium uppercase tracking-wider border-b border-gray-300 py-2 ${isSelected(employee._id) ? "bg-blue-50" : ""
+                }`}
             >
-              {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
-              {/* Checkbox - spans 2 rows */}
-              <div className="row-span-2 flex items-center justify-center">
-                {renderImageCell(employee)}
+              {/* Photo + Checkbox */}
+              <div className="flex flex-row gap-x-2 row-span-2 items-center justify-center">
                 {renderEmployeeCheckbox(employee)}
+                {renderImageCell(employee)}
+
               </div>
 
-              {/* Vertical action buttons - spans 2 rows */}
-              <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
+              {/* Actions */}
+              <div className="flex flex-col items-start gap-1 row-span-2">
                 {isAdmin && (
                   <button
                     onClick={() => toggleEditMode(employee._id)}
-                    className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
-                      editableEmployees.has(employee._id)
-                        ? "bg-orange-600 text-white hover:bg-orange-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                    title={
-                      editableEmployees.has(employee._id)
-                        ? "Disable editing"
-                        : "Enable editing"
-                    }
+                    className={`px-2 py-1 text-[11px] rounded ${editableEmployees.has(employee._id)
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
                   >
-                    {editableEmployees.has(employee._id)
-                      ? "Disable Edit"
-                      : "Edit"}
+                    {editableEmployees.has(employee._id) ? "Disable Edit" : "Edit"}
                   </button>
                 )}
-                {/* <button
-                  onClick={() => handleDelete(employee?._id)}
-                  className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
-                >
-                  Delete
-                </button> */}
-                 {!isEditing && (
+                {!isEditing && (
                   <button
-                   onClick={() => handleView(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                    onClick={() => handleView(employee)}
+                    className="px-2 py-1 text-[11px]  rounded bg-gray-700 text-white hover:bg-gray-800"
                   >
                     View
-                 </button>
-                 )}
-                {/* Removed horizontal action row; actions shown vertically next to checkbox */}
+                  </button>
+                )}
                 {isEditing && (
                   <>
                     <button
                       onClick={() => onSaveCell(employee)}
-                      className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                      className="px-2 py-1 text-[11px] rounded bg-green-600 text-white hover:bg-green-700"
                     >
                       Save
                     </button>
                     <button
                       onClick={() => handleCancelEditing(employee)}
-                      className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                      className="px-2 py-1 text-[11px] rounded bg-purple-600 text-white hover:bg-purple-700"
                     >
                       Cancel
                     </button>
@@ -934,32 +916,52 @@ const EmployeeGridTable = ({
                 )}
               </div>
 
-              {/* First row of data (reordered) */}
-              <div>{renderCell(employee, "status", "select", "statuses")}</div>
-              <div>{renderCell(employee, "personalNumber", "input")}</div>
+              {/* Row Data */}
               <div>{renderCell(employee, "firstName", "input")}</div>
-              <div>
-                {renderCell(employee, "stations", "select", "stations")}
-              </div>
+              <div>{renderCell(employee, "serviceType", "serviceType")}</div>
+              <div>{renderCell(employee, "personalNumber", "input")}</div>
+              <div>{renderCell(employee, "stations", "select", "stations")}</div>
               <div>{renderCell(employee, "mobileNumber", "input")}</div>
-              <div>
-                {renderCell(employee, "designation", "select", "designations")}
-              </div>
-              <div>{renderCell(employee, "rank", "select", "ranks")}</div>
-              <div>
-                {renderCell(employee, "address.tehsil", "select", "tehsil")}
-              </div>
-              <div>
-                {renderCell(employee, "address.line2", "select", "district")}
+
+              {/* Address (wrapped text) */}
+              <div className="row-span-2">
+                {renderCell(employee, "address.line1", "textarea")}
               </div>
 
-              {/* NEW: Assets Column - spans 2 rows */}
-              <div className="row-span-2 flex items-center p-1">
-                <div className="text-xs text-gray-700 max-w-32 break-words">
+
+              <div>{renderCell(employee, "rank", "select", "ranks")}</div>
+              <div >{renderCell(employee, "address.line2", "select", "district")}</div>
+              {/* Awards */}
+
+              <div className="text-xs text-gray-700">
+                {achievementsLoading ? (
+                  <span className="text-gray-400 animate-pulse">Loading...</span>
+                ) : (
+                  <span title={getEmployeeAchievementsString(employee._id)}>
+                    {getEmployeeAchievementsString(employee._id)}
+                  </span>
+                )}
+              </div>
+              <div>{renderCell(employee, "dateOfBirth", "date")}</div>
+              <div>Deduction</div>
+              <div>{renderCell(employee, "status", "select", "statuses")}</div>
+              <div>Training</div>
+              <div>{renderCell(employee, "fatherFirstName", "input")}</div>
+
+              <div>{renderCell(employee, "cast", "select", "casts")}</div>
+
+              <div>{renderCell(employee, "cnic", "input")}</div>
+              <div>{renderCell(employee, "address.muhala", "input")}</div>
+              <div>{renderCell(employee, "grade", "select", "grades")}</div>
+              <div>{renderCell(employee, "address.tehsil", "select", "tehsil")}</div>
+              <div>{renderCell(employee, "designation", "select", "designations")}</div>
+
+              {/* Assets */}
+              <div>
+                <hr className="my-2 border border-black" />
+                <div className="text-xs text-gray-700 mt-2">
                   {assetsLoading ? (
-                    <span className="text-gray-500 animate-pulse">
-                      Loading...
-                    </span>
+                    <span className="text-gray-400 animate-pulse">Loading...</span>
                   ) : (
                     <span title={getEmployeeAssetsString(employee._id)}>
                       {getEmployeeAssetsString(employee._id)}
@@ -967,41 +969,11 @@ const EmployeeGridTable = ({
                   )}
                 </div>
               </div>
-
-              {/* Second row of data (paired under headers) */}
-              <div className="col-start-3 row-start-2">
-                {renderCell(employee, "dateOfBirth", "date")}
-              </div>
-              <div className="col-start-4">
-                {renderCell(employee, "cnic", "input")}
-              </div>
-              <div className="col-start-5">
-                {renderCell(employee, "fatherFirstName", "input")}
-              </div>
-              <div className="col-start-6">
-                {renderCell(employee, "serviceType", "serviceType")}
-              </div>
-              <div className="col-start-7">
-                {renderCell(employee, "grade", "select", "grades")}
-              </div>
-              <div className="col-start-8">
-                {renderCell(employee, "cast", "select", "casts")}
-              </div>
-              <div className="col-start-9">
-                {renderCell(employee, "address.line1", "textarea")}
-              </div>
-              <div className="col-start-10">
-                {renderCell(employee, "address.muhala", "input")}
-              </div>
-              <div className="col-start-11 row-start-2"></div>
             </div>
           );
         })}
 
-        {/* Confirmation Modal */}
-        {confirmPopup && renderConfirmationModal()}
-
-        {/* Empty State */}
+        {/* No Employees */}
         {safeEmployees.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-500">
@@ -1011,9 +983,11 @@ const EmployeeGridTable = ({
             </p>
           </div>
         )}
+
+        {confirmPopup && renderConfirmationModal()}
       </div>
 
-      {/* Save All Button for multiple edits */}
+
       {Object.keys(editingData).length > 0 && (
         <div className="flex justify-end gap-2 mt-2">
           <button
