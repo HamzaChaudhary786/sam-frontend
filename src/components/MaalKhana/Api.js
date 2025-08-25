@@ -32,7 +32,7 @@ export const getStations = async (filters = {}) => {
     if (filters.limit) queryParams.append('limit', filters.limit.toString());
     
     const queryString = queryParams.toString();
-    const url = `${API_URL}/stations${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_URL}/mallkhana${queryString ? `?${queryString}` : ''}`;
     
     const response = await axios.get(url, {
       headers: getAuthHeaders()
@@ -41,7 +41,7 @@ export const getStations = async (filters = {}) => {
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch stations'
+      error: error.response?.data?.message || 'Failed to fetch mallkhana'
     };
   }
 };
@@ -49,14 +49,14 @@ export const getStations = async (filters = {}) => {
 // Get single station by ID
 export const getStation = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/stations/${id}`, {
+    const response = await axios.get(`${API_URL}/mallkhana/${id}`, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch station'
+      error: error.response?.data?.message || 'Failed to fetch mallkhana'
     };
   }
 };
@@ -64,7 +64,7 @@ export const getStation = async (id) => {
 // Add new station
 export const addStation = async (stationData) => {
   try {
-    const response = await axios.post(`${API_URL}/stations`, stationData, {
+    const response = await axios.post(`${API_URL}/mallkhana`, stationData, {
       headers: {
         ...getAuthHeaders(),
         'Content-Type': 'application/json'
@@ -74,7 +74,7 @@ export const addStation = async (stationData) => {
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to add station'
+      error: error.response?.data?.message || 'Failed to add mallkhana'
     };
   }
 };
@@ -82,14 +82,14 @@ export const addStation = async (stationData) => {
 // Update station
 export const updateStation = async (stationData, id) => {
   try {
-    const response = await axios.put(`${API_URL}/stations/${id}`, stationData, {
+    const response = await axios.put(`${API_URL}/mallkhana/${id}`, stationData, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to update station'
+      error: error.response?.data?.message || 'Failed to update mallkhana'
     };
   }
 };
@@ -97,14 +97,14 @@ export const updateStation = async (stationData, id) => {
 // Delete station
 export const deleteStation = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/stations/${id}`, {
+    const response = await axios.delete(`${API_URL}/mallkhana/${id}`, {
       headers: getAuthHeaders()
     });
     return { success: true, data: response.data };
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to delete station'
+      error: error.response?.data?.message || 'Failed to delete mallkhana'
     };
   }
 };

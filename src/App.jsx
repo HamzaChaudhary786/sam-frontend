@@ -29,6 +29,8 @@ import PendingStationApprovals from './components/PendingStationPosting/PendingS
 import StationAssetAssignment from './pages/StationAssetAssignment.jsx';
 import { GlobalStationViewProvider } from './components/Station/GlobalStationView.jsx';
 import { GlobalEmployeeViewProvider } from './components/Employee/GlobalEmployeeView.jsx'; // 🆕 Add this
+import BulkAssetAssignment from './components/BulkAssetAssignment/BulkAssetAssignment/BulkAssetAssignment.jsx';
+
 
 
 
@@ -277,6 +279,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <BulkStationAssignment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bulk-asset-assignment"
+          element={
+            <ProtectedRoute>
+              <BulkAssetAssignment />
             </ProtectedRoute>
           }
         />
