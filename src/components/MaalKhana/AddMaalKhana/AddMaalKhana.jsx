@@ -26,12 +26,12 @@ const SearchableSelect = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredOptions = options.filter((option) => {
-  const searchLower = searchTerm.toLowerCase();
-  return (
-    option.label.toLowerCase().includes(searchLower) ||
-    (option.subtitle && option.subtitle.toLowerCase().includes(searchLower))
-  );
-});
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      option.label.toLowerCase().includes(searchLower) ||
+      (option.subtitle && option.subtitle.toLowerCase().includes(searchLower))
+    );
+  });
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -49,9 +49,8 @@ const SearchableSelect = ({
 
       <div className="relative">
         <div
-          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-          }`}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+            }`}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           <div className="flex justify-between items-center">
@@ -61,9 +60,8 @@ const SearchableSelect = ({
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ${
-                isOpen ? "transform rotate-180" : ""
-              }`}
+              className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "transform rotate-180" : ""
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -96,11 +94,10 @@ const SearchableSelect = ({
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}
-                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                      value === option.value
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-900"
-                    }`}
+                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${value === option.value
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-900"
+                      }`}
                     onClick={() => handleSelect(option.value)}
                   >
                     <div className="font-medium">{option.label}</div>
@@ -148,6 +145,8 @@ const StationModal = ({
   const [loadingDesignations, setLoadingDesignations] = useState(false);
   const [position, setPosition] = useState({ lat: null, lng: null });
   const [hideLocationPanels, setHideLocationPanels] = useState(false);
+  const [lockLocation, setLockLocation] = useState(true);
+
   const [formData, setFormData] = useState({
     name: "",
     tehsil: "",
@@ -163,6 +162,7 @@ const StationModal = ({
     latitude: "", // Changed from coordinates.lat to latitude (string type)
     longitude: "", // Changed from coordinates.lng to longitude (string type)
     stationImageUrl: [], // Changed from pictures to stationImageUrl to match schema
+    excludeStatistics: false, // Add this line
     stationIncharge: [
       {
         employee: "",
@@ -271,12 +271,12 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: [
-                  ...item.assetRequirement,
-                  { assets: "", quantity: 1 },
-                ],
-              }
+              ...item,
+              assetRequirement: [
+                ...item.assetRequirement,
+                { assets: "", quantity: 1 },
+              ],
+            }
             : item
       ),
     }));
@@ -289,11 +289,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: item.assetRequirement.filter(
-                  (_, ai) => ai !== assetIndex
-                ),
-              }
+              ...item,
+              assetRequirement: item.assetRequirement.filter(
+                (_, ai) => ai !== assetIndex
+              ),
+            }
             : item
       ),
     }));
@@ -306,11 +306,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                assetRequirement: item.assetRequirement.map((asset, ai) =>
-                  ai === assetIndex ? { ...asset, [field]: value } : asset
-                ),
-              }
+              ...item,
+              assetRequirement: item.assetRequirement.map((asset, ai) =>
+                ai === assetIndex ? { ...asset, [field]: value } : asset
+              ),
+            }
             : item
       ),
     }));
@@ -323,16 +323,16 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: [
-                  ...item.staffDetail,
-                  {
-                    designation: "",
-                    numberOfPersonal: 0,
-                    assetRequirement: [{ assets: "", quantity: 1 }],
-                  },
-                ],
-              }
+              ...item,
+              staffDetail: [
+                ...item.staffDetail,
+                {
+                  designation: "",
+                  numberOfPersonal: 0,
+                  assetRequirement: [{ assets: "", quantity: 1 }],
+                },
+              ],
+            }
             : item
       ),
     }));
@@ -345,11 +345,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.filter(
-                  (_, si) => si !== staffIndex
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.filter(
+                (_, si) => si !== staffIndex
+              ),
+            }
             : item
       ),
     }));
@@ -362,11 +362,11 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex ? { ...staff, [field]: value } : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex ? { ...staff, [field]: value } : staff
+              ),
+            }
             : item
       ),
     }));
@@ -379,19 +379,19 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: [
-                          ...staff.assetRequirement,
-                          { assets: "", quantity: 1 },
-                        ],
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: [
+                      ...staff.assetRequirement,
+                      { assets: "", quantity: 1 },
+                    ],
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -404,18 +404,18 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: staff.assetRequirement.filter(
-                          (_, ai) => ai !== assetIndex
-                        ),
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: staff.assetRequirement.filter(
+                      (_, ai) => ai !== assetIndex
+                    ),
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -434,21 +434,21 @@ const StationModal = ({
         (item, i) =>
           i === reqIndex
             ? {
-                ...item,
-                staffDetail: item.staffDetail.map((staff, si) =>
-                  si === staffIndex
-                    ? {
-                        ...staff,
-                        assetRequirement: staff.assetRequirement.map(
-                          (asset, ai) =>
-                            ai === assetIndex
-                              ? { ...asset, [field]: value }
-                              : asset
-                        ),
-                      }
-                    : staff
-                ),
-              }
+              ...item,
+              staffDetail: item.staffDetail.map((staff, si) =>
+                si === staffIndex
+                  ? {
+                    ...staff,
+                    assetRequirement: staff.assetRequirement.map(
+                      (asset, ai) =>
+                        ai === assetIndex
+                          ? { ...asset, [field]: value }
+                          : asset
+                    ),
+                  }
+                  : staff
+              ),
+            }
             : item
       ),
     }));
@@ -496,9 +496,8 @@ const StationModal = ({
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${
-        import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-      }&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+        }&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = () => setMapLoaded(true);
@@ -530,7 +529,8 @@ const StationModal = ({
           ...response.data.map((employee) => ({
             value: employee._id,
             label: `${employee.firstName} ${employee.lastName || ""}`,
-            subtitle: employee.personalNumber || employee.pnumber,
+            // subtitle: employee.personalNumber || employee.pnumber,
+            subtitle: `${employee.cnic} | ${employee.personalNumber} | ${employee.rank}`,
           })),
         ];
         setEmployeeOptions(employeeOptions);
@@ -562,9 +562,8 @@ const StationModal = ({
           ...assetsData.map((asset) => ({
             value: asset._id,
             label: asset.name,
-            subtitle: `${asset.type}${
-              asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
-            }${asset.vehicleNumber ? ` - ${asset.vehicleNumber}` : ""}`,
+            subtitle: `${asset.type}${asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
+              }${asset.vehicleNumber ? ` - ${asset.vehicleNumber}` : ""}`,
           })),
         ];
         setAssetOptions(assetOptions);
@@ -681,6 +680,9 @@ const StationModal = ({
 
   // Initialize form data for editing
   useEffect(() => {
+
+    setLockLocation(true); // ADD THIS LINE
+
     if (isEdit && editData) {
       setFormData({
         name: editData.name || "",
@@ -697,6 +699,7 @@ const StationModal = ({
         latitude: editData.latitude || "",
         longitude: editData.longitude || "",
         stationImageUrl: editData.stationImageUrl || [],
+        excludeStatistics: false, // Add this line
         stationIncharge: editData.stationIncharge || [
           {
             employee: "",
@@ -752,6 +755,7 @@ const StationModal = ({
         latitude: "",
         longitude: "",
         stationImageUrl: [],
+        excludeStatistics: false, // Add this line
         stationIncharge: [
           {
             employee: "",
@@ -975,6 +979,11 @@ const StationModal = ({
 
   // Handle manual coordinate input
   const handleCoordinateChange = (e) => {
+
+    if (isEdit && lockLocation) {
+      return;
+    }
+
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -1066,6 +1075,7 @@ const StationModal = ({
         latitude: formData.latitude,
         longitude: formData.longitude,
         stationImageUrl: uploadedUrls,
+        excludeStatistics: formData.excludeStatistics, // Add this line
         address: {
           line1: formData.address.line1,
           line2: formData.address.line2,
@@ -1096,6 +1106,7 @@ const StationModal = ({
           status: "",
           facilities: [],
           description: "",
+          excludeStatistics: false, // Add this line
           address: {
             line1: "",
             line2: "",
@@ -1175,6 +1186,10 @@ const StationModal = ({
   };
 
   useEffect(() => {
+
+    if (isEdit && lockLocation) {
+      return;
+    }
     if (position.lat && position.lng) {
       setFormData((prev) => ({
         ...prev,
@@ -1182,17 +1197,17 @@ const StationModal = ({
         longitude: position.lng.toString(),
       }));
     }
-  }, [position]);
+  }, [position, isEdit, lockLocation]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">
-            {isEdit ? "Edit Station" : "Add New Station"}
+            {isEdit ? "Edit Mall Khana" : "Add New Mall Khana"}
           </h2>
           <button
             onClick={handleClose}
@@ -1219,7 +1234,7 @@ const StationModal = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Maal Khana Name *
+                  Mall Khana Name *
                 </label>
                 <input
                   type="text"
@@ -1261,7 +1276,7 @@ const StationModal = ({
             {/* Status, Facilities, and Description */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <EnumSelect
-                label="Maal Khana Status"
+                label="Mall Khana Status"
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
@@ -1276,7 +1291,7 @@ const StationModal = ({
               />
 
               <MultiEnumSelect
-                label="Maal Khana Facilities"
+                label="Mall Khana Facilities"
                 name="facilities"
                 value={formData.facilities}
                 onChange={handleFacilitiesEnumChange}
@@ -1304,12 +1319,33 @@ const StationModal = ({
                 placeholder="Optional description about the station..."
               />
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="excludeStatistics"
+                name="excludeStatistics"
+                checked={formData.excludeStatistics}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    excludeStatistics: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="excludeStatistics"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Exclude Statistics
+              </label>
+            </div>
 
             {/* Station Incharge */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Maal Khana Incharge
+                  Station Incharge
                 </h3>
                 {formData.stationIncharge.length < 2 && (
                   <button
@@ -1357,12 +1393,11 @@ const StationModal = ({
                           : "Search and select employee"
                       }
                       disabled={loadingEmployees}
-                      required
                     />
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Incharge Type *
+                        Incharge Type
                       </label>
                       <select
                         value={incharge.type}
@@ -1370,7 +1405,6 @@ const StationModal = ({
                           updateStationIncharge(index, "type", e.target.value)
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
                       >
                         <option value="">Select Type</option>
                         <option value="firstIncharge">First Incharge</option>
@@ -1383,7 +1417,7 @@ const StationModal = ({
 
               {formData.stationIncharge.length === 2 && (
                 <p className="text-sm text-gray-500 italic">
-                  Maximum 2 incharges allowed per maal khana
+                  Maximum 2 incharges allowed per station
                 </p>
               )}
             </div>
@@ -1392,7 +1426,7 @@ const StationModal = ({
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Maal khana Minimum Requirements
+                  Station Minimum Requirements
                 </h3>
                 <button
                   type="button"
@@ -1413,7 +1447,7 @@ const StationModal = ({
                       <h4 className="text-md font-medium text-gray-800">
                         Requirement {reqIndex + 1}
                       </h4>
-                      {formData.stationMinimumRequirements.length >=1 && (
+                      {formData.stationMinimumRequirements.length >= 1 && (
                         <button
                           type="button"
                           onClick={() => removeMinimumRequirement(reqIndex)}
@@ -1436,7 +1470,7 @@ const StationModal = ({
                           updateMinimumRequirement(
                             reqIndex,
                             "numberOfStaff",
-                            parseInt(e.target.value) 
+                            parseInt(e.target.value)
                           )
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1484,24 +1518,23 @@ const StationModal = ({
                                   : "Search and select asset"
                               }
                               disabled={loadingAssets}
-                              required
                             />
                           </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Quantity *
+                              Quantity
                             </label>
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
-                                value={asset.quantity }
+                                value={asset.quantity}
                                 onChange={(e) =>
                                   updateAssetRequirement(
                                     reqIndex,
                                     assetIndex,
                                     "quantity",
-                                    parseInt(e.target.value) 
+                                    parseInt(e.target.value)
                                   )
                                 }
                                 min="1"
@@ -1584,7 +1617,6 @@ const StationModal = ({
                                     : "Search and select designation"
                                 }
                                 disabled={loadingDesignations}
-                                required
                               />
                             </div>
 
@@ -1600,7 +1632,7 @@ const StationModal = ({
                                     reqIndex,
                                     staffIndex,
                                     "numberOfPersonal",
-                                    parseInt(e.target.value) 
+                                    parseInt(e.target.value)
                                   )
                                 }
                                 className="w-full px-2 py-1 text-sm border h-[44px] border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -1652,7 +1684,6 @@ const StationModal = ({
                                         : "Select asset"
                                     }
                                     disabled={loadingAssets}
-                                    required
                                   />
                                 </div>
 
@@ -1663,7 +1694,7 @@ const StationModal = ({
                                   <div className="flex items-center gap-1">
                                     <input
                                       type="number"
-                                      value={asset.quantity }
+                                      value={asset.quantity}
                                       onChange={(e) =>
                                         updateStaffAssetRequirement(
                                           reqIndex,
@@ -1676,7 +1707,6 @@ const StationModal = ({
                                       min="1"
                                       className="flex-1 px-2 py-1 text-sm border h-[44px] border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                                       placeholder="Qty"
-                                      required
                                     />
                                     {staff.assetRequirement.length > 1 && (
                                       <button
@@ -1709,12 +1739,12 @@ const StationModal = ({
             {/* Pictures */}
             <div className="border-t pt-4">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Maal Khana Pictures
+                Mall Khana Pictures
               </h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Upload Maal Khana Pictures
+                  Upload Mall Khana Pictures
                 </label>
                 <input
                   type="file"
@@ -1819,6 +1849,28 @@ const StationModal = ({
               </div>
             </div>
 
+            {isEdit && (
+              <div className="border-t pt-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="lockLocation"
+                    checked={lockLocation}
+                    onChange={(e) => setLockLocation(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="lockLocation" className="text-sm font-medium text-gray-700">
+                    🔒 Lock current location (prevent coordinate changes)
+                  </label>
+                </div>
+                {lockLocation && (
+                  <p className="text-xs text-gray-500 mt-1 ml-7">
+                    Location is locked. Uncheck to allow coordinate modifications.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Coordinates */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-4">
@@ -1837,7 +1889,9 @@ const StationModal = ({
                     name="latitude"
                     value={formData.latitude}
                     onChange={handleCoordinateChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isEdit && lockLocation} // ADD THIS LINE
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit && lockLocation ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`} // ADD CONDITIONAL STYLING
                     placeholder="e.g., 31.5204"
                   />
                 </div>
@@ -1851,7 +1905,9 @@ const StationModal = ({
                     name="longitude"
                     value={formData.longitude}
                     onChange={handleCoordinateChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isEdit && lockLocation} // ADD THIS LINE
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit && lockLocation ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`} // ADD CONDITIONAL STYLING
                     placeholder="e.g., 74.3587"
                   />
                 </div>
@@ -1861,6 +1917,7 @@ const StationModal = ({
                 <MapLocation
                   onPositionChange={setPosition}
                   hidePanels={hideLocationPanels}
+                  disabled={isEdit && lockLocation}
                 />
               </div>
             </div>
@@ -1885,8 +1942,8 @@ const StationModal = ({
                   ? "Updating..."
                   : "Adding..."
                 : isEdit
-                ? "Update Station"
-                : "Add Station"}
+                  ? "Update Mall Khana"
+                  : "Add Mall Khana"}
             </button>
           </div>
         </form>

@@ -1,0 +1,410 @@
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import axios from "axios";
+import { BACKEND_URL } from "../../../constants/api.js";
+
+const AssetAssignmentsList = () => {
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    type: "all", // "employee", "station", "all"
+    employee: "",
+    station: "",
+    asset: "",
+    batch: "",
+    status: "",
+    fromDate: "",
+    toDate: "",
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
+
+  // Helper function to get token
+  const getToken = () => localStorage.getItem("authToken");
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // Helper function to get employee image
+  const getEmployeeImage = (employee) => {
+    if (!employee) return "/default-avatar.png";
+    if (Array.isArray(employee.profileUrl) && employee.profileUrl.length > 0) {
+      return employee.profileUrl[0];
+    }
+    return employee.profileUrl || "/default-avatar.png";
+  };
+
+  // Fetch assignments
+  const fetchAssignments = async () => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add filters to query params
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams.append(key, filters[key]);
+        }
+      });
+
+      const response = await axios.get(
+        `${BACKEND_URL}/asset-batch/get-employee-station-assignments?${queryParams.toString()}`,
+        { headers: getAuthHeaders() }
+      );
+
+      if (response.data && response.data.success) {
+        if (filters.type === "all") {
+          // Combine employee and station assignments
+          const combinedAssignments = [
+            ...(response.data.employees || []).map(emp => ({ ...emp, assignmentType: "employee" })),
+            ...(response.data.stations || []).map(station => ({ ...station, assignmentType: "station" }))
+          ];
+          setAssignments(combinedAssignments);
+        } else {
+          setAssignments(response.data.data || []);
+        }
+        
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0
+        }));
+      } else {
+        toast.error("Failed to fetch assignments");
+      }
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      toast.error("Error fetching assignments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  // Handle filter changes
+  const handleFilterChange = (name, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Apply filters
+  const handleApplyFilters = () => {
+    fetchAssignments();
+  };
+
+  // Clear filters
+  const handleClearFilters = () => {
+    setFilters({
+      type: "all",
+      employee: "",
+      station: "",
+      asset: "",
+      batch: "",
+      status: "",
+      fromDate: "",
+      toDate: "",
+    });
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "issued":
+        return "bg-green-100 text-green-800";
+      case "returned":
+        return "bg-gray-100 text-gray-800";
+      case "transferred":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-yellow-100 text-yellow-800";
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 mb-10">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Asset Assignments</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            View and manage all asset assignments to employees and stations.
+          </p>
+        </div>
+        <button
+          onClick={fetchAssignments}
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Loading...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white shadow-md rounded-lg mb-6">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Assignment Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assignment Type
+              </label>
+              <select
+                value={filters.type}
+                onChange={(e) => handleFilterChange("type", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">All</option>
+                <option value="employee">Employee Only</option>
+                <option value="station">Station Only</option>
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="issued">Issued</option>
+                <option value="returned">Returned</option>
+                <option value="transferred">Transferred</option>
+              </select>
+            </div>
+
+            {/* From Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={filters.fromDate}
+                onChange={(e) => handleFilterChange("fromDate", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+
+            {/* To Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={filters.toDate}
+                onChange={(e) => handleFilterChange("toDate", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={handleApplyFilters}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Apply Filters
+            </button>
+            <button
+              onClick={handleClearFilters}
+              disabled={loading}
+              className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="bg-white shadow-md rounded-lg">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">
+              Assignment Results ({assignments.length})
+            </h3>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading assignments...</p>
+          </div>
+        )}
+
+        {/* No Results */}
+        {!loading && assignments.length === 0 && (
+          <div className="p-8 text-center">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="text-gray-600 mb-2">No assignments found</p>
+            <p className="text-sm text-gray-400">Try adjusting your filters or create new assignments</p>
+          </div>
+        )}
+
+        {/* Assignments Table */}
+        {!loading && assignments.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Asset
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Assigned To
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Assignment Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Batch
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {assignments.map((assignment, index) => (
+                  <tr key={assignment._id || index} className="hover:bg-gray-50">
+                    {/* Asset */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {Array.isArray(assignment.asset) 
+                              ? assignment.asset.map(a => a.name).join(", ")
+                              : assignment.asset?.name || "N/A"
+                            }
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {Array.isArray(assignment.asset) 
+                              ? `${assignment.asset.length} assets`
+                              : `${assignment.asset?.type || "N/A"} - ${assignment.asset?.category || "N/A"}`
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Assigned To */}
+                    <td className="px-6 py-4">
+                      {assignment.assignmentType === "employee" || assignment.employee ? (
+                        <div className="flex items-center">
+                          <img
+                            className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                            src={getEmployeeImage(assignment.employee)}
+                            alt=""
+                            onError={(e) => { e.target.src = "/default-avatar.png"; }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 truncate">
+                              {assignment.employee?.firstName} {assignment.employee?.lastName}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {assignment.employee?.personalNumber || assignment.employee?.pnumber}
+                            </div>
+                          </div>
+                        </div>
+                      ) : assignment.station ? (
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {assignment.station.name}
+                          </div>
+                          {assignment.station.district && (
+                            <div className="text-xs text-gray-500 truncate">
+                              {assignment.station.district}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </td>
+
+                    {/* Type */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        assignment.assignmentType === "employee" || assignment.employee
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }`}>
+                        {assignment.assignmentType === "employee" || assignment.employee 
+                          ? "Employee" 
+                          : "Station"
+                        }
+                      </span>
+                    </td>
+
+                    {/* Assignment Date */}
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {formatDate(assignment.assignedDate)}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(assignment.status)}`}>
+                        {assignment.status || "N/A"}
+                      </span>
+                    </td>
+
+                    {/* Batch */}
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div className="truncate max-w-32" title={assignment.assetBatch?.referenceNumber}>
+                        {assignment.assetBatch?.referenceNumber || "N/A"}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AssetAssignmentsList;

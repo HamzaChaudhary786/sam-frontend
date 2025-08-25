@@ -723,7 +723,7 @@ const StationList = () => {
 
         {safeStations.length === 0 && !loading && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No stations found</p>
+            <p className="text-gray-500">No Mall Khana found</p>
           </div>
         )}
 
