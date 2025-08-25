@@ -158,21 +158,21 @@ const BulkAssetCreation = () => {
       if (!row.quantity || row.quantity < 1) {
         errors.push(`Asset ${index + 1}: Valid quantity is required`);
       }
-      if (!row.assetStatus) {
-        errors.push(`Asset ${index + 1}: Asset status is required`);
-      }
-      if (!row.condition) {
-        errors.push(`Asset ${index + 1}: Condition is required`);
-      }
-      if (!row.purchaseDate) {
-        errors.push(`Asset ${index + 1}: Purchase date is required`);
-      }
-      if (!row.cost || row.cost < 0) {
-        errors.push(`Asset ${index + 1}: Valid cost is required`);
-      }
-      if (!row.supplier) {
-        errors.push(`Asset ${index + 1}: Supplier is required`);
-      }
+      // if (!row.assetStatus) {
+      //   errors.push(`Asset ${index + 1}: Asset status is required`);
+      // }
+      // if (!row.condition) {
+      //   errors.push(`Asset ${index + 1}: Condition is required`);
+      // }
+      // if (!row.purchaseDate) {
+      //   errors.push(`Asset ${index + 1}: Purchase date is required`);
+      // }
+      // if (!row.cost || row.cost < 0) {
+      //   errors.push(`Asset ${index + 1}: Valid cost is required`);
+      // }
+      // if (!row.supplier) {
+      //   errors.push(`Asset ${index + 1}: Supplier is required`);
+      // }
 
       // Category-specific validation
       switch (row.category) {
@@ -429,11 +429,11 @@ const BulkAssetCreation = () => {
       />
 
       {/* Filters Component */}
-      <BulkAssetFilters
+      {/* <BulkAssetFilters
         filters={filters}
         onFilterChange={handleFilterChange}
         loading={loading}
-      />
+      /> */}
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md p-4 flex gap-3 justify-end z-50">
         <button

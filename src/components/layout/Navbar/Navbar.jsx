@@ -327,6 +327,33 @@ const Navbar = () => {
                       </div>
                     </div>
                   </button>
+                  
+                  <button
+                    onClick={() => handleNavigation("/bulk-asset-assignment")}
+                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                  >
+                    <div className="flex flex-row ">
+                      <svg
+                        className="h-5 w-5 mr-3 text-purple-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        />
+                      </svg>
+                      <span>Bulk Assets Assignment</span>
+                    </div>
+                    <div className=" flex justify-end">
+                      <div className="h-2 w-2 rounded-full bg-green-600">
+
+                      </div>
+                    </div>
+                  </button>
 
                   <button
                     onClick={() => handleNavigation("/editgrid")}

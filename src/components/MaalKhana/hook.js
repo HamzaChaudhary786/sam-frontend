@@ -46,16 +46,16 @@ export const useStations = (initialFilters = {}) => {
         setCurrentPage(1);
         setTotalPages(1);
         setTotalStations(0);
-        toast.error(`Failed to fetch stations: ${result.error}`);
+        toast.error(`Failed to fetch mallkhana: ${result.error}`);
       }
     } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while fetching stations';
+      const errorMessage = error.message || 'Unknown error occurred while fetching mallkhana';
       setError(errorMessage);
       setStations([]);
       setCurrentPage(1);
       setTotalPages(1);
       setTotalStations(0);
-      toast.error(`Error fetching stations: ${errorMessage}`);
+      toast.error(`Error fetching mallkhana: ${errorMessage}`);
     }
     
     setLoading(false);
@@ -70,17 +70,17 @@ export const useStations = (initialFilters = {}) => {
       
       if (result.success) {
         await fetchStations();
-        toast.success(`Station "${stationData.name || 'New Station'}" created successfully!`);
+        toast.success(`Mall Khana "${stationData.name || 'Mall Khana'}" created successfully!`);
         return { success: true };
       } else {
         setError(result.error);
-        toast.error(`Failed to create station: ${result.error}`);
+        toast.error(`Failed to create mall khana: ${result.error}`);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while creating station';
+      const errorMessage = error.message || 'Unknown error occurred while creating mall khana';
       setError(errorMessage);
-      toast.error(`Error creating station: ${errorMessage}`);
+      toast.error(`Error creating mallkhana: ${errorMessage}`);
       return { success: false, error: errorMessage };
     }
   };
@@ -94,17 +94,17 @@ export const useStations = (initialFilters = {}) => {
       
       if (result.success) {
         await fetchStations();
-        toast.success(`Station "${stationData.name || 'Station'}" updated successfully!`);
+        toast.success(`Mall Khana"${stationData.name || 'Mall Khana'}" updated successfully!`);
         return { success: true };
       } else {
         setError(result.error);
-        toast.error(`Failed to update station: ${result.error}`);
+        toast.error(`Failed to update Mallkhana: ${result.error}`);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while updating station';
+      const errorMessage = error.message || 'Unknown error occurred while updating MallKhana';
       setError(errorMessage);
-      toast.error(`Error updating station: ${errorMessage}`);
+      toast.error(`Error updating mallkhana: ${errorMessage}`);
       return { success: false, error: errorMessage };
     }
   };
@@ -128,17 +128,17 @@ export const useStations = (initialFilters = {}) => {
           await fetchStations();
         }
         
-        toast.success("Station deleted successfully!");
+        toast.success("Mall Khana deleted successfully!");
         return { success: true };
       } else {
         setError(result.error);
-        toast.error(`Failed to delete station: ${result.error}`);
+        toast.error(`Failed to delete Mall Khana: ${result.error}`);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while deleting station';
+      const errorMessage = error.message || 'Unknown error occurred while deleting Mall Khana';
       setError(errorMessage);
-      toast.error(`Error deleting station: ${errorMessage}`);
+      toast.error(`Error deleting Mall Khana: ${errorMessage}`);
       return { success: false, error: errorMessage };
     }
   };

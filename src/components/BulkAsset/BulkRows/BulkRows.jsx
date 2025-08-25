@@ -69,18 +69,18 @@ const BulkAssetRows = ({
 
   // Define which fields to show for each category
   const getCategoryFields = (category) => {
-    const commonFields = ['type', 'category', 'quantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+    const commonFields = ['type', 'category', 'availableQuantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
 
     switch (category) {
       case 'weapons':
-        return [...commonFields, 'weaponNumber', 'availableQuantity'];
+        return [...commonFields, 'weaponNumber'];
       case 'pistol':
-        return [...commonFields, 'pistolNumber', 'availableQuantity'];
+        return [...commonFields, 'pistolNumber'];
       case 'vehicle':
         return [...commonFields, 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color'];
       case 'weaponRound':
       case 'pistolRound':
-        return [...commonFields, 'numberOfRounds', 'weaponName', 'availableQuantity'];
+        return [...commonFields, 'numberOfRounds', 'weaponName'];
       case 'other':
       default:
         return commonFields;
@@ -98,11 +98,11 @@ const BulkAssetRows = ({
 
     // Always include basic fields even if no rows exist
     if (allVisibleFields.size === 0) {
-      return ['type', 'category', 'quantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+      return ['type', 'availableQuantity', 'category',  'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
     }
 
     // Return fields in a logical order
-    const fieldOrder = ['type', 'category', 'quantity', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'availableQuantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+    const fieldOrder = ['type','availableQuantity', 'category', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
 
     return fieldOrder.filter(field => allVisibleFields.has(field));
   };
@@ -183,6 +183,19 @@ const BulkAssetRows = ({
         </select>
       )
     },
+        availableQuantity: {
+      label: "Quantity",
+      render: (row) => (
+        <input
+          type="number"
+          value={row.availableQuantity || ''}
+          onChange={(e) => handleAssetChange(row.id, 'availableQuantity', e.target.value)}
+          disabled={loading}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[120px]"
+          placeholder="Incoming "
+        />
+      )
+    },
     category: {
       label: "Category",
       render: (row) => {
@@ -202,20 +215,22 @@ const BulkAssetRows = ({
         );
       }
     },
-    quantity: {
-      label: "Quantity",
-      render: (row) => (
-        <input
-          type="number"
-          value={row.quantity || ''}
-          onChange={(e) => handleAssetChange(row.id, 'quantity', e.target.value)}
-          disabled={loading}
-          min="1"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[80px]"
-          placeholder="1"
-        />
-      )
-    },
+
+    
+    // quantity: {
+    //   label: "Quantity",
+    //   render: (row) => (
+    //     <input
+    //       type="number"
+    //       value={row.quantity || ''}
+    //       onChange={(e) => handleAssetChange(row.id, 'quantity', e.target.value)}
+    //       disabled={loading}
+    //       min="1"
+    //       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[80px]"
+    //       placeholder="1"
+    //     />
+    //   )
+    // },
     weaponNumber: {
       label: "Weapon Number",
       render: (row) => (
@@ -359,19 +374,7 @@ const BulkAssetRows = ({
         />
       )
     },
-    availableQuantity: {
-      label: "Available Quantity",
-      render: (row) => (
-        <input
-          type="number"
-          value={row.availableQuantity || ''}
-          onChange={(e) => handleAssetChange(row.id, 'availableQuantity', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[120px]"
-          placeholder="Stock qty"
-        />
-      )
-    },
+
     condition: {
       label: "Condition",
       render: (row) => (
