@@ -656,7 +656,11 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                               {employee.firstName?.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
                             </span>
                           </div>
-                          <div className="ml-3">
+                          <div className="ml-3 cursor-pointer" onClick={() => {
+                          setIsEmployee(employee)
+                          setIsViewEmployee(!isViewEmployee)
+
+                        }}>
                             <div className="text-sm font-medium text-gray-700">
                               Name: {employee.firstName}
                             </div>
@@ -698,7 +702,8 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                             {employee.status}
                           </span>
                         </div>
-                        <div className='py-0.5 px-1.5 cursor-pointer bg-blue-600 text-white flex flex-row items-center gap-x-2 rounded-3xl' onClick={() => {
+                        {/* <div className='py-0.5 px-1.5 cursor-pointer bg-blue-600 text-white flex flex-row items-center gap-x-2 rounded-3xl' 
+                        onClick={() => {
                           setIsEmployee(employee)
                           setIsViewEmployee(!isViewEmployee)
 
@@ -706,7 +711,7 @@ const DrillStationPage = ({ stationId, stationName, onBack, onDrillTehsil }) => 
                           <IoEyeSharp />
 
                           view
-                        </div>
+                        </div> */}
                       </td>
                     </tr>
                   ))}

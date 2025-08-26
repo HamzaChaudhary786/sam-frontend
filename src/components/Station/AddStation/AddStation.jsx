@@ -163,6 +163,7 @@ const StationModal = ({
     longitude: "", // Changed from coordinates.lng to longitude (string type)
     stationImageUrl: [], // Changed from pictures to stationImageUrl to match schema
     excludeStatistics: false, // Add this line
+    maximumEmployeeStatePeriod: "",
     stationIncharge: [
       {
         employee: "",
@@ -699,7 +700,8 @@ const StationModal = ({
         latitude: editData.latitude || "",
         longitude: editData.longitude || "",
         stationImageUrl: editData.stationImageUrl || [],
-        excludeStatistics: false, // Add this line
+        excludeStatistics: editData.excludeStatistics || false, // Add this line
+        maximumEmployeeStatePeriod: editData?.maximumEmployeeStatePeriod || "",
         stationIncharge: editData.stationIncharge || [
           {
             employee: "",
@@ -756,6 +758,7 @@ const StationModal = ({
         longitude: "",
         stationImageUrl: [],
         excludeStatistics: false, // Add this line
+        maximumEmployeeStatePeriod: "",
         stationIncharge: [
           {
             employee: "",
@@ -1075,7 +1078,8 @@ const StationModal = ({
         latitude: formData.latitude,
         longitude: formData.longitude,
         stationImageUrl: uploadedUrls,
-        excludeStatistics: formData.excludeStatistics, // Add this line
+        excludeStatistics: formData.excludeStatistics, // Add this line,
+        maximumEmployeeStatePeriod: formData.maximumEmployeeStatePeriod,
         address: {
           line1: formData.address.line1,
           line2: formData.address.line2,
@@ -1107,6 +1111,7 @@ const StationModal = ({
           facilities: [],
           description: "",
           excludeStatistics: false, // Add this line
+          maximumEmployeeStatePeriod,
           address: {
             line1: "",
             line2: "",
@@ -1317,6 +1322,20 @@ const StationModal = ({
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Optional description about the station..."
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Maximum Tenure
+              </label>
+              <input
+                type="number"
+                name="maximumEmployeeStatePeriod"
+                value={formData.maximumEmployeeStatePeriod}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Total number of staff required"
               />
             </div>
             <div className="flex items-center">
