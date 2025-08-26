@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getDesignationsWithEnum } from "../AddEmployee/Designation.js";
 import { getGradesWithEnum } from "../AddEmployee/Grades.js";
 
-const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
+const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [designationEnum, setDesignationEnum] = useState([]);
@@ -17,30 +17,34 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
           getGradesWithEnum(),
         ]);
 
-        console.log('Modal - Designation response:', desigRes);
-        console.log('Modal - Grade response:', gradeRes);
+        console.log("Modal - Designation response:", desigRes);
+        console.log("Modal - Grade response:", gradeRes);
 
         if (desigRes.success && desigRes.data) {
           // Convert object to array format
-          const designationArray = Object.entries(desigRes.data).map(([_id, name]) => ({
-            _id,
-            name
-          }));
+          const designationArray = Object.entries(desigRes.data).map(
+            ([_id, name]) => ({
+              _id,
+              name,
+            })
+          );
           setDesignationEnum(designationArray);
-          console.log('Modal - Set designations array:', designationArray);
+          console.log("Modal - Set designations array:", designationArray);
         }
 
         if (gradeRes.success && gradeRes.data) {
           // Convert object to array format
-          const gradeArray = Object.entries(gradeRes.data).map(([_id, name]) => ({
-            _id,
-            name
-          }));
+          const gradeArray = Object.entries(gradeRes.data).map(
+            ([_id, name]) => ({
+              _id,
+              name,
+            })
+          );
           setGradeEnum(gradeArray);
-          console.log('Modal - Set grades array:', gradeArray);
+          console.log("Modal - Set grades array:", gradeArray);
         }
       } catch (error) {
-        console.error('Modal - Error fetching options:', error);
+        console.error("Modal - Error fetching options:", error);
       }
     };
 
@@ -51,13 +55,13 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
 
   // Helper function to get designation name by ID
   const getDesignationName = (designationId) => {
-    if (typeof designationId === 'object' && designationId?.name) {
+    if (typeof designationId === "object" && designationId?.name) {
       return designationId.name;
     }
 
     // If it's an ID, find the name from designationEnum
     if (designationEnum && Array.isArray(designationEnum)) {
-      const designation = designationEnum.find(d => d._id === designationId);
+      const designation = designationEnum.find((d) => d._id === designationId);
       return designation?.name || designationId || "N/A";
     }
 
@@ -66,13 +70,13 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
 
   // Helper function to get grade name by ID
   const getGradeName = (gradeId) => {
-    if (typeof gradeId === 'object' && gradeId?.name) {
+    if (typeof gradeId === "object" && gradeId?.name) {
       return gradeId.name;
     }
 
     // If it's an ID, find the name from gradeEnum
     if (gradeEnum && Array.isArray(gradeEnum)) {
-      const grade = gradeEnum.find(g => g._id === gradeId);
+      const grade = gradeEnum.find((g) => g._id === gradeId);
       return grade?.name || gradeId || "N/A";
     }
 
@@ -85,10 +89,11 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
   const profileImages = Array.isArray(employee.profileUrl)
     ? employee.profileUrl
     : employee.profileUrl
-      ? [employee.profileUrl]
-      : [];
+    ? [employee.profileUrl]
+    : [];
 
-  const currentImage = profileImages[currentImageIndex] || "/default-avatar.png";
+  const currentImage =
+    profileImages[currentImageIndex] || "/default-avatar.png";
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -109,7 +114,12 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
   const closeImageModal = () => {
     setShowImageModal(false);
   };
-
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit(employee);
+      onClose(); // Close the view modal when edit is clicked
+    }
+  };
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -146,16 +156,36 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                       onClick={handlePrevImage}
                       className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
                     >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 19l-7-7 7-7"
+                        />
                       </svg>
                     </button>
                     <button
                       onClick={handleNextImage}
                       className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
                     >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </button>
                   </>
@@ -177,14 +207,15 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                 </p>
                 <div className="mt-2">
                   <span
-                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${employee.status === "active"
+                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                      employee.status === "active"
                         ? "bg-green-100 text-green-800"
                         : employee.status === "retired"
-                          ? "bg-blue-100 text-blue-800"
-                          : employee.status === "terminated"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
+                        ? "bg-blue-100 text-blue-800"
+                        : employee.status === "terminated"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
                   >
                     {employee.status?.charAt(0).toUpperCase() +
                       employee.status?.slice(1)}
@@ -256,7 +287,9 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                   <p className="text-sm text-gray-900">
                     {employee.fatherFirstName && employee.fatherLastName
                       ? `${employee.fatherFirstName} ${employee.fatherLastName}`
-                      : employee.fatherFirstName || employee.fatherLastName || "N/A"}
+                      : employee.fatherFirstName ||
+                        employee.fatherLastName ||
+                        "N/A"}
                   </p>
                 </div>
               </div>
@@ -397,24 +430,52 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                   {employee.assets.map((asset, index) => (
                     <div
                       key={index}
-                      className={`rounded-lg p-4 ${asset.asset?.type === "weapons"
+                      className={`rounded-lg p-4 ${
+                        asset.asset?.type === "weapons"
                           ? "bg-red-50 border border-red-200"
                           : "bg-blue-50 border border-blue-200"
-                        }`}
+                      }`}
                     >
                       {/* Asset content remains the same as in your original code */}
                       <div className="flex items-center mb-3">
                         {asset.asset?.type === "weapons" ? (
-                          <svg className="h-5 w-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                          <svg
+                            className="h-5 w-5 text-red-600 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+                            />
                           </svg>
                         ) : (
-                          <svg className="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          <svg
+                            className="h-5 w-5 text-blue-600 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M13 10V3L4 14h7v7l9-11h-7z"
+                            />
                           </svg>
                         )}
-                        <h5 className={`font-semibold ${asset.asset?.type === "weapons" ? "text-red-800" : "text-blue-800"}`}>
-                          {asset.asset?.name || "Unknown Asset"} ({asset.asset?.type || "Unknown Type"})
+                        <h5
+                          className={`font-semibold ${
+                            asset.asset?.type === "weapons"
+                              ? "text-red-800"
+                              : "text-blue-800"
+                          }`}
+                        >
+                          {asset.asset?.name || "Unknown Asset"} (
+                          {asset.asset?.type || "Unknown Type"})
                         </h5>
                       </div>
                       {/* Rest of asset content... */}
@@ -433,6 +494,14 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
             >
               Close
             </button>
+            {onEdit && (
+              <button
+                onClick={handleEditClick}
+                className="px-4 py-2 bg-blue-600 text-white ml-2 rounded-md hover:bg-blue-700"
+              >
+                Edit
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -454,16 +523,36 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
                   onClick={handlePrevImage}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
                 <button
                   onClick={handleNextImage}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </>
@@ -474,8 +563,18 @@ const EmployeeViewModal = ({ isOpen, onClose, employee }) => {
               onClick={closeImageModal}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 

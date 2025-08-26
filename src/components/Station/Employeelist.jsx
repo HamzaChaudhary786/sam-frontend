@@ -16,27 +16,27 @@ const StationEmployeeWrapper = ({
   // If not showing, return the toggle row
   if (!showAll) {
     return (
-      <tr className="bg-blue-50 border-t-2 border-blue-200">
+      <tr className="">
         <td className="px-6 py-3">
-          <div className="flex items-center text-xs text-blue-600 font-medium">
+          {/* <div className="flex items-center text-xs text-blue-600 font-medium">
             <span className="mr-2">👥 Employees</span>
                         <span className="mr-2"> 10 </span>
 
-          </div>
+          </div> */}
           
         </td>
         <td className="px-6 py-3" colSpan="4">
-          <div className="text-sm text-gray-600">
+          {/* <div className="text-sm text-gray-600">
             Click "Show Employees" to view staff at {stationName}
-          </div>
+          </div> */}
         </td>
         <td className="px-6 py-3">
-          <button
+          {/* <button
             onClick={() => onToggleView(true)}
             className="px-3 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition"
           >
             Show Employees
-          </button>
+          </button> */}
         </td>
       </tr>
     );
@@ -53,12 +53,12 @@ const StationEmployeeWrapper = ({
               <h4 className="text-sm font-medium text-blue-900">
                 👥 Employees at {stationName}
               </h4>
-              <button
+              {/* <button
                 onClick={() => onToggleView(false)}
                 className="px-3 py-1 text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-md transition"
               >
                 Hide Employees
-              </button>
+              </button> */}
             </div>
           </div>
           

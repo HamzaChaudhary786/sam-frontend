@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
 import { useGlobalStationView } from "../Station/GlobalStationView.jsx";
 import ClickableEmployeeName from "../Employee/ClickableName.jsx"; // Adjust path as needed
+import StationViewModal from "../Station/ViewStation/ViewStation.jsx";
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -703,6 +704,7 @@ const PendingStationApprovals = ({ onEdit }) => {
                           </div>
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
                           <div className="flex items-center text-sm">

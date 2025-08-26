@@ -126,6 +126,47 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     }
   };
 
+
+  const fetchComprehensiveTehsilDataForNewTehsil = async (newTehsil) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/stations/by-tehsil?tehsil=${newTehsil}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch tehsil data");
+      }
+
+      const result = await response.json();
+      console.log("New Tehsil API Response:", result);
+
+      // Update the component's data with new tehsil
+      setData(result.data);
+
+      // Reset selected station if any
+      setSelectedStation(null);
+
+      // Reset to overview tab
+      setActiveTab("overview");
+
+    } catch (err) {
+      setError(err.message);
+      console.error("New Tehsil API Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handler to go back from district view
   const handleBackFromDistrict = () => {
     setShowDistrictView(false);
@@ -138,13 +179,9 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         tehsil={tehsil}
         onBack={handleBackFromDistrict}
         onDrillTehsil={(selectedTehsil) => {
-
-          alert("Under Contruction (In Progress...)")
-          // setShowDistrictView(!showDistrictView);
-          // setActiveTab("overview");
-          // fetchTehsilToDistrictData(selectedTehsil, data?.districtInfo?.name);
-
           console.log("Drilling down to tehsil:", selectedTehsil);
+          setShowDistrictView(false);
+          fetchComprehensiveTehsilDataForNewTehsil(selectedTehsil);
         }}
       />
     );
@@ -900,8 +937,160 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         {activeTab === "stations" && renderStationsTab()}
       </div>
 
+      <section>
+
+        {/* Footer Summary */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center space-x-6">
+              <span className="flex items-center">
+                <Building className="h-4 w-4 mr-1" />
+                Total stations:{" "}
+                <strong className="ml-1">{data.summary.totalStations}</strong>
+              </span>
+              <span className="flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                Active employees:{" "}
+                <strong className="ml-1">
+                  {data.summary.totalActiveEmployees}
+                </strong>
+              </span>
+              <span className="flex items-center">
+                <Database className="h-4 w-4 mr-1" />
+                Total assets:{" "}
+                <strong className="ml-1">
+                  {data.summary.totalStationAssets +
+                    data.summary.totalEmployeeAssets}
+                </strong>
+              </span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="flex items-center text-green-600">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Staffed: {data.summary.stationsWithEmployees}
+              </span>
+              <span className="flex items-center text-red-600">
+                <AlertTriangle className="h-4 w-4 mr-1" />
+                Understaffed: {data.summary.stationsWithoutEmployees}
+              </span>
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
+          {data.metadata?.queryPerformance && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">
+                Query Performance
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <span className="text-sm text-blue-700">Stations Found</span>
+                  <span className="font-semibold text-blue-900">
+                    {data.metadata.queryPerformance.stationsFound}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                  <span className="text-sm text-green-700">Employees Found</span>
+                  <span className="font-semibold text-green-900">
+                    {data.metadata.queryPerformance.employeesFound}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <span className="text-sm text-purple-700">Station Assets</span>
+                  <span className="font-semibold text-purple-900">
+                    {data.metadata.queryPerformance.stationAssetsFound}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <span className="text-sm text-orange-700">Employee Assets</span>
+                  <span className="font-semibold text-orange-900">
+                    {data.metadata.queryPerformance.employeeAssetsFound}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Data Quality and Recommendations */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900 mb-2">
+              Data Quality Overview
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <span className="text-sm text-blue-700">Unique Facilities</span>
+                <span className="font-semibold text-blue-900">
+                  {data.summary.uniqueFacilities}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <span className="text-sm text-green-700">
+                  Requirement Compliance
+                </span>
+                <span className="font-semibold text-green-900">
+                  {Math.round(
+                    ((data.summary.totalStations -
+                      data.stationsNotMeetingRequirements.count) /
+                      data.summary.totalStations) *
+                    100
+                  )}
+                  %
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <span className="text-sm text-purple-700">Avg Staff/Station</span>
+                <span className="font-semibold text-purple-900">
+                  {(
+                    data.summary.totalActiveEmployees / data.summary.totalStations
+                  ).toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommendations */}
+          {(data.summary.stationsWithoutEmployees > 0 ||
+            data.stationsNotMeetingRequirements.count > 0) && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
+                  Action Items
+                </h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {data.summary.stationsWithoutEmployees > 0 && (
+                    <li>
+                      • Urgent: Assign staff to{" "}
+                      {data.summary.stationsWithoutEmployees} stations with zero
+                      employees
+                    </li>
+                  )}
+                  {data.stationsNotMeetingRequirements.count > 0 && (
+                    <li>
+                      • Priority: Address staff shortages in{" "}
+                      {data.stationsNotMeetingRequirements.count} stations not
+                      meeting requirements
+                    </li>
+                  )}
+                  {data.summary.totalStationAssets === 0 && (
+                    <li>
+                      • Review: No station assets recorded - verify asset management
+                      system
+                    </li>
+                  )}
+                  {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
+                    <li>
+                      • Data Quality: Update missing age information for better
+                      analytics
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+        </div>
+      </section>
+
       {/* Employee List */}
-      {data.employees?.data && data.employees.data.length > 0 && (
+      {/* {data.employees?.data && data.employees.data.length > 0 && (
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -1023,7 +1212,235 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
               employee={isEmployee} />
           </div>
 
-          {/* Pagination Info */}
+      
+          {data.employees.pagination && (
+            <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <span className="text-sm text-gray-700">
+                  Page {data.employees.pagination.currentPage} of{" "}
+                  {data.employees.pagination.totalPages}
+                </span>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing employees <span className="font-medium">1</span> to{" "}
+                    <span className="font-medium">
+                      {data.employees.data.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">
+                      {data.employees.pagination.totalEmployees}
+                    </span>{" "}
+                    results
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-700">
+                    Page {data.employees.pagination.currentPage} of{" "}
+                    {data.employees.pagination.totalPages}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )} */}
+
+
+
+      {/* Employee List Grouped by Station */}
+      {/* Employee List Grouped by Station */}
+      {data.employees?.data && data.employees.data.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              All Employees ({data.employees.pagination.totalEmployees})
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            {/* Group employees by station */}
+            {(() => {
+              // Group employees by station using stations data from API response
+              const groupedEmployees = data.employees.data.reduce((acc, employee) => {
+                const stationName = employee.stations?.name || "Unassigned";
+                const stationId = employee.stations?._id || "unassigned";
+                if (!acc[stationName]) {
+                  acc[stationName] = {
+                    stationId: stationId,
+                    employees: []
+                  };
+                }
+                acc[stationName].employees.push(employee);
+                return acc;
+              }, {});
+
+              // Sort station names to ensure consistent order
+              const sortedStationNames = Object.keys(groupedEmployees).sort();
+
+              return sortedStationNames.map((stationName) => (
+                <div key={stationName}>
+                  {/* Station Header */}
+                  <div className="bg-blue-50 px-6 py-4 border-b border-blue-200">
+                    <h4 className="text-lg font-semibold text-blue-900 flex items-center">
+                      <Building className="h-5 w-5 mr-2" />
+                      Station: {stationName}
+                      <span className="ml-2 px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+                        {groupedEmployees[stationName].employees.length} employees
+                      </span>
+                    </h4>
+                    <div className="mt-2 text-sm text-blue-700">
+                      Station ID: {groupedEmployees[stationName].stationId}
+                    </div>
+                  </div>
+
+                  {/* Employee Table for this station */}
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Employee
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Personal No.
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          CNIC
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Designation
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Grade
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Cast
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Service
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Station Details
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact
+                        </th>
+                        {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Action
+                        </th> */}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {groupedEmployees[stationName].employees.map((employee) => (
+                        <tr key={employee._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={employee.profileUrl?.[0] || "/api/placeholder/40/40"}
+                                alt={employee?.firstName}
+                                className="h-10 w-10 rounded-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = "/api/placeholder/40/40";
+                                }}
+                              />
+                              <div className="ml-4 cursor-pointer" onClick={() => {
+                                setIsEmployee(employee);
+                                setIsViewEmployee(true);
+                              }}>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {employee?.firstName || "N/A"}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {employee?.fatherFirstName || "N/A"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {employee?.personalNumber || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {employee?.cnic || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {employee?.designation || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {employee?.grade || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                            {employee?.cast || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.serviceType === "federal"
+                                ? "bg-green-100 text-green-800"
+                                : employee.serviceType === "provincial"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                                }`}
+                            >
+                              {employee.serviceType || "N/A"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div>
+                              <div className="font-medium">{employee.stations?.name || "Unassigned"}</div>
+                              <div className="text-xs text-gray-500">
+                                {employee.stations?.address?.city || ""}, {employee.stations?.district || ""}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Tehsil: {employee.stations?.tehsil || "N/A"}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-1 text-gray-400" />
+                              {employee.mobileNumber || "N/A"}
+                            </div>
+                          </td>
+                          {/* <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              className="py-1 px-3 cursor-pointer bg-blue-600 text-white flex items-center gap-x-2 rounded-full hover:bg-blue-700 transition-colors"
+                              onClick={() => {
+                                setIsEmployee(employee);
+                                setIsViewEmployee(true);
+                              }}
+                            >
+                              <IoEyeSharp />
+                              View
+                            </button>
+                          </td> */}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Station Summary */}
+                  <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                    <div className="flex justify-between items-center text-sm text-gray-600">
+                      <span>Station Total: {groupedEmployees[stationName].employees.length} employees</span>
+                      <span>Station Address: {groupedEmployees[stationName].employees[0]?.stations?.address?.fullAddress || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+
+          {/* Employee View Modal */}
+          <div>
+            <EmployeeViewModal
+              isOpen={isViewEmployee}
+              onClose={handleClose}
+              employee={isEmployee}
+            />
+          </div>
+
+          {/* Overall Pagination Info */}
           {data.employees.pagination && (
             <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="flex-1 flex justify-between sm:hidden">
@@ -1058,154 +1475,6 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         </div>
       )}
 
-      {/* Footer Summary */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div className="flex items-center space-x-6">
-            <span className="flex items-center">
-              <Building className="h-4 w-4 mr-1" />
-              Total stations:{" "}
-              <strong className="ml-1">{data.summary.totalStations}</strong>
-            </span>
-            <span className="flex items-center">
-              <Users className="h-4 w-4 mr-1" />
-              Active employees:{" "}
-              <strong className="ml-1">
-                {data.summary.totalActiveEmployees}
-              </strong>
-            </span>
-            <span className="flex items-center">
-              <Database className="h-4 w-4 mr-1" />
-              Total assets:{" "}
-              <strong className="ml-1">
-                {data.summary.totalStationAssets +
-                  data.summary.totalEmployeeAssets}
-              </strong>
-            </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center text-green-600">
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Staffed: {data.summary.stationsWithEmployees}
-            </span>
-            <span className="flex items-center text-red-600">
-              <AlertTriangle className="h-4 w-4 mr-1" />
-              Understaffed: {data.summary.stationsWithoutEmployees}
-            </span>
-          </div>
-        </div>
-
-        {/* Performance Metrics */}
-        {data.metadata?.queryPerformance && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">
-              Query Performance
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <span className="text-sm text-blue-700">Stations Found</span>
-                <span className="font-semibold text-blue-900">
-                  {data.metadata.queryPerformance.stationsFound}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <span className="text-sm text-green-700">Employees Found</span>
-                <span className="font-semibold text-green-900">
-                  {data.metadata.queryPerformance.employeesFound}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <span className="text-sm text-purple-700">Station Assets</span>
-                <span className="font-semibold text-purple-900">
-                  {data.metadata.queryPerformance.stationAssetsFound}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                <span className="text-sm text-orange-700">Employee Assets</span>
-                <span className="font-semibold text-orange-900">
-                  {data.metadata.queryPerformance.employeeAssetsFound}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Data Quality and Recommendations */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
-            Data Quality Overview
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm text-blue-700">Unique Facilities</span>
-              <span className="font-semibold text-blue-900">
-                {data.summary.uniqueFacilities}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <span className="text-sm text-green-700">
-                Requirement Compliance
-              </span>
-              <span className="font-semibold text-green-900">
-                {Math.round(
-                  ((data.summary.totalStations -
-                    data.stationsNotMeetingRequirements.count) /
-                    data.summary.totalStations) *
-                  100
-                )}
-                %
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-              <span className="text-sm text-purple-700">Avg Staff/Station</span>
-              <span className="font-semibold text-purple-900">
-                {(
-                  data.summary.totalActiveEmployees / data.summary.totalStations
-                ).toFixed(1)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recommendations */}
-        {(data.summary.stationsWithoutEmployees > 0 ||
-          data.stationsNotMeetingRequirements.count > 0) && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
-                Action Items
-              </h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {data.summary.stationsWithoutEmployees > 0 && (
-                  <li>
-                    • Urgent: Assign staff to{" "}
-                    {data.summary.stationsWithoutEmployees} stations with zero
-                    employees
-                  </li>
-                )}
-                {data.stationsNotMeetingRequirements.count > 0 && (
-                  <li>
-                    • Priority: Address staff shortages in{" "}
-                    {data.stationsNotMeetingRequirements.count} stations not
-                    meeting requirements
-                  </li>
-                )}
-                {data.summary.totalStationAssets === 0 && (
-                  <li>
-                    • Review: No station assets recorded - verify asset management
-                    system
-                  </li>
-                )}
-                {data.allStationEmployeeSummary.breakdown.byAge.Unknown > 0 && (
-                  <li>
-                    • Data Quality: Update missing age information for better
-                    analytics
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-      </div>
     </div>
   );
 };
