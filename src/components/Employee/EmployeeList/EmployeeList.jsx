@@ -624,13 +624,11 @@ const EmployeeList = ({
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-gray-900 truncate">
-                              <ClickableEmployeeName
-                                employee={employee}
-                                className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                              >
-                                {employee.firstName} {employee.lastName}
-                              </ClickableEmployeeName>
+                            <div
+                              className="text-xs font-medium text-gray-900 truncate"
+                              onClick={() => handleView(employee)}
+                            >
+                              {employee.firstName} {employee.lastName}
                             </div>
                             <div className="text-xs font-medium text-gray-700 truncate">
                               {employee.fatherFirstName}
@@ -817,16 +815,14 @@ const EmployeeList = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
-                        <ClickableEmployeeName
-                          employee={employee}
-                          className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                        >
-                          {employee.firstName}
-                        </ClickableEmployeeName>
-                         <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {employee.fatherFirstName}
-                      </h3>
+                      <h3
+                        className="text-sm font-medium text-gray-900 truncate"
+                        onClick={() => handleView(employee)}
+                      >
+                        {employee.firstName}
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                          {employee.fatherFirstName}
+                        </h3>
                       </h3>
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1025,6 +1021,7 @@ const EmployeeList = ({
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         employee={selectedEmployee}
+        onEdit={handleEdit} // Add this line
       />
 
       {/* Full Size Image Modal */}

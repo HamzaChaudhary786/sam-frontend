@@ -337,7 +337,7 @@ const AssetAssignmentsList = () => {
                             className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
                             src={getEmployeeImage(assignment.employee)}
                             alt=""
-                            onError={(e) => { e.target.src = "/default-avatar.png"; }}
+                            // onError={(e) => { e.target.src = "/default-avatar.png"; }}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-gray-900 truncate">
