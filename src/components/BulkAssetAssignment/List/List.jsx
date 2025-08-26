@@ -2,8 +2,21 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api.js";
+import { role_admin } from "../../../constants/Enum.js";
+import { 
+  deleteAssetAssignment, 
+  approveAssetAssignment,
+  issueRoundsToAssignment,
+  consumeRoundsFromAssignment,
+  transferAssetAssignment,
+  returnAssetAssignment
+} from "../../AssetAssignment/AssetApi.js";
+import IssueRoundsModal from "../../AssetAssignment/IssueRound.jsx";
+import ConsumeRoundsModal from "../../AssetAssignment/ConsumeRound.jsx";
+import TransferReturnModal from "../../AssetAssignment/TransferAsset.jsx";
 
-const AssetAssignmentsList = () => {
+const AssetAssignmentsList = ({ onModalStateChange }) => {
+
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -22,11 +35,86 @@ const AssetAssignmentsList = () => {
     total: 0,
   });
 
+  // User role state
+  const [userType, setUserType] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Employees data for transfer modal
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+
+  // Modal states
+  const [issueRoundsModal, setIssueRoundsModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [consumeRoundsModal, setConsumeRoundsModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [transferReturnModal, setTransferReturnModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [modalLoading, setModalLoading] = useState(false);
+
   // Helper function to get token
   const getToken = () => localStorage.getItem("authToken");
   const getAuthHeaders = () => {
     const token = getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // Check user role from localStorage
+  useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const storedUserType = localStorage.getItem("userType");
+        const userData = localStorage.getItem("userData");
+        const parsedUserData = userData ? JSON.parse(userData) : null;
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
+
+        setUserType(currentUserType);
+        setIsAdmin(currentUserType === role_admin);
+      } catch (error) {
+        setUserType("");
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
+
+  // Notify parent when modal state changes
+useEffect(() => {
+  const isAnyModalOpen = issueRoundsModal.isOpen || consumeRoundsModal.isOpen || transferReturnModal.isOpen;
+  if (onModalStateChange) {
+    onModalStateChange(isAnyModalOpen);
+  }
+}, [issueRoundsModal.isOpen, consumeRoundsModal.isOpen, transferReturnModal.isOpen, onModalStateChange]);
+
+  // Fetch employees for transfer functionality
+  const fetchEmployees = async () => {
+    if (employees.length > 0) return; // Already loaded
+
+    setEmployeesLoading(true);
+    try {
+      const response = await axios.get(`${BACKEND_URL}/employee?limit=2000&page=1`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`,
+        },
+      });
+
+      if (response.data && response.data.employees) {
+        setEmployees(response.data.employees);
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    } finally {
+      setEmployeesLoading(false);
+    }
   };
 
   // Helper function to get employee image
@@ -86,6 +174,7 @@ const AssetAssignmentsList = () => {
   // Initial load
   useEffect(() => {
     fetchAssignments();
+    fetchEmployees();
   }, []);
 
   // Handle filter changes
@@ -135,6 +224,254 @@ const AssetAssignmentsList = () => {
     }
   };
 
+  // Check if assignment is for employee (not station)
+  const isEmployeeAssignment = (assignment) => {
+    return assignment.assignmentType === "employee" || assignment.employee;
+  };
+
+  // Check if asset supports rounds (weapons)
+const supportsRounds = (assignment) => {
+    if (!assignment.asset) return false;
+    const assetArray = Array.isArray(assignment.asset) ? assignment.asset : [assignment.asset];
+    return assetArray.some(asset => {
+      if (!asset) return false;
+      
+      // Check by category
+      const category = asset.category?.toLowerCase();
+      if (category === 'weapons' || category === 'weaponround') {
+        return true;
+      }
+      
+      // Check by type for weapon-related assets
+      const type = asset.type?.toLowerCase();
+      if (type && (
+        type.includes('weapon') || 
+        type.includes('rifle') ||
+        type.includes('pistol') ||
+        type.includes('mp5') ||
+        type.includes('ak47') ||
+        type.includes('g3') ||
+        type.includes('magazine')
+      )) {
+        return true;
+      }
+      
+      return false;
+    });
+  };
+
+  // Modal handlers
+  const handleApprove = async (assignment) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can approve asset assignments");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to approve this asset assignment?")) {
+      return;
+    }
+
+    try {
+      const result = await approveAssetAssignment(assignment._id);
+      if (result.success) {
+        toast.success("Asset assignment approved successfully");
+        fetchAssignments();
+      } else {
+        toast.error(result.error || "Failed to approve assignment");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to approve assignment");
+    }
+  };
+
+  const handleDelete = async (assignment) => {
+    if (!isAdmin) {
+      toast.error("Access denied: Only administrators can delete asset assignments");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this asset assignment?")) {
+      return;
+    }
+
+    try {
+      const result = await deleteAssetAssignment(assignment._id);
+      if (result.success) {
+        toast.success("Asset assignment deleted successfully");
+        fetchAssignments();
+      } else {
+        toast.error(result.error || "Failed to delete assignment");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to delete assignment");
+    }
+  };
+
+  const handleIssueRounds = (assignment) => {
+    if (!supportsRounds(assignment)) {
+      toast.warning("This asset type doesn't support round management");
+      return;
+    }
+    setIssueRoundsModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  const handleConsumeRounds = (assignment) => {
+    if (!supportsRounds(assignment)) {
+      toast.warning("This asset type doesn't support round management");
+      return;
+    }
+    setConsumeRoundsModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  const handleTransferReturn = (assignment) => {
+    if (employees.length === 0 && !employeesLoading) {
+      toast.warning("Loading employee data... Please try again in a moment.");
+      fetchEmployees();
+      return;
+    }
+
+    setTransferReturnModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  // Modal save handlers
+  const handleIssueRoundsSave = async (data) => {
+    if (!issueRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      const issueData = {
+        roundsIssued: parseInt(data.roundsIssued) || 0,
+        reason: data.reason || "Rounds issued",
+        date: data.date || new Date().toISOString(),
+      };
+
+      const result = await issueRoundsToAssignment(
+        issueRoundsModal.assignment._id, 
+        issueData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds issued successfully");
+        setIssueRoundsModal({ isOpen: false, assignment: null });
+        fetchAssignments();
+      } else {
+        toast.error(result.error || "Failed to issue rounds");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to issue rounds");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleConsumeRoundsSave = async (data) => {
+    if (!consumeRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      const consumeData = {
+        roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        reason: data.reason || "Rounds consumed",
+        date: data.date || new Date().toISOString(),
+        isCompleteConsumption: data.isCompleteConsumption || false,
+      };
+
+      const result = await consumeRoundsFromAssignment(
+        consumeRoundsModal.assignment._id,
+        consumeData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds consumed successfully");
+        setConsumeRoundsModal({ isOpen: false, assignment: null });
+        fetchAssignments();
+      } else {
+        toast.error(result.error || "Failed to consume rounds");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to consume rounds");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleTransferReturnSave = async (data) => {
+    if (!transferReturnModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      let result;
+      
+      if (data.action === "transfer") {
+        const selectedEmployee = employees.find(emp => emp._id === data.newEmployeeId);
+        const newEmployeeName = selectedEmployee ? 
+          `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 
+          'another employee';
+
+        const transferData = {
+          newEmployeeId: data.newEmployeeId,
+          newEmployeeName: newEmployeeName,
+          reason: data.reason || "Asset transfer",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          transferRounds: parseInt(data.transferRounds) || 0,
+          notes: data.notes || "",
+        };
+
+        result = await transferAssetAssignment(
+          transferReturnModal.assignment._id,
+          transferData
+        );
+      } else if (data.action === "return") {
+        const returnData = {
+          reason: data.reason || "Asset return",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          returnRounds: parseInt(data.returnRounds) || 0,
+          notes: data.notes || "",
+        };
+
+        result = await returnAssetAssignment(
+          transferReturnModal.assignment._id,
+          returnData
+        );
+      } else {
+        throw new Error("Invalid action specified");
+      }
+
+      if (result.success) {
+        const action = data.action === "transfer" ? "transferred" : "returned";
+        toast.success(result.message || `Asset ${action} successfully`);
+        setTransferReturnModal({ isOpen: false, assignment: null });
+        fetchAssignments();
+      } else {
+        toast.error(result.error || "Failed to process request");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to process request");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 mb-10">
       {/* Page Header */}
@@ -144,6 +481,11 @@ const AssetAssignmentsList = () => {
           <p className="text-sm text-gray-600 mt-1">
             View and manage all asset assignments to employees and stations.
           </p>
+          {!isAdmin && (
+            <p className="text-xs text-orange-600 mt-1">
+              Viewing in read-only mode - Contact administrator for actions
+            </p>
+          )}
         </div>
         <button
           onClick={fetchAssignments}
@@ -304,6 +646,9 @@ const AssetAssignmentsList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Batch
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -337,7 +682,6 @@ const AssetAssignmentsList = () => {
                             className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
                             src={getEmployeeImage(assignment.employee)}
                             alt=""
-                            // onError={(e) => { e.target.src = "/default-avatar.png"; }}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-gray-900 truncate">
@@ -396,6 +740,79 @@ const AssetAssignmentsList = () => {
                         {assignment.assetBatch?.referenceNumber || "N/A"}
                       </div>
                     </td>
+
+                    {/* Actions - Only show for employee assignments */}
+                    <td className="px-6 py-4">
+                      {isEmployeeAssignment(assignment) ? (
+                        <div className="flex items-center space-x-2">
+                          {/* Approve Button */}
+                          {!assignment.isApproved && isAdmin && (
+                            <button
+                              onClick={() => handleApprove(assignment)}
+                              className="text-green-600 hover:text-green-900 text-xs font-medium bg-green-50 hover:bg-green-100 px-2 py-1 rounded"
+                              title="Approve Assignment"
+                            >
+                              Approve
+                            </button>
+                          )}
+
+                          {/* Issue Rounds Button */}
+                          {supportsRounds(assignment) && isAdmin && (
+                            <button
+                              onClick={() => handleIssueRounds(assignment)}
+                              className="text-blue-600 hover:text-blue-900 text-xs font-medium bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+                              title="Issue Rounds"
+                            >
+                              Issue
+                            </button>
+                          )}
+
+                          {/* Consume Rounds Button */}
+                          {supportsRounds(assignment) && isAdmin && (
+                            <button
+                              onClick={() => handleConsumeRounds(assignment)}
+                              className="text-orange-600 hover:text-orange-900 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded"
+                              title="Consume Rounds"
+                            >
+                              Consume
+                            </button>
+                          )}
+
+                          {/* Transfer/Return Button */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleTransferReturn(assignment)}
+                              className="text-purple-600 hover:text-purple-900 text-xs font-medium bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded"
+                              title="Transfer or Return"
+                            >
+                              Transfer
+                            </button>
+                          )}
+
+                          {/* Delete Button */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(assignment)}
+                              className="text-red-600 hover:text-red-900 text-xs font-medium bg-red-50 hover:bg-red-100 px-2 py-1 rounded"
+                              title="Delete Assignment"
+                            >
+                              Delete
+                            </button>
+                          )}
+
+                          {/* Show message if no admin access */}
+                          {!isAdmin && (
+                            <span className="text-xs text-gray-400 italic">
+                              Admin only
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">
+                          Station assignment
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -403,7 +820,41 @@ const AssetAssignmentsList = () => {
           </div>
         )}
       </div>
-    </div>
+
+    {/* Issue Rounds Modal */}
+      <div className={issueRoundsModal.isOpen ? "z-[60px]" : ""}>
+        <IssueRoundsModal
+          isOpen={issueRoundsModal.isOpen}
+          onClose={() => setIssueRoundsModal({ isOpen: false, assignment: null })}
+          onSave={handleIssueRoundsSave}
+          assignment={issueRoundsModal.assignment}
+          loading={modalLoading}
+        />
+      </div>
+
+      {/* Consume Rounds Modal */}
+      <div className={consumeRoundsModal.isOpen ? "z-[60px]" : ""}>
+        <ConsumeRoundsModal
+          isOpen={consumeRoundsModal.isOpen}
+          onClose={() => setConsumeRoundsModal({ isOpen: false, assignment: null })}
+          onSave={handleConsumeRoundsSave}
+          assignment={consumeRoundsModal.assignment}
+          loading={modalLoading}
+        />
+      </div>
+
+      {/* Transfer/Return Modal */}
+      <div className={transferReturnModal.isOpen ? "z-[60px]" : ""}>
+        <TransferReturnModal
+          isOpen={transferReturnModal.isOpen}
+          onClose={() => setTransferReturnModal({ isOpen: false, assignment: null })}
+          onSave={handleTransferReturnSave}
+          assignment={transferReturnModal.assignment}
+          employees={employees}
+          loading={modalLoading}
+        />
+      </div>
+      </div>
   );
 };
 
