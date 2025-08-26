@@ -872,13 +872,13 @@ const StationList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">
                           <div className="pt-2">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">
-                              <ClickableStationName
-                                station={station}
-                                className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                              >
-                                {station.name}
-                              </ClickableStationName>
+                            <h3
+                              className="text-sm font-medium text-gray-900 truncate"
+                              onClick={() => {
+                                handleView(station);
+                              }}
+                            >
+                              {station.name}
                             </h3>
                             <div className="text-sm text-gray-900">
                               {/* Facilities */}
@@ -1106,6 +1106,28 @@ const StationList = () => {
                               className="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
                             >
                               Edit
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleToggleEmployeeView(
+                                  station._id,
+                                  !expandedStations.has(station._id)
+                                )
+                              }
+                              className={`px-3 py-1 text-xs rounded-md transition ${
+                                expandedStations.has(station._id)
+                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              }`}
+                              title={
+                                expandedStations.has(station._id)
+                                  ? "Hide employees"
+                                  : "Show employees"
+                              }
+                            >
+                              {expandedStations.has(station._id)
+                                ? "Hide Emp"
+                                : "Show Emp"}
                             </button>
                             {/* <button
                               onClick={() => handleDelete(station._id)}
@@ -1396,6 +1418,7 @@ const StationList = () => {
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         station={selectedStation}
+        onEdit={handleEdit} // Add this line
       />
 
       {/* Image Modal */}

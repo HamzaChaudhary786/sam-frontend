@@ -85,29 +85,37 @@ export const useStations = (initialFilters = {}) => {
     }
   };
 
-  // Update station
-  const modifyStation = async (id, stationData) => {
-    setError('');
+  
+
+// Update station
+const modifyStation = async (id, stationData) => {
+  setError('');
+  
+  try {
+    const result = await updateStation(stationData, id);
     
-    try {
-      const result = await updateStation(stationData, id);
+    if (result.success) {
+      // Update local state instead of refetching
+      setStations(prevStations => 
+        prevStations.map(station => 
+          station._id === id ? { ...station, ...stationData, _id: id } : station
+        )
+      );
       
-      if (result.success) {
-        await fetchStations();
-        toast.success(`Station "${stationData.name || 'Station'}" updated successfully!`);
-        return { success: true };
-      } else {
-        setError(result.error);
-        toast.error(`Failed to update station: ${result.error}`);
-        return { success: false, error: result.error };
-      }
-    } catch (error) {
-      const errorMessage = error.message || 'Unknown error occurred while updating station';
-      setError(errorMessage);
-      toast.error(`Error updating station: ${errorMessage}`);
-      return { success: false, error: errorMessage };
+      toast.success(`Station "${stationData.name || 'Station'}" updated successfully!`);
+      return { success: true };
+    } else {
+      setError(result.error);
+      toast.error(`Failed to update station: ${result.error}`);
+      return { success: false, error: result.error };
     }
-  };
+  } catch (error) {
+    const errorMessage = error.message || 'Unknown error occurred while updating station';
+    setError(errorMessage);
+    toast.error(`Error updating station: ${errorMessage}`);
+    return { success: false, error: errorMessage };
+  }
+};
 
   // Delete station
   const removeStation = async (id) => {

@@ -1,28 +1,29 @@
 import React, { useState } from "react";
 
-const StationViewModal = ({ isOpen, onClose, station }) => {
+const StationViewModal = ({ isOpen, onClose, station, onEdit }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
 
   if (!isOpen || !station) return null;
 
   // Get station images array or fallback to empty array
-  const stationImages = Array.isArray(station.stationImageUrl) 
-    ? station.stationImageUrl 
-    : station.stationImageUrl 
-      ? [station.stationImageUrl] 
-      : [];
+  const stationImages = Array.isArray(station.stationImageUrl)
+    ? station.stationImageUrl
+    : station.stationImageUrl
+    ? [station.stationImageUrl]
+    : [];
 
-  const currentImage = stationImages[currentImageIndex] || "/default-station.png";
+  const currentImage =
+    stationImages[currentImageIndex] || "/default-station.png";
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === 0 ? stationImages.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === stationImages.length - 1 ? 0 : prev + 1
     );
   };
@@ -33,6 +34,13 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
 
   const closeImageModal = () => {
     setShowImageModal(false);
+  };
+
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit(station);
+      onClose(); // Close the view modal when edit is clicked
+    }
   };
 
   return (
@@ -65,15 +73,17 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
                   onClick={openImageModal}
                   onError={(e) => {
                     // Fallback to icon if image fails to load
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "flex";
                   }}
                 />
-                
+
                 {/* Fallback Icon (hidden by default, shown if image fails) */}
-                <div 
+                <div
                   className="h-32 w-32 rounded-lg bg-green-100 flex items-center justify-center border-4 border-green-200 cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ display: stationImages.length > 0 ? 'none' : 'flex' }}
+                  style={{
+                    display: stationImages.length > 0 ? "none" : "flex",
+                  }}
                   onClick={openImageModal}
                 >
                   <svg
@@ -104,16 +114,36 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
                       onClick={handlePrevImage}
                       className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
                     >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 19l-7-7 7-7"
+                        />
                       </svg>
                     </button>
                     <button
                       onClick={handleNextImage}
                       className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
                     >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </button>
                   </>
@@ -126,13 +156,13 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-900">
                   {station.name}
                 </h3>
                 <p className="text-lg text-gray-600 mt-1">
-                  {station.address?.city || 'N/A'} - {station.tehsil}
+                  {station.address?.city || "N/A"} - {station.tehsil}
                 </p>
                 <div className="mt-2">
                   <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
@@ -144,24 +174,36 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
 
             {/* Station Information */}
             <div className="border-t pt-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Station Information</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                Station Information
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Station Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Station Name
+                  </label>
                   <p className="text-sm text-gray-900">{station.name}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tehsil</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tehsil
+                  </label>
                   <p className="text-sm text-gray-900">{station.tehsil}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">District</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    District
+                  </label>
                   <p className="text-sm text-gray-900">{station.district}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Created Date</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Created Date
+                  </label>
                   <p className="text-sm text-gray-900">
-                    {station.createdAt ? new Date(station.createdAt).toLocaleDateString() : 'N/A'}
+                    {station.createdAt
+                      ? new Date(station.createdAt).toLocaleDateString()
+                      : "N/A"}
                   </p>
                 </div>
               </div>
@@ -169,27 +211,47 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
 
             {/* Address Information */}
             <div className="border-t pt-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                Address Information
+              </h4>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Address Line 1</label>
-                    <p className="text-sm text-gray-900">{station.address?.line1 || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Address Line 2</label>
-                    <p className="text-sm text-gray-900">{station.address?.line2 || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">City</label>
-                    <p className="text-sm text-gray-900">{station.address?.city || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Complete Address</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Address Line 1
+                    </label>
                     <p className="text-sm text-gray-900">
-                      {station.address ? 
-                        `${station.address.line1}${station.address.line2 ? ', ' + station.address.line2 : ''}, ${station.address.city}` 
-                        : 'N/A'}
+                      {station.address?.line1 || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Address Line 2
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {station.address?.line2 || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      City
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {station.address?.city || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Complete Address
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {station.address
+                        ? `${station.address.line1}${
+                            station.address.line2
+                              ? ", " + station.address.line2
+                              : ""
+                          }, ${station.address.city}`
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -199,15 +261,32 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
             {/* Facilities Information */}
             {station.facilities && station.facilities.length > 0 && (
               <div className="border-t pt-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Station Facilities</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                  Station Facilities
+                </h4>
                 <div className="bg-blue-50 rounded-lg p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {station.facilities.map((facility, index) => (
-                      <div key={index} className="flex items-center p-2 bg-white rounded-md">
-                        <svg className="h-4 w-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <div
+                        key={index}
+                        className="flex items-center p-2 bg-white rounded-md"
+                      >
+                        <svg
+                          className="h-4 w-4 text-blue-600 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
                         </svg>
-                        <span className="text-sm text-gray-900">{facility}</span>
+                        <span className="text-sm text-gray-900">
+                          {facility}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -217,25 +296,55 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
 
             {/* Location Details */}
             <div className="border-t pt-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Location Details</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                Location Details
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-blue-50 rounded-lg p-4">
                   <div className="flex items-center">
-                    <svg className="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <svg
+                      className="h-5 w-5 text-blue-600 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
                     </svg>
-                    <label className="block text-sm font-medium text-blue-700">Tehsil</label>
+                    <label className="block text-sm font-medium text-blue-700">
+                      Tehsil
+                    </label>
                   </div>
-                  <p className="text-lg font-semibold text-blue-900 mt-1">{station.tehsil}</p>
+                  <p className="text-lg font-semibold text-blue-900 mt-1">
+                    {station.tehsil}
+                  </p>
                 </div>
                 <div className="bg-green-50 rounded-lg p-4">
                   <div className="flex items-center">
-                    <svg className="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <svg
+                      className="h-5 w-5 text-green-600 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
                     </svg>
-                    <label className="block text-sm font-medium text-green-700">City</label>
+                    <label className="block text-sm font-medium text-green-700">
+                      City
+                    </label>
                   </div>
-                  <p className="text-lg font-semibold text-green-900 mt-1">{station.address?.city || 'N/A'}</p>
+                  <p className="text-lg font-semibold text-green-900 mt-1">
+                    {station.address?.city || "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -249,6 +358,14 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
             >
               Close
             </button>
+            {onEdit && (
+              <button
+                onClick={handleEditClick}
+                className="px-4 py-2 bg-blue-600 ml-2 text-white rounded-md hover:bg-blue-700"
+              >
+                Edit
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -262,7 +379,7 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
               alt={`${station.name} - Full Size`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             {/* Navigation arrows for full-size modal */}
             {stationImages.length > 1 && (
               <>
@@ -270,16 +387,36 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
                   onClick={handlePrevImage}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
                 <button
                   onClick={handleNextImage}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </>
@@ -290,8 +427,18 @@ const StationViewModal = ({ isOpen, onClose, station }) => {
               onClick={closeImageModal}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
