@@ -1,4 +1,4 @@
-// StationAssetList.jsx
+// StationAssetList.jsx - Complete updated version with modal functionality
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { 
@@ -15,8 +15,23 @@ import {
 } from "../StationAssetApi.js";
 import { getAssetTypesWithEnum } from "../../AssetAssignment/TypeLookup.js";
 import { role_admin } from "../../../constants/Enum.js";
+import { BACKEND_URL } from "../../../constants/api.js";
+
+// NEW: Import the same APIs and components from AssetAssignment
+import { 
+  issueRoundsToAssignment,
+  consumeRoundsFromAssignment,
+  transferAssetAssignment,
+  returnAssetAssignment
+} from "../StationAssetApi.js";
+
 import StationAssetFilters from "../Filter.jsx";
 import StationAssetTable from "../AssetTable/AssetTable.jsx";
+
+// NEW: Import the modal components from AssetAssignment
+import IssueRoundsModal from "../IssueRound.jsx";
+import ConsumeRoundsModal from "../ConsumeRound.jsx";
+import TransferReturnModal from "../TransferAsset.jsx";
 
 const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
@@ -35,6 +50,26 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
   // User role state
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // NEW: Employee state management for transfer functionality
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+  const [employeesError, setEmployeesError] = useState("");
+
+  // NEW: Modal states
+  const [issueRoundsModal, setIssueRoundsModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [consumeRoundsModal, setConsumeRoundsModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [transferReturnModal, setTransferReturnModal] = useState({
+    isOpen: false,
+    assignment: null,
+  });
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Check user role from localStorage
   useEffect(() => {
@@ -57,6 +92,63 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
 
     checkUserRole();
   }, []);
+
+  // NEW: Fetch employees for transfer functionality
+  const fetchEmployees = async () => {
+    setEmployeesLoading(true);
+    setEmployeesError("");
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/employee?limit=2000&page=1`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      let employeesData = [];
+      
+      if (result.employees && Array.isArray(result.employees)) {
+        employeesData = result.employees;
+        
+        if (result.pagination && result.pagination.hasNext && employeesData.length < result.pagination.totalEmployees) {
+          if (result.pagination.totalEmployees <= 2000) {
+            try {
+              const allEmployeesResponse = await fetch(`${BACKEND_URL}/employee?limit=${result.pagination.totalEmployees}&page=1`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+              });
+              
+              if (allEmployeesResponse.ok) {
+                const allEmployeesResult = await allEmployeesResponse.json();
+                if (allEmployeesResult.employees && Array.isArray(allEmployeesResult.employees)) {
+                  employeesData = allEmployeesResult.employees;
+                }
+              }
+            } catch (retryError) {
+              // Silent fail on retry
+            }
+          }
+        }
+      }
+      
+      setEmployees(employeesData);
+    } catch (error) {
+      setEmployeesError(error.message || "Failed to fetch employees");
+      setEmployees([]);
+    } finally {
+      setEmployeesLoading(false);
+    }
+  };
 
   // Fetch asset types for filtering
   const fetchAssetTypes = async () => {
@@ -135,6 +227,171 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
     }
   };
 
+  // NEW: Modal handlers
+  const handleIssueRounds = (assignment) => {
+    setIssueRoundsModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  const handleConsumeRounds = (assignment) => {
+    setConsumeRoundsModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  const handleTransferReturn = (assignment) => {
+    if (employees.length === 0 && !employeesLoading) {
+      toast.warning("Loading employee data... Please try again in a moment.");
+      fetchEmployees();
+      return;
+    }
+
+    setTransferReturnModal({
+      isOpen: true,
+      assignment: assignment,
+    });
+  };
+
+  // NEW: API call handlers for modals using existing APIs
+  const handleIssueRoundsSave = async (data) => {
+    if (!issueRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      const issueData = {
+        roundsIssued: parseInt(data.roundsIssued) || 0,
+        reason: data.reason || "Rounds issued",
+        date: data.date || new Date().toISOString(),
+      };
+
+      const result = await issueRoundsToAssignment(
+        issueRoundsModal.assignment._id, 
+        issueData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds issued successfully");
+        setIssueRoundsModal({ isOpen: false, assignment: null });
+        fetchStationAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to issue rounds");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to issue rounds");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleConsumeRoundsSave = async (data) => {
+    if (!consumeRoundsModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      const consumeData = {
+        roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        reason: data.reason || "Rounds consumed",
+        date: data.date || new Date().toISOString(),
+        isCompleteConsumption: data.isCompleteConsumption || false,
+      };
+
+      const result = await consumeRoundsFromAssignment(
+        consumeRoundsModal.assignment._id,
+        consumeData
+      );
+
+      if (result.success) {
+        toast.success(result.message || "Rounds consumed successfully");
+        setConsumeRoundsModal({ isOpen: false, assignment: null });
+        fetchStationAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to consume rounds");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to consume rounds");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleTransferReturnSave = async (data) => {
+    if (!transferReturnModal.assignment?._id) {
+      toast.error("No assignment selected");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      let result;
+      
+      if (data.action === "transfer") {
+        // Find the selected employee name for better messaging
+        const selectedEmployee = employees.find(emp => emp._id === data.newEmployeeId);
+        const newEmployeeName = selectedEmployee ? 
+          `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 
+          'another employee';
+
+        const transferData = {
+          newEmployeeId: data.newEmployeeId,
+          newEmployeeName: newEmployeeName,
+          reason: data.reason || "Asset transfer",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          transferRounds: parseInt(data.transferRounds) || 0,
+          notes: data.notes || "",
+        };
+
+        result = await transferAssetAssignment(
+          transferReturnModal.assignment._id,
+          transferData
+        );
+      } else if (data.action === "return") {
+        const returnData = {
+          reason: data.reason || "Asset return",
+          date: data.date || new Date().toISOString(),
+          condition: data.condition || "Good",
+          returnRounds: parseInt(data.returnRounds) || 0,
+          notes: data.notes || "",
+          roundHistory: data.roundHistory ? {
+            Date: data.date || new Date().toISOString(),
+            Reason: data.reason || "Asset return",
+            assignedRounds: "0",
+            consumedRounds: data.returnRounds?.toString() || "0"
+          } : null,
+        };
+
+        result = await returnAssetAssignment(
+          transferReturnModal.assignment._id,
+          returnData
+        );
+      } else {
+        throw new Error("Invalid action specified");
+      }
+
+      if (result.success) {
+        const action = data.action === "transfer" ? "transferred" : "returned";
+        toast.success(result.message || `Asset ${action} successfully`);
+        setTransferReturnModal({ isOpen: false, assignment: null });
+        fetchStationAssetAssignments(); // Refresh the data
+      } else {
+        toast.error(result.error || "Failed to process request");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to process request");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   // Handle bulk delete
   const handleBulkDelete = async () => {
     if (!isAdmin) {
@@ -150,7 +407,7 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
     if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} station asset assignment(s)?`)) {
       return;
     }
-
+    
     try {
       const result = await bulkDeleteStationAssetAssignments(selectedItems);
       if (result.success) {
@@ -253,6 +510,7 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
   useEffect(() => {
     fetchStationAssetAssignments();
     fetchAssetTypes();
+    fetchEmployees(); // NEW: Fetch employees for transfer functionality
   }, [station, refreshTrigger]);
 
   if (loading) {
@@ -287,8 +545,32 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
             <span className="text-sm text-gray-600">
               Showing {filteredAssignments.length} of {assignments.length} assignments
             </span>
+            <div className="text-xs text-gray-500 border-l pl-2">
+              Employees: {employees.length}
+              {employeesLoading && " (loading...)"}
+              {employeesError && " (error)"}
+            </div>
           </div>
         </div>
+
+        {/* Employee loading/error state */}
+        {employeesError && (
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
+            <div className="flex items-center">
+              <div className="text-orange-600 mr-2">⚠️</div>
+              <div>
+                <p className="text-sm text-orange-700 font-medium">Employee Data Issue</p>
+                <p className="text-xs text-orange-600">{employeesError}</p>
+                <button 
+                  onClick={fetchEmployees}
+                  className="text-xs text-orange-600 underline hover:text-orange-800 mt-1"
+                >
+                  Retry loading employees
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Station Asset Filters Component */}
         <StationAssetFilters
@@ -297,6 +579,8 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
           onBulkApprove={handleBulkApprove}
           onBulkDelete={handleBulkDelete}
           isAdmin={isAdmin}
+
+
         />
       </div>
 
@@ -345,9 +629,43 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
             getAssetNames={getAssetNames}
             getApprovalStatus={getApprovalStatus}
             getAssetTypes={getAssetTypes}
+            // NEW: Pass modal handlers to table
+            onIssueRounds={handleIssueRounds}
+            onConsumeRounds={handleConsumeRounds}
+            onTransferReturn={handleTransferReturn}
           />
         )}
       </div>
+
+      {/* NEW: Modal Components */}
+      {/* Issue Rounds Modal */}
+      {console.log(issueRoundsModal.assignment,"my testing data 123456")}
+      <IssueRoundsModal
+        isOpen={issueRoundsModal.isOpen}
+        onClose={() => setIssueRoundsModal({ isOpen: false, assignment: null })}
+        onSave={handleIssueRoundsSave}
+        assignment={issueRoundsModal.assignment}
+        loading={modalLoading}
+      />
+
+      {/* Consume Rounds Modal */}
+      <ConsumeRoundsModal
+        isOpen={consumeRoundsModal.isOpen}
+        onClose={() => setConsumeRoundsModal({ isOpen: false, assignment: null })}
+        onSave={handleConsumeRoundsSave}
+        assignment={consumeRoundsModal.assignment}
+        loading={modalLoading}
+      />
+
+      {/* Transfer/Return Modal */}
+      <TransferReturnModal
+        isOpen={transferReturnModal.isOpen}
+        onClose={() => setTransferReturnModal({ isOpen: false, assignment: null })}
+        onSave={handleTransferReturnSave}
+        assignment={transferReturnModal.assignment}
+        employees={employees}
+        loading={modalLoading}
+      />
     </div>
   );
 };
