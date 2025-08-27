@@ -1,0 +1,322 @@
+import React, { useState, useEffect } from "react";
+import { X } from "lucide-react";
+
+const IssueRoundsModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  assignment,
+  loading,
+}) => {
+  const [formData, setFormData] = useState({
+    roundsIssued: "",
+    date: "",
+    reason: "",
+  });
+
+  console.log(assignment,"my issue assignment data")
+
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form when modal opens
+      const today = new Date().toISOString().split('T')[0];
+      setFormData({
+        roundsIssued: "",
+        date: today,
+        reason: "",
+      });
+    }
+  }, [isOpen]);
+
+  // CALCULATE TOTALS FROM ROUND HISTORY
+  const calculateRoundTotals = (assignment) => {
+    if (!assignment?.roundStation || !Array.isArray(assignment.roundStation)) {
+      return { assignedRounds: 0, consumedRounds: 0 };
+    }
+
+    let totalAssigned = 0;
+    let totalConsumed = 0;
+
+    assignment.roundStation.forEach(entry => {
+      if (entry.assignedRounds) {
+        totalAssigned += parseInt(entry.assignedRounds) || 0;
+      }
+      if (entry.consumedRounds) {
+        totalConsumed += parseInt(entry.consumedRounds) || 0;
+      }
+    });
+
+    return { assignedRounds: totalAssigned, consumedRounds: totalConsumed };
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleClose = () => {
+    setFormData({
+      roundsIssued: "",
+      date: "",
+      reason: "",
+    });
+    onClose();
+  };
+
+  const handleSave = () => {
+    // Basic validation
+    if (!formData.roundsIssued || !formData.date || !formData.reason) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    const rounds = parseInt(formData.roundsIssued);
+    if (rounds <= 0) {
+      alert("Number of rounds must be greater than 0");
+      return;
+    }
+
+    // Convert date to ISO string if it's not already
+    const dateValue = formData.date.includes('T') ? formData.date : `${formData.date}T00:00:00.000Z`;
+
+    // Pass data in the format expected by the API
+    onSave({
+      roundsIssued: rounds,
+      reason: formData.reason,
+      date: dateValue,
+    });
+  };
+
+  const getAssetNames = (assets) => {
+    if (!assets || !Array.isArray(assets) || assets.length === 0) {
+      return "No assets assigned";
+    }
+    
+    const validAssets = assets.filter(asset => asset && asset.name);
+    if (validAssets.length === 0) {
+      return "No valid assets";
+    }
+    
+    return validAssets.map(asset => asset.name).join(", ");
+  };
+
+  const getEmployeeName = (employee) => {
+    if (!employee) return "Unknown Employee";
+    return `${employee.name || ""} ${employee.lastName || ""}`.trim() || "Unknown Employee";
+  };
+
+  if (!isOpen || !assignment) return null;
+
+  // Calculate round totals from round history
+  const { assignedRounds, consumedRounds } = calculateRoundTotals(assignment);
+  const availableRounds = assignedRounds - consumedRounds;
+
+  // Debug log
+  console.log("🔍 Issue Modal - Round calculation:", {
+    roundStation: assignment.roundStation,
+    calculated: { assignedRounds, consumedRounds, availableRounds },
+    original: {
+      assignedRounds: assignment.assignedRounds,
+      consumedRounds: assignment.consumedRounds
+    }
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Issue Rounds
+            </h3>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Asset and Employee Details */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2">
+                Assignment Details
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Station
+                  </label>
+                  <p className="text-sm font-medium text-gray-900">
+                    {getEmployeeName(assignment.station)}
+                  </p>
+                  {assignment.employee?.personalNumber && (
+                    <p className="text-xs text-gray-500">
+                      ID: {assignment.employee.personalNumber}
+                    </p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Assets
+                  </label>
+                  <p className="text-sm font-medium text-gray-900">
+                    {getAssetNames(assignment.asset)}
+                  </p>
+                  {assignment.asset && Array.isArray(assignment.asset) && assignment.asset.length > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {assignment.asset
+                        .filter(asset => asset && (asset.serialNumber || asset.weaponNumber))
+                        .map((asset, index) => (
+                          <div key={index}>
+                            {asset.serialNumber && `Serial: ${asset.serialNumber}`}
+                            {asset.weaponNumber && ` | Weapon: ${asset.weaponNumber}`}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Current Round Status - Now calculated from round history */}
+              <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Assigned</p>
+                  <p className="text-lg font-semibold text-blue-600">
+                    {assignedRounds}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Consumed</p>
+                  <p className="text-lg font-semibold text-red-600">
+                    {consumedRounds}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Available</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    {availableRounds}
+                  </p>
+                </div>
+              </div>
+
+              {/* Round History Display */}
+              {assignment.roundStation && assignment.roundStation.length > 0 && (
+                <div className="pt-3 border-t border-gray-200">
+                  <h5 className="text-xs font-medium text-gray-600 mb-2">Recent Round History:</h5>
+                  <div className="max-h-24 overflow-y-auto">
+                    {assignment.roundStation.slice(-3).map((entry, index) => (
+                      <div key={entry._id || index} className="text-xs text-gray-500 mb-1">
+                        <span className="font-medium">{entry.Reason}</span>
+                        {parseInt(entry.assignedRounds) > 0 && (
+                          <span className="text-blue-600"> (+{entry.assignedRounds} assigned)</span>
+                        )}
+                        {parseInt(entry.consumedRounds) > 0 && (
+                          <span className="text-red-600"> (-{entry.consumedRounds} consumed)</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Issue Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Rounds to Issue *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.roundsIssued}
+                  onChange={(e) => handleInputChange("roundsIssued", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter number of rounds to issue"
+                  required
+                />
+                {formData.roundsIssued && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    ℹ️ This will be added to the current assignment
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Issue Date *
+                </label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Issue *
+                </label>
+                <textarea
+                  rows="3"
+                  value={formData.reason}
+                  onChange={(e) => handleInputChange("reason", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter reason for issuing rounds (e.g., monthly allocation, training requirement, operational need, etc.)..."
+                  required
+                />
+              </div>
+
+              {/* Summary Preview - Now using calculated values */}
+              {formData.roundsIssued && parseInt(formData.roundsIssued) > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <h5 className="text-sm font-medium text-blue-800 mb-2">Issue Summary:</h5>
+                  <div className="text-sm text-blue-700">
+                    <p>• Current total assigned: <span className="font-medium">{assignedRounds}</span></p>
+                    <p>• Current total consumed: <span className="font-medium">{consumedRounds}</span></p>
+                    <p>• Current available: <span className="font-medium">{availableRounds}</span></p>
+                    <p className="border-t border-blue-300 pt-2 mt-2">
+                      • Rounds to issue: <span className="font-medium">{parseInt(formData.roundsIssued)}</span>
+                    </p>
+                    <p>• New total assigned: <span className="font-medium text-blue-800">{assignedRounds + parseInt(formData.roundsIssued)}</span></p>
+                    <p>• New available rounds: <span className="font-medium text-green-700">{availableRounds + parseInt(formData.roundsIssued)}</span></p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? "Issuing..." : "Issue Rounds"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default IssueRoundsModal;

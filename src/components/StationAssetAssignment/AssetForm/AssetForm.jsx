@@ -8,7 +8,13 @@ import {
 } from "../StationAssetApi.js";
 import { role_admin } from "../../../constants/Enum.js";
 
-const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }) => {
+const StationAssetForm = ({
+  station,
+  editingAsset,
+  isOpen,
+  onSuccess,
+  onCancel,
+}) => {
   // User role state
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -125,22 +131,22 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
     try {
       // Create changed fields tracking
       const changedFields = [];
-      
+
       if (selectedAssets.length > 0) {
-        selectedAssets.forEach(assetId => {
+        selectedAssets.forEach((assetId) => {
           const asset = getAssetDetails(assetId);
           if (asset) {
             changedFields.push({
               oldStatus: {
                 fromType: "unassigned",
                 fromFieldName: "status",
-                fromFieldValue: "Available"
+                fromFieldValue: "Available",
               },
               currentStatus: {
                 toType: "station",
                 toFieldName: "assignedTo",
-                toFieldValue: station.name
-              }
+                toFieldValue: station.name,
+              },
             });
           }
         });
@@ -153,25 +159,32 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
         mallKhana: formData.mallKhana || null,
         fromDate: formData.fromDate || new Date().toISOString(),
         toDate: formData.toDate || null,
-        description: formData.description || `Assets assigned to ${station.name}`,
+        description:
+          formData.description || `Assets assigned to ${station.name}`,
         changedFields: changedFields,
         // Only include approval fields when editing and user is admin
-        ...(editingAsset && isAdmin && {
-          isApproved: formData.isApproved,
-          approvalComment: formData.approvalComment,
-        }),
+        ...(editingAsset &&
+          isAdmin && {
+            isApproved: formData.isApproved,
+            approvalComment: formData.approvalComment,
+          }),
       };
 
       let result;
       if (editingAsset) {
-        result = await updateStationAssetAssignment(editingAsset._id, submitData);
+        result = await updateStationAssetAssignment(
+          editingAsset._id,
+          submitData
+        );
       } else {
         result = await createStationAssetAssignment(submitData);
       }
 
       if (result.success) {
         toast.success(
-          `Station asset assignment ${editingAsset ? "updated" : "created"} successfully`
+          `Station asset assignment ${
+            editingAsset ? "updated" : "created"
+          } successfully`
         );
         resetForm();
         onSuccess();
@@ -202,14 +215,25 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
   useEffect(() => {
     if (editingAsset) {
       // Extract asset IDs from the editing asset
-      const assetIds = editingAsset.asset?.map((a) => a._id || a) || [];
-      
+      let assetIds = [];
+      if (editingAsset.asset) {
+        if (Array.isArray(editingAsset.asset)) {
+          // Handle case where asset is an array
+          assetIds = editingAsset.asset.map((a) => a._id || a);
+        } else if (editingAsset.asset._id) {
+          // Handle case where asset is a single object
+          assetIds = [editingAsset.asset._id];
+        }
+      }
+         console.log(editingAsset,"editing asset hello world")
       setFormData({
         asset: assetIds,
         employee: editingAsset.employee?._id || "",
         mallKhana: editingAsset.mallKhana?._id || "",
-        fromDate: editingAsset.fromDate ? editingAsset.fromDate.split('T')[0] : "",
-        toDate: editingAsset.toDate ? editingAsset.toDate.split('T')[0] : "",
+        fromDate: editingAsset.fromDate
+          ? editingAsset.fromDate.split("T")[0]
+          : "",
+        toDate: editingAsset.toDate ? editingAsset.toDate.split("T")[0] : "",
         description: editingAsset.description || "",
         isApproved: editingAsset.isApproved || false,
         approvalComment: editingAsset.approvalComment || "",
@@ -241,13 +265,13 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {editingAsset ? "Edit Station Asset Assignment" : "Assign Assets to Station"}
+              {editingAsset
+                ? "Edit Station Asset Assignment"
+                : "Assign Assets to Station"}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {editingAsset ? "Update" : "Create"} asset assignment for{" "}
-              <span className="font-medium">
-                {station.name}
-              </span>
+              <span className="font-medium">{station.name}</span>
             </p>
             {editingAsset && !isAdmin && (
               <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded">
@@ -317,7 +341,8 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
                                   ? "bg-red-100 text-red-800"
                                   : asset.type === "pistol"
                                   ? "bg-purple-100 text-purple-800"
-                                  : asset.type === "vehicle" || asset.type === "vehicles"
+                                  : asset.type === "vehicle" ||
+                                    asset.type === "vehicles"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-blue-100 text-blue-800"
                               }`}
@@ -328,15 +353,11 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
 
                           {/* Asset Details */}
                           <div className="text-xs text-gray-500 mt-1">
-                            {asset.assetId && (
-                              <p>Asset ID: {asset.assetId}</p>
-                            )}
+                            {asset.assetId && <p>Asset ID: {asset.assetId}</p>}
                             {asset.serialNumber && (
                               <p>Serial: {asset.serialNumber}</p>
                             )}
-                            {asset.model && (
-                              <p>Model: {asset.model}</p>
-                            )}
+                            {asset.model && <p>Model: {asset.model}</p>}
                           </div>
                         </div>
                       </label>
@@ -351,7 +372,7 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
           </div>
 
           {/* From Date */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               From Date
             </label>
@@ -362,10 +383,10 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
-          </div>
+          </div> */}
 
           {/* To Date */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               To Date (Optional)
             </label>
@@ -376,10 +397,10 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
-          </div>
+          </div> */}
 
           {/* Description */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
@@ -391,7 +412,7 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
             />
-          </div>
+          </div> */}
 
           {/* Approval Fields - Only show when editing and user is admin */}
           {editingAsset && isAdmin && (
@@ -446,7 +467,7 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
             <button
               type="submit"
               disabled={
-                isSubmitting || 
+                isSubmitting ||
                 selectedAssets.length === 0 ||
                 (editingAsset && isAdmin && !formData.approvalComment) // Only require approval comment when editing as admin
               }
@@ -457,8 +478,8 @@ const StationAssetForm = ({ station, editingAsset, isOpen, onSuccess, onCancel }
                   ? "Updating..."
                   : "Assigning..."
                 : editingAsset
-                  ? "Update Assignment"
-                  : "Assign Assets"}
+                ? "Update Assignment"
+                : "Assign Assets"}
             </button>
           </div>
         </form>
