@@ -1,4 +1,4 @@
-// StationAssetTable.jsx
+// StationAssetTable.jsx - Updated with modal handlers
 import React from "react";
 
 const StationAssetTable = ({ 
@@ -14,6 +14,10 @@ const StationAssetTable = ({
   getAssetNames,
   getApprovalStatus,
   getAssetTypes,
+  // NEW: Add modal handlers
+  onIssueRounds,
+  onConsumeRounds,
+  onTransferReturn
 }) => {
   if (filteredAssignments.length === 0) {
     return (
@@ -59,10 +63,10 @@ const StationAssetTable = ({
             Assets
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Assignment Details
+            Rounds (Assigned/Consumed)
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Dates
+            Assignment Details
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
@@ -72,9 +76,11 @@ const StationAssetTable = ({
           </th>
         </tr>
       </thead>
+      {console.log(filteredAssignments,"my filter assignment")}
       <tbody className="bg-white divide-y divide-gray-200">
         {filteredAssignments.map((assignment) => {
           const assetTypes = getAssetTypes(assignment.asset);
+          const hasWeapons = assetTypes.includes("weapons");
           const approvalStatus = getApprovalStatus(assignment);
           
           return (
@@ -94,11 +100,12 @@ const StationAssetTable = ({
                 {assignment.asset && Array.isArray(assignment.asset) && assignment.asset.length > 0 && (
                   <div className="text-xs text-gray-500 mt-1">
                     {assignment.asset
-                      .filter(asset => asset && (asset.assetId || asset.serialNumber))
+                      .filter(asset => asset && (asset.assetId || asset.serialNumber || asset.weaponNumber))
                       .map((asset, index) => (
                         <div key={index}>
                           {asset.assetId && `ID: ${asset.assetId}`}
                           {asset.serialNumber && ` | Serial: ${asset.serialNumber}`}
+                          {asset.weaponNumber && ` | Weapon: ${asset.weaponNumber}`}
                           {asset.type && (
                             <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               asset.type === "weapons"
@@ -117,6 +124,19 @@ const StationAssetTable = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
+                  <div className="font-medium">
+                    {assignment.assignedRounds || "0"}/{assignment.consumedRounds || "0"}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {assignment.assignedRounds && assignment.consumedRounds ? 
+                      `${Math.max(0, (assignment.assignedRounds - assignment.consumedRounds))} remaining` : 
+                      'No rounds data'
+                    }
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-900">
                   {/* Station Information */}
                   <div className="font-medium">
                     Station: {assignment.station?.name || "N/A"}
@@ -131,18 +151,6 @@ const StationAssetTable = ({
                       Mall Khana: {assignment.mallKhana.name}
                     </div>
                   )}
-                  {assignment.description && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {assignment.description}
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
-                  <div className="font-medium">
-                    From: {formatDate(assignment.fromDate)}
-                  </div>
                   {assignment.toDate && (
                     <div className="text-xs text-gray-500 mt-1">
                       To: {formatDate(assignment.toDate)}
@@ -171,11 +179,6 @@ const StationAssetTable = ({
                   {assignment.approvalDate && (
                     <div className="text-xs text-gray-500">
                       Approved on: {formatDate(assignment.approvalDate)}
-                    </div>
-                  )}
-                  {assignment.approvalComment && (
-                    <div className="text-xs text-gray-500 max-w-xs truncate" title={assignment.approvalComment}>
-                      Comment: {assignment.approvalComment}
                     </div>
                   )}
                 </div>
@@ -250,6 +253,72 @@ const StationAssetTable = ({
                         </svg>
                         Edit
                       </button>
+                      
+                      {/* Transfer/Return Button */}
+                      <button
+                        onClick={() => onTransferReturn(assignment)}
+                        className="inline-flex items-center px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors mb-1"
+                        title="Transfer or Return Asset"
+                      >
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                          />
+                        </svg>
+                        Transfer/Return
+                      </button>
+                      
+                        <button
+                          onClick={() => onConsumeRounds(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors mb-1"
+                          title="Consume Rounds"
+                        >
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 12H4"
+                            />
+                          </svg>
+                          Consume Rounds
+                        </button>
+                      
+                      
+                        <button
+                          onClick={() => onIssueRounds(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors mb-1"
+                          title="Issue Additional Rounds"
+                        >
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                          Issue Rounds
+                        </button>
+                      
                       
                       {/* Delete Button - Admin Only */}
                       {isAdmin ? (
@@ -328,6 +397,73 @@ const StationAssetTable = ({
                         </svg>
                         View
                       </button>
+
+                      {/* Transfer/Return Button for approved assignments */}
+                      <button
+                        onClick={() => onTransferReturn(assignment)}
+                        className="inline-flex items-center px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors mb-1"
+                        title="Transfer or Return Asset"
+                      >
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                          />
+                        </svg>
+                        Transfer/Return
+                      </button>
+
+                        <button
+                          onClick={() => onConsumeRounds(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors mb-1"
+                          title="Consume Rounds"
+                        >
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 12H4"
+                            />
+                          </svg>
+                          Consume Rounds
+                        </button>
+                      
+
+                      
+                        <button
+                          onClick={() => onIssueRounds(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors mb-1"
+                          title="Issue Additional Rounds"
+                        >
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                          Issue Rounds
+                        </button>
+                      
 
                       {/* Approved Status Indicator */}
                       <span className="inline-flex items-center px-3 py-1 text-xs text-gray-500 bg-gray-50 rounded-md mb-1">

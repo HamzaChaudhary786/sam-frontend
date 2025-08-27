@@ -2,7 +2,7 @@
 import { BACKEND_URL } from "../../constants/api.js";
 import { role_admin } from "../../constants/Enum.js";
 
-const API_URL = `${BACKEND_URL}/asset-assignments`;
+const API_URL = `${BACKEND_URL}/station-asset`;
 
 // Get auth token and user info from localStorage
 const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
@@ -18,8 +18,8 @@ export const getStationAssetAssignments = async (stationId, filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
 
-    // Add station filter
-    queryParams.append('station', stationId);
+    // Add station filter as query parameter
+    queryParams.append('stationId', stationId);
 
     // Add additional filters
     Object.keys(filters).forEach((key) => {
@@ -28,16 +28,16 @@ export const getStationAssetAssignments = async (stationId, filters = {}) => {
       }
     });
 
-    const response = await fetch(
-      `${API_URL}?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // Construct URL with stationId in the path
+    const url = `${API_URL}/station/${stationId}?${queryParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json",
+      },
+    });
 
     const data = await response.json();
 
@@ -203,8 +203,8 @@ export const deleteStationAssetAssignment = async (assignmentId) => {
 // Bulk delete asset assignments
 export const bulkDeleteStationAssetAssignments = async (assignmentIds) => {
   try {
-    const response = await fetch(`${API_URL}/bulk/delete`, {
-      method: "DELETE",
+    const response = await fetch(`${API_URL}/bulk-delete`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${getAuthToken()}`,
         "Content-Type": "application/json",
@@ -298,13 +298,15 @@ export const bulkRejectStationAssetAssignments = async (assignmentIds, approvalC
 export const approveStationAssetAssignment = async (assignmentId, approvalComment = "") => {
   try {
     const response = await fetch(`${API_URL}/${assignmentId}/approve`, {
-      method: "PATCH",
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${getAuthToken()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         approvalComment: approvalComment || "Station asset assignment approved",
+        approvedBy: getCurrentUserId(),
+
       }),
     });
 
@@ -433,7 +435,7 @@ export const processAndFilterStationAssignments = (rawData, filters, assetTypes)
         if (!selectedTypeName) return false;
         
         return assignment.asset.some(asset => 
-          asset && asset.type && asset.type.toLowerCase() === selectedTypeName.toLowerCase()
+          asset && asset.name && asset.name.toLowerCase() === selectedTypeName.toLowerCase()
         );
       });
     }
@@ -472,16 +474,27 @@ export const processAndFilterStationAssignments = (rawData, filters, assetTypes)
 
 // Get asset names helper
 export const getAssetNames = (assets) => {
-  if (!assets || !Array.isArray(assets) || assets.length === 0) {
+  // Handle case where assets is undefined or null
+  if (!assets) {
     return "No assets assigned";
   }
-  
-  const validAssets = assets.filter(asset => asset && asset.name);
-  if (validAssets.length === 0) {
-    return "No valid assets";
+
+  // Handle single asset object
+  if (!Array.isArray(assets) && assets.name) {
+    return assets.name;
   }
-  
-  return validAssets.map(asset => asset.name).join(", ");
+
+  // Handle array of assets
+  if (Array.isArray(assets) && assets.length > 0) {
+    const validAssets = assets.filter(asset => asset && asset.name);
+    if (validAssets.length === 0) {
+      return "No valid assets";
+    }
+    return validAssets.map(asset => asset.name).join(", ");
+  }
+
+  // Default case
+  return "No assets assigned";
 };
 
 // Get asset types helper
@@ -525,5 +538,225 @@ export const formatDate = (dateString) => {
     });
   } catch {
     return "N/A";
+  }
+};
+
+export const addRoundHistory = async (assignmentId, roundData) => {
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/round-station/${assignmentId}/round-station`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Date: roundData.date || new Date().toISOString(),
+          Reason: roundData.reason,
+          assignedRounds: roundData.assignedRounds.toString(),
+          consumedRounds: roundData.consumedRounds.toString(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data: data.data || data };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to add round history",
+      };
+    }
+  } catch (error) {
+    console.error("Error adding round history:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const issueRoundsToAssignment = async (assignmentId, issueData) => {
+  try {
+    // First, add the round history entry
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: issueData.date || new Date().toISOString(),
+      reason: issueData.reason || "Rounds issued",
+      assignedRounds: issueData.roundsIssued,
+      consumedRounds: 0, // No consumption when issuing
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Then update the assignment with the new round data
+    const updateData = {
+      // Add any other fields you need to update
+      lastRoundIssueDate: issueData.date || new Date().toISOString(),
+      lastRoundIssueReason: issueData.reason || "Rounds issued",
+      // You might want to update total available rounds here
+      // totalAvailableRounds: existingRounds + issueData.roundsIssued,
+    };
+
+    const updateResult = await updateStationAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundHistory: roundHistoryResult.data,
+        },
+        message: `${issueData.roundsIssued} rounds issued successfully`,
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error issuing rounds:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Consume rounds from an asset assignment
+export const consumeRoundsFromAssignment = async (assignmentId, consumeData) => {
+  try {
+    // Add the round history entry for consumption
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: consumeData.date || new Date().toISOString(),
+      reason: consumeData.reason || "Rounds consumed",
+      assignedRounds: 0, // No new assignment when consuming
+      consumedRounds: consumeData.roundsConsumed,
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Update the assignment with consumption data
+    const updateData = {
+      lastRoundConsumeDate: consumeData.date || new Date().toISOString(),
+      lastRoundConsumeReason: consumeData.reason || "Rounds consumed",
+      // Mark as consumed if this is a complete consumption
+      ...(consumeData.isCompleteConsumption && {
+        consumedDate: consumeData.date || new Date().toISOString(),
+        consumedReason: consumeData.reason || "Rounds consumed",
+      }),
+    };
+
+    const updateResult = await updateStationAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundHistory: roundHistoryResult.data,
+        },
+        message: `${consumeData.roundsConsumed} rounds consumed successfully`,
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error consuming rounds:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Transfer asset to another employee
+export const transferAssetAssignment = async (assignmentId, transferData) => {
+  try {
+    // Add round history entry for transfer
+    const roundHistoryResult = await addRoundHistory(assignmentId, {
+      date: transferData.date || new Date().toISOString(),
+      reason: `Asset transferred to ${transferData.newEmployeeName || 'another employee'}`,
+      assignedRounds: transferData.transferRounds || 0,
+      consumedRounds: 0,
+    });
+
+    if (!roundHistoryResult.success) {
+      return roundHistoryResult;
+    }
+
+    // Update the assignment with transfer information
+    const updateData = {
+      status: "Transferred",
+      transferredDate: transferData.date || new Date().toISOString(),
+      transferredTo: transferData.newEmployeeId,
+      transferredBy: getCurrentUserId(),
+      transferReason: transferData.reason || "Asset transfer",
+      condition: transferData.condition || "Good",
+      ...(transferData.notes && { notes: transferData.notes }),
+    };
+
+    const updateResult = await updateStationAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: {
+          assignment: updateResult.data,
+          roundStation: roundHistoryResult.data,
+        },
+        message: "Asset transferred successfully",
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error transferring asset:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Return asset
+export const returnAssetAssignment = async (assignmentId, returnData) => {
+  try {
+    // Add round history entry for return (if any rounds are being returned)
+    if (returnData.returnRounds && returnData.returnRounds > 0) {
+      const roundHistoryResult = await addRoundHistory(assignmentId, {
+        date: returnData.date || new Date().toISOString(),
+        reason: "Asset returned with remaining rounds",
+        assignedRounds: 0,
+        consumedRounds: 0, // This might need adjustment based on your logic
+      });
+
+      if (!roundHistoryResult.success) {
+        return roundHistoryResult;
+      }
+    }
+
+    // Update the assignment with return information
+    const updateData = {
+      status: "Returned",
+      returnedDate: returnData.date || new Date().toISOString(),
+      returnedBy: getCurrentUserId(),
+      returnReason: returnData.reason || "Asset return",
+      condition: returnData.condition || "Good",
+      ...(returnData.notes && { notes: returnData.notes }),
+      // Add any round history if provided
+      ...(returnData.roundHistory && {
+        roundStation: Array.isArray(returnData.roundHistory) 
+          ? returnData.roundHistory 
+          : [returnData.roundHistory]
+      }),
+    };
+
+    const updateResult = await updateStationAssetAssignment(assignmentId, updateData);
+
+    if (updateResult.success) {
+      return {
+        success: true,
+        data: updateResult.data,
+        message: "Asset returned successfully",
+      };
+    } else {
+      return updateResult;
+    }
+  } catch (error) {
+    console.error("Error returning asset:", error);
+    return { success: false, error: error.message };
   }
 };
