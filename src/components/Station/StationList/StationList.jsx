@@ -60,6 +60,9 @@ const StationList = () => {
   const [selectedStations, setSelectedStations] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
 
+  const [employeeCounts, setEmployeeCounts] = useState({});
+  const [loadingCounts, setLoadingCounts] = useState(false);
+
   // Export modal state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportOptions, setExportOptions] = useState({
@@ -76,6 +79,7 @@ const StationList = () => {
 
   // 🆕 Employee listing state - track which stations have expanded employee view
   const [expandedStations, setExpandedStations] = useState(new Set());
+  const safeStations = Array.isArray(stations) ? stations : [];
 
   // Fetch station locations on component mount
   useEffect(() => {
@@ -87,6 +91,12 @@ const StationList = () => {
     setSelectedStations(new Set());
     setSelectAll(false);
   }, [stations]);
+
+  useEffect(() => {
+    if (safeStations.length > 0) {
+      fetchEmployeeCounts(safeStations);
+    }
+  }, [safeStations]);
 
   // Fetch station locations from API
   const fetchStationLocations = async () => {
@@ -102,6 +112,51 @@ const StationList = () => {
       console.error("Error fetching station locations:", error);
     } finally {
       setLoadingLocations(false);
+    }
+  };
+  const fetchEmployeeCounts = async (stations) => {
+    if (!stations || stations.length === 0) return;
+
+    setLoadingCounts(true);
+    const counts = {};
+
+    try {
+      // Fetch counts for all visible stations in parallel
+      const countPromises = stations.map(async (station) => {
+        try {
+          const result = await getEmployees({
+            station: station._id,
+          });
+
+          // Handle different possible response structures
+          const count =
+            result?.data?.totalEmployees ||
+            result?.totalEmployees ||
+            result?.data?.employees?.length ||
+            result?.data?.length ||
+            0;
+
+          return { stationId: station._id, count };
+        } catch (error) {
+          console.error(
+            `Error fetching count for station ${station._id}:`,
+            error
+          );
+          return { stationId: station._id, count: 0 };
+        }
+      });
+
+      const results = await Promise.all(countPromises);
+
+      results.forEach(({ stationId, count }) => {
+        counts[stationId] = count;
+      });
+
+      setEmployeeCounts((prev) => ({ ...prev, ...counts }));
+    } catch (error) {
+      console.error("Error fetching employee counts:", error);
+    } finally {
+      setLoadingCounts(false);
     }
   };
 
@@ -648,7 +703,6 @@ const StationList = () => {
   };
 
   // Safety check for stations
-  const safeStations = Array.isArray(stations) ? stations : [];
 
   // Render drill up page
   if (currentView === "drillStation" && drillStationData) {
@@ -880,6 +934,13 @@ const StationList = () => {
                             >
                               {station.name}
                             </h3>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {loadingCounts ? (
+                                <span className="animate-pulse">...</span>
+                              ) : (
+                                `${employeeCounts[station._id] || 0} emp`
+                              )}
+                            </span>
                             <div className="text-sm text-gray-900">
                               {/* Facilities */}
                               {station?.stationIncharge &&
@@ -1265,12 +1326,21 @@ const StationList = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">
-                      <ClickableStationName
-                        station={station}
-                        className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                      <h3
+                        className="text-sm font-medium text-gray-900 truncate"
+                        onClick={() => {
+                          handleView(station);
+                        }}
                       >
                         {station.name}
-                      </ClickableStationName>
+                      </h3>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {loadingCounts ? (
+                          <span className="animate-pulse">...</span>
+                        ) : (
+                          `${employeeCounts[station._id] || 0} emp`
+                        )}
+                      </span>
                     </div>
                   </div>
 
