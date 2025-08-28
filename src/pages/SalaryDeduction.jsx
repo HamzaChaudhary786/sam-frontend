@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SalaryDeductionForm from "../components/SalaryDeduction/AddDeduction/AddDeduction.jsx";
 import SalaryDeductionList from "../components/SalaryDeduction/DeductionList/DeductionList.jsx";
-import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
+import EmployeeViewModal from "../components/Employee/ViewEmployee/ViewEmployee.jsx"; // Add this import
 
 const SalaryDeductionPage = () => {
   const navigate = useNavigate();
@@ -13,6 +13,32 @@ const SalaryDeductionPage = () => {
   const [editingDeduction, setEditingDeduction] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showModal, setShowModal] = useState(false);
+
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Add this function - same as in your first code
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
+  // Add this function to close the view modal
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  // Add this function if you want edit functionality from the view modal
+  const handleEmployeeEdit = (employeeData) => {
+    // You can navigate to employee edit page or handle as needed
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
 
   // Handle form success
   const handleFormSuccess = () => {
@@ -90,12 +116,12 @@ const SalaryDeductionPage = () => {
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Managing deductions for{" "}
-            <ClickableEmployeeName
-              employee={employee}
+             <span
+              onClick={() => handleView(employee)}
               className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
             >
               {employee.firstName} {employee.lastName}
-            </ClickableEmployeeName>{" "}
+            </span>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
@@ -143,6 +169,12 @@ const SalaryDeductionPage = () => {
         isOpen={showModal}
         onSuccess={handleFormSuccess}
         onCancel={handleCloseModal}
+      />
+        <EmployeeViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        employee={selectedEmployee}
+        onEdit={handleEmployeeEdit} // Use the renamed function here
       />
     </div>
   );

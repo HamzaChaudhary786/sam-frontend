@@ -7,7 +7,11 @@ import { getEmployees } from "../../Employee/EmployeeApi.js";
 import { getStations } from "../../Station/StationApi.js";
 import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api.js";
-import AssetAssignmentsList from "../List/List.jsx"; // Add this line
+import AssetAssignmentsList from "../List/List.jsx";
+import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
+import StationViewModal from "../../Station/ViewStation/ViewStation.jsx";
+import StationModal from "../../Station/AddStation/AddStation.jsx";
+import { useStations } from "../../Station/StationHook.js";
 
 const BulkAssetAssignment = () => {
   const navigate = useNavigate();
@@ -50,6 +54,15 @@ const BulkAssetAssignment = () => {
     stations: {},
   });
 
+  const [isEmployeeViewModalOpen, setIsEmployeeViewModalOpen] = useState(false);
+  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState(null);
+  const [isStationViewModalOpen, setIsStationViewModalOpen] = useState(false);
+  const [selectedStationForView, setSelectedStationForView] = useState(null);
+  const [isStationModalOpen, setIsStationModalOpen] = useState(false);
+  const [isStationEditMode, setIsStationEditMode] = useState(false);
+  const [stationEditData, setStationEditData] = useState(null);
+  const { createStation, modifyStation } = useStations();
+
   // Loading states for search
   const [isSearching, setIsSearching] = useState({});
   const [mallkhanaAssets, setMallkhanaAssets] = useState([]);
@@ -69,6 +82,48 @@ const BulkAssetAssignment = () => {
       return employee.profileUrl[0];
     }
     return employee.profileUrl || "/default-avatar.png";
+  };
+  // Add modal handlers
+  const handleEmployeeView = (employee) => {
+    setSelectedEmployeeForView(employee);
+    setIsEmployeeViewModalOpen(true);
+  };
+
+  const handleCloseEmployeeViewModal = () => {
+    setIsEmployeeViewModalOpen(false);
+    setSelectedEmployeeForView(null);
+  };
+
+  const handleEmployeeEdit = (employeeData) => {
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
+
+  const handleStationView = (station) => {
+    setSelectedStationForView(station);
+    setIsStationViewModalOpen(true);
+  };
+
+  const handleCloseStationViewModal = () => {
+    setIsStationViewModalOpen(false);
+    setSelectedStationForView(null);
+  };
+
+  const handleStationEdit = (stationData) => {
+    console.log("handleStationEdit called with:", stationData);
+    setIsStationEditMode(true);
+    setStationEditData(stationData);
+    setIsStationModalOpen(true);
+  };
+
+  const handleCloseStationModal = () => {
+    setIsStationModalOpen(false);
+    setIsStationEditMode(false);
+    setStationEditData(null);
   };
 
   // Fetch Mallkhana assets when mallkhana is selected
@@ -716,7 +771,12 @@ const BulkAssetAssignment = () => {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {row.employee.firstName} {row.employee.lastName}
+                            <span
+                              onClick={() => handleEmployeeView(row.employee)}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {row.employee.firstName} {row.employee.lastName}
+                            </span>
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {row.employee.personalNumber ||
@@ -808,7 +868,12 @@ const BulkAssetAssignment = () => {
                       <div className="flex items-center">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {row.station.name}
+                            <span
+                              onClick={() => handleStationView(row.station)}
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {row.station.name}
+                            </span>
                           </div>
                           {row.station.district && (
                             <div className="text-xs text-gray-500 truncate">
@@ -1058,6 +1123,29 @@ const BulkAssetAssignment = () => {
           </button>
         </div>
       )}
+      {/* Add these modals before the closing div */}
+      <EmployeeViewModal
+        isOpen={isEmployeeViewModalOpen}
+        onClose={handleCloseEmployeeViewModal}
+        employee={selectedEmployeeForView}
+        onEdit={handleEmployeeEdit}
+      />
+
+      <StationViewModal
+        isOpen={isStationViewModalOpen}
+        onClose={handleCloseStationViewModal}
+        station={selectedStationForView}
+        onEdit={handleStationEdit}
+      />
+
+      <StationModal
+        isOpen={isStationModalOpen}
+        onClose={handleCloseStationModal}
+        isEdit={isStationEditMode}
+        editData={stationEditData}
+        createStation={createStation}
+        modifyStation={modifyStation}
+      />
     </div>
   );
 };

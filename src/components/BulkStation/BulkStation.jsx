@@ -9,8 +9,10 @@ import {
   getEmployeeCurrentStation,
 } from "./StationApi.js";
 import { getStations } from "../Station/StationApi.js";
-import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
-import ClickableEmployeeName from "../Employee/ClickableName.jsx"; // Adjust path as needed
+import StationViewModal from "../Station/ViewStation/ViewStation.jsx";
+import EmployeeViewModal from "../Employee/ViewEmployee/ViewEmployee.jsx";
+import StationModal from "../Station/AddStation/AddStation.jsx";
+import { useStations } from "../Station/StationHook.js";
 
 const BulkStationAssignment = () => {
   const navigate = useNavigate();
@@ -33,6 +35,13 @@ const BulkStationAssignment = () => {
     }));
   });
   const [saving, setSaving] = useState(false);
+  const [isEmployeeViewModalOpen, setIsEmployeeViewModalOpen] = useState(false);
+  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState(null);
+  const [isStationViewModalOpen, setIsStationViewModalOpen] = useState(false);
+  const [selectedStationForView, setSelectedStationForView] = useState(null);
+  const [isStationModalOpen, setIsStationModalOpen] = useState(false);
+  const [isStationEditMode, setIsStationEditMode] = useState(false);
+  const [stationEditData, setStationEditData] = useState(null);
 
   // Search states
   const [employeeSearch, setEmployeeSearch] = useState({});
@@ -44,6 +53,7 @@ const BulkStationAssignment = () => {
 
   // Loading states for search
   const [isSearching, setIsSearching] = useState({});
+  const { createStation, modifyStation } = useStations();
 
   // Helper function to get employee image
   const getEmployeeImage = (employee) => {
@@ -242,6 +252,46 @@ const BulkStationAssignment = () => {
     });
 
     return errors;
+  };
+  const handleEmployeeView = (employee) => {
+    setSelectedEmployeeForView(employee);
+    setIsEmployeeViewModalOpen(true);
+  };
+
+  const handleCloseEmployeeViewModal = () => {
+    setIsEmployeeViewModalOpen(false);
+    setSelectedEmployeeForView(null);
+  };
+
+  const handleEmployeeEdit = (employeeData) => {
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
+
+  const handleStationView = (station) => {
+    setSelectedStationForView(station);
+    setIsStationViewModalOpen(true);
+  };
+
+  const handleCloseStationViewModal = () => {
+    setIsStationViewModalOpen(false);
+    setSelectedStationForView(null);
+  };
+
+  const handleStationEdit = (stationData) => {
+    console.log("handleStationEdit called with:", stationData);
+    setIsStationEditMode(true);
+    setStationEditData(stationData);
+    setIsStationModalOpen(true);
+  };
+  const handleCloseStationModal = () => {
+    setIsStationModalOpen(false);
+    setIsStationEditMode(false);
+    setStationEditData(null);
   };
 
   // Save bulk assignments using the bulk API
@@ -481,13 +531,15 @@ const BulkStationAssignment = () => {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            <ClickableEmployeeName
-                              employee={assignment.employee}
+                            <span
+                              onClick={() =>
+                                handleEmployeeView(assignment.employee)
+                              }
                               className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                             >
                               {assignment.employee.firstName}{" "}
                               {assignment.employee.lastName}
-                            </ClickableEmployeeName>
+                            </span>
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {assignment.employee.personalNumber ||
@@ -585,13 +637,16 @@ const BulkStationAssignment = () => {
                     <div className="flex items-center">
                       <div className="flex-1 min-w-0">
                         <div>
-                          <ClickableStationName
-                            station={assignment.employee?.stations}
+                          <span
+                            onClick={() =>
+                              assignment.employee?.stations &&
+                              handleStationView(assignment.employee.stations)
+                            }
                             className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                           >
                             {assignment.employee?.stations?.name ||
                               "not assigned"}
-                          </ClickableStationName>
+                          </span>
                         </div>
                         <div>{assignment.employee?.stations?.tehsil}</div>
                         <div>{assignment.employee?.stations?.district}</div>
@@ -604,12 +659,14 @@ const BulkStationAssignment = () => {
                       <div className="flex items-center">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            <ClickableStationName
-                              station={assignment.station}
+                            <span
+                              onClick={() =>
+                                handleStationView(assignment.station)
+                              }
                               className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                             >
                               {assignment.station.name}
-                            </ClickableStationName>
+                            </span>
                           </div>
                         </div>
                         <button
@@ -775,6 +832,28 @@ const BulkStationAssignment = () => {
           )}
         </button>
       </div>
+      <EmployeeViewModal
+        isOpen={isEmployeeViewModalOpen}
+        onClose={handleCloseEmployeeViewModal}
+        employee={selectedEmployeeForView}
+        onEdit={handleEmployeeEdit}
+      />
+
+      {/* Station View Modal */}
+      <StationViewModal
+        isOpen={isStationViewModalOpen}
+        onClose={handleCloseStationViewModal}
+        station={selectedStationForView}
+        onEdit={handleStationEdit}
+      />
+      <StationModal
+        isOpen={isStationModalOpen}
+        onClose={handleCloseStationModal}
+        isEdit={isStationEditMode}
+        editData={stationEditData}
+        createStation={createStation}
+        modifyStation={modifyStation}
+      />
     </div>
   );
 };
