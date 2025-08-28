@@ -3,19 +3,25 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api.js";
 import { role_admin } from "../../../constants/Enum.js";
-import { 
-  deleteAssetAssignment, 
+import { useNavigate } from "react-router-dom";
+import {
+  deleteAssetAssignment,
   approveAssetAssignment,
   issueRoundsToAssignment,
   consumeRoundsFromAssignment,
   transferAssetAssignment,
-  returnAssetAssignment
+  returnAssetAssignment,
 } from "../../AssetAssignment/AssetApi.js";
 import IssueRoundsModal from "../../AssetAssignment/IssueRound.jsx";
 import ConsumeRoundsModal from "../../AssetAssignment/ConsumeRound.jsx";
 import TransferReturnModal from "../../AssetAssignment/TransferAsset.jsx";
+import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
+import StationViewModal from "../../Station/ViewStation/ViewStation.jsx";
+import StationModal from "../../Station/AddStation/AddStation.jsx";
+import { useStations } from "../../Station/StationHook.js";
 
 const AssetAssignmentsList = ({ onModalStateChange }) => {
+  const navigate = useNavigate();
 
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +44,14 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   // User role state
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEmployeeViewModalOpen, setIsEmployeeViewModalOpen] = useState(false);
+  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState(null);
+  const [isStationViewModalOpen, setIsStationViewModalOpen] = useState(false);
+  const [selectedStationForView, setSelectedStationForView] = useState(null);
+  const [isStationModalOpen, setIsStationModalOpen] = useState(false);
+  const [isStationEditMode, setIsStationEditMode] = useState(false);
+  const [stationEditData, setStationEditData] = useState(null);
+  const { createStation, modifyStation } = useStations();
 
   // Employees data for transfer modal
   const [employees, setEmployees] = useState([]);
@@ -87,12 +101,27 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   }, []);
 
   // Notify parent when modal state changes
-useEffect(() => {
-  const isAnyModalOpen = issueRoundsModal.isOpen || consumeRoundsModal.isOpen || transferReturnModal.isOpen;
-  if (onModalStateChange) {
-    onModalStateChange(isAnyModalOpen);
-  }
-}, [issueRoundsModal.isOpen, consumeRoundsModal.isOpen, transferReturnModal.isOpen, onModalStateChange]);
+  // Update the existing useEffect to include new modals
+  useEffect(() => {
+    const isAnyModalOpen =
+      issueRoundsModal.isOpen ||
+      consumeRoundsModal.isOpen ||
+      transferReturnModal.isOpen ||
+      isEmployeeViewModalOpen ||
+      isStationViewModalOpen ||
+      isStationModalOpen;
+    if (onModalStateChange) {
+      onModalStateChange(isAnyModalOpen);
+    }
+  }, [
+    issueRoundsModal.isOpen,
+    consumeRoundsModal.isOpen,
+    transferReturnModal.isOpen,
+    isEmployeeViewModalOpen,
+    isStationViewModalOpen,
+    isStationModalOpen,
+    onModalStateChange,
+  ]);
 
   // Fetch employees for transfer functionality
   const fetchEmployees = async () => {
@@ -100,12 +129,15 @@ useEffect(() => {
 
     setEmployeesLoading(true);
     try {
-      const response = await axios.get(`${BACKEND_URL}/employee?limit=2000&page=1`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`,
-        },
-      });
+      const response = await axios.get(
+        `${BACKEND_URL}/employee?limit=2000&page=1`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+        }
+      );
 
       if (response.data && response.data.employees) {
         setEmployees(response.data.employees);
@@ -126,14 +158,56 @@ useEffect(() => {
     return employee.profileUrl || "/default-avatar.png";
   };
 
+  // Add these handler functions
+  const handleEmployeeView = (employee) => {
+    setSelectedEmployeeForView(employee);
+    setIsEmployeeViewModalOpen(true);
+  };
+
+  const handleCloseEmployeeViewModal = () => {
+    setIsEmployeeViewModalOpen(false);
+    setSelectedEmployeeForView(null);
+  };
+
+  const handleEmployeeEdit = (employeeData) => {
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
+
+  const handleStationView = (station) => {
+    setSelectedStationForView(station);
+    setIsStationViewModalOpen(true);
+  };
+
+  const handleCloseStationViewModal = () => {
+    setIsStationViewModalOpen(false);
+    setSelectedStationForView(null);
+  };
+
+  const handleStationEdit = (stationData) => {
+    setIsStationEditMode(true);
+    setStationEditData(stationData);
+    setIsStationModalOpen(true);
+  };
+
+  const handleCloseStationModal = () => {
+    setIsStationModalOpen(false);
+    setIsStationEditMode(false);
+    setStationEditData(null);
+  };
+
   // Fetch assignments
   const fetchAssignments = async () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      
+
       // Add filters to query params
-      Object.keys(filters).forEach(key => {
+      Object.keys(filters).forEach((key) => {
         if (filters[key]) {
           queryParams.append(key, filters[key]);
         }
@@ -148,17 +222,23 @@ useEffect(() => {
         if (filters.type === "all") {
           // Combine employee and station assignments
           const combinedAssignments = [
-            ...(response.data.employees || []).map(emp => ({ ...emp, assignmentType: "employee" })),
-            ...(response.data.stations || []).map(station => ({ ...station, assignmentType: "station" }))
+            ...(response.data.employees || []).map((emp) => ({
+              ...emp,
+              assignmentType: "employee",
+            })),
+            ...(response.data.stations || []).map((station) => ({
+              ...station,
+              assignmentType: "station",
+            })),
           ];
           setAssignments(combinedAssignments);
         } else {
           setAssignments(response.data.data || []);
         }
-        
-        setPagination(prev => ({
+
+        setPagination((prev) => ({
           ...prev,
-          total: response.data.total || 0
+          total: response.data.total || 0,
         }));
       } else {
         toast.error("Failed to fetch assignments");
@@ -179,9 +259,9 @@ useEffect(() => {
 
   // Handle filter changes
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -230,32 +310,35 @@ useEffect(() => {
   };
 
   // Check if asset supports rounds (weapons)
-const supportsRounds = (assignment) => {
+  const supportsRounds = (assignment) => {
     if (!assignment.asset) return false;
-    const assetArray = Array.isArray(assignment.asset) ? assignment.asset : [assignment.asset];
-    return assetArray.some(asset => {
+    const assetArray = Array.isArray(assignment.asset)
+      ? assignment.asset
+      : [assignment.asset];
+    return assetArray.some((asset) => {
       if (!asset) return false;
-      
+
       // Check by category
       const category = asset.category?.toLowerCase();
-      if (category === 'weapons' || category === 'weaponround') {
+      if (category === "weapons" || category === "weaponround") {
         return true;
       }
-      
+
       // Check by type for weapon-related assets
       const type = asset.type?.toLowerCase();
-      if (type && (
-        type.includes('weapon') || 
-        type.includes('rifle') ||
-        type.includes('pistol') ||
-        type.includes('mp5') ||
-        type.includes('ak47') ||
-        type.includes('g3') ||
-        type.includes('magazine')
-      )) {
+      if (
+        type &&
+        (type.includes("weapon") ||
+          type.includes("rifle") ||
+          type.includes("pistol") ||
+          type.includes("mp5") ||
+          type.includes("ak47") ||
+          type.includes("g3") ||
+          type.includes("magazine"))
+      ) {
         return true;
       }
-      
+
       return false;
     });
   };
@@ -263,11 +346,15 @@ const supportsRounds = (assignment) => {
   // Modal handlers
   const handleApprove = async (assignment) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can approve asset assignments");
+      toast.error(
+        "Access denied: Only administrators can approve asset assignments"
+      );
       return;
     }
 
-    if (!window.confirm("Are you sure you want to approve this asset assignment?")) {
+    if (
+      !window.confirm("Are you sure you want to approve this asset assignment?")
+    ) {
       return;
     }
 
@@ -286,11 +373,15 @@ const supportsRounds = (assignment) => {
 
   const handleDelete = async (assignment) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can delete asset assignments");
+      toast.error(
+        "Access denied: Only administrators can delete asset assignments"
+      );
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this asset assignment?")) {
+    if (
+      !window.confirm("Are you sure you want to delete this asset assignment?")
+    ) {
       return;
     }
 
@@ -358,7 +449,7 @@ const supportsRounds = (assignment) => {
       };
 
       const result = await issueRoundsToAssignment(
-        issueRoundsModal.assignment._id, 
+        issueRoundsModal.assignment._id,
         issueData
       );
 
@@ -419,12 +510,14 @@ const supportsRounds = (assignment) => {
     setModalLoading(true);
     try {
       let result;
-      
+
       if (data.action === "transfer") {
-        const selectedEmployee = employees.find(emp => emp._id === data.newEmployeeId);
-        const newEmployeeName = selectedEmployee ? 
-          `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 
-          'another employee';
+        const selectedEmployee = employees.find(
+          (emp) => emp._id === data.newEmployeeId
+        );
+        const newEmployeeName = selectedEmployee
+          ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}`
+          : "another employee";
 
         const transferData = {
           newEmployeeId: data.newEmployeeId,
@@ -477,7 +570,9 @@ const supportsRounds = (assignment) => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Asset Assignments</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Asset Assignments
+          </h1>
           <p className="text-sm text-gray-600 mt-1">
             View and manage all asset assignments to employees and stations.
           </p>
@@ -499,8 +594,18 @@ const supportsRounds = (assignment) => {
             </>
           ) : (
             <>
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Refresh
             </>
@@ -512,7 +617,7 @@ const supportsRounds = (assignment) => {
       <div className="bg-white shadow-md rounded-lg mb-6">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Assignment Type */}
             <div>
@@ -614,11 +719,23 @@ const supportsRounds = (assignment) => {
         {/* No Results */}
         {!loading && assignments.length === 0 && (
           <div className="p-8 text-center">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-12 h-12 text-gray-400 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <p className="text-gray-600 mb-2">No assignments found</p>
-            <p className="text-sm text-gray-400">Try adjusting your filters or create new assignments</p>
+            <p className="text-sm text-gray-400">
+              Try adjusting your filters or create new assignments
+            </p>
           </div>
         )}
 
@@ -653,22 +770,25 @@ const supportsRounds = (assignment) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {assignments.map((assignment, index) => (
-                  <tr key={assignment._id || index} className="hover:bg-gray-50">
+                  <tr
+                    key={assignment._id || index}
+                    className="hover:bg-gray-50"
+                  >
                     {/* Asset */}
                     <td className="px-6 py-4">
                       <div className="flex items-start">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {Array.isArray(assignment.asset) 
-                              ? assignment.asset.map(a => a.name).join(", ")
-                              : assignment.asset?.name || "N/A"
-                            }
+                            {Array.isArray(assignment.asset)
+                              ? assignment.asset.map((a) => a.name).join(", ")
+                              : assignment.asset?.name || "N/A"}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
-                            {Array.isArray(assignment.asset) 
+                            {Array.isArray(assignment.asset)
                               ? `${assignment.asset.length} assets`
-                              : `${assignment.asset?.type || "N/A"} - ${assignment.asset?.category || "N/A"}`
-                            }
+                              : `${assignment.asset?.type || "N/A"} - ${
+                                  assignment.asset?.category || "N/A"
+                                }`}
                           </div>
                         </div>
                       </div>
@@ -676,7 +796,8 @@ const supportsRounds = (assignment) => {
 
                     {/* Assigned To */}
                     <td className="px-6 py-4">
-                      {assignment.assignmentType === "employee" || assignment.employee ? (
+                      {assignment.assignmentType === "employee" ||
+                      assignment.employee ? (
                         <div className="flex items-center">
                           <img
                             className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
@@ -685,17 +806,33 @@ const supportsRounds = (assignment) => {
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-gray-900 truncate">
-                              {assignment.employee?.firstName} {assignment.employee?.lastName}
+                              <span
+                                onClick={() =>
+                                  handleEmployeeView(assignment.employee)
+                                }
+                                className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                              >
+                                {assignment.employee?.firstName}{" "}
+                                {assignment.employee?.lastName}
+                              </span>
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {assignment.employee?.personalNumber || assignment.employee?.pnumber}
+                              {assignment.employee?.personalNumber ||
+                                assignment.employee?.pnumber}
                             </div>
                           </div>
                         </div>
                       ) : assignment.station ? (
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">
-                            {assignment.station.name}
+                            <span
+                              onClick={() =>
+                                handleStationView(assignment.station)
+                              }
+                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+                              {assignment.station.name}
+                            </span>
                           </div>
                           {assignment.station.district && (
                             <div className="text-xs text-gray-500 truncate">
@@ -710,15 +847,18 @@ const supportsRounds = (assignment) => {
 
                     {/* Type */}
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        assignment.assignmentType === "employee" || assignment.employee
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-green-100 text-green-800"
-                      }`}>
-                        {assignment.assignmentType === "employee" || assignment.employee 
-                          ? "Employee" 
-                          : "Station"
-                        }
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          assignment.assignmentType === "employee" ||
+                          assignment.employee
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {assignment.assignmentType === "employee" ||
+                        assignment.employee
+                          ? "Employee"
+                          : "Station"}
                       </span>
                     </td>
 
@@ -729,14 +869,21 @@ const supportsRounds = (assignment) => {
 
                     {/* Status */}
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(assignment.status)}`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(
+                          assignment.status
+                        )}`}
+                      >
                         {assignment.status || "N/A"}
                       </span>
                     </td>
 
                     {/* Batch */}
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="truncate max-w-32" title={assignment.assetBatch?.referenceNumber}>
+                      <div
+                        className="truncate max-w-32"
+                        title={assignment.assetBatch?.referenceNumber}
+                      >
                         {assignment.assetBatch?.referenceNumber || "N/A"}
                       </div>
                     </td>
@@ -821,11 +968,13 @@ const supportsRounds = (assignment) => {
         )}
       </div>
 
-    {/* Issue Rounds Modal */}
+      {/* Issue Rounds Modal */}
       <div className={issueRoundsModal.isOpen ? "z-[60px]" : ""}>
         <IssueRoundsModal
           isOpen={issueRoundsModal.isOpen}
-          onClose={() => setIssueRoundsModal({ isOpen: false, assignment: null })}
+          onClose={() =>
+            setIssueRoundsModal({ isOpen: false, assignment: null })
+          }
           onSave={handleIssueRoundsSave}
           assignment={issueRoundsModal.assignment}
           loading={modalLoading}
@@ -836,7 +985,9 @@ const supportsRounds = (assignment) => {
       <div className={consumeRoundsModal.isOpen ? "z-[60px]" : ""}>
         <ConsumeRoundsModal
           isOpen={consumeRoundsModal.isOpen}
-          onClose={() => setConsumeRoundsModal({ isOpen: false, assignment: null })}
+          onClose={() =>
+            setConsumeRoundsModal({ isOpen: false, assignment: null })
+          }
           onSave={handleConsumeRoundsSave}
           assignment={consumeRoundsModal.assignment}
           loading={modalLoading}
@@ -847,14 +998,39 @@ const supportsRounds = (assignment) => {
       <div className={transferReturnModal.isOpen ? "z-[60px]" : ""}>
         <TransferReturnModal
           isOpen={transferReturnModal.isOpen}
-          onClose={() => setTransferReturnModal({ isOpen: false, assignment: null })}
+          onClose={() =>
+            setTransferReturnModal({ isOpen: false, assignment: null })
+          }
           onSave={handleTransferReturnSave}
           assignment={transferReturnModal.assignment}
           employees={employees}
           loading={modalLoading}
         />
       </div>
-      </div>
+      {/* Add these modals after the existing Transfer/Return Modal */}
+      <EmployeeViewModal
+        isOpen={isEmployeeViewModalOpen}
+        onClose={handleCloseEmployeeViewModal}
+        employee={selectedEmployeeForView}
+        onEdit={handleEmployeeEdit}
+      />
+
+      <StationViewModal
+        isOpen={isStationViewModalOpen}
+        onClose={handleCloseStationViewModal}
+        station={selectedStationForView}
+        onEdit={handleStationEdit}
+      />
+
+      <StationModal
+        isOpen={isStationModalOpen}
+        onClose={handleCloseStationModal}
+        isEdit={isStationEditMode}
+        editData={stationEditData}
+        createStation={createStation}
+        modifyStation={modifyStation}
+      />
+    </div>
   );
 };
 

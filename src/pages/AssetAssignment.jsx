@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AssetForm from "../components/AssetAssignment/AddAsset/AddAsset.jsx";
 import AssetList from "../components/AssetAssignment/ViewAssetList/AssetList.jsx";
-import ClickableEmployeeName from "../components/Employee/ClickableName.jsx"; // Adjust path as needed
+import EmployeeViewModal from "../components/Employee/ViewEmployee/ViewEmployee.jsx";
 
 const AssetPage = () => {
   const navigate = useNavigate();
@@ -13,6 +13,30 @@ const AssetPage = () => {
   const [editingAsset, setEditingAsset] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showModal, setShowModal] = useState(false);
+   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Handle employee view
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
+  // Handle closing employee view modal
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  // Handle employee edit (rename this to avoid conflict)
+  const handleEmployeeEdit = (employeeData) => {
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
 
   // Handle form success
   const handleFormSuccess = () => {
@@ -88,12 +112,12 @@ const AssetPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Asset Management</h1>
           <p className="text-sm text-gray-600 mt-1">
             Managing asset assignments for{" "}
-            <ClickableEmployeeName
-              employee={employee}
+              <span
+              onClick={() => handleView(employee)}
               className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
             >
               {employee.firstName} {employee.lastName}
-            </ClickableEmployeeName>{" "}
+            </span>{" "}
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
@@ -141,6 +165,12 @@ const AssetPage = () => {
         isOpen={showModal}
         onSuccess={handleFormSuccess}
         onCancel={handleCloseModal}
+      />
+        <EmployeeViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        employee={selectedEmployee}
+        onEdit={handleEmployeeEdit} // Use the renamed function here
       />
     </div>
   );

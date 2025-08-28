@@ -8,10 +8,11 @@ import {
   rejectStationAssignment,
 } from "../StationAssignment/StationAssignmentApi.js";
 import { useNavigate } from "react-router-dom";
-import ClickableStationName from "../Station/ClickableStationView.jsx"; // Adjust path as needed
 import { useGlobalStationView } from "../Station/GlobalStationView.jsx";
-import ClickableEmployeeName from "../Employee/ClickableName.jsx"; // Adjust path as needed
 import StationViewModal from "../Station/ViewStation/ViewStation.jsx";
+import EmployeeViewModal from "../Employee/ViewEmployee/ViewEmployee.jsx";
+import StationModal from "../Station/AddStation/AddStation.jsx";
+import { useStations } from "../Station/StationHook.js";
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -20,6 +21,13 @@ const PendingStationApprovals = ({ onEdit }) => {
   const [error, setError] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { openStationView } = useGlobalStationView();
+  const [isEmployeeViewModalOpen, setIsEmployeeViewModalOpen] = useState(false);
+  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState(null);
+  const [isStationViewModalOpen, setIsStationViewModalOpen] = useState(false);
+  const [selectedStationForView, setSelectedStationForView] = useState(null);
+  const [isStationModalOpen, setIsStationModalOpen] = useState(false);
+  const [isStationEditMode, setIsStationEditMode] = useState(false);
+  const [stationEditData, setStationEditData] = useState(null);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -31,6 +39,7 @@ const PendingStationApprovals = ({ onEdit }) => {
 
   // Selection state for bulk actions
   const [selectedAssignments, setSelectedAssignments] = useState(new Set());
+  const { createStation, modifyStation } = useStations();
 
   // Date range options
   const dateRangeOptions = [
@@ -383,6 +392,46 @@ const PendingStationApprovals = ({ onEdit }) => {
     }
     setSelectedAssignments(newSelected);
   };
+  const handleEmployeeView = (employee) => {
+    setSelectedEmployeeForView(employee);
+    setIsEmployeeViewModalOpen(true);
+  };
+
+  const handleCloseEmployeeViewModal = () => {
+    setIsEmployeeViewModalOpen(false);
+    setSelectedEmployeeForView(null);
+  };
+
+  const handleEmployeeEdit = (employeeData) => {
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: employeeData,
+      },
+    });
+  };
+
+  const handleStationView = (station) => {
+    setSelectedStationForView(station);
+    setIsStationViewModalOpen(true);
+  };
+
+  const handleCloseStationViewModal = () => {
+    setIsStationViewModalOpen(false);
+    setSelectedStationForView(null);
+  };
+
+  const handleStationEdit = (stationData) => {
+    console.log("handleStationEdit called with:", stationData);
+    setIsStationEditMode(true);
+    setStationEditData(stationData);
+    setIsStationModalOpen(true);
+  };
+  const handleCloseStationModal = () => {
+    setIsStationModalOpen(false);
+    setIsStationEditMode(false);
+    setStationEditData(null);
+  };
 
   // Effects
   useEffect(() => {
@@ -686,12 +735,14 @@ const PendingStationApprovals = ({ onEdit }) => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
                           <div className="text-sm font-medium text-gray-900">
-                            <ClickableEmployeeName
-                              employee={assignment.employee}
+                            <span
+                              onClick={() =>
+                                handleEmployeeView(assignment.employee)
+                              }
                               className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                             >
                               {employeeName}
-                            </ClickableEmployeeName>
+                            </span>
                           </div>
                           <div className="text-sm text-gray-500">
                             ID: {assignment.employee?.personalNumber || "N/A"}
@@ -711,13 +762,16 @@ const PendingStationApprovals = ({ onEdit }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               From:
                             </span>
-                            <ClickableStationName
-                              station={assignment?.lastStation?.[0]}
+                            <span
+                              onClick={() =>
+                                assignment?.lastStation?.[0] &&
+                                handleStationView(assignment.lastStation[0])
+                              }
                               className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                             >
                               {assignment?.lastStation?.[0]?.name ||
                                 "No Previous Station"}
-                            </ClickableStationName>
+                            </span>
                           </div>
                           <div className="flex items-center">
                             <svg
@@ -738,13 +792,16 @@ const PendingStationApprovals = ({ onEdit }) => {
                             <span className="text-gray-500 mr-2 font-medium">
                               To:
                             </span>
-                            <ClickableStationName
-                              station={assignment?.currentStation?.[0]}
+                            <span
+                              onClick={() =>
+                                assignment?.currentStation?.[0] &&
+                                handleStationView(assignment.currentStation[0])
+                              }
                               className="text-blue-900 font-semibold hover:text-blue-700 cursor-pointer hover:underline"
                             >
                               {assignment?.currentStation?.[0]?.name ||
                                 "Unknown Station"}
-                            </ClickableStationName>
+                            </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Effective: {formatDate(assignment.fromDate)}
@@ -863,6 +920,28 @@ const PendingStationApprovals = ({ onEdit }) => {
           </div>
         )}
       </div>
+      <EmployeeViewModal
+        isOpen={isEmployeeViewModalOpen}
+        onClose={handleCloseEmployeeViewModal}
+        employee={selectedEmployeeForView}
+        onEdit={handleEmployeeEdit}
+      />
+
+      {/* Station View Modal */}
+      <StationViewModal
+        isOpen={isStationViewModalOpen}
+        onClose={handleCloseStationViewModal}
+        station={selectedStationForView}
+        onEdit={handleStationEdit}
+      />
+      <StationModal
+        isOpen={isStationModalOpen}
+        onClose={handleCloseStationModal}
+        isEdit={isStationEditMode}
+        editData={stationEditData}
+        createStation={createStation}
+        modifyStation={modifyStation}
+      />
     </div>
   );
 };
