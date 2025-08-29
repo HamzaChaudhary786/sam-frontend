@@ -14,6 +14,7 @@ import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
 import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 
 import { toast } from "react-toastify";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const EmployeeGridTable = ({
   // parent-managed state and methods (single source of truth)
@@ -75,6 +76,7 @@ const EmployeeGridTable = ({
   const [editableEmployees, setEditableEmployees] = useState(new Set());
   const [confirmPopup, setConfirmPopup] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const permissions = usePermissions();
 
   // View Modal state
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -882,7 +884,7 @@ const EmployeeGridTable = ({
 
               {/* Vertical action buttons - spans 2 rows */}
               <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
-                {isAdmin && (
+                {permissions?.userData?.roles[0]?.accessRequirement[0]?.canEdit && (
                   <button
                     onClick={() => toggleEditMode(employee._id)}
                     className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${

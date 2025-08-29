@@ -11,10 +11,11 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
   const resourceOptions = [
     "station",
     "employee",
-    "salary deduction",
-    "reports",
+    "asset",
     "users",
     "roles",
+    "lookup",
+    "Audit"
   ];
 
   const permissionFields = [
@@ -299,8 +300,8 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                 {loading
                   ? "Saving..."
                   : editingRole
-                  ? "Update Role"
-                  : "Create Role"}
+                    ? "Update Role"
+                    : "Create Role"}
               </button>
             </div>
           </div>

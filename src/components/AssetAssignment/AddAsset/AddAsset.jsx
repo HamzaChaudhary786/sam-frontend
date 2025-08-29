@@ -8,8 +8,12 @@ import {
 } from "../AssetApi.js";
 import { role_admin } from "../../../constants/Enum.js";
 import ClickableEmployeeName from "../../Employee/ClickableName.jsx"; // Adjust path as needed
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
+
+
+  const permissions = usePermissions()
   // User role state
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -112,10 +116,10 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
         // Remove rounds data if asset is deselected
         assetRounds: isSelected
           ? Object.fromEntries(
-              Object.entries(prevForm.assetRounds).filter(
-                ([key]) => key !== assetId
-              )
+            Object.entries(prevForm.assetRounds).filter(
+              ([key]) => key !== assetId
             )
+          )
           : prevForm.assetRounds,
       }));
 
@@ -165,9 +169,9 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
         // Only include approval fields when editing and user is admin
         ...(editingAsset &&
           isAdmin && {
-            isApproved: formData.isApproved,
-            approvalComment: formData.approvalComment,
-          }),
+          isApproved: formData.isApproved,
+          approvalComment: formData.approvalComment,
+        }),
       };
 
       let result;
@@ -179,8 +183,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
 
       if (result.success) {
         toast.success(
-          `Asset assignment ${
-            editingAsset ? "updated" : "created"
+          `Asset assignment ${editingAsset ? "updated" : "created"
           } successfully`
         );
         resetForm();
@@ -332,19 +335,18 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                               {asset.name}
                             </span>
                             <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                asset.type === "weapons"
-                                  ? "bg-red-100 text-red-800"
-                                  : asset.type === "pistol"
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.type === "weapons"
+                                ? "bg-red-100 text-red-800"
+                                : asset.type === "pistol"
                                   ? "bg-purple-100 text-purple-800"
                                   : asset.type === "round" ||
                                     asset.type === "weaponRound"
-                                  ? "bg-orange-100 text-orange-800"
-                                  : asset.type === "vehicle" ||
-                                    asset.type === "vehicles"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-blue-100 text-blue-800"
-                              }`}
+                                    ? "bg-orange-100 text-orange-800"
+                                    : asset.type === "vehicle" ||
+                                      asset.type === "vehicles"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-blue-100 text-blue-800"
+                                }`}
                             >
                               {asset.type}
                             </span>
@@ -376,19 +378,19 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                           {/* Round Details */}
                           {(asset.type === "round" ||
                             asset.type === "weaponRound") && (
-                            <>
-                              {asset.weaponName && (
-                                <p className="text-xs text-gray-500">
-                                  Weapon: {asset.weaponName}
-                                </p>
-                              )}
-                              {asset.numberOfRounds && (
-                                <p className="text-xs text-gray-500">
-                                  Total Rounds: {asset.numberOfRounds}
-                                </p>
-                              )}
-                            </>
-                          )}
+                              <>
+                                {asset.weaponName && (
+                                  <p className="text-xs text-gray-500">
+                                    Weapon: {asset.weaponName}
+                                  </p>
+                                )}
+                                {asset.numberOfRounds && (
+                                  <p className="text-xs text-gray-500">
+                                    Total Rounds: {asset.numberOfRounds}
+                                  </p>
+                                )}
+                              </>
+                            )}
 
                           {/* Available Quantity */}
                           {"availableQuantity" in asset && (
@@ -440,7 +442,7 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
           </div>
 
           {/* Approval Fields - Only show when editing and user is admin */}
-          {editingAsset && isAdmin && (
+          {editingAsset && permissions?.userData?.roles[0]?.accessRequirement[0]?.canApprove && (
             <>
               {/* Approval Checkbox */}
               <div className="border-t border-gray-200 pt-4">
@@ -504,8 +506,8 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                   ? "Updating..."
                   : "Assigning..."
                 : editingAsset
-                ? "Update Assignment"
-                : "Assign Assets"}
+                  ? "Update Assignment"
+                  : "Assign Assets"}
             </button>
           </div>
         </form>

@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
 import EmployeeGridTable from "../GridTable/GridTable.jsx";
 import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const EmployeeGridContainer = () => {
   const {
@@ -41,6 +42,7 @@ const EmployeeGridContainer = () => {
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const permissions = usePermissions();
 
   // Enum states
   const [enums, setEnums] = useState({
@@ -228,7 +230,7 @@ const EmployeeGridContainer = () => {
 
   const handleCellChange = (fieldName, value) => {
     if (!editingCell) return;
-    
+
     const { rowId } = editingCell;
     setEditingData(prev => ({
       ...prev,
@@ -243,7 +245,7 @@ const EmployeeGridContainer = () => {
   const applyNestedUpdate = (obj, path, value) => {
     const pathParts = path.split('.');
     const result = { ...obj };
-    
+
     let current = result;
     for (let i = 0; i < pathParts.length - 1; i++) {
       const part = pathParts[i];
@@ -254,40 +256,40 @@ const EmployeeGridContainer = () => {
       }
       current = current[part];
     }
-    
+
     current[pathParts[pathParts.length - 1]] = value;
     return result;
   };
 
-const saveAllCell = async () => {
-  const employeeIds = Object.keys(editingData);
-  if (employeeIds.length === 0) return;
+  const saveAllCell = async () => {
+    const employeeIds = Object.keys(editingData);
+    if (employeeIds.length === 0) return;
 
-  try {
-    // Save all edited employees in parallel
-    await Promise.all(
-      employeeIds.map(async (employeeId) => {
-        const employee = employees.find((emp) => emp._id === employeeId);
-        if (employee) {
-          await saveCell(employee);
-        }
-      })
-    );
-    toast.success("All changes saved!");
-  } catch (error) {
-    toast.error("Failed to save all changes");
-    console.error(error);
-  }
-};
+    try {
+      // Save all edited employees in parallel
+      await Promise.all(
+        employeeIds.map(async (employeeId) => {
+          const employee = employees.find((emp) => emp._id === employeeId);
+          if (employee) {
+            await saveCell(employee);
+          }
+        })
+      );
+      toast.success("All changes saved!");
+    } catch (error) {
+      toast.error("Failed to save all changes");
+      console.error(error);
+    }
+  };
 
   const saveCell = async (employee) => {
     try {
       // Get the editing data for this specific employee
       const employeeEditingData = editingData[employee._id] || {};
-      
+
       // Start with the original employee data
       let updatedData = { ...employee };
-      
+
       // Apply all the editing changes, handling nested fields properly
       Object.entries(employeeEditingData).forEach(([fieldPath, value]) => {
         if (fieldPath.includes('.')) {
@@ -298,7 +300,7 @@ const saveAllCell = async () => {
           updatedData[fieldPath] = value;
         }
       });
-      
+
       // Validate required fields
       if (!updatedData.personalNumber || !updatedData.firstName || !updatedData.cnic || !updatedData.fatherFirstName) {
         toast.error("Personal Number, First Name, CNIC, and Father's First Name are required fields");
@@ -330,15 +332,15 @@ const saveAllCell = async () => {
 
     try {
       toast.info("Uploading image...");
-      
+
       // Upload to Cloudinary
       const uploadResult = await uploadToCloudinary(file);
-      
+
       if (uploadResult.success) {
         // Update employee's profile with new image
         const currentImages = Array.isArray(employee.profileUrl) ? employee.profileUrl : [employee.profileUrl].filter(Boolean);
         const updatedImages = [...currentImages, uploadResult.url];
-        
+
         const updatedData = {
           ...employee,
           profileUrl: updatedImages
@@ -366,7 +368,7 @@ const saveAllCell = async () => {
     try {
       const currentImages = Array.isArray(employee.profileUrl) ? employee.profileUrl : [employee.profileUrl].filter(Boolean);
       const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
-      
+
       const updatedData = {
         ...employee,
         profileUrl: updatedImages.length > 0 ? updatedImages : [`https://ui-avatars.com/api/?name=${employee.firstName}+${employee.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`]
@@ -571,7 +573,7 @@ const saveAllCell = async () => {
   const handleAddAsset = () => {
     navigate("/assets");
   };
-  
+
   const handleBulkStationAssignment = () => {
     navigate("/bulk-station-assignment");
   };
@@ -593,7 +595,7 @@ const saveAllCell = async () => {
             Employee Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Click Edit button, then double-click any cell to edit 
+            Click Edit button, then double-click any cell to edit
           </p>
           {!isAdmin && (
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -601,7 +603,8 @@ const saveAllCell = async () => {
             </p>
           )}
         </div>
-
+        {console.log(permissions, "my permission")
+        }
         <div className="flex flex-wrap gap-2">
           {isAdmin && (
             <button
@@ -617,27 +620,40 @@ const saveAllCell = async () => {
           >
             List View
           </button>
-          <button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
-            onClick={() => setIsExportModalOpen(true)}
-          >
-            Export
-          </button>
+          {
+            permissions?.userData?.roles[0]?.accessRequirement[0]?.canPrint && (
+
+              <button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+                onClick={() => setIsExportModalOpen(true)}
+              >
+                Export
+              </button>
+            )
+          }
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">         
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-            onClick={handleAddStation}
-          >
-            Stations
-          </button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-            onClick={handleAddAsset}
-          >
-            Assets
-          </button>
+        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
+          {
+            permissions.hasStationAccess && (
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                onClick={handleAddStation}
+              >
+                Stations
+              </button>
+            )
+          }
+          {
+            permissions.hasAssetAccess && (
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                onClick={handleAddAsset}
+              >
+                Assets
+              </button>
+            )
+          }
           <button
             className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleBulkStationAssignment}
@@ -763,7 +779,7 @@ const saveAllCell = async () => {
               alt={`${imageModal.employee.firstName} ${imageModal.employee.lastName} - Full Size`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded-lg">
               <h3 className="font-medium">
                 {imageModal.employee.firstName} {imageModal.employee.lastName}
@@ -772,7 +788,7 @@ const saveAllCell = async () => {
                 {imageModal.employee.personalNumber}
               </p>
             </div>
-            
+
             <button
               onClick={() => setImageModal(null)}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"

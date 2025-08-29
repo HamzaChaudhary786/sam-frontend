@@ -24,6 +24,8 @@ import TransferReturnModal from "../TransferAsset.jsx";
 import { BACKEND_URL } from "../../../constants/api.js";
 
 const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger }) => {
+
+  
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import logoImage from "../../../assets/logobig.jpg";
 import { IoMdNotifications } from "react-icons/io";
 import { getPendingApprovals } from "../../StationAssignment/StationAssignmentApi";
+import { RESOURCE_ACCESS } from "../../../constants/Enum";
+import { usePermissions } from "../../../hook/usePermission";
+
+
+
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -11,6 +16,9 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const [pendingApproval, setPendingApproval] = useState([]);
   const navigate = useNavigate();
+  const permissions = usePermissions();
+
+
 
   const handleLogout = () => {
     // Clear localStorage
@@ -81,11 +89,21 @@ const Navbar = () => {
     };
   }, []);
 
+  const userData = localStorage.getItem("userData");
+  const parsed = JSON.parse(userData);
+  const userTypeData = parsed?.userType;
+
+  // Single boolean: true if userType matches ANY resource
+  const hasEmployeeAccess = Object.values(RESOURCE_ACCESS)
+    .some(list => list.includes(userTypeData));
+
+  console.log("hasEmployeeAccess:", hasEmployeeAccess);
+
+
   useEffect(() => {
-    const userData = localStorage.getItem("userData");
+
     if (userData) {
       try {
-        const parsed = JSON.parse(userData);
         setUserType(parsed.userType || "Unknown");
         setLastLogin(formatLastLogin(parsed.lastLogin));
       } catch (e) {
@@ -222,6 +240,8 @@ const Navbar = () => {
                 </svg>
               </button>
 
+
+
               {/* Dropdown Menu with Animation */}
               <div
                 className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${isDropdownOpen
@@ -301,231 +321,274 @@ const Navbar = () => {
 
                   <div className="my-2 border-t border-gray-100"></div>
 
-                  <button
-                    onClick={() => handleNavigation("/bulk-asset")}
-                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <div className="flex flex-row ">
-                      <svg
-                        className="h-5 w-5 mr-3 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                      <span>Bulk Assets</span>
-                    </div>
-                    <div className=" flex justify-end">
-                      <div className="h-2 w-2 rounded-full bg-green-600">
+                  {permissions.hasAssetAccess && (
 
+                    <button
+                      onClick={() => handleNavigation("/bulk-asset")}
+                      className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                    >
+                      <div className="flex flex-row ">
+                        <svg
+                          className="h-5 w-5 mr-3 text-purple-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                        <span>Bulk Assets</span>
                       </div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNavigation("/bulk-asset-assignment")}
-                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <div className="flex flex-row ">
-                      <svg
-                        className="h-5 w-5 mr-3 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                      <span>Bulk Assets Assignment</span>
-                    </div>
-                    <div className=" flex justify-end">
-                      <div className="h-2 w-2 rounded-full bg-green-600">
+                      <div className=" flex justify-end">
+                        <div className="h-2 w-2 rounded-full bg-green-600">
 
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  )
+                  }
 
-                  <button
-                    onClick={() => handleNavigation("/editgrid")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-emerald-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 10h18M3 14h18m-9-4v8m-7 0V7a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <span>Employees</span>
-                  </button>
+                  {
+                    permissions.hasAssetAccess && (
+                      <button
+                        onClick={() => handleNavigation("/bulk-asset-assignment")}
+                        className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <div className="flex flex-row ">
+                          <svg
+                            className="h-5 w-5 mr-3 text-purple-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                          <span>Bulk Assets Assignment</span>
+                        </div>
+                        <div className=" flex justify-end">
+                          <div className="h-2 w-2 rounded-full bg-green-600">
 
-                  <button
-                    onClick={() => handleNavigation("/stations")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <span>Stations</span>
-                  </button>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  }
 
-                  <button
-                    onClick={() => handleNavigation("/pendingapprovals")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-cyan-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                      />
-                    </svg>
-                    <span>Transfer Posting</span>
-                  </button>
 
-                  <button
-                    onClick={() => handleNavigation("/assets")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      />
-                    </svg>
-                    <span>Assets</span>
-                  </button>
+                  {
+                    permissions.hasEmployeeAccess && (
+                      <button
+                        onClick={() => handleNavigation("/editgrid")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-emerald-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M3 10h18M3 14h18m-9-4v8m-7 0V7a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                        <span>Employees</span>
+                      </button>
+                    )
+                  }
 
-                  <button
-                    onClick={() => handleNavigation("/maalkhana")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <span>Maal Khana</span>
-                  </button>
 
-                  <button
-                    onClick={() => handleNavigation("/lookup")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-orange-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <span>Bulk Insert Lookup</span>
-                  </button>
+                  {
+                    permissions.hasStationAccess && (
+                      <button
+                        onClick={() => handleNavigation("/stations")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span>Stations</span>
+                      </button>
+                    )
+                  }
 
-                  <button
-                    onClick={() => handleNavigation("/audit")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-amber-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <span>Audit Trail</span>
-                  </button>
+                  {
+                    permissions.hasEmployeeAccess && (
+                      <button
+                        onClick={() => handleNavigation("/pendingapprovals")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-cyan-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                          />
+                        </svg>
+                        <span>Transfer Posting</span>
+                      </button>
+                    )
+                  }
 
-                  <button
-                    onClick={() => handleNavigation("/admin")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-teal-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <span>User Role</span>
-                  </button>
+                  {
+                    permissions.hasAssetAccess && (
+
+                      <button
+                        onClick={() => handleNavigation("/assets")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-purple-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                        <span>Assets</span>
+                      </button>
+                    )
+                  }
+
+                  {
+                    permissions.hasStationAccess && (
+                      <button
+                        onClick={() => handleNavigation("/maalkhana")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span>Maal Khana</span>
+                      </button>
+                    )
+                  }
+
+                  {
+                    permissions.hasLookupAccess && (
+                      <button
+                        onClick={() => handleNavigation("/lookup")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-orange-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span>Bulk Insert Lookup</span>
+                      </button>
+                    )
+                  }
+
+                  {
+                    permissions.hasAuditAccess && (
+                      <button
+                        onClick={() => handleNavigation("/audit")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-amber-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span>Audit Trail</span>
+                      </button>
+                    )
+                  }
+                  {
+                    permissions.hasUserAccess && (
+
+                      <button
+                        onClick={() => handleNavigation("/admin")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-teal-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                        <span>User Role</span>
+                      </button>
+                    )
+                  }
 
                   <div className="my-2 border-t border-gray-100"></div>
 
@@ -550,6 +613,8 @@ const Navbar = () => {
                   </button>
                 </div>
               </div>
+
+
             </div>
 
             {/* User Profile Button */}
