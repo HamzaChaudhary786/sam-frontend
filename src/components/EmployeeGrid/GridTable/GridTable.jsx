@@ -11,7 +11,7 @@ import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
-import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
+// import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 
 import { toast } from "react-toastify";
 import { usePermissions } from "../../../hook/usePermission.js";
@@ -87,8 +87,8 @@ const EmployeeGridTable = ({
   // Safety check for employees
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
-  const { getEmployeeAssetsString, loading: assetsLoading } =
-    useEmployeeAssets(safeEmployees);
+  // const { getEmployeeAssetsString, loading: assetsLoading } =
+  //   useEmployeeAssets(safeEmployees);
 
   function handleMultiPosting(selectedEmployeeObjects) {
     console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
@@ -238,8 +238,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-      ? 1
-      : 0;
+        ? 1
+        : 0;
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -534,9 +534,8 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                statusClasses[value] || statusClasses.default
-              }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
+                }`}
             >
               {displayName}
             </span>
@@ -578,17 +577,16 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
-      isAdmin && isEditable
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
         ? "cursor-pointer hover:bg-gray-100"
         : "cursor-default"
-    }`;
+      }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-      ? "Click Edit button to enable editing"
-      : "Double-click to edit";
+        ? "Click Edit button to enable editing"
+        : "Double-click to edit";
 
     return (
       <>
@@ -872,9 +870,8 @@ const EmployeeGridTable = ({
           return (
             <div
               key={employee._id}
-              className={`grid grid-cols-12 grid-rows-2 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
-                isSelected(employee._id) ? "bg-blue-50" : ""
-              }`}
+              className={`grid grid-cols-12 grid-rows-2 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${isSelected(employee._id) ? "bg-blue-50" : ""
+                }`}
             >
               {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
               {/* Checkbox - spans 2 rows */}
@@ -892,24 +889,23 @@ const EmployeeGridTable = ({
                       access.canEdit === true
                   )
                 ) && (
-                  <button
-                    onClick={() => toggleEditMode(employee._id)}
-                    className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
-                      editableEmployees.has(employee._id)
-                        ? "bg-orange-600 text-white hover:bg-orange-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                    title={
-                      editableEmployees.has(employee._id)
-                        ? "Disable editing"
-                        : "Enable editing"
-                    }
-                  >
-                    {editableEmployees.has(employee._id)
-                      ? "Disable Edit"
-                      : "Edit"}
-                  </button>
-                )}
+                    <button
+                      onClick={() => toggleEditMode(employee._id)}
+                      className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
+                          ? "bg-orange-600 text-white hover:bg-orange-700"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                        }`}
+                      title={
+                        editableEmployees.has(employee._id)
+                          ? "Disable editing"
+                          : "Enable editing"
+                      }
+                    >
+                      {editableEmployees.has(employee._id)
+                        ? "Disable Edit"
+                        : "Edit"}
+                    </button>
+                  )}
                 {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
@@ -963,7 +959,7 @@ const EmployeeGridTable = ({
               </div>
 
               {/* NEW: Assets Column - spans 2 rows */}
-              <div className="row-span-2 flex items-center p-1">
+              {/* <div className="row-span-2 flex items-center p-1">
                 <div className="text-xs text-gray-700 max-w-32 break-words">
                   {assetsLoading ? (
                     <span className="text-gray-500 animate-pulse">
@@ -975,6 +971,9 @@ const EmployeeGridTable = ({
                     </span>
                   )}
                 </div>
+              </div> */}
+              <div>
+                Assets Pending
               </div>
 
               {/* Second row of data (paired under headers) */}
