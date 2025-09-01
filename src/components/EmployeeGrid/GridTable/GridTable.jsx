@@ -376,13 +376,14 @@ const EmployeeGridTable = ({
     setSelectedEmployee(null);
   };
 
-  {/* Employee View Modal */}
+  {
+    /* Employee View Modal */
+  }
   <EmployeeViewModal
     isOpen={isViewModalOpen}
     onClose={handleCloseViewModal}
     employee={selectedEmployee}
-  />
-
+  />;
 
   // Pagination handlers remain the same
   const handlePageChange = (page) => {
@@ -884,7 +885,13 @@ const EmployeeGridTable = ({
 
               {/* Vertical action buttons - spans 2 rows */}
               <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
-                {permissions?.userData?.roles[0]?.accessRequirement[0]?.canEdit && (
+                {permissions?.userData?.roles?.some((role) =>
+                  role.accessRequirement?.some(
+                    (access) =>
+                      access.resourceName.toLowerCase() === "employee" &&
+                      access.canEdit === true
+                  )
+                ) && (
                   <button
                     onClick={() => toggleEditMode(employee._id)}
                     className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
@@ -909,14 +916,14 @@ const EmployeeGridTable = ({
                 >
                   Delete
                 </button> */}
-                 {!isEditing && (
+                {!isEditing && (
                   <button
-                   onClick={() => handleView(employee)}
+                    onClick={() => handleView(employee)}
                     className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
                   >
                     View
-                 </button>
-                 )}
+                  </button>
+                )}
                 {/* Removed horizontal action row; actions shown vertically next to checkbox */}
                 {isEditing && (
                   <>
@@ -2151,7 +2158,6 @@ export default EmployeeGridTable;
 //           </div>
 //         )}
 //       </div>
-
 
 //       {/* Confirmation Modal */}
 //       {confirmPopup && renderConfirmationModal()}

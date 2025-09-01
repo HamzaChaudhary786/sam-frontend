@@ -19,10 +19,9 @@ const AssetTable = ({
   // New modal handlers
   onIssueRounds,
   onConsumeRounds,
-  onTransferReturn
+  onTransferReturn,
 }) => {
-
-  const permissions = usePermissions()
+  const permissions = usePermissions();
 
   if (filteredAssignments.length === 0) {
     return (
@@ -59,7 +58,10 @@ const AssetTable = ({
           <th className="px-6 py-3 text-left">
             <input
               type="checkbox"
-              checked={selectedItems.length === filteredAssignments.length && filteredAssignments.length > 0}
+              checked={
+                selectedItems.length === filteredAssignments.length &&
+                filteredAssignments.length > 0
+              }
               onChange={handleSelectAll}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
@@ -102,29 +104,39 @@ const AssetTable = ({
                 <div className="text-sm font-medium text-gray-900">
                   {getAssetNames(assignment.asset)}
                 </div>
-                {assignment.asset && Array.isArray(assignment.asset) && assignment.asset.length > 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {assignment.asset
-                      .filter(asset => asset && (asset.serialNumber || asset.weaponNumber))
-                      .map((asset, index) => (
-                        <div key={index}>
-                          {asset.serialNumber && `Serial: ${asset.serialNumber}`}
-                          {asset.weaponNumber && ` | Weapon: ${asset.weaponNumber}`}
-                        </div>
-                      ))}
-                  </div>
-                )}
+                {assignment.asset &&
+                  Array.isArray(assignment.asset) &&
+                  assignment.asset.length > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {assignment.asset
+                        .filter(
+                          (asset) =>
+                            asset && (asset.serialNumber || asset.weaponNumber)
+                        )
+                        .map((asset, index) => (
+                          <div key={index}>
+                            {asset.serialNumber &&
+                              `Serial: ${asset.serialNumber}`}
+                            {asset.weaponNumber &&
+                              ` | Weapon: ${asset.weaponNumber}`}
+                          </div>
+                        ))}
+                    </div>
+                  )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
                   <div className="font-medium">
-                    {assignment.assignedRounds || "0"}/{assignment.consumedRounds || "0"}
+                    {assignment.assignedRounds || "0"}/
+                    {assignment.consumedRounds || "0"}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {assignment.assignedRounds && assignment.consumedRounds ?
-                      `${Math.max(0, (assignment.assignedRounds - assignment.consumedRounds))} remaining` :
-                      'No rounds data'
-                    }
+                    {assignment.assignedRounds && assignment.consumedRounds
+                      ? `${Math.max(
+                          0,
+                          assignment.assignedRounds - assignment.consumedRounds
+                        )} remaining`
+                      : "No rounds data"}
                   </div>
                 </div>
               </td>
@@ -160,7 +172,13 @@ const AssetTable = ({
                   {!assignment.isApproved && (
                     <>
                       {/* Approve Button - Admin Only */}
-                      {permissions?.userData?.roles[0]?.accessRequirement[0]?.canApprove && (
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canApprove === true
+                        )
+                      ) && (
                         <button
                           onClick={() => handleApprove(assignment)}
                           className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors mb-1"
@@ -181,36 +199,38 @@ const AssetTable = ({
                           </svg>
                           Approve
                         </button>
-                      )
-                      }
+                      )}
 
                       {/* Edit Button */}
 
-                      {
-                        permissions?.userData?.roles[0]?.accessRequirement[0]?.canEdit && (
-                          <button
-                            onClick={() => onEdit(assignment)}
-                            className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors mb-1"
-                            title="Edit Assignment"
-                          >
-                            <svg
-                              className="w-3 h-3 mr-1"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            Edit
-                          </button>
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canEdit === true
                         )
-                      }
-
+                      ) && (
+                        <button
+                          onClick={() => onEdit(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors mb-1"
+                          title="Edit Assignment"
+                        >
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
+                      )}
 
                       {/* Transfer/Return Button */}
                       <button
@@ -279,7 +299,13 @@ const AssetTable = ({
                       </button>
 
                       {/* Delete Button - Admin Only */}
-                      {permissions?.userData?.roles[0]?.accessRequirement[0]?.canDelete && (
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canDelete === true
+                        )
+                      ) && (
                         <button
                           onClick={() => handleDelete(assignment._id)}
                           className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors mb-1"

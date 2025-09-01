@@ -60,10 +60,8 @@ const EmployeeList = ({
     []
   );
 
-
   const [isEdit, setIsEdit] = useState(false);
   const [editData, setEditData] = useState({});
-
 
   // View Modal state
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -303,8 +301,8 @@ const EmployeeList = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-        ? 1
-        : 0;
+      ? 1
+      : 0;
   };
 
   // Image navigation functions
@@ -446,6 +444,8 @@ const EmployeeList = ({
     );
   }
 
+  console.log(permissions, "my permissions hahahhaha");
+
   return (
     <div className={compactView ? "p-0" : "p-3 sm:p-6 lg:p-0"}>
       {/* Header Section - Responsive */}
@@ -472,7 +472,13 @@ const EmployeeList = ({
           {/* Header Buttons - Only show if not in station context */}
           {!stationContext && (
             <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
-              {permissions?.userData?.roles[0]?.accessRequirement[0]?.canAdd && (
+              {permissions?.userData?.roles?.some((role) =>
+                role.accessRequirement?.some(
+                  (access) =>
+                    access.resourceName.toLowerCase() === "employee" &&
+                    access.canAdd === true
+                )
+              ) && (
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
                   onClick={handleAddEmployee}
@@ -480,26 +486,22 @@ const EmployeeList = ({
                   Add Employee
                 </button>
               )}
-              {
-                permissions?.hasStationAccess && (
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                    onClick={handleAddStation}
-                  >
-                    Stations
-                  </button>
-                )
-              }
-              {
-                permissions?.hasAssetAccess && (
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                    onClick={handleAddAsset}
-                  >
-                    Assets
-                  </button>
-                )
-              }
+              {permissions?.hasStationAccess && (
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                  onClick={handleAddStation}
+                >
+                  Stations
+                </button>
+              )}
+              {permissions?.hasAssetAccess && (
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                  onClick={handleAddAsset}
+                >
+                  Assets
+                </button>
+              )}
               <button
                 className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
                 onClick={handleBulkStationAssignment}
@@ -586,8 +588,9 @@ const EmployeeList = ({
                   return (
                     <tr
                       key={employee._id}
-                      className={`hover:bg-gray-50 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                        }`}
+                      className={`hover:bg-gray-50 ${
+                        multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                      }`}
                     >
                       {!compactView && (
                         <td className="px-1 py-2">
@@ -656,14 +659,15 @@ const EmployeeList = ({
                       {/* Information Column - Ultra Compact */}
                       <td className="px-1 py-2">
                         <div
-                          className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${employee.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : employee.status === "retired"
+                          className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${
+                            employee.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : employee.status === "retired"
                               ? "bg-blue-100 text-blue-800"
                               : employee.status === "terminated"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                         >
                           {employee.status}
                         </div>
@@ -702,26 +706,34 @@ const EmployeeList = ({
                           >
                             View
                           </button>
-                          {
-                            permissions?.userData?.roles[0]?.accessRequirement[0]?.canEdit && (
-                              <button
-                                onClick={() => handleEdit(employee)}
-                                className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                              >
-                                Edit
-                              </button>
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canEdit === true
                             )
-                          }
-                          {
-                            permissions?.userData?.roles[0]?.accessRequirement[0]?.canDelete && (
-                              <button
-                                onClick={() => handleDelete(employee._id)}
-                                className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                              >
-                                Delete
-                              </button>
+                          ) && (
+                            <button
+                              onClick={() => handleEdit(employee)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canDelete === true
                             )
-                          }
+                          ) && (
+                            <button
+                              onClick={() => handleDelete(employee._id)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                            >
+                              Delete
+                            </button>
+                          )}
 
                           <button
                             onClick={() => handleAssets(employee)}
@@ -774,8 +786,9 @@ const EmployeeList = ({
             return (
               <div
                 key={employee._id}
-                className={`border-b border-gray-200 p-4 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                  }`}
+                className={`border-b border-gray-200 p-4 ${
+                  multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                }`}
               >
                 <div className="flex items-start space-x-3">
                   {/* Using the component's render function */}
@@ -832,14 +845,15 @@ const EmployeeList = ({
                         </h3>
                       </h3>
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : employee.status === "retired"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          employee.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : employee.status === "retired"
                             ? "bg-blue-100 text-blue-800"
                             : employee.status === "terminated"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
                       >
                         {employee.status}
                       </span>
@@ -889,22 +903,24 @@ const EmployeeList = ({
                           View
                         </button>
 
-                        {
-                          permissions?.userData?.roles[0]?.accessRequirement[0]?.canEdit && (
-                            <button
-                              onClick={() => handleEdit(employee)}
-                              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
-                            >
-                              Edit
-                            </button>
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                                "employee" && access.canEdit === true
                           )
-                        }
-
+                        ) && (
+                          <button
+                            onClick={() => handleEdit(employee)}
+                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
 
                       {/* Secondary Actions Row */}
                       <div className="grid grid-cols-2 gap-2 mb-2">
-
                         <button
                           onClick={() => handleAssets(employee)}
                           className="px-3 py-1 text-xs bg-cyan-100 text-cyan-700 rounded-md hover:bg-cyan-200 text-center"
@@ -944,7 +960,13 @@ const EmployeeList = ({
                           Deductions
                         </button>
 
-                        {permissions?.userData?.roles[0]?.accessRequirement[0]?.canDelete && (
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                                "employee" && access.canDelete === true
+                          )
+                        ) && (
                           <button
                             onClick={() => handleDelete(employee._id)}
                             className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
