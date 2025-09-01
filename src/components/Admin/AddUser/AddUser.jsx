@@ -3,9 +3,9 @@ import { X } from "lucide-react";
 import {
   userTypes,
   role_data_entery,
-  role_incharge,
   role_admin,
   role_view_only,
+  
 } from "../../../constants/Enum";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 
@@ -43,9 +43,8 @@ const SearchableSelect = ({
 
       <div className="relative">
         <div
-          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-          }`}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+            }`}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           <div className="flex justify-between items-center">
@@ -55,9 +54,8 @@ const SearchableSelect = ({
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ${
-                isOpen ? "transform rotate-180" : ""
-              }`}
+              className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "transform rotate-180" : ""
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,11 +88,10 @@ const SearchableSelect = ({
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}
-                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                      value === option.value
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-900"
-                    }`}
+                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${value === option.value
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-900"
+                      }`}
                     onClick={() => handleSelect(option.value)}
                   >
                     <div className="font-medium">{option.label}</div>
@@ -131,7 +128,6 @@ const UserModal = ({
   // Create user type enum object for EnumSelect
   const userTypeEnum = {
     [role_data_entery]: "Data Entry",
-    [role_incharge]: "In Charge",
     [role_admin]: "Admin",
     [role_view_only]: "View Only",
   };
@@ -244,7 +240,7 @@ const UserModal = ({
       alert("Password is required for new users");
       return;
     }
-  
+
     // Remove employeeId if it's empty (optional field)
     if (!formData.employeeId || formData.employeeId === "") {
       delete formData.employeeId;
@@ -514,8 +510,8 @@ const UserModal = ({
                 {loading
                   ? "Saving..."
                   : editingUser
-                  ? "Update User"
-                  : "Create User"}
+                    ? "Update User"
+                    : "Create User"}
               </button>
             </div>
           </div>

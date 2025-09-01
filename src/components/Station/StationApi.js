@@ -5,6 +5,9 @@ const API_URL = BACKEND_URL;
 
 // Helper function to get token from localStorage
 const getToken = () => localStorage.getItem('authToken');
+const userData = localStorage.getItem("userData");
+const user = JSON.parse(userData);
+
 
 // Helper function to get headers with token
 const getAuthHeaders = () => {
@@ -17,9 +20,7 @@ export const getAllStationsWithoutPage = async (filters = {}) => {
   try {
     // // Build query string from filters
     const queryParams = new URLSearchParams();
-
-    // // Add filter parameters
-    // if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
+    if (filters.name) queryParams.append('name', filters.name);
 
     const queryString = queryParams.toString();
     const url = `${API_URL}/stations/allStationsWithoutPage${queryString ? `?${queryString}` : ''}`;
@@ -39,6 +40,10 @@ export const getAllStationsWithoutPage = async (filters = {}) => {
 // Get all stations with optional filters and pagination
 export const getStations = async (filters = {}) => {
   try {
+    // console.log(filters.tehsil, "my tehsil filters hahhahahahahhahahahhahahahahhahahhahaha");
+
+
+
     // Build query string from filters
     const queryParams = new URLSearchParams();
 
@@ -48,6 +53,16 @@ export const getStations = async (filters = {}) => {
     if (filters.address) queryParams.append('address', filters.address);
     if (filters.status) queryParams.append('status', filters.status);
     if (filters.district) queryParams.append('district', filters.district);
+
+
+    if (user.userType === 'data_entry') {
+      let myTehsil = user?.roles[0]?.tehsil;
+      let myDistrict = user?.roles[0]?.district;
+      if (myTehsil) queryParams.append('tehsil', [myTehsil]);
+      if (myDistrict) queryParams.append('district', [myDistrict]);
+    }
+
+
 
 
 

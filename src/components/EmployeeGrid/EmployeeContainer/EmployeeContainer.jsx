@@ -8,13 +8,17 @@ import { getRanksWithEnum } from "../../Employee/AddEmployee/Rank.js";
 import { getStatusWithEnum } from "../../Employee/AddEmployee/Status.js";
 import { getStationDistrictWithEnum } from "../../Station/District.js";
 import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
-import { getAllStationsWithoutPage, getStations } from "../../Station/StationApi.js";
+import {
+  getAllStationsWithoutPage,
+  getStations,
+} from "../../Station/StationApi.js";
 import { updateEmployee } from "../../Employee/EmployeeApi.js";
 import { uploadToCloudinary } from "../../Employee/AddEmployee/Cloudinary.js";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
 import EmployeeGridTable from "../GridTable/GridTable.jsx";
 import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const EmployeeGridContainer = () => {
   const {
@@ -35,12 +39,13 @@ const EmployeeGridContainer = () => {
   } = useEmployees();
 
   // State management
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [editingCell, setEditingCell] = useState(null);
   const [editingData, setEditingData] = useState({}); // Changed: Now stores data by employee ID
   const [imageModal, setImageModal] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const permissions = usePermissions();
 
   // Enum states
   const [enums, setEnums] = useState({
@@ -51,7 +56,7 @@ const EmployeeGridContainer = () => {
     statuses: [],
     district: [],
     tehsil: [],
-    stations: []
+    stations: [],
   });
 
   // User role state
@@ -67,7 +72,8 @@ const EmployeeGridContainer = () => {
         const storedUserType = localStorage.getItem("userType");
         const userData = localStorage.getItem("userData");
         const parsedUserData = userData ? JSON.parse(userData) : null;
-        const currentUserType = storedUserType || parsedUserData?.userType || "";
+        const currentUserType =
+          storedUserType || parsedUserData?.userType || "";
         setUserType(currentUserType);
         setIsAdmin(currentUserType === role_admin);
       } catch (error) {
@@ -84,8 +90,14 @@ const EmployeeGridContainer = () => {
     const fetchEnums = async () => {
       try {
         const [
-          desigRes, gradeRes, castRes, rankRes, statusRes,
-          districtRes, locationRes, stationsRes
+          desigRes,
+          gradeRes,
+          castRes,
+          rankRes,
+          statusRes,
+          districtRes,
+          locationRes,
+          stationsRes,
         ] = await Promise.all([
           getDesignationsWithEnum(),
           getGradesWithEnum(),
@@ -99,26 +111,31 @@ const EmployeeGridContainer = () => {
 
         const processEnumData = (response, key) => {
           if (response.success && response.data) {
-            if (key === 'stations') {
-              return response.data.stations?.map(station => ({
-                _id: station._id,
-                name: station.name
-              })) || [];
+            if (key === "stations") {
+              return (
+                response.data.stations?.map((station) => ({
+                  _id: station._id,
+                  name: station.name,
+                })) || []
+              );
             }
-            return Object.entries(response.data).map(([_id, name]) => ({ _id, name }));
+            return Object.entries(response.data).map(([_id, name]) => ({
+              _id,
+              name,
+            }));
           }
           return [];
         };
 
         setEnums({
-          designations: processEnumData(desigRes, 'designations'),
-          grades: processEnumData(gradeRes, 'grades'),
-          casts: processEnumData(castRes, 'casts'),
-          ranks: processEnumData(rankRes, 'ranks'),
-          statuses: processEnumData(statusRes, 'statuses'),
-          district: processEnumData(districtRes, 'districts'),
-          tehsil: processEnumData(locationRes, 'locations'),
-          stations: processEnumData(stationsRes, 'stations')
+          designations: processEnumData(desigRes, "designations"),
+          grades: processEnumData(gradeRes, "grades"),
+          casts: processEnumData(castRes, "casts"),
+          ranks: processEnumData(rankRes, "ranks"),
+          statuses: processEnumData(statusRes, "statuses"),
+          district: processEnumData(districtRes, "districts"),
+          tehsil: processEnumData(locationRes, "locations"),
+          stations: processEnumData(stationsRes, "stations"),
         });
       } catch (error) {
         console.error("Error fetching enums:", error);
@@ -138,9 +155,9 @@ const EmployeeGridContainer = () => {
 
   // Sorting
   const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
   };
@@ -152,19 +169,19 @@ const EmployeeGridContainer = () => {
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
 
-      if (sortConfig.key.includes('.')) {
-        const keys = sortConfig.key.split('.');
+      if (sortConfig.key.includes(".")) {
+        const keys = sortConfig.key.split(".");
         aValue = keys.reduce((obj, key) => obj?.[key], a);
         bValue = keys.reduce((obj, key) => obj?.[key], b);
       }
 
-      if (typeof aValue === 'string') {
+      if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
   };
@@ -173,25 +190,31 @@ const EmployeeGridContainer = () => {
   const handlePrevImage = (employeeId, totalImages) => {
     setImageIndexes((prev) => ({
       ...prev,
-      [employeeId]: (prev[employeeId] ?? 0) === 0 ? totalImages - 1 : (prev[employeeId] ?? 0) - 1,
+      [employeeId]:
+        (prev[employeeId] ?? 0) === 0
+          ? totalImages - 1
+          : (prev[employeeId] ?? 0) - 1,
     }));
   };
 
   const handleNextImage = (employeeId, totalImages) => {
     setImageIndexes((prev) => ({
       ...prev,
-      [employeeId]: (prev[employeeId] ?? 0) === totalImages - 1 ? 0 : (prev[employeeId] ?? 0) + 1,
+      [employeeId]:
+        (prev[employeeId] ?? 0) === totalImages - 1
+          ? 0
+          : (prev[employeeId] ?? 0) + 1,
     }));
   };
 
   // Helper function to get nested value from employee object
   const getNestedValue = (employee, fieldPath) => {
-    const pathParts = fieldPath.split('.');
+    const pathParts = fieldPath.split(".");
     let value = employee;
     for (const part of pathParts) {
       value = value?.[part];
     }
-    return value || '';
+    return value || "";
   };
 
   // Editing functions
@@ -202,12 +225,12 @@ const EmployeeGridContainer = () => {
     }
     setEditingCell({ rowId, fieldName });
     // Store editing data by employee ID
-    setEditingData(prev => ({
+    setEditingData((prev) => ({
       ...prev,
       [rowId]: {
         ...prev[rowId],
-        [fieldName]: value
-      }
+        [fieldName]: value,
+      },
     }));
   };
 
@@ -219,7 +242,7 @@ const EmployeeGridContainer = () => {
   const cancelAllEditing = (employeeId) => {
     setEditingCell(null);
     // Clear editing data for this specific employee
-    setEditingData(prev => {
+    setEditingData((prev) => {
       const newData = { ...prev };
       delete newData[employeeId];
       return newData;
@@ -228,69 +251,69 @@ const EmployeeGridContainer = () => {
 
   const handleCellChange = (fieldName, value) => {
     if (!editingCell) return;
-    
+
     const { rowId } = editingCell;
-    setEditingData(prev => ({
+    setEditingData((prev) => ({
       ...prev,
       [rowId]: {
         ...prev[rowId],
-        [fieldName]: value
-      }
+        [fieldName]: value,
+      },
     }));
   };
 
   // Helper function to apply nested updates to an object
   const applyNestedUpdate = (obj, path, value) => {
-    const pathParts = path.split('.');
+    const pathParts = path.split(".");
     const result = { ...obj };
-    
+
     let current = result;
     for (let i = 0; i < pathParts.length - 1; i++) {
       const part = pathParts[i];
-      if (!current[part] || typeof current[part] !== 'object') {
+      if (!current[part] || typeof current[part] !== "object") {
         current[part] = {};
       } else {
         current[part] = { ...current[part] };
       }
       current = current[part];
     }
-    
+
     current[pathParts[pathParts.length - 1]] = value;
     return result;
   };
 
-const saveAllCell = async () => {
-  const employeeIds = Object.keys(editingData);
-  if (employeeIds.length === 0) return;
+  const saveAllCell = async () => {
+    const employeeIds = Object.keys(editingData);
+    if (employeeIds.length === 0) return;
 
-  try {
-    // Save all edited employees in parallel
-    await Promise.all(
-      employeeIds.map(async (employeeId) => {
-        const employee = employees.find((emp) => emp._id === employeeId);
-        if (employee) {
-          await saveCell(employee);
-        }
-      })
-    );
-    toast.success("All changes saved!");
-  } catch (error) {
-    toast.error("Failed to save all changes");
-    console.error(error);
-  }
-};
+    try {
+      // Save all edited employees in parallel
+      await Promise.all(
+        employeeIds.map(async (employeeId) => {
+          const employee = employees.find((emp) => emp._id === employeeId);
+          if (employee) {
+            await saveCell(employee);
+          }
+        })
+      );
+      toast.success("All changes saved!");
+    } catch (error) {
+      toast.error("Failed to save all changes");
+      console.error(error);
+    }
+  };
 
   const saveCell = async (employee) => {
     try {
       // Get the editing data for this specific employee
       const employeeEditingData = editingData[employee._id] || {};
-      
+
       // Start with the original employee data
       let updatedData = { ...employee };
-      
+
       // Apply all the editing changes, handling nested fields properly
       Object.entries(employeeEditingData).forEach(([fieldPath, value]) => {
-        if (fieldPath.includes('.')) {
+        if (fieldPath.includes(".")) {
           // Handle nested fields like address.line1
           updatedData = applyNestedUpdate(updatedData, fieldPath, value);
         } else {
@@ -298,10 +321,17 @@ const saveAllCell = async () => {
           updatedData[fieldPath] = value;
         }
       });
-      
+
       // Validate required fields
-      if (!updatedData.personalNumber || !updatedData.firstName || !updatedData.cnic || !updatedData.fatherFirstName) {
-        toast.error("Personal Number, First Name, CNIC, and Father's First Name are required fields");
+      if (
+        !updatedData.personalNumber ||
+        !updatedData.firstName ||
+        !updatedData.cnic ||
+        !updatedData.fatherFirstName
+      ) {
+        toast.error(
+          "Personal Number, First Name, CNIC, and Father's First Name are required fields"
+        );
         return;
       }
 
@@ -309,7 +339,7 @@ const saveAllCell = async () => {
       if (result.success) {
         // Clear editing state for this employee after successful save
         setEditingCell(null);
-        setEditingData(prev => {
+        setEditingData((prev) => {
           const newData = { ...prev };
           delete newData[employee._id];
           return newData;
@@ -330,18 +360,20 @@ const saveAllCell = async () => {
 
     try {
       toast.info("Uploading image...");
-      
+
       // Upload to Cloudinary
       const uploadResult = await uploadToCloudinary(file);
-      
+
       if (uploadResult.success) {
         // Update employee's profile with new image
-        const currentImages = Array.isArray(employee.profileUrl) ? employee.profileUrl : [employee.profileUrl].filter(Boolean);
+        const currentImages = Array.isArray(employee.profileUrl)
+          ? employee.profileUrl
+          : [employee.profileUrl].filter(Boolean);
         const updatedImages = [...currentImages, uploadResult.url];
-        
+
         const updatedData = {
           ...employee,
-          profileUrl: updatedImages
+          profileUrl: updatedImages,
         };
 
         // Save updated employee data
@@ -350,26 +382,35 @@ const saveAllCell = async () => {
           toast.success("Image uploaded successfully");
           // No need to refresh data as modifyEmployee updates the state directly
         } else {
-          throw new Error(result.error || 'Failed to save employee data');
+          throw new Error(result.error || "Failed to save employee data");
         }
       } else {
-        throw new Error(uploadResult.error || 'Upload failed');
+        throw new Error(uploadResult.error || "Upload failed");
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Failed to upload image: ' + error.message);
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image: " + error.message);
     }
   };
 
   // Remove image function - SINGLE FUNCTION ONLY
   const handleRemoveImage = async (employee, imageIndex) => {
     try {
-      const currentImages = Array.isArray(employee.profileUrl) ? employee.profileUrl : [employee.profileUrl].filter(Boolean);
-      const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
-      
+      const currentImages = Array.isArray(employee.profileUrl)
+        ? employee.profileUrl
+        : [employee.profileUrl].filter(Boolean);
+      const updatedImages = currentImages.filter(
+        (_, index) => index !== imageIndex
+      );
+
       const updatedData = {
         ...employee,
-        profileUrl: updatedImages.length > 0 ? updatedImages : [`https://ui-avatars.com/api/?name=${employee.firstName}+${employee.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`]
+        profileUrl:
+          updatedImages.length > 0
+            ? updatedImages
+            : [
+                `https://ui-avatars.com/api/?name=${employee.firstName}+${employee.lastName}&background=6366f1&color=ffffff&size=200&rounded=true&bold=true`,
+              ],
       };
 
       const result = await modifyEmployee(employee._id, updatedData);
@@ -377,11 +418,11 @@ const saveAllCell = async () => {
         toast.success("Image removed successfully");
         // No need to refresh data as modifyEmployee updates the state directly
       } else {
-        throw new Error(result.error || 'Failed to save employee data');
+        throw new Error(result.error || "Failed to save employee data");
       }
     } catch (error) {
-      console.error('Error removing image:', error);
-      toast.error('Failed to remove image: ' + error.message);
+      console.error("Error removing image:", error);
+      toast.error("Failed to remove image: " + error.message);
     }
   };
 
@@ -427,7 +468,7 @@ const saveAllCell = async () => {
       const escapeCSVField = (field) => {
         if (field == null) return "";
         const str = String(field);
-        if (str.includes(",") || str.includes("\"") || str.includes("\n")) {
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
           return `"${str.replace(/\"/g, '""')}"`;
         }
         return str;
@@ -529,7 +570,9 @@ const saveAllCell = async () => {
             getEnumName("district", e.address?.line2),
             getEmployeeAssetsString(e._id),
           ];
-          return `<tr>${row.map((c) => `<td>${String(c ?? "").replace(/</g, "&lt;")}</td>`).join("")}</tr>`;
+          return `<tr>${row
+            .map((c) => `<td>${String(c ?? "").replace(/</g, "&lt;")}</td>`)
+            .join("")}</tr>`;
         })
         .join("");
 
@@ -571,7 +614,7 @@ const saveAllCell = async () => {
   const handleAddAsset = () => {
     navigate("/assets");
   };
-  
+
   const handleBulkStationAssignment = () => {
     navigate("/bulk-station-assignment");
   };
@@ -593,7 +636,7 @@ const saveAllCell = async () => {
             Employee Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Click Edit button, then double-click any cell to edit 
+            Click Edit button, then double-click any cell to edit
           </p>
           {!isAdmin && (
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -601,7 +644,7 @@ const saveAllCell = async () => {
             </p>
           )}
         </div>
-
+        {console.log(permissions, "my permission")}
         <div className="flex flex-wrap gap-2">
           {isAdmin && (
             <button
@@ -617,27 +660,39 @@ const saveAllCell = async () => {
           >
             List View
           </button>
-          <button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
-            onClick={() => setIsExportModalOpen(true)}
-          >
-            Export
-          </button>
+          {permissions?.userData?.roles?.some((role) =>
+            role.accessRequirement?.some(
+              (access) =>
+                access.resourceName.toLowerCase() === "employee" &&
+                access.canPrint === true
+            )
+          ) && (
+            <button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              Export
+            </button>
+          )}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">         
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-            onClick={handleAddStation}
-          >
-            Stations
-          </button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-            onClick={handleAddAsset}
-          >
-            Assets
-          </button>
+        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
+          {permissions.hasStationAccess && (
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+              onClick={handleAddStation}
+            >
+              Stations
+            </button>
+          )}
+          {permissions.hasAssetAccess && (
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+              onClick={handleAddAsset}
+            >
+              Assets
+            </button>
+          )}
           <button
             className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
             onClick={handleBulkStationAssignment}
@@ -681,7 +736,6 @@ const saveAllCell = async () => {
         updateFilters={updateFilters}
         clearFilters={clearFilters}
         removeEmployee={removeEmployee}
-
         // editing/ui props
         sortConfig={sortConfig}
         editingCell={editingCell}
@@ -708,28 +762,48 @@ const saveAllCell = async () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Export Data</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Export Data
+              </h2>
               <button
                 onClick={() => setIsExportModalOpen(false)}
                 className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Close export dialog"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="p-6">
-              <p className="text-gray-700 text-sm mb-4">Choose a format to export the currently visible table data.</p>
+              <p className="text-gray-700 text-sm mb-4">
+                Choose a format to export the currently visible table data.
+              </p>
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => { setIsExportModalOpen(false); exportCSV(); }}
+                  onClick={() => {
+                    setIsExportModalOpen(false);
+                    exportCSV();
+                  }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                 >
                   CSV
                 </button>
                 <button
-                  onClick={() => { setIsExportModalOpen(false); exportPDF(); }}
+                  onClick={() => {
+                    setIsExportModalOpen(false);
+                    exportPDF();
+                  }}
                   className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium transition-colors"
                 >
                   PDF
@@ -741,7 +815,9 @@ const saveAllCell = async () => {
                   Cancel
                 </button>
               </div>
-              <div className="mt-3 text-xs text-gray-500">Note: Export respects current filters and page.</div>
+              <div className="mt-3 text-xs text-gray-500">
+                Note: Export respects current filters and page.
+              </div>
             </div>
           </div>
         </div>
@@ -763,7 +839,7 @@ const saveAllCell = async () => {
               alt={`${imageModal.employee.firstName} ${imageModal.employee.lastName} - Full Size`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded-lg">
               <h3 className="font-medium">
                 {imageModal.employee.firstName} {imageModal.employee.lastName}
@@ -772,14 +848,24 @@ const saveAllCell = async () => {
                 {imageModal.employee.personalNumber}
               </p>
             </div>
-            
+
             <button
               onClick={() => setImageModal(null)}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
               title="Close"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>

@@ -8,8 +8,10 @@ import {
 } from "../AssetApi.js";
 import { role_admin } from "../../../constants/Enum.js";
 import ClickableEmployeeName from "../../Employee/ClickableName.jsx"; // Adjust path as needed
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
+  const permissions = usePermissions();
   // User role state
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -440,44 +442,51 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
           </div>
 
           {/* Approval Fields - Only show when editing and user is admin */}
-          {editingAsset && isAdmin && (
-            <>
-              {/* Approval Checkbox */}
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex flex-row gap-2 items-center">
-                  <input
-                    type="checkbox"
-                    name="isApproved"
-                    checked={formData.isApproved}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                  />
-                  <label className="block text-sm font-medium text-gray-700">
-                    Approved
-                  </label>
+          {editingAsset &&
+            permissions?.userData?.roles?.some((role) =>
+              role.accessRequirement?.some(
+                (access) =>
+                  access.resourceName.toLowerCase() === "employee" &&
+                  access.canApprove === true
+              )
+            ) && (
+              <>
+                {/* Approval Checkbox */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex flex-row gap-2 items-center">
+                    <input
+                      type="checkbox"
+                      name="isApproved"
+                      checked={formData.isApproved}
+                      onChange={handleChange}
+                      className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                    />
+                    <label className="block text-sm font-medium text-gray-700">
+                      Approved
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              {/* Approval Comment */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Approval Comments *
-                </label>
-                <textarea
-                  name="approvalComment"
-                  value={formData.approvalComment}
-                  onChange={handleChange}
-                  placeholder="Enter detailed reason for this approval/comments..."
-                  rows={2}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Provide approval comments or additional notes
-                </p>
-              </div>
-            </>
-          )}
+                {/* Approval Comment */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Approval Comments *
+                  </label>
+                  <textarea
+                    name="approvalComment"
+                    value={formData.approvalComment}
+                    onChange={handleChange}
+                    placeholder="Enter detailed reason for this approval/comments..."
+                    rows={2}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Provide approval comments or additional notes
+                  </p>
+                </div>
+              </>
+            )}
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">

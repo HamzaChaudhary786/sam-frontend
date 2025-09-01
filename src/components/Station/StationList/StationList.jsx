@@ -62,7 +62,6 @@ const StationList = () => {
 
   const [employeeCounts, setEmployeeCounts] = useState({});
   const [loadingCounts, setLoadingCounts] = useState(false);
-
   // Export modal state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportOptions, setExportOptions] = useState({
@@ -94,7 +93,7 @@ const StationList = () => {
 
   useEffect(() => {
     if (safeStations.length > 0) {
-      fetchEmployeeCounts(safeStations);
+      // fetchEmployeeCounts(safeStations);
     }
   }, [safeStations]);
 
@@ -114,51 +113,51 @@ const StationList = () => {
       setLoadingLocations(false);
     }
   };
-  const fetchEmployeeCounts = async (stations) => {
-    if (!stations || stations.length === 0) return;
+  // const fetchEmployeeCounts = async (stations) => {
+  //   if (!stations || stations.length === 0) return;
 
-    setLoadingCounts(true);
-    const counts = {};
+  //   setLoadingCounts(true);
+  //   const counts = {};
 
-    try {
-      // Fetch counts for all visible stations in parallel
-      const countPromises = stations.map(async (station) => {
-        try {
-          const result = await getEmployees({
-            station: station._id,
-          });
+  //   try {
+  //     // Fetch counts for all visible stations in parallel
+  //     const countPromises = stations.map(async (station) => {
+  //       try {
+  //         const result = await getEmployees({
+  //           station: station._id,
+  //         });
 
-          // Handle different possible response structures
-          const count =
-            result?.data?.totalEmployees ||
-            result?.totalEmployees ||
-            result?.data?.employees?.length ||
-            result?.data?.length ||
-            0;
+  //         // Handle different possible response structures
+  //         const count =
+  //           result?.data?.totalEmployees ||
+  //           result?.totalEmployees ||
+  //           result?.data?.employees?.length ||
+  //           result?.data?.length ||
+  //           0;
 
-          return { stationId: station._id, count };
-        } catch (error) {
-          console.error(
-            `Error fetching count for station ${station._id}:`,
-            error
-          );
-          return { stationId: station._id, count: 0 };
-        }
-      });
+  //         return { stationId: station._id, count };
+  //       } catch (error) {
+  //         console.error(
+  //           `Error fetching count for station ${station._id}:`,
+  //           error
+  //         );
+  //         return { stationId: station._id, count: 0 };
+  //       }
+  //     });
 
-      const results = await Promise.all(countPromises);
+  //     const results = await Promise.all(countPromises);
 
-      results.forEach(({ stationId, count }) => {
-        counts[stationId] = count;
-      });
+  //     results.forEach(({ stationId, count }) => {
+  //       counts[stationId] = count;
+  //     });
 
-      setEmployeeCounts((prev) => ({ ...prev, ...counts }));
-    } catch (error) {
-      console.error("Error fetching employee counts:", error);
-    } finally {
-      setLoadingCounts(false);
-    }
-  };
+  //     setEmployeeCounts((prev) => ({ ...prev, ...counts }));
+  //   } catch (error) {
+  //     console.error("Error fetching employee counts:", error);
+  //   } finally {
+  //     setLoadingCounts(false);
+  //   }
+  // };
 
   // Multiple selection handlers
   const handleSelectStation = (stationId) => {
@@ -406,13 +405,11 @@ const StationList = () => {
                 <tr>
                   <td>${escapeHtml(station.name)}</td>
                   <td>${escapeHtml(getStationLocationName(station.tehsil))}</td>
-                  <td>${escapeHtml(station.address?.line1 || "")}${
-            station.address?.line2
+                  <td>${escapeHtml(station.address?.line1 || "")}${station.address?.line2
               ? ", " + escapeHtml(station.address.line2)
               : ""
-          }${
-            station.address?.city ? ", " + escapeHtml(station.address.city) : ""
-          }</td>
+            }${station.address?.city ? ", " + escapeHtml(station.address.city) : ""
+            }</td>
                   <td>${escapeHtml(station.district || "")}</td>
                   <td>${escapeHtml(station.status || "")}</td>
                 </tr>
@@ -437,18 +434,18 @@ const StationList = () => {
               </thead>
               <tbody>
                 ${employees
-                  .map((e) => {
-                    const fullName = `${escapeHtml(
-                      e.firstName || ""
-                    )} ${escapeHtml(e.lastName || "")}`.trim();
-                    const designation =
-                      e.designation?.title || e.designation || "";
-                    const grade = e.grade?.name || e.grade || "";
-                    const serviceType = e.serviceType || "";
-                    const assets = exportOptions.includeAssets
-                      ? `<td>${escapeHtml(e.__assets || "")}</td>`
-                      : "";
-                    return `<tr>
+              .map((e) => {
+                const fullName = `${escapeHtml(
+                  e.firstName || ""
+                )} ${escapeHtml(e.lastName || "")}`.trim();
+                const designation =
+                  e.designation?.title || e.designation || "";
+                const grade = e.grade?.name || e.grade || "";
+                const serviceType = e.serviceType || "";
+                const assets = exportOptions.includeAssets
+                  ? `<td>${escapeHtml(e.__assets || "")}</td>`
+                  : "";
+                return `<tr>
                       <td>${fullName}</td>
                       <td>${escapeHtml(e.personalNumber || "")}</td>
                       <td>${escapeHtml(designation)}</td>
@@ -456,8 +453,8 @@ const StationList = () => {
                       <td>${escapeHtml(serviceType)}</td>
                       ${assets}
                     </tr>`;
-                  })
-                  .join("")}
+              })
+              .join("")}
               </tbody>
             </table>
           `);
@@ -493,7 +490,7 @@ const StationList = () => {
         win.document.open();
         win.document.write(
           html +
-            "<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>"
+          "<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>"
         );
         win.document.close();
       } else if (format === "xls") {
@@ -543,9 +540,8 @@ const StationList = () => {
           const empRows = [];
           data.forEach(({ station, employees }) => {
             employees.forEach((e) => {
-              const fullName = `${e?.firstName || ""} ${
-                e?.lastName || ""
-              }`.trim();
+              const fullName = `${e?.firstName || ""} ${e?.lastName || ""
+                }`.trim();
               const row = [
                 station?.name || "",
                 fullName,
@@ -854,19 +850,19 @@ const StationList = () => {
                         />
                         {/* Show main image if available */}
                         {station.stationImageUrl &&
-                        station.stationImageUrl.length > 0 ? (
+                          station.stationImageUrl.length > 0 ? (
                           <div className="relative">
                             <img
                               src={
                                 station.stationImageUrl[
-                                  imageIndexes[station._id] ?? 0
+                                imageIndexes[station._id] ?? 0
                                 ]
                               }
                               alt="Station"
                               onClick={() =>
                                 setImageModal(
                                   station.stationImageUrl[
-                                    imageIndexes[station._id] ?? 0
+                                  imageIndexes[station._id] ?? 0
                                   ]
                                 )
                               }
@@ -934,12 +930,29 @@ const StationList = () => {
                             >
                               {station.name}
                             </h3>
+                            <button
+                              onClick={() =>
+                                handleToggleEmployeeView(
+                                  station._id,
+                                  !expandedStations.has(station._id)
+                                )
+                              }
+                              className={`px-3 py-1 text-xs rounded-md transition ${expandedStations.has(station._id)
+                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                }`}
+                              title={
+                                expandedStations.has(station._id)
+                                  ? "Hide employees"
+                                  : "Show employees"
+                              }
+                            >
+                              {expandedStations.has(station._id)
+                                ? "Hide Emp"
+                                : "Show Emp"}
+                            </button>
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {loadingCounts ? (
-                                <span className="animate-pulse">...</span>
-                              ) : (
-                                `${employeeCounts[station._id] || 0} emp`
-                              )}
+                              {station?.employeeCount}
                             </span>
                             <div className="text-sm text-gray-900">
                               {/* Facilities */}
@@ -951,9 +964,9 @@ const StationList = () => {
                                         (itm, index) => (
                                           <span
                                             key={index}
-                                            // className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                          // className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
                                           >
-                                            {/* {itm.employee} {itm.type} */}
+                                            {itm?.employee?.firstName} {itm?.employee?.lastName} {itm?.type}
                                           </span>
                                         )
                                       )}
@@ -1168,28 +1181,7 @@ const StationList = () => {
                             >
                               Edit
                             </button>
-                            <button
-                              onClick={() =>
-                                handleToggleEmployeeView(
-                                  station._id,
-                                  !expandedStations.has(station._id)
-                                )
-                              }
-                              className={`px-3 py-1 text-xs rounded-md transition ${
-                                expandedStations.has(station._id)
-                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                  : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                              }`}
-                              title={
-                                expandedStations.has(station._id)
-                                  ? "Hide employees"
-                                  : "Show employees"
-                              }
-                            >
-                              {expandedStations.has(station._id)
-                                ? "Hide Emp"
-                                : "Show Emp"}
-                            </button>
+
                             {/* <button
                               onClick={() => handleDelete(station._id)}
                               className="px-3 py-1 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
@@ -1251,19 +1243,19 @@ const StationList = () => {
                 <div className="flex-shrink-0 relative">
                   {/* Station Image */}
                   {station.stationImageUrl &&
-                  station.stationImageUrl.length > 0 ? (
+                    station.stationImageUrl.length > 0 ? (
                     <div className="relative">
                       <img
                         src={
                           station.stationImageUrl[
-                            imageIndexes[station._id] ?? 0
+                          imageIndexes[station._id] ?? 0
                           ]
                         }
                         alt="Station"
                         onClick={() =>
                           setImageModal(
                             station.stationImageUrl[
-                              imageIndexes[station._id] ?? 0
+                            imageIndexes[station._id] ?? 0
                             ]
                           )
                         }
@@ -1384,11 +1376,10 @@ const StationList = () => {
                             !expandedStations.has(station._id)
                           )
                         }
-                        className={`px-3 py-1 text-xs rounded-md text-center transition ${
-                          expandedStations.has(station._id)
-                            ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                        }`}
+                        className={`px-3 py-1 text-xs rounded-md text-center transition ${expandedStations.has(station._id)
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                          }`}
                       >
                         {expandedStations.has(station._id)
                           ? "Hide Employees"
