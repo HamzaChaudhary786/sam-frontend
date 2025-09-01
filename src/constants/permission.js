@@ -18,6 +18,24 @@ export function getUserAccessibleResources(userData) {
   
   const accessibleResources = new Set();
   
+  const userType = userData.userType;
+
+  // if (userType === "admin") {
+  //   accessibleResources.add("employee");
+  //   accessibleResources.add("station");
+  //   accessibleResources.add("asset");
+  //   accessibleResources.add("audit");
+  //   accessibleResources.add("lookup");
+  //   accessibleResources.add("user");
+  // }else if (userType === "view_only") {
+  //   accessibleResources.add("employee");
+  //   accessibleResources.add("station");
+  //   accessibleResources.add("asset");
+  //   accessibleResources.add("audit");
+  //   accessibleResources.add("lookup");
+  //   accessibleResources.add("user");
+  // }
+
   userData.roles.forEach(role => {
     console.log('🏷️ Processing role:', role.name);
     

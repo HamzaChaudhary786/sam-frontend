@@ -358,10 +358,6 @@ const EmployeeList = ({
   };
 
   const handleAddEmployee = () => {
-    if (!isAdmin) {
-      toast.error("Access denied: Only administrators can add employees");
-      return;
-    }
     navigate("/employee");
   };
 
@@ -475,8 +471,8 @@ const EmployeeList = ({
               {permissions?.userData?.roles?.some((role) =>
                 role.accessRequirement?.some(
                   (access) =>
-                    access.resourceName.toLowerCase() === "employee" &&
-                    access.canAdd === true
+                    (access.resourceName.toLowerCase() === "employee"  &&
+                      access.canAdd === true)
                 )
               ) && (
                 <button

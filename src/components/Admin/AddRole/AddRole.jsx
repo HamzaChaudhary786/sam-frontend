@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, CheckSquare, Square } from "lucide-react";
+import { EnumSelect } from "../../SearchableDropdown";
+import { getStationLocationsWithEnum } from "../../Station/lookUp";
+import { getStationDistrictWithEnum } from "../../Station/District";
 
 const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    tehsil: "",
+    district: "",
     accessRequirement: [],
   });
+  const [stationLocations, setStationLocations] = useState({}); // State for station locations
+  const [districtLocations, setDistrictLocations] = useState({}); // State for district locations
+  const [loadingLocations, setLoadingLocations] = useState(false); // Loading state for locations
 
   const resourceOptions = [
     "station",
@@ -15,7 +23,7 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
     "users",
     "roles",
     "lookup",
-    "Audit"
+    "Audit",
   ];
 
   const permissionFields = [
@@ -27,11 +35,58 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
     { key: "canPrint", label: "Print" },
   ];
 
+  const fetchAllEnumData = async () => {
+    setLoadingLocations(true);
+    try {
+      // Fetch all enum data in parallel
+      const [stationLocationsResult, districtLocationsResult] =
+        await Promise.all([
+          getStationLocationsWithEnum(),
+          getStationDistrictWithEnum(),
+        ]);
+
+      // Handle station locations
+      if (stationLocationsResult.success) {
+        setStationLocations(stationLocationsResult.data);
+      } else {
+        console.error(
+          "Error fetching station locations:",
+          stationLocationsResult.error
+        );
+      }
+
+      // Handle district locations
+      if (districtLocationsResult.success) {
+        setDistrictLocations(districtLocationsResult.data);
+      } else {
+        console.error(
+          "Error fetching district locations:",
+          districtLocationsResult.error
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching enum data:", error);
+      setError("Failed to load some options. Please try again.");
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllEnumData();
+    }
+  }, [isOpen]);
+
+  console.log(stationLocations, "my tehsil data");
+
   useEffect(() => {
     if (editingRole) {
       setFormData({
         name: editingRole.name || "",
         description: editingRole.description || "",
+        tehsil: editingRole.tehsil || "",
+        district: editingRole.district || "",
         accessRequirement: editingRole.accessRequirement || [],
       });
     } else {
@@ -125,6 +180,22 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
     onClose();
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name.includes("address.")) {
+      const addressField = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -160,6 +231,7 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                   required
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description *
@@ -175,6 +247,31 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                   required
                 />
               </div>
+
+              <EnumSelect
+                label="Tehsil"
+                name="tehsil"
+                value={formData.tehsil}
+                onChange={handleChange}
+                enumObject={stationLocations}
+                required={true}
+                placeholder={
+                  loadingLocations
+                    ? "Loading locations..."
+                    : "Search and select tehsil..."
+                }
+                readOnly={loadingLocations}
+              />
+
+              <EnumSelect
+                label="District"
+                name="district"
+                value={formData.district}
+                onChange={handleChange}
+                enumObject={districtLocations}
+                required={true}
+                placeholder="Search and select district..."
+              />
             </div>
 
             {/* Permissions Section */}
@@ -300,8 +397,8 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
                 {loading
                   ? "Saving..."
                   : editingRole
-                    ? "Update Role"
-                    : "Create Role"}
+                  ? "Update Role"
+                  : "Create Role"}
               </button>
             </div>
           </div>

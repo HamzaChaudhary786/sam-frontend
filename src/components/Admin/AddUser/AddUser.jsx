@@ -3,27 +3,9 @@ import { X } from "lucide-react";
 import {
   userTypes,
   role_data_entery,
-  role_incharge,
   role_admin,
   role_view_only,
-  role_stationAdmin,
-  role_employeeAdmin,
-  role_assetAdmin,
-  role_stationIncharge,
-  role_employeeIncharge,
-  role_assetIncharge,
-  role_stationClerk,
-  role_employeeClerk,
-  role_assetClerk,
-  role_auditAdmin,
-  role_auditIncharge,
-  role_auditClerk,
-  role_lookupAdmin,
-  role_lookupIncharge,
-  role_lookupClerk,
-  role_userAdmin,
-  role_userIncharge,
-  role_userClerk,
+  
 } from "../../../constants/Enum";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 
@@ -145,28 +127,8 @@ const UserModal = ({
 }) => {
   // Create user type enum object for EnumSelect
   const userTypeEnum = {
-    [role_data_entery]: "Clerk",
-    [role_incharge]: "In Charge",
+    [role_data_entery]: "Data Entry",
     [role_admin]: "Admin",
-
-    [role_employeeAdmin]: "employeeAdmin",
-    [role_employeeClerk]: "employeeClerk",
-    [role_employeeIncharge]: "employeeIncharge",
-    [role_assetAdmin]: "assetAdmin",
-    [role_assetIncharge]: "assetIncharge",
-    [role_assetClerk]: "assetClerk",
-    [role_stationAdmin]: "stationAdmin",
-    [role_stationIncharge]: "stationIncharge",
-    [role_stationClerk]: "stationClerk",
-    [role_auditAdmin]: "auditAdmin",
-    [role_auditIncharge]: "auditIncharge",
-    [role_auditClerk]: "auditClerk",
-    [role_lookupAdmin]: "lookupAdmin",
-    [role_lookupIncharge]: "lookupIncharge",
-    [role_lookupClerk]: "lookupClerk",
-    [role_userAdmin]: "userAdmin",
-    [role_userIncharge]: "userIncharge",
-    [role_userClerk]: "userClerk",
     [role_view_only]: "View Only",
   };
 

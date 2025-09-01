@@ -4,7 +4,7 @@ import { getStationStatusWithEnum } from "./stationstatus.js";
 import { getStationDistrictWithEnum } from "./District.js";
 import { SearchableMultiSelect } from "../Employee/searchableMultiselect.jsx"; // 🆕 Import the SearchableMultiSelect component
 import { MultiTextInput } from "../Employee/MultiTextInput.jsx"; // 🆕 Import the MultiTextInput component
-import { getStations } from "./StationApi.js"; // 🆕 Import for station name suggestions
+import { getAllStationsWithoutPage} from "./StationApi.js"; // 🆕 Import for station name suggestions
 
 const StationFilters = ({
   filters,
@@ -69,13 +69,14 @@ const StationFilters = ({
     setIsSearching((prev) => ({ ...prev, name: true }));
 
     try {
-      const result = await getStations({
+      
+      const result = await  getAllStationsWithoutPage({
         name: query,
         limit: 10,
-      });
+      });      
 
       if (result.success) {
-        const stations = result.data.stations || result.data || [];
+        const stations = result?.data?.result || result.data || [];
         const names = stations
           .map((station) => station.name)
           .filter(Boolean);
