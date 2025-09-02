@@ -13,7 +13,7 @@ import { useLookupOptions } from "../../services/LookUp.js";
 import { STATUS_ENUM } from "./AddEmployee/EmployeeConstants";
 import { SearchableMultiSelect } from "./searchableMultiselect.jsx"; // 🆕 Import the new component
 import { MultiTextInput } from "./MultiTextInput"; // 🆕 Import the multi-text input component
-import { getEmployees } from "./EmployeeApi.js";
+import { getEmployees , getEmployeesWithoutPagination } from "./EmployeeApi.js";
 
 // Add this after your imports
 const SERVICE_TYPE_ENUM = {
@@ -93,7 +93,7 @@ const searchPersonalNumbers = async (query) => {
   try {
     // ✅ FIX: Use 'name' parameter instead of 'personalNumber'
     // The backend's name search includes personalNumber in the $or query
-    const result = await getEmployees({
+    const result = await getEmployeesWithoutPagination({
       name: query,  // This searches firstName, lastName, personalNumber, and cnic
       limit: 10,
     });
@@ -131,7 +131,7 @@ const searchCNICs = async (query) => {
   try {
     // ✅ FIX: Use 'name' parameter instead of 'cnic'
     // The backend's name search includes cnic in the $or query
-    const result = await getEmployees({
+    const result = await getEmployeesWithoutPagination({
       name: query,  // This searches firstName, lastName, personalNumber, and cnic
       limit: 10,
     });
@@ -168,7 +168,7 @@ const searchEmployeeNames = async (query) => {
   setIsSearching((prev) => ({ ...prev, name: true }));
 
   try {
-    const result = await getEmployees({
+    const result = await getEmployeesWithoutPagination({
       name: query,
       limit: 10,
     });

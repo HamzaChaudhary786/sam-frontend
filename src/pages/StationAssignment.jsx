@@ -10,7 +10,6 @@ const StationAssignmentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { employee } = location.state || {};
-
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -115,8 +114,8 @@ const StationAssignmentPage = () => {
             Station Assignment Management
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-  Managing Station assignments for{" "}
-    <span
+            Managing Station assignments for{" "}
+            <span
               onClick={() => handleView(employee)}
               className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
             >
@@ -125,7 +124,7 @@ const StationAssignmentPage = () => {
             ({employee.personalNumber || employee.pnumber})
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleAddNew}
@@ -170,7 +169,7 @@ const StationAssignmentPage = () => {
         onSuccess={handleFormSuccess}
         onCancel={handleCloseModal}
       />
-          <EmployeeViewModal
+      <EmployeeViewModal
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         employee={selectedEmployee}

@@ -35,15 +35,6 @@ export const getEmployees = async (filters = {}) => {
     if (filters.assetType) queryParams.append('assetType', filters.assetType);
     if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
 
-
-
-
-
-
-
-
-
-
     
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page);
@@ -66,6 +57,53 @@ export const getEmployees = async (filters = {}) => {
     };
   }
 };
+
+
+
+export const getEmployeesWithoutPagination = async (filters = {}) => {
+  try {
+    // Build query string from filters and pagination
+    const queryParams = new URLSearchParams();
+    
+    // Add filter parameters
+    if (filters.name) queryParams.append('name', filters.name);
+    if (filters.address) queryParams.append('address', filters.address);
+    if (filters.personalNumber) queryParams.append('personalNumber', filters.personalNumber);
+    if (filters.cnic) queryParams.append('cnic', filters.cnic);
+    if (filters.designation) queryParams.append('designation', filters.designation);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.cast) queryParams.append('cast', filters.cast);
+    if (filters.grade) queryParams.append('grade', filters.grade);
+    if (filters.rank) queryParams.append('rank', filters.rank);
+    if (filters.tehsil) queryParams.append('tehsil', filters.tehsil);
+    if (filters.district) queryParams.append('district', filters.district);
+    if (filters.station) queryParams.append('station', filters.station);
+    if (filters.assetType) queryParams.append('assetType', filters.assetType);
+    if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+
+    
+    // Add pagination parameters
+    if (filters.page) queryParams.append('page', filters.page);
+    if (filters.limit) queryParams.append('limit', filters.limit);
+    
+    const queryString = queryParams.toString();
+    const url = `${API_URL}/employee/without-page${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await axios.get(url, {
+      headers: getAuthHeaders()
+    });
+    
+    return { success: true, data: response.data };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
+    // toast.error(`Error fetching employees: ${errorMessage}`);
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
+};
+
 
 export const getEmployeesAll = async (filters = {}) => {
   try {
