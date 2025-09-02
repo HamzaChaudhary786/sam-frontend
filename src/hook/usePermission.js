@@ -40,12 +40,12 @@ export function usePermissions() {
   const accessibleResources = getUserAccessibleResources(userData);  
   const permissions = {
     // Resource access checks
-    hasEmployeeAccess: accessibleResources.has(RESOURCES.EMPLOYEE),
-    hasStationAccess: accessibleResources.has(RESOURCES.STATION),
-    hasAssetAccess: accessibleResources.has(RESOURCES.ASSET),
-    hasAuditAccess: accessibleResources.has(RESOURCES.AUDIT),
-    hasLookupAccess: accessibleResources.has(RESOURCES.LOOKUP),
-    hasUserAccess: accessibleResources.has(RESOURCES.USER),
+    hasEmployeeAccess: userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.EMPLOYEE),
+    hasStationAccess:  userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.STATION),
+    hasAssetAccess:  userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.ASSET),
+    hasAuditAccess:  userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.AUDIT),
+    hasLookupAccess:  userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.LOOKUP),
+    hasUserAccess:  userData?.userType === 'admin'? true : accessibleResources.has(RESOURCES.USER),
     
     // Generic functions
     hasAccess: (resource) => hasResourceAccess(userData, resource),
