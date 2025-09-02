@@ -61,6 +61,9 @@ export const getEmployees = async (filters = {}) => {
 
 
 export const getEmployeesWithoutPagination = async (filters = {}) => {
+
+    return await getEmployees(filters); // TODO: Remove this line when API is ready
+
   try {
     // Build query string from filters and pagination
     const queryParams = new URLSearchParams();
@@ -120,9 +123,6 @@ export const getEmployeesAll = async (filters = {}) => {
     if (filters.cast) queryParams.append('cast', filters.cast);
     if (filters.grade) queryParams.append('grade', filters.grade);
     if (filters.rank) queryParams.append('rank', filters.rank);
-
-
-
 
 
     
