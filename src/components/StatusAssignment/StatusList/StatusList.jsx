@@ -8,13 +8,14 @@ import {
 } from "../StatusAssignmentApi.js";
 import { getStatusWithEnum } from "../../Employee/AddEmployee/Status.js";
 import { role_admin } from "../../../constants/Enum.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const permissions = usePermissions();
   // Dynamic status options from API
   const [statusOptions, setStatusOptions] = useState({});
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
@@ -283,7 +284,7 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   const getStatusColorClass = (status) => {
     // Get the display name for color mapping
     const displayName = getStatusDisplayName(status);
-    
+
     switch (displayName?.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-800";
@@ -578,15 +579,15 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 "System"}
                             </div>
                           )}
-                           {assignment.approvalDate && (
+                          {assignment.approvalDate && (
                             <div className="text-xs text-gray-500">
                               Approved on: {formatDate(assignment.approvalDate)}
                             </div>
                           )}
                           {assignment.disciplinaryAction && (
-                          <div className="text-xs text-red-500">
-                                Disciplinary Action
-                                </div>
+                            <div className="text-xs text-red-500">
+                              Disciplinary Action
+                            </div>
                           )}
                         </div>
                       </td>
@@ -606,50 +607,35 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                           {!assignment.isApproved && (
                             <>
                               {/* Approve Button - Admin Only */}
-                              {isAdmin ? (
-                                <button
-                                  onClick={() => handleApprove(assignment)}
-                                  className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
-                                  title="Approve Assignment"
-                                >
-                                  <svg
-                                    className="w-3 h-3 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                    "employee" && access.canApprove === true
+                                )
+                              ) && (
+                                  <button
+                                    onClick={() => handleApprove(assignment)}
+                                    className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                                    title="Approve Assignment"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                  Approve
-                                </button>
-                              ) : (
-                                <button
-                                  disabled
-                                  className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
-                                  title="Only administrators can approve assignments"
-                                >
-                                  <svg
-                                    className="w-3 h-3 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                  Approve
-                                </button>
-                              )}
-                              
+                                    <svg
+                                      className="w-3 h-3 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Approve
+                                  </button>
+                                )}
+
                               {/* Edit Button */}
                               <button
                                 onClick={() => onEdit(assignment)}
@@ -671,51 +657,36 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 </svg>
                                 Edit
                               </button>
-                              
+
                               {/* Delete Button - Admin Only */}
-                              {isAdmin ? (
-                                <button
-                                  onClick={() => handleDelete(assignment._id)}
-                                  className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                                  title="Delete Assignment"
-                                >
-                                  <svg
-                                    className="w-3 h-3 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                    "employee" && access.canDelete === true
+                                )
+                              ) && (
+                                  <button
+                                    onClick={() => handleDelete(assignment._id)}
+                                    className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                                    title="Delete Assignment"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                  Delete
-                                </button>
-                              ) : (
-                                <button
-                                  disabled
-                                  className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
-                                  title="Only administrators can delete assignments"
-                                >
-                                  <svg
-                                    className="w-3 h-3 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                  Delete
-                                </button>
-                              )}
+                                    <svg
+                                      className="w-3 h-3 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                )}
                             </>
                           )}
                           {assignment.isApproved && (

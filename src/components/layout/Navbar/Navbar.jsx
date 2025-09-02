@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import logoImage from "../../../assets/logobig.jpg";
 import { IoMdNotifications } from "react-icons/io";
 import { getPendingApprovals } from "../../StationAssignment/StationAssignmentApi";
+import { RESOURCE_ACCESS } from "../../../constants/Enum";
+import { usePermissions } from "../../../hook/usePermission";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -11,6 +13,7 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const [pendingApproval, setPendingApproval] = useState([]);
   const navigate = useNavigate();
+  const permissions = usePermissions();
 
   const handleLogout = () => {
     // Clear localStorage
@@ -81,11 +84,40 @@ const Navbar = () => {
     };
   }, []);
 
+  const userData = localStorage.getItem("userData");
+  const parsed = JSON.parse(userData);
+  const userTypeData = parsed?.userType;
+  const userName = `${parsed?.firstName} ${parsed?.lastName}`;
+
+  const userDistrictTehsil = () => {
+    let myType = `${userName} as ${
+      userType === "admin"
+        ? "Admin"
+        : userType === "data_entry"
+        ? "User"
+        : "View Only"
+    }`;
+
+    if (parsed?.userType === "data_entry") {
+      if (parsed?.roles[0]?.tehsil) {
+        let myTehsil = parsed?.roles[0]?.tehsil;
+        let myDistrict = parsed?.roles[0]?.district;
+        return `${myType} for tehsil: ${myTehsil}-${myDistrict}`;
+      }
+    }
+    return `${myType}`;
+  };
+
+  // Single boolean: true if userType matches ANY resource
+  const hasEmployeeAccess = Object.values(RESOURCE_ACCESS).some((list) =>
+    list.includes(userTypeData)
+  );
+
+  console.log("hasEmployeeAccess:", hasEmployeeAccess);
+
   useEffect(() => {
-    const userData = localStorage.getItem("userData");
     if (userData) {
       try {
-        const parsed = JSON.parse(userData);
         setUserType(parsed.userType || "Unknown");
         setLastLogin(formatLastLogin(parsed.lastLogin));
       } catch (e) {
@@ -152,9 +184,9 @@ const Navbar = () => {
           {/* User Info Section - Hidden on mobile (320px), visible on larger screens */}
           <div className="hidden sm:flex flex-col items-center justify-center text-sm text-gray-600 mr-2">
             <div className="flex items-center space-x-1">
-              <span>Logged in as:</span>
-              <span className="font-semibold capitalize text-blue-600">
-                {userType}
+              <span>Logged in:</span>
+              <span className="font-semibold capitalize text-blue-600 flex">
+                {userDistrictTehsil()}
               </span>
             </div>
             <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
@@ -207,8 +239,9 @@ const Navbar = () => {
                 </svg>
                 <span className="hidden xs:inline">Menu</span>
                 <svg
-                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${isDropdownOpen ? "rotate-180" : "rotate-0"
-                    }`}
+                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${
+                    isDropdownOpen ? "rotate-180" : "rotate-0"
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -224,10 +257,11 @@ const Navbar = () => {
 
               {/* Dropdown Menu with Animation */}
               <div
-                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${isDropdownOpen
-                  ? "opacity-100 scale-100 translate-y-0"
-                  : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-                  }`}
+                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${
+                  isDropdownOpen
+                    ? "opacity-100 scale-100 translate-y-0"
+                    : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                }`}
               >
                 {/* Dropdown Header with Close Button */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
@@ -249,7 +283,14 @@ const Navbar = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900 capitalize">
-                        {userType}
+                        {userName}
+                        {` as ${
+                          userType === "admin"
+                            ? "Admin"
+                            : userType === "data_entry"
+                            ? "User"
+                            : "View Only"
+                        }`}
                       </p>
                       <p className="text-xs text-gray-500 sm:hidden">
                         Last login: {lastLogin}
@@ -279,35 +320,13 @@ const Navbar = () => {
 
                 {/* Menu Items */}
                 <div className="py-2 max-h-96 overflow-y-auto">
-                  <button
-                    onClick={() => handleNavigation("/dashboard")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-indigo-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex gap-0 px-0 py-0">
+                    <button
+                      onClick={() => handleNavigation("/dashboard")}
+                      className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                      />
-                    </svg>
-                    <span className="font-medium">Home</span>
-                  </button>
-
-                  <div className="my-2 border-t border-gray-100"></div>
-
-                  <button
-                    onClick={() => handleNavigation("/bulk-asset")}
-                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <div className="flex flex-row ">
                       <svg
-                        className="h-5 w-5 mr-3 text-purple-600"
+                        className="h-5 w-5 mr-3 text-indigo-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -316,25 +335,18 @@ const Navbar = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                         />
                       </svg>
-                      <span>Bulk Assets</span>
-                    </div>
-                    <div className=" flex justify-end">
-                      <div className="h-2 w-2 rounded-full bg-green-600">
+                      <span className="font-medium">Home</span>
+                    </button>
 
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNavigation("/bulk-asset-assignment")}
-                    className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <div className="flex flex-row ">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
+                    >
                       <svg
-                        className="h-5 w-5 mr-3 text-purple-600"
+                        className="h-5 w-5 mr-3"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -343,211 +355,258 @@ const Navbar = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                         />
                       </svg>
-                      <span>Bulk Assets Assignment</span>
+                      <span className="font-medium">Logout</span>
+                    </button>
+                  </div>
+
+                  {/* <div className="my-2 border-t border-gray-100"></div> */}
+
+                  {permissions.hasAssetAccess && (
+                    <div className="flex gap-0 px-0 py-0">
+                      <button
+                        onClick={() => handleNavigation("/bulk-asset")}
+                        className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <div className="flex flex-row ">
+                          <svg
+                            className="h-5 w-5 mr-3 text-purple-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                          <span>Insert Assets</span>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          handleNavigation("/bulk-asset-assignment")
+                        }
+                        className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <div className="flex flex-row ">
+                          <svg
+                            className="h-5 w-5 mr-3 text-purple-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                          <span>Assets Assignment</span>
+                        </div>
+                      </button>
                     </div>
-                    <div className=" flex justify-end">
-                      <div className="h-2 w-2 rounded-full bg-green-600">
+                  )}
 
-                      </div>
+                  <div className="flex gap-0 px-0 py-0">
+                    {permissions.hasEmployeeAccess && (
+                      <button
+                        onClick={() => handleNavigation("/editgrid")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-emerald-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M3 10h18M3 14h18m-9-4v8m-7 0V7a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                        <span>Employees</span>
+                      </button>
+                    )}
+
+                    {permissions.hasAssetAccess && (
+                      <button
+                        onClick={() => handleNavigation("/assets")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-purple-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                        <span>Assets</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {permissions.hasStationAccess && (
+                    <div className="flex gap-0 px-0 py-0">
+                      <button
+                        onClick={() => handleNavigation("/stations")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span>Stations</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleNavigation("/maalkhana")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span>Maal Khana</span>
+                      </button>
                     </div>
-                  </button>
+                  )}
 
-                  <button
-                    onClick={() => handleNavigation("/editgrid")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-emerald-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {permissions.hasEmployeeAccess && (
+                    <button
+                      onClick={() => handleNavigation("/pendingapprovals")}
+                      className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 10h18M3 14h18m-9-4v8m-7 0V7a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <span>Employees</span>
-                  </button>
+                      <svg
+                        className="h-5 w-5 mr-3 text-cyan-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                      </svg>
+                      <span>Transfer Posting</span>
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => handleNavigation("/stations")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex gap-0 px-0 py-0">
+                    {permissions.hasLookupAccess && (
+                      <button
+                        onClick={() => handleNavigation("/lookup")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-orange-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span>Lookups</span>
+                      </button>
+                    )}
+
+                    {permissions.hasUserAccess && (
+                      <button
+                        onClick={() => handleNavigation("/admin")}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="h-5 w-5 mr-3 text-teal-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                        <span>User Role</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {permissions.hasAuditAccess && (
+                    <button
+                      onClick={() => handleNavigation("/audit")}
+                      className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <span>Stations</span>
-                  </button>
+                      <svg
+                        className="h-5 w-5 mr-3 text-amber-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <span>Audit Trail</span>
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => handleNavigation("/pendingapprovals")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-cyan-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                      />
-                    </svg>
-                    <span>Transfer Posting</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/assets")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      />
-                    </svg>
-                    <span>Assets</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/maalkhana")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <span>Maal Khana</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/lookup")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-orange-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <span>Bulk Insert Lookup</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/audit")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-amber-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <span>Audit Trail</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigation("/admin")}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3 text-teal-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <span>User Role</span>
-                  </button>
-
-                  <div className="my-2 border-t border-gray-100"></div>
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="h-5 w-5 mr-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    <span className="font-medium">Logout</span>
-                  </button>
+                  {/* <div className="my-2 border-t border-gray-100"></div> */}
                 </div>
               </div>
             </div>
@@ -576,8 +635,9 @@ const Navbar = () => {
 
       {/* Mobile backdrop with animation */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${
+          isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
+        }`}
         onClick={closeDropdown}
       />
     </nav>

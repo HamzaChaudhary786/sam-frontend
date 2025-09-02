@@ -1,14 +1,15 @@
 // AssetTable.jsx - Updated with modal button handlers
 import React from "react";
+import { usePermissions } from "../../../hook/usePermission";
 
-const AssetTable = ({ 
-  filteredAssignments, 
-  selectedItems, 
-  handleSelectItem, 
-  handleSelectAll, 
-  handleApprove, 
-  onEdit, 
-  handleDelete, 
+const AssetTable = ({
+  filteredAssignments,
+  selectedItems,
+  handleSelectItem,
+  handleSelectAll,
+  handleApprove,
+  onEdit,
+  handleDelete,
   isAdmin,
   formatDate,
   getAssetNames,
@@ -18,8 +19,10 @@ const AssetTable = ({
   // New modal handlers
   onIssueRounds,
   onConsumeRounds,
-  onTransferReturn
+  onTransferReturn,
 }) => {
+  const permissions = usePermissions();
+
   if (filteredAssignments.length === 0) {
     return (
       <div className="text-center py-12">
@@ -55,7 +58,10 @@ const AssetTable = ({
           <th className="px-6 py-3 text-left">
             <input
               type="checkbox"
-              checked={selectedItems.length === filteredAssignments.length && filteredAssignments.length > 0}
+              checked={
+                selectedItems.length === filteredAssignments.length &&
+                filteredAssignments.length > 0
+              }
               onChange={handleSelectAll}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
@@ -83,7 +89,7 @@ const AssetTable = ({
           const assetTypes = getAssetTypes(assignment.asset);
           const hasWeapons = assetTypes.includes("weapons");
           const approvalStatus = getApprovalStatus(assignment);
-          
+
           return (
             <tr key={assignment._id} className="hover:bg-gray-50">
               <td className="px-6 py-4 whitespace-nowrap">
@@ -98,29 +104,39 @@ const AssetTable = ({
                 <div className="text-sm font-medium text-gray-900">
                   {getAssetNames(assignment.asset)}
                 </div>
-                {assignment.asset && Array.isArray(assignment.asset) && assignment.asset.length > 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {assignment.asset
-                      .filter(asset => asset && (asset.serialNumber || asset.weaponNumber))
-                      .map((asset, index) => (
-                        <div key={index}>
-                          {asset.serialNumber && `Serial: ${asset.serialNumber}`}
-                          {asset.weaponNumber && ` | Weapon: ${asset.weaponNumber}`}
-                        </div>
-                      ))}
-                  </div>
-                )}
+                {assignment.asset &&
+                  Array.isArray(assignment.asset) &&
+                  assignment.asset.length > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {assignment.asset
+                        .filter(
+                          (asset) =>
+                            asset && (asset.serialNumber || asset.weaponNumber)
+                        )
+                        .map((asset, index) => (
+                          <div key={index}>
+                            {asset.serialNumber &&
+                              `Serial: ${asset.serialNumber}`}
+                            {asset.weaponNumber &&
+                              ` | Weapon: ${asset.weaponNumber}`}
+                          </div>
+                        ))}
+                    </div>
+                  )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
                   <div className="font-medium">
-                    {assignment.assignedRounds || "0"}/{assignment.consumedRounds || "0"}
+                    {assignment.assignedRounds || "0"}/
+                    {assignment.consumedRounds || "0"}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {assignment.assignedRounds && assignment.consumedRounds ? 
-                      `${Math.max(0, (assignment.assignedRounds - assignment.consumedRounds))} remaining` : 
-                      'No rounds data'
-                    }
+                    {assignment.assignedRounds && assignment.consumedRounds
+                      ? `${Math.max(
+                          0,
+                          assignment.assignedRounds - assignment.consumedRounds
+                        )} remaining`
+                      : "No rounds data"}
                   </div>
                 </div>
               </td>
@@ -144,7 +160,7 @@ const AssetTable = ({
                         "System"}
                     </div>
                   )}
-                   {assignment.approvalDate && (
+                  {assignment.approvalDate && (
                     <div className="text-xs text-gray-500">
                       Approved on: {formatDate(assignment.approvalDate)}
                     </div>
@@ -156,7 +172,13 @@ const AssetTable = ({
                   {!assignment.isApproved && (
                     <>
                       {/* Approve Button - Admin Only */}
-                      {isAdmin ? (
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canApprove === true
+                        )
+                      ) && (
                         <button
                           onClick={() => handleApprove(assignment)}
                           className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors mb-1"
@@ -177,11 +199,21 @@ const AssetTable = ({
                           </svg>
                           Approve
                         </button>
-                      ) : (
+                      )}
+
+                      {/* Edit Button */}
+
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canEdit === true
+                        )
+                      ) && (
                         <button
-                          disabled
-                          className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed mb-1"
-                          title="Only administrators can approve assignments"
+                          onClick={() => onEdit(assignment)}
+                          className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors mb-1"
+                          title="Edit Assignment"
                         >
                           <svg
                             className="w-3 h-3 mr-1"
@@ -193,35 +225,13 @@ const AssetTable = ({
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M5 13l4 4L19 7"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                             />
                           </svg>
-                          Approve
+                          Edit
                         </button>
                       )}
-                      
-                      {/* Edit Button */}
-                      <button
-                        onClick={() => onEdit(assignment)}
-                        className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors mb-1"
-                        title="Edit Assignment"
-                      >
-                        <svg
-                          className="w-3 h-3 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                        Edit
-                      </button>
-                      
+
                       {/* Transfer/Return Button */}
                       <button
                         onClick={() => onTransferReturn(assignment)}
@@ -243,7 +253,7 @@ const AssetTable = ({
                         </svg>
                         Transfer/Return
                       </button>
-                      
+
                       {/* Consume Rounds Button */}
                       <button
                         onClick={() => onConsumeRounds(assignment)}
@@ -265,7 +275,7 @@ const AssetTable = ({
                         </svg>
                         Consume Rounds
                       </button>
-                      
+
                       {/* Issue Rounds Button */}
                       <button
                         onClick={() => onIssueRounds(assignment)}
@@ -287,9 +297,15 @@ const AssetTable = ({
                         </svg>
                         Issue Rounds
                       </button>
-                      
+
                       {/* Delete Button - Admin Only */}
-                      {isAdmin ? (
+                      {permissions?.userData?.roles?.some((role) =>
+                        role.accessRequirement?.some(
+                          (access) =>
+                            access.resourceName.toLowerCase() === "employee" &&
+                            access.canDelete === true
+                        )
+                      ) && (
                         <button
                           onClick={() => handleDelete(assignment._id)}
                           className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors mb-1"
@@ -310,31 +326,10 @@ const AssetTable = ({
                           </svg>
                           Delete
                         </button>
-                      ) : (
-                        <button
-                          disabled
-                          className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed mb-1"
-                          title="Only administrators can delete assignments"
-                        >
-                          <svg
-                            className="w-3 h-3 mr-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          Delete
-                        </button>
                       )}
                     </>
                   )}
-                  
+
                   {/* Approved State - Show different buttons */}
                   {assignment.isApproved && (
                     <>

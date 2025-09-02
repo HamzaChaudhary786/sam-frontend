@@ -28,6 +28,7 @@ export const useStations = (initialFilters = {}) => {
       };
       
       const result = await getStations(paginationFilters);
+
       
       if (result.success) {
         // Handle the case where data has a 'stations' property

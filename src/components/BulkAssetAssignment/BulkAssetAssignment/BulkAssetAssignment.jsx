@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import BulkAssetHeader from "../../BulkAsset/Header/Header.jsx";
 import BulkAssetFilters from "../../BulkAsset/Filter/Filter.jsx";
 import { getEmployees } from "../../Employee/EmployeeApi.js";
-import { getStations } from "../../Station/StationApi.js";
+import { getAllStationsWithoutPage, getStations } from "../../Station/StationApi.js";
 import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api.js";
 import AssetAssignmentsList from "../List/List.jsx";
@@ -39,6 +39,7 @@ const BulkAssetAssignment = () => {
       asset: null,
       employee: null,
       station: null,
+      outQuantity: null,
       assignmentDate: new Date().toISOString().split("T")[0],
       remarks: "",
     }));
@@ -62,6 +63,7 @@ const BulkAssetAssignment = () => {
   const [isStationEditMode, setIsStationEditMode] = useState(false);
   const [stationEditData, setStationEditData] = useState(null);
   const { createStation, modifyStation } = useStations();
+  const [selectedEmployee, setSelectedEmployee] = useState({})
 
   // Loading states for search
   const [isSearching, setIsSearching] = useState({});
@@ -78,7 +80,7 @@ const BulkAssetAssignment = () => {
   // Helper function to get employee image
   const getEmployeeImage = (employee) => {
     if (!employee) return "/default-avatar.png";
-    if (Array.isArray(employee.profileUrl) && employee.profileUrl.length > 0) {
+    if (Array.isArray(employee?.profileUrl) && employee?.profileUrl.length > 0) {
       return employee.profileUrl[0];
     }
     return employee.profileUrl || "/default-avatar.png";
@@ -114,7 +116,6 @@ const BulkAssetAssignment = () => {
   };
 
   const handleStationEdit = (stationData) => {
-    console.log("handleStationEdit called with:", stationData);
     setIsStationEditMode(true);
     setStationEditData(stationData);
     setIsStationModalOpen(true);
@@ -149,7 +150,6 @@ const BulkAssetAssignment = () => {
 
   const fetchMallkhanaAssets = async (mallkhanaId) => {
     try {
-      console.log("Fetching assets for mallkhana:", mallkhanaId);
       setLoading(true);
 
       const response = await axios.get(
@@ -179,7 +179,6 @@ const BulkAssetAssignment = () => {
           assets = response.data.data.asset;
         }
 
-        console.log("Processed assets:", assets);
         setMallkhanaAssets(assets);
 
         if (assets.length === 0) {
@@ -202,7 +201,6 @@ const BulkAssetAssignment = () => {
 
   // Header handlers
   const handleHeaderChange = (name, value) => {
-    console.log("Header change:", name, value);
     setHeaderData((prev) => ({
       ...prev,
       [name]: value,
@@ -230,6 +228,7 @@ const BulkAssetAssignment = () => {
       asset: null,
       employee: null,
       station: null,
+      outQuantity: null,
       assignmentDate: new Date().toISOString().split("T")[0],
       remarks: "",
     };
@@ -246,12 +245,6 @@ const BulkAssetAssignment = () => {
 
   // Search assets within mallkhana
   const searchAssets = (query, rowId) => {
-    console.log("Searching assets:", {
-      query,
-      rowId,
-      mallkhanaAssets: mallkhanaAssets.length,
-    });
-
     if (!headerData.mallkhana?._id) {
       toast.warning("Please select a Mallkhana first");
       return;
@@ -280,7 +273,6 @@ const BulkAssetAssignment = () => {
       );
     });
 
-    console.log("Filtered assets:", filteredAssets.length);
 
     setSearchResults((prev) => ({
       ...prev,
@@ -324,6 +316,9 @@ const BulkAssetAssignment = () => {
     }
   };
 
+
+
+
   // Search stations
   const searchStations = async (query, rowId) => {
     if (!query.trim()) {
@@ -337,7 +332,7 @@ const BulkAssetAssignment = () => {
     setIsSearching((prev) => ({ ...prev, [`station_${rowId}`]: true }));
 
     try {
-      const result = await getStations({
+      const result = await getAllStationsWithoutPage({
         name: query,
         limit: 25,
       });
@@ -374,7 +369,6 @@ const BulkAssetAssignment = () => {
 
   // Select handlers
   const selectAsset = (asset, rowId) => {
-    console.log("Selected asset:", asset);
     setAssignmentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, asset } : row))
     );
@@ -387,6 +381,7 @@ const BulkAssetAssignment = () => {
 
   const selectEmployee = (employee, rowId) => {
     console.log("Selected employee:", employee);
+    setSelectedEmployee(employee)
     setAssignmentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, employee } : row))
     );
@@ -398,7 +393,6 @@ const BulkAssetAssignment = () => {
   };
 
   const selectStation = (station, rowId) => {
-    console.log("Selected station:", station);
     setAssignmentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, station } : row))
     );
@@ -442,8 +436,7 @@ const BulkAssetAssignment = () => {
       }
       if (!row.employee && !row.station) {
         errors.push(
-          `Row ${
-            index + 1
+          `Row ${index + 1
           }: At least one of Employee or Station must be selected`
         );
       }
@@ -459,7 +452,6 @@ const BulkAssetAssignment = () => {
   // Replace the entire handleSaveAll function with this:
 
   const handleSaveAll = async () => {
-    console.log("=== STARTING BULK ASSET ASSIGNMENT ===");
 
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
@@ -477,6 +469,7 @@ const BulkAssetAssignment = () => {
         asset: row.asset._id,
         employee: row.employee?._id || null,
         station: row.station?._id || null,
+        outQuantity: row.outQuantity || null,
         assignmentDate: row.assignmentDate,
         remarks: row.remarks || "",
       }));
@@ -492,7 +485,6 @@ const BulkAssetAssignment = () => {
         mallkhana: headerData.mallkhana,
       };
 
-      console.log("Submitting assignment data:", assignmentData);
 
       // Make the actual API call to your backend
       const response = await axios.post(
@@ -534,6 +526,7 @@ const BulkAssetAssignment = () => {
                 asset: null,
                 employee: null,
                 station: null,
+                outQuantity: null,
                 assignmentDate: new Date().toISOString().split("T")[0],
                 remarks: "",
               },
@@ -549,8 +542,7 @@ const BulkAssetAssignment = () => {
         }, 1500);
       } else {
         toast.error(
-          `Failed to create asset assignments: ${
-            response.data?.message || "Unknown error"
+          `Failed to create asset assignments: ${response.data?.message || "Unknown error"
           }`
         );
       }
@@ -638,14 +630,21 @@ const BulkAssetAssignment = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Asset
+                  Station (Optional)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Employee (Optional)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Station (Optional)
+                  Current Assignment
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Asset
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Issue Quantity
+                </th>
+
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Assignment Date
                 </th>
@@ -660,207 +659,8 @@ const BulkAssetAssignment = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {assignmentRows.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50">
-                  {/* Asset Column */}
-                  <td className="px-6 py-4 relative">
-                    {row.asset ? (
-                      <div className="flex items-center">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">
-                            {row.asset.name || "Unnamed Asset"}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            Type: {row.asset.type || "N/A"} | Category:{" "}
-                            {row.asset.category || "N/A"}
-                          </div>
-                          {(row.asset.weaponNumber ||
-                            row.asset.pistolNumber ||
-                            row.asset.vehicleNumber) && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {row.asset.weaponNumber ||
-                                row.asset.pistolNumber ||
-                                row.asset.vehicleNumber}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => clearAsset(row.id)}
-                          disabled={loading}
-                          className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
-                          title="Clear selection"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder={
-                            !headerData.mallkhana
-                              ? "Select Mallkhana first..."
-                              : "Search asset..."
-                          }
-                          disabled={loading || !headerData.mallkhana}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
-                          value={assetSearch[row.id] || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setAssetSearch((prev) => ({
-                              ...prev,
-                              [row.id]: value,
-                            }));
-                            searchAssets(value, row.id);
-                          }}
-                        />
 
-                        {searchResults.assets[row.id]?.length > 0 && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                            {searchResults.assets[row.id].map((asset) => (
-                              <button
-                                key={asset._id}
-                                onClick={() => selectAsset(asset, row.id)}
-                                disabled={loading}
-                                className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
-                              >
-                                <div className="font-medium text-gray-900 truncate">
-                                  {asset.name || "Unnamed Asset"}
-                                </div>
-                                <div className="text-xs text-gray-500 truncate">
-                                  {asset.type} - {asset.category}
-                                </div>
-                                {(asset.weaponNumber ||
-                                  asset.pistolNumber ||
-                                  asset.vehicleNumber) && (
-                                  <div className="text-xs text-gray-400 truncate">
-                                    {asset.weaponNumber ||
-                                      asset.pistolNumber ||
-                                      asset.vehicleNumber}
-                                  </div>
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </td>
 
-                  {/* Employee Column */}
-                  <td className="px-6 py-4 relative">
-                    {row.employee ? (
-                      <div className="flex items-center">
-                        <img
-                          className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                          src={getEmployeeImage(row.employee)}
-                          alt={`${row.employee.firstName} ${row.employee.lastName}`}
-                          onError={(e) => {
-                            e.target.src = "/default-avatar.png";
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">
-                            <span
-                              onClick={() => handleEmployeeView(row.employee)}
-                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                            >
-                              {row.employee.firstName} {row.employee.lastName}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {row.employee.personalNumber ||
-                              row.employee.pnumber}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => clearEmployee(row.id)}
-                          disabled={loading}
-                          className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
-                          title="Clear selection"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search employee... (optional)"
-                          disabled={loading}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
-                          value={employeeSearch[row.id] || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setEmployeeSearch((prev) => ({
-                              ...prev,
-                              [row.id]: value,
-                            }));
-                            searchEmployees(value, row.id);
-                          }}
-                        />
-                        {isSearching[`employee_${row.id}`] && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          </div>
-                        )}
-
-                        {searchResults.employees[row.id]?.length > 0 && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                            {searchResults.employees[row.id].map((employee) => (
-                              <button
-                                key={employee._id}
-                                onClick={() => selectEmployee(employee, row.id)}
-                                disabled={loading}
-                                className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center border-b border-gray-100 last:border-b-0"
-                              >
-                                <img
-                                  className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                                  src={getEmployeeImage(employee)}
-                                  alt={`${employee.firstName} ${employee.lastName}`}
-                                  onError={(e) => {
-                                    e.target.src = "/default-avatar.png";
-                                  }}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-900 truncate">
-                                    {employee.firstName} {employee.lastName}
-                                  </div>
-                                  <div className="text-xs text-gray-500 truncate">
-                                    {employee.personalNumber ||
-                                      employee.pnumber}{" "}
-                                    | {employee.cnic}
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </td>
 
                   {/* Station Column */}
                   <td className="px-6 py-4 relative">
@@ -949,6 +749,268 @@ const BulkAssetAssignment = () => {
                       </div>
                     )}
                   </td>
+
+                  {console.log("Selected employee: hahahhahahhahahahhah", selectedEmployee)}
+                  {/* Employee Column */}
+                  <td className="px-6 py-4 relative">
+                    {row.employee ? (
+                      <div className="flex items-center">
+                        <img
+                          className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                          src={getEmployeeImage(row?.employee)}
+
+                          alt={`${row.employee.firstName} ${row.employee.lastName}`}
+                          onError={(e) => {
+                            e.target.src = "/default-avatar.png";
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            <div
+                              onClick={() => handleEmployeeView(row.employee)}
+                              className="text-gray-900 text-sm hover:text-blue-600 cursor-pointer hover:underline"
+                            >
+
+                              {row.employee.firstName}
+                            </div>
+                            <div className="text-xs">
+                              {row.employee.fatherFirstName}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {row.employee.personalNumber ||
+                              row.employee.pnumber || row.employee.rank}
+                          </div>
+
+
+                        </div>
+                        <button
+                          onClick={() => clearEmployee(row.id)}
+                          disabled={loading}
+                          className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
+                          title="Clear selection"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search employee... (optional)"
+                          disabled={loading}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
+                          value={employeeSearch[row.id] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setEmployeeSearch((prev) => ({
+                              ...prev,
+                              [row.id]: value,
+                            }));
+                            searchEmployees(value, row.id);
+                          }}
+                        />
+                        {isSearching[`employee_${row.id}`] && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          </div>
+                        )}
+
+                        {searchResults.employees[row.id]?.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                            {searchResults.employees[row.id].map((employee) => (
+                              <button
+                                key={employee._id}
+                                onClick={() => selectEmployee(employee, row.id)}
+                                disabled={loading}
+                                className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center border-b border-gray-100 last:border-b-0"
+                              >
+                                <img
+                                  className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                                  src={getEmployeeImage(employee)}
+                                  alt={`${employee.firstName} ${employee.lastName}`}
+                                  onError={(e) => {
+                                    e.target.src = "/default-avatar.png";
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-gray-900 truncate">
+                                    {employee.firstName} {employee.lastName}
+
+                                  </div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {employee.personalNumber ||
+                                      employee.rank ||
+                                      employee.pnumber}{" "}
+                                    | {employee.cnic}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+
+                  <td>
+                    <div>
+                      {row?.employee?.assignedAssets?.map((item) => (
+                        <div key={item._id} className="flex flex-row">
+                          {item.asset?.map((itm) => (
+                            <span key={itm._id} className="text-xs mt-0.5">
+                              {itm.name}
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    {console.log(row, "this is my row X hahahha")
+                    }
+                    <div >
+                      {row?.stations?.stationAssets?.map((item) => (
+                        <div key={item._id} className="flex flex-row">
+                          {item.asset?.map((itm) => (
+                            <span key={itm._id} className="text-xs mt-0.5">
+                              {itm.name}
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  {/* Asset Column */}
+                  <td className="px-6 py-4 relative">
+                    {row.asset ? (
+                      <div className="flex items-center">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {row.asset.name || "Unnamed Asset"}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            Type: {row.asset.type || "N/A"}
+                            <br />
+                            Category:{" "}
+                            {row.asset.category || "N/A"}
+                            <br />
+                            availible Quantity:{row?.asset?.availableQuantity || "N/A"}
+                          </div>
+                          {(row.asset.weaponNumber ||
+                            row.asset.pistolNumber ||
+                            row.asset.vehicleNumber) && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {row.asset.weaponNumber ||
+                                  row.asset.pistolNumber ||
+                                  row.asset.vehicleNumber}
+                              </div>
+                            )}
+                        </div>
+                        <button
+                          onClick={() => clearAsset(row.id)}
+                          disabled={loading}
+                          className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
+                          title="Clear selection"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder={
+                            !headerData.mallkhana
+                              ? "Select Mallkhana first..."
+                              : "Search asset..."
+                          }
+                          disabled={loading || !headerData.mallkhana}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
+                          value={assetSearch[row.id] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setAssetSearch((prev) => ({
+                              ...prev,
+                              [row.id]: value,
+                            }));
+                            searchAssets(value, row.id);
+                          }}
+                        />
+
+                        {searchResults.assets[row.id]?.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                            {searchResults.assets[row.id].map((asset) => (
+                              <button
+                                key={asset._id}
+                                onClick={() => selectAsset(asset, row.id)}
+                                disabled={loading}
+                                className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900 truncate">
+                                  {asset.name || "Unnamed Asset"}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {asset.type} - {asset.category}
+                                </div>
+                                {(asset.weaponNumber ||
+                                  asset.pistolNumber ||
+                                  asset.vehicleNumber) && (
+                                    <div className="text-xs text-gray-400 truncate">
+                                      {asset.weaponNumber ||
+                                        asset.pistolNumber ||
+                                        asset.vehicleNumber}
+                                    </div>
+                                  )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={row.outQuantity}
+                      disabled={loading}
+                      onChange={(e) => {
+                        if (Number(row?.asset?.availableQuantity) < Number(e.target.value)) {
+                          toast.warn("Issue quantity should be less than available quantity");
+                        }
+
+                        handleAssignmentChange(
+                          row.id,
+                          "outQuantity",
+                          e.target.value
+                        )
+                      }}
+                      className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                      placeholder="issue quantity.." />
+                  </td>
+
 
                   {/* Assignment Date */}
                   <td className="px-6 py-4">

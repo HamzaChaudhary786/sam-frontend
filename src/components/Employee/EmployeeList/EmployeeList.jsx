@@ -17,6 +17,7 @@ import MultiStatusAssignmentForm from "../MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../MultiAsset.jsx";
 import { useEmployeeAssets } from "../EmployeeAsset.js";
 import ClickableEmployeeName from "../ClickableName.jsx";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const EmployeeList = ({
   initialFilters = {}, // 🆕 Accept initial filters from parent
@@ -84,7 +85,7 @@ const EmployeeList = ({
 
   const { getEmployeeAssetsString, loading: assetsLoading } =
     useEmployeeAssets(safeEmployees);
-
+  const permissions = usePermissions();
   const navigate = useNavigate();
 
   // Handle multi-posting functionality
@@ -357,10 +358,6 @@ const EmployeeList = ({
   };
 
   const handleAddEmployee = () => {
-    if (!isAdmin) {
-      toast.error("Access denied: Only administrators can add employees");
-      return;
-    }
     navigate("/employee");
   };
 
@@ -443,6 +440,8 @@ const EmployeeList = ({
     );
   }
 
+  console.log(permissions, "my permissions hahahhaha");
+
   return (
     <div className={compactView ? "p-0" : "p-3 sm:p-6 lg:p-0"}>
       {/* Header Section - Responsive */}
@@ -469,7 +468,13 @@ const EmployeeList = ({
           {/* Header Buttons - Only show if not in station context */}
           {!stationContext && (
             <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
-              {isAdmin && (
+              {permissions?.userData?.roles?.some((role) =>
+                role.accessRequirement?.some(
+                  (access) =>
+                    (access.resourceName.toLowerCase() === "employee"  &&
+                      access.canAdd === true)
+                )
+              ) && (
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
                   onClick={handleAddEmployee}
@@ -477,18 +482,22 @@ const EmployeeList = ({
                   Add Employee
                 </button>
               )}
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                onClick={handleAddStation}
-              >
-                Stations
-              </button>
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                onClick={handleAddAsset}
-              >
-                Assets
-              </button>
+              {permissions?.hasStationAccess && (
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                  onClick={handleAddStation}
+                >
+                  Stations
+                </button>
+              )}
+              {permissions?.hasAssetAccess && (
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                  onClick={handleAddAsset}
+                >
+                  Assets
+                </button>
+              )}
               <button
                 className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
                 onClick={handleBulkStationAssignment}
@@ -693,23 +702,30 @@ const EmployeeList = ({
                           >
                             View
                           </button>
-                          <button
-                            onClick={() => handleEdit(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                          >
-                            Edit
-                          </button>
-                          {isAdmin ? (
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canEdit === true
+                            )
+                          ) && (
+                            <button
+                              onClick={() => handleEdit(employee)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canDelete === true
+                            )
+                          ) && (
                             <button
                               onClick={() => handleDelete(employee._id)}
                               className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                            >
-                              Delete
-                            </button>
-                          ) : (
-                            <button
-                              disabled
-                              className="px-1 py-0.5 text-[10px] rounded bg-gray-100 text-gray-400 cursor-not-allowed"
                             >
                               Delete
                             </button>
@@ -882,12 +898,21 @@ const EmployeeList = ({
                         >
                           View
                         </button>
-                        <button
-                          onClick={() => handleEdit(employee)}
-                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
-                        >
-                          Edit
-                        </button>
+
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                                "employee" && access.canEdit === true
+                          )
+                        ) && (
+                          <button
+                            onClick={() => handleEdit(employee)}
+                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
 
                       {/* Secondary Actions Row */}
@@ -931,19 +956,18 @@ const EmployeeList = ({
                           Deductions
                         </button>
 
-                        {isAdmin ? (
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                                "employee" && access.canDelete === true
+                          )
+                        ) && (
                           <button
                             onClick={() => handleDelete(employee._id)}
                             className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
                           >
                             Delete
-                          </button>
-                        ) : (
-                          <button
-                            disabled
-                            className="w-full px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed text-center"
-                          >
-                            Delete Employee
                           </button>
                         )}
                       </div>
