@@ -184,7 +184,7 @@ const Navbar = () => {
           {/* User Info Section - Hidden on mobile (320px), visible on larger screens */}
           <div className="hidden sm:flex flex-col items-center justify-center text-sm text-gray-600 mr-2">
             <div className="flex items-center space-x-1">
-              <span>Logged in as:</span>
+              <span>Logged in:</span>
               <span className="font-semibold capitalize text-blue-600 flex">
                 {userDistrictTehsil()}
               </span>

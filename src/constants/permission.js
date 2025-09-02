@@ -75,6 +75,7 @@ export function getUserAccessibleResources(userData) {
  * Check if user has access to a specific resource
  */
 export function hasResourceAccess(userData, resourceName) {
+  if (userData?.userType === 'admin') return true;
   const accessibleResources = getUserAccessibleResources(userData);
   return accessibleResources.has(resourceName.toLowerCase());
 }
@@ -83,6 +84,9 @@ export function hasResourceAccess(userData, resourceName) {
  * Get specific permission for a resource
  */
 export function hasPermission(userData, resourceName, permission) {
+ 
+  if (userData?.userType === 'admin') return true;
+
   if (!userData?.roles) return false;
   
   for (const role of userData.roles) {
