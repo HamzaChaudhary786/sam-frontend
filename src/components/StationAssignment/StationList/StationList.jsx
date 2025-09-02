@@ -7,12 +7,14 @@ import {
   approveStationAssignment,
 } from "../StationAssignmentApi.js";
 import ClickableStationName from "../../Station/ClickableStationView.jsx"; // Adjust path as needed
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const permissions = usePermissions()
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -458,26 +460,34 @@ const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                         <div className="flex items-center space-x-2">
                           {!assignment.isApproved && (
                             <>
-                              <button
-                                onClick={() => handleApprove(assignment)}
-                                className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
-                                title="Approve Assignment"
-                              >
-                                <svg
-                                  className="w-3 h-3 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                Approve
-                              </button>
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                    "employee" && access.canApprove === true
+                                )
+                              ) && (
+                                  <button
+                                    onClick={() => handleApprove(assignment)}
+                                    className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                                    title="Approve Assignment"
+                                  >
+                                    <svg
+                                      className="w-3 h-3 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Approve
+                                  </button>
+                                )}
                               <button
                                 onClick={() => onEdit(assignment)}
                                 className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
@@ -498,26 +508,34 @@ const StationAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 </svg>
                                 Edit
                               </button>
-                              <button
-                                onClick={() => handleDelete(assignment._id)}
-                                className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                                title="Delete Assignment"
-                              >
-                                <svg
-                                  className="w-3 h-3 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                                Delete
-                              </button>
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                    "employee" && access.canDelete === true
+                                )
+                              ) && (
+                                  <button
+                                    onClick={() => handleDelete(assignment._id)}
+                                    className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                                    title="Delete Assignment"
+                                  >
+                                    <svg
+                                      className="w-3 h-3 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                )}
                             </>
                           )}
                           {assignment.isApproved && (

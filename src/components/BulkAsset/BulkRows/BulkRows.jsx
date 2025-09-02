@@ -98,11 +98,11 @@ const BulkAssetRows = ({
 
     // Always include basic fields even if no rows exist
     if (allVisibleFields.size === 0) {
-      return ['type', 'availableQuantity', 'category',  'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+      return ['type', 'availableQuantity', 'category', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
     }
 
     // Return fields in a logical order
-    const fieldOrder = ['type','availableQuantity', 'category', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+    const fieldOrder = ['type', 'availableQuantity', 'category', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
 
     return fieldOrder.filter(field => allVisibleFields.has(field));
   };
@@ -170,20 +170,30 @@ const BulkAssetRows = ({
     type: {
       label: "Asset Type",
       render: (row) => (
-        <select
-          value={row.type || ''}
-          onChange={(e) => handleTypeChange(row.id, e)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[200px]"
-        >
-          <option value="">Select Type...</option>
-          {Object.entries(assetTypeEnum).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+
+        <>
+          <section>
+            <select
+              value={row.type || ''}
+              onChange={(e) => handleTypeChange(row.id, e)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[200px]"
+            >
+              <option value="">Select Type...</option>
+              {Object.entries(assetTypeEnum).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            {console.log(assetTypeEnum, "jjjajajjajajjajajjajajjajajaja")
+            }
+            <div>
+              {row?.availableQuantity}
+            </div>
+          </section>
+        </>
       )
     },
-        availableQuantity: {
+    availableQuantity: {
       label: "Quantity",
       render: (row) => (
         <input
@@ -216,7 +226,7 @@ const BulkAssetRows = ({
       }
     },
 
-    
+
     // quantity: {
     //   label: "Quantity",
     //   render: (row) => (

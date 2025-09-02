@@ -14,16 +14,16 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
   const fetchMaalkhanaOptions = async () => {
     setLoadingMaalkhana(true);
     setApiError(null);
-    
+
     try {
       console.log("Fetching maalkhana options...");
       const result = await getMaalkhanaOptions();
-      
+
       console.log("API Result:", result);
-      
+
       if (result.success) {
         let stations = [];
-        
+
         // Handle different response structures
         if (Array.isArray(result.data)) {
           stations = result.data;
@@ -36,20 +36,20 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
           console.warn("Unexpected data structure:", result.data);
           setApiError("Unexpected data structure from API");
         }
-        
+
         console.log("Extracted stations:", stations);
-        
+
         if (stations.length === 0) {
           console.warn("No stations found in API response");
           setApiError("No stations available");
         }
-        
+
         // Transform data to match EnumSelect format
         const options = stations.map(item => ({
           value: item._id,
           label: item.name
         }));
-        
+
         console.log("Final options:", options);
         setMaalkhanaOptions(options);
       } else {
@@ -89,10 +89,34 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
     <div className="bg-white shadow-md rounded-lg p-6 mb-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Batch Information</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+
+        {/* Maalkhana Dropdown */}
+        <div>
+          <EnumSelect
+            label="Maalkhana"
+            name="mallkhana"
+            value={headerData.mallkhana?._id || ''}
+            onChange={handleMaalkhanaChange}
+            enumObject={maalkhanaEnum}
+            required={true}
+            disabled={loading || loadingMaalkhana}
+            placeholder={
+              loadingMaalkhana
+                ? "Loading..."
+                : apiError
+                  ? "Error loading options"
+                  : maalkhanaOptions.length === 0
+                    ? "No options available"
+                    : "Select Maalkhana..."
+            }
+          />
+        </div>
+
         {/* Batch Date */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Batch Date *
+            Batch Date 
           </label>
           <input
             type="date"
@@ -121,27 +145,7 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
           />
         </div>
 
-        {/* Maalkhana Dropdown */}
-        <div>
-          <EnumSelect
-            label="Maalkhana"
-            name="mallkhana"
-            value={headerData.mallkhana?._id || ''}
-            onChange={handleMaalkhanaChange}
-            enumObject={maalkhanaEnum}
-            required={false}
-            disabled={loading || loadingMaalkhana}
-            placeholder={
-              loadingMaalkhana 
-                ? "Loading..." 
-                : apiError 
-                  ? "Error loading options"
-                  : maalkhanaOptions.length === 0 
-                    ? "No options available" 
-                    : "Select Maalkhana..."
-            }
-          />
-        </div>
+
 
         {/* Letter Info */}
         <div className="md:col-span-2 lg:col-span-3">

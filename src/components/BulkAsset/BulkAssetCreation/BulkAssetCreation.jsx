@@ -152,9 +152,9 @@ const BulkAssetCreation = () => {
       if (!row.type) {
         errors.push(`Asset ${index + 1}: Asset type is required`);
       }
-      if (!row.category) {
-        errors.push(`Asset ${index + 1}: Category is required`);
-      }
+      // if (!row.category) {
+      //   errors.push(`Asset ${index + 1}: Category is required`);
+      // }
       if (!row.quantity || row.quantity < 1) {
         errors.push(`Asset ${index + 1}: Valid quantity is required`);
       }
@@ -175,50 +175,50 @@ const BulkAssetCreation = () => {
       // }
 
       // Category-specific validation
-      switch (row.category) {
-        case "weapons":
-          if (!row.weaponNumber) {
-            errors.push(`Asset ${index + 1}: Weapon number is required`);
-          }
-          break;
-        case "pistol":
-          if (!row.pistolNumber) {
-            errors.push(`Asset ${index + 1}: Pistol number is required`);
-          }
-          break;
-        case "vehicle":
-          if (!row.vehicleNumber) {
-            errors.push(`Asset ${index + 1}: Vehicle number is required`);
-          }
-          if (!row.registerNumber) {
-            errors.push(`Asset ${index + 1}: Register number is required`);
-          }
-          if (!row.chassiNumber) {
-            errors.push(`Asset ${index + 1}: Chassi number is required`);
-          }
-          if (!row.engineNumber) {
-            errors.push(`Asset ${index + 1}: Engine number is required`);
-          }
-          if (!row.model) {
-            errors.push(`Asset ${index + 1}: Model is required`);
-          }
-          if (!row.make) {
-            errors.push(`Asset ${index + 1}: Make is required`);
-          }
-          if (!row.color) {
-            errors.push(`Asset ${index + 1}: Color is required`);
-          }
-          break;
-        case "weaponRound":
-        case "pistolRound":
-          if (!row.numberOfRounds) {
-            errors.push(`Asset ${index + 1}: Number of rounds is required`);
-          }
-          if (!row.weaponName) {
-            errors.push(`Asset ${index + 1}: Weapon name is required`);
-          }
-          break;
-      }
+      // switch (row.category) {
+      //   case "weapons":
+      //     if (!row.weaponNumber) {
+      //       errors.push(`Asset ${index + 1}: Weapon number is required`);
+      //     }
+      //     break;
+      //   case "pistol":
+      //     if (!row.pistolNumber) {
+      //       errors.push(`Asset ${index + 1}: Pistol number is required`);
+      //     }
+      //     break;
+      //   case "vehicle":
+      //     if (!row.vehicleNumber) {
+      //       errors.push(`Asset ${index + 1}: Vehicle number is required`);
+      //     }
+      //     if (!row.registerNumber) {
+      //       errors.push(`Asset ${index + 1}: Register number is required`);
+      //     }
+      //     if (!row.chassiNumber) {
+      //       errors.push(`Asset ${index + 1}: Chassi number is required`);
+      //     }
+      //     if (!row.engineNumber) {
+      //       errors.push(`Asset ${index + 1}: Engine number is required`);
+      //     }
+      //     if (!row.model) {
+      //       errors.push(`Asset ${index + 1}: Model is required`);
+      //     }
+      //     if (!row.make) {
+      //       errors.push(`Asset ${index + 1}: Make is required`);
+      //     }
+      //     if (!row.color) {
+      //       errors.push(`Asset ${index + 1}: Color is required`);
+      //     }
+      //     break;
+      //   case "weaponRound":
+      //   case "pistolRound":
+      //     if (!row.numberOfRounds) {
+      //       errors.push(`Asset ${index + 1}: Number of rounds is required`);
+      //     }
+      //     if (!row.weaponName) {
+      //       errors.push(`Asset ${index + 1}: Weapon name is required`);
+      //     }
+      //     break;
+      // }
     });
 
     return errors;
