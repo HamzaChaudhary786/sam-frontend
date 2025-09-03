@@ -163,8 +163,6 @@ const BulkAssetAssignment = () => {
         { headers: getAuthHeaders() }
       );
 
-      console.log("Assets API response:", response.data);
-
       if (response.data && response.data.success) {
         // Handle the actual response structure based on your API
         let assets = [];
@@ -337,13 +335,9 @@ const BulkAssetAssignment = () => {
         limit: 25,
       });
 
+
       if (result.success) {
-        let stations = [];
-        if (Array.isArray(result.data)) {
-          stations = result.data;
-        } else if (result.data && Array.isArray(result.data.stations)) {
-          stations = result.data.stations;
-        }
+        const stations = result?.data?.result || result.data || [];
 
         const filteredStations = stations.filter(
           (station) =>
@@ -380,7 +374,7 @@ const BulkAssetAssignment = () => {
   };
 
   const selectEmployee = (employee, rowId) => {
-    console.log("Selected employee:", employee);
+    
     setSelectedEmployee(employee);
     setAssignmentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, employee } : row))
@@ -497,8 +491,6 @@ const BulkAssetAssignment = () => {
         }
       );
 
-      console.log("API Response:", response.data);
-
       if (response.data && response.data.success) {
         toast.success(
           `Successfully created ${assignments.length} asset assignments!`
@@ -589,13 +581,6 @@ const BulkAssetAssignment = () => {
         onHeaderChange={handleHeaderChange}
         loading={loading}
       />
-
-      {/* Filters Component */}
-      {/* <BulkAssetFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        loading={loading}
-      /> */}
 
       {/* Assignment Rows */}
       <div className="bg-white shadow-md rounded-lg overflow-visible mb-10 relative">
@@ -747,10 +732,6 @@ const BulkAssetAssignment = () => {
                     )}
                   </td>
 
-                  {console.log(
-                    "Selected employee: hahahhahahhahahahhah",
-                    selectedEmployee
-                  )}
                   {/* Employee Column */}
                   <td className="px-6 py-4 relative">
                     {row.employee ? (
@@ -874,7 +855,7 @@ const BulkAssetAssignment = () => {
                         </div>
                       ))}
                     </div>
-                    {console.log(row, "this is my row X hahahha")}
+
                     <div>
                       Stations:
                       {row?.station?.stationAssets?.map((item) => (
