@@ -556,6 +556,8 @@ const EmployeeGridTable = ({
             return value || `Mohalla N/A`;
           case "address.tehsil":
             return value || `Tehsil N/A`;
+          case "training":
+            return value || `Trainings N/A`;
 
           default:
             return value || `${fieldKey} N/A`;
@@ -578,8 +580,8 @@ const EmployeeGridTable = ({
     }
 
     const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
-        ? "cursor-pointer hover:bg-gray-100"
-        : "cursor-default"
+      ? "cursor-pointer hover:bg-gray-100"
+      : "cursor-default"
       }`;
 
     const titleText = !isAdmin
@@ -603,7 +605,7 @@ const EmployeeGridTable = ({
             title={titleText}
           >
             <div
-              className="max-w-32 truncate"
+              className="max-w-64 truncate"
               title={renderDisplayCell(employee, fieldKey, fieldType, enumType)}
             >
               {renderDisplayCell(employee, fieldKey, fieldType, enumType)}
@@ -829,182 +831,321 @@ const EmployeeGridTable = ({
         </div>
       )}
 
-      {/* Grid Section - Updated with checkboxes */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header Grid - Reordered to match requested layout */}
-        <div className="grid grid-cols-12 grid-rows-2  bg-black/75 text-white text-sm text-left lg:font-bold uppercase tracking-wider p-3">
-          <div className="mb-2">
-            {renderSelectAllCheckbox()}
-            <span className="ml-3">Photo</span>
-          </div>
-          <div>Actions</div>
-          <div>Status</div>
-          <div>Personal #</div>
-          <div>Name</div>
-          <div>Station</div>
-          <div>Mobile</div>
-          <div>Designation</div>
-          <div>Rank</div>
-          <div>Tehsil</div>
-          <div>District</div>
-          <div>Employee's</div>
-          <div></div> {/* Row 2 placeholder for Photo column */}
-          <div></div> {/* Row 2 placeholder for Actions column */}
-          <div>Date of Birth</div>
-          <div>CNIC</div>
-          <div>Father's Name</div>
-          <div>Service Type</div>
-          <div>Grade</div>
-          <div>Cast</div>
-          <div>Address</div>
-          <div>Mohalla</div>
-          <div></div>
-          <div className="text-center"> Assets</div>
-        </div>
 
-        {/* Employee Rows - Updated with checkboxes */}
-        {safeEmployees?.map((employee) => {
-          const isEditing = editingCell?.rowId === employee._id;
-          const isEditable = editableEmployees.has(employee._id);
 
-          return (
-            <div
-              key={employee._id}
-              className={`grid grid-cols-12 grid-rows-2 overflow-x-auto text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${isSelected(employee._id) ? "bg-blue-50" : ""
-                }`}
-            >
-              {/* <div className="row-span-1">{renderImageCell(employee)}</div> */}
-              {/* Checkbox - spans 2 rows */}
-              <div className="row-span-2 flex items-center justify-center">
-                {renderImageCell(employee)}
-                {renderEmployeeCheckbox(employee)}
-              </div>
 
-              {/* Vertical action buttons - spans 2 rows */}
-              <div className="row-span-2 flex flex-col items-stretch gap-1 py-1">
-                {permissions?.userData?.roles?.some((role) =>
-                  role.accessRequirement?.some(
-                    (access) =>
-                      access.resourceName.toLowerCase() === "employee" &&
-                      access.canEdit === true
-                  )
-                ) && (
-                    <button
-                      onClick={() => toggleEditMode(employee._id)}
-                      className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
-                          ? "bg-orange-600 text-white hover:bg-orange-700"
-                          : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      title={
-                        editableEmployees.has(employee._id)
-                          ? "Disable editing"
-                          : "Enable editing"
-                      }
-                    >
-                      {editableEmployees.has(employee._id)
-                        ? "Disable Edit"
-                        : "Edit"}
-                    </button>
-                  )}
-                {/* <button
+      <div class="overflow-x-auto rounded-t-xl">
+        <table class="min-w-full text-left text-sm text-gray-500 border border-gray-200">
+          <thead class="bg-[#ede8e8] text-[#000] h-12">
+            <tr class="text-left text-xs font-medium uppercase tracking-wider">
+
+              <th class="px-4 py-2 border border-gray-200 ">
+                Photo
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Actions
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Name
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Status
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200 row-span-2">
+                Personal #
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Station
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Rank
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Cast
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200 row-span-2">
+                Address
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Tehsil
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+
+              </th>
+
+              <th colSpan={4} class="px-4 py-2 border border-gray-200">
+                Employee's
+              </th>
+
+
+            </tr>
+            <tr class="text-left text-xs font-medium uppercase tracking-wider">
+              <th class="px-4 py-2 border border-gray-200">
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Father's Name
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Grade
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                CNIC
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Mobile
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Date of Birth
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Designation
+              </th>
+              <th class="px-4 py-2 border border-gray-200">
+                Mohalla
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                District
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200">
+                Service Type
+              </th>
+
+              <th class="px-4 py-2 border border-gray-200 text-center"> Trainings
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center"> Assets
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center"> Awards
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center"> Deductions
+              </th>
+
+
+            </tr>
+          </thead>
+          <tbody>
+
+
+            {/* Employee Rows - Updated with checkboxes */}
+            {safeEmployees?.map((employee) => {
+              const isEditing = editingCell?.rowId === employee._id;
+              const isEditable = editableEmployees.has(employee._id);
+
+              return (
+                <>
+
+                  {/* {renderCell(employee, "address.line1", "textarea")}
+                  {renderCell(employee, "address.muhala", "input")} */}
+
+
+                  <tr key={employee._id}
+                    className={`bg-white hover:bg-gray-50 text-left text-xs 
+                font-medium uppercase tracking-wider  ${isSelected(employee._id) ? "bg-blue-50" : ""
+                      }`}>
+
+                    <td rowSpan={2} className="border border-gray-200">
+                      <div
+                        className="border border-gray-200 items-center justify-center p-1">
+
+                        {renderEmployeeCheckbox(employee)}
+                        {renderImageCell(employee)}
+                      </div>
+
+                    </td>
+
+                    <td rowSpan={2} className="border border-gray-200">
+                      {/* Vertical action buttons - spans 2 rows */}
+                      <div className=" flex flex-col items-stretch gap-1 py-1">
+                        {(isAdmin || permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() === "employee" &&
+                              access.canEdit === true
+                          )
+                        )) && (
+                            <button
+                              onClick={() => toggleEditMode(employee._id)}
+                              className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
+                                ? "bg-orange-600 text-white hover:bg-orange-700"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                                }`}
+                              title={
+                                editableEmployees.has(employee._id)
+                                  ? "Disable editing"
+                                  : "Enable editing"
+                              }
+                            >
+                              {editableEmployees.has(employee._id)
+                                ? "Disable Edit"
+                                : "Edit"}
+                            </button>
+                          )}
+                        {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
                 >
                   Delete
                 </button> */}
-                {!isEditing && (
-                  <button
-                    onClick={() => handleView(employee)}
-                    className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
-                  >
-                    View
-                  </button>
-                )}
-                {/* Removed horizontal action row; actions shown vertically next to checkbox */}
-                {isEditing && (
-                  <>
-                    <button
-                      onClick={() => onSaveCell(employee)}
-                      className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => handleCancelEditing(employee)}
-                      className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </div>
+                        {!isEditing && (
+                          <button
+                            onClick={() => handleView(employee)}
+                            className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                          >
+                            View
+                          </button>
+                        )}
+                        {/* Removed horizontal action row; actions shown vertically next to checkbox */}
+                        {isEditing && (
+                          <>
+                            <button
+                              onClick={() => onSaveCell(employee)}
+                              className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => handleCancelEditing(employee)}
+                              className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </div>
 
-              {/* First row of data (reordered) */}
-              <div>{renderCell(employee, "status", "select", "statuses")}</div>
-              <div>{renderCell(employee, "personalNumber", "input")}</div>
-              <div>{renderCell(employee, "firstName", "input")}</div>
-              <div>
-                {renderCell(employee, "stations", "select", "stations")}
-              </div>
-              <div>{renderCell(employee, "mobileNumber", "input")}</div>
-              <div>
-                {renderCell(employee, "designation", "select", "designations")}
-              </div>
-              <div>{renderCell(employee, "rank", "select", "ranks")}</div>
-              <div>
-                {renderCell(employee, "address.tehsil", "select", "tehsil")}
-              </div>
-              <div>
-                {renderCell(employee, "address.line2", "select", "district")}
-              </div>
+                    </td>
 
-              {/* NEW: Assets Column - spans 2 rows */}
-              {/* <div className="row-span-2 flex items-center p-1">
-                <div className="text-xs text-gray-700 max-w-32 break-words">
-                  {assetsLoading ? (
-                    <span className="text-gray-500 animate-pulse">
-                      Loading...
-                    </span>
-                  ) : (
-                    <span title={getEmployeeAssetsString(employee._id)}>
-                      {getEmployeeAssetsString(employee._id)}
-                    </span>
-                  )}
-                </div>
-              </div> */}
-              <div>
-                Assets Pending
-              </div>
 
-              {/* Second row of data (paired under headers) */}
-              <div className="col-start-3 row-start-2">
-                {renderCell(employee, "dateOfBirth", "date")}
-              </div>
-              <div className="col-start-4">
-                {renderCell(employee, "cnic", "input")}
-              </div>
-              <div className="col-start-5">
-                {renderCell(employee, "fatherFirstName", "input")}
-              </div>
-              <div className="col-start-6">
-                {renderCell(employee, "serviceType", "serviceType")}
-              </div>
-              <div className="col-start-7">
-                {renderCell(employee, "grade", "select", "grades")}
-              </div>
-              <div className="col-start-8">
-                {renderCell(employee, "cast", "select", "casts")}
-              </div>
-              <div className="col-start-9">
-                {renderCell(employee, "address.line1", "textarea")}
-              </div>
-              <div className="col-start-10">
-                {renderCell(employee, "address.muhala", "input")}
-              </div>
-              <div className="col-start-11 row-start-2"></div>
-            </div>
-          );
-        })}
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "firstName", "input")}
+                    </td>
+
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "status", "select", "statuses")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "personalNumber", "input")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "stations", "select", "stations")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "rank", "select", "ranks")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "cast", "select", "casts")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "address.line1", "textarea")}
+
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "address.tehsil", "select", "tehsil")}
+                    </td>
+                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "serviceType", "serviceType")}
+                    </td>
+
+
+                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
+                      {/* {renderCell(employee, "training", "training")} */}
+                      <div>
+                        {
+                          employee?.training?.map((itm) => (
+                            <div className="flex flex-row">
+                              <span className="text-xs mt-0.5">
+                                {itm}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </td>
+                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
+
+                      <div>
+                        {employee?.assignedAssets?.map((item) => (
+                          <div key={item._id} className="flex flex-row">
+                            {item.asset?.map((itm) => (
+                              <span key={itm._id} className="text-xs mt-0.5">
+                                {itm.name} {itm.category}
+                              </span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+
+                    </td>
+                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
+                      Awards pending
+                    </td>
+                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
+                      Deduction pending
+                    </td>
+
+
+                  </tr>
+
+
+                  <tr className={`bg-white hover:bg-gray-50 text-left text-xs 
+                font-medium uppercase tracking-wider border-b-2 
+                border-black pb-2 pt-2 ${isSelected(employee._id) ? "bg-blue-50" : ""
+                    }`}>
+
+
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "fatherFirstName", "input")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "grade", "select", "grades")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "cnic", "input")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "mobileNumber", "input")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "dateOfBirth", "date")}
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "designation", "select", "designations")}
+
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200"> {renderCell(employee, "address.muhala", "input")}
+
+                    </td>
+                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "address.line2", "select", "district")}
+
+                    </td>
+
+
+                  </tr>
+                </>
+              );
+            })}
+
+
+          </tbody>
+        </table>
+      </div>
+
+
+
+
+      {/* Grid Section - Updated with checkboxes */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+
 
         {/* Confirmation Modal */}
         {confirmPopup && renderConfirmationModal()}
