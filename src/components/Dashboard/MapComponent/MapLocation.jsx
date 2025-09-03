@@ -241,31 +241,6 @@ const MapLocation = ({
 
                 let assetDetails = `${assetName} (${assetType}): Required ${requiredQuantity}`;
 
-                // Add specific details based on asset type
-                //   if (asset.type === 'vehicle') {
-                //     const vehicleInfo = [];
-                //     if (asset.make) vehicleInfo.push(asset.make);
-                //     if (asset.model) vehicleInfo.push(asset.model);
-                // if (asset.color) vehicleInfo.push(asset.color);
-                // if (asset.vehicleNumber) vehicleInfo.push(`#${asset.vehicleNumber}`);
-
-                // if (vehicleInfo.length > 0) {
-                //   assetDetails += ` - ${vehicleInfo.join(' ')}`;
-                // }
-
-                // if (asset.condition) {
-                //   assetDetails += ` (${asset.condition} condition)`;
-                // }
-                //   } else if (asset.type === 'weaponRound' || asset.type === 'weapon') {
-                //     const weaponInfo = [];
-                //     if (asset.weaponName) weaponInfo.push(asset.weaponName);
-                //     if (asset.numberOfRounds) weaponInfo.push(`${asset.numberOfRounds} rounds`);
-
-                //     if (weaponInfo.length > 0) {
-                //       assetDetails += ` - ${weaponInfo.join(', ')}`;
-                //     }
-                //   }
-
                 details.push(assetDetails);
               } else {
                 // Fallback for when asset is just an ID (shouldn't happen based on your data)

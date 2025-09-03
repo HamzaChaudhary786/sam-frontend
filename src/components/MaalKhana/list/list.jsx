@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useStations } from "../hook.js";
-import StationModal from "../AddMaalKhana/AddMaalKhana.jsx";
 import StationViewModal from "../MaalKhanaView/MaalKhanaView.jsx";
 import DrillUpPage from "../DrillUp/DrillUp.jsx";
 import DrillDownPage from "../DrillDown/DrillDown.jsx";
@@ -10,6 +9,7 @@ import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import StationModal from "../../Station/AddStation/AddStation.jsx";
 
 const StationList = () => {
   const {
@@ -90,7 +90,7 @@ const StationList = () => {
 
   // Multiple selection handlers
   const handleSelectStation = (stationId) => {
-    setSelectedStations(prev => {
+    setSelectedStations((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(stationId)) {
         newSet.delete(stationId);
@@ -105,7 +105,7 @@ const StationList = () => {
     if (selectAll) {
       setSelectedStations(new Set());
     } else {
-      setSelectedStations(new Set(safeStations.map(station => station._id)));
+      setSelectedStations(new Set(safeStations.map((station) => station._id)));
     }
     setSelectAll(!selectAll);
   };
@@ -116,43 +116,53 @@ const StationList = () => {
       return;
     }
 
-    if (window.confirm(`Are you sure you want to delete ${selectedStations.size} station(s)?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedStations.size} station(s)?`
+      )
+    ) {
       try {
         let successCount = 0;
         let errorCount = 0;
         const errors = [];
-        
+
         for (const stationId of selectedStations) {
           try {
             // Validate ID format
-            if (!stationId || typeof stationId !== 'string' || stationId.trim() === '') {
+            if (
+              !stationId ||
+              typeof stationId !== "string" ||
+              stationId.trim() === ""
+            ) {
               throw new Error("Invalid station ID format");
             }
-            
+
             console.log("Attempting to delete station with ID:", stationId);
-            
+
             const result = await removeStation(stationId.trim());
-            
+
             if (result && result.success) {
               successCount++;
             } else {
               errorCount++;
-              errors.push(`${stationId}: ${result?.error || 'Unknown error'}`);
+              errors.push(`${stationId}: ${result?.error || "Unknown error"}`);
             }
           } catch (error) {
             console.error(`Failed to delete station ${stationId}:`, error);
             errorCount++;
-            errors.push(`${stationId}: ${error?.message || 'Unknown error'}`);
+            errors.push(`${stationId}: ${error?.message || "Unknown error"}`);
           }
         }
-        
+
         setSelectedStations(new Set());
         setSelectAll(false);
-        
+
         if (successCount > 0 && errorCount === 0) {
           toast.success(`Successfully deleted ${successCount} station(s)`);
         } else if (successCount > 0 && errorCount > 0) {
-          toast.warning(`Deleted ${successCount} station(s), failed to delete ${errorCount}`);
+          toast.warning(
+            `Deleted ${successCount} station(s), failed to delete ${errorCount}`
+          );
           console.log("Errors:", errors);
         } else {
           toast.error("Failed to delete selected stations");
@@ -172,7 +182,7 @@ const StationList = () => {
 
   const handleDelete = async (id) => {
     // Validate ID format
-    if (!id || typeof id !== 'string' || id.trim() === '') {
+    if (!id || typeof id !== "string" || id.trim() === "") {
       toast.error("Invalid station ID");
       return;
     }
@@ -180,9 +190,9 @@ const StationList = () => {
     if (window.confirm("Are you sure you want to delete this station?")) {
       try {
         console.log("Attempting to delete station with ID:", id);
-        
+
         const result = await removeStation(id.trim());
-        
+
         if (result && result.success) {
           console.log("Station deleted successfully");
         } else {
@@ -584,14 +594,21 @@ const StationList = () => {
                 />
                 <div className="flex-shrink-0 relative">
                   {/* Station Image */}
-                  {station.stationImageUrl && station.stationImageUrl.length > 0 ? (
+                  {station.stationImageUrl &&
+                  station.stationImageUrl.length > 0 ? (
                     <div className="relative">
                       <img
-                        src={station.stationImageUrl[imageIndexes[station._id] ?? 0]}
+                        src={
+                          station.stationImageUrl[
+                            imageIndexes[station._id] ?? 0
+                          ]
+                        }
                         alt="Station"
                         onClick={() =>
                           setImageModal(
-                            station.stationImageUrl[imageIndexes[station._id] ?? 0]
+                            station.stationImageUrl[
+                              imageIndexes[station._id] ?? 0
+                            ]
                           )
                         }
                         className="h-12 w-12 rounded border object-cover cursor-pointer hover:scale-105 transition"
@@ -600,7 +617,10 @@ const StationList = () => {
                         <>
                           <button
                             onClick={() =>
-                              handlePrevImage(station._id, station.stationImageUrl.length)
+                              handlePrevImage(
+                                station._id,
+                                station.stationImageUrl.length
+                              )
                             }
                             className="absolute -left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
                             style={{ fontSize: "10px" }}
@@ -609,7 +629,10 @@ const StationList = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleNextImage(station._id, station.stationImageUrl.length)
+                              handleNextImage(
+                                station._id,
+                                station.stationImageUrl.length
+                              )
                             }
                             className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
                             style={{ fontSize: "10px" }}
@@ -620,7 +643,8 @@ const StationList = () => {
                             className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
                             style={{ fontSize: "8px" }}
                           >
-                            {(imageIndexes[station._id] ?? 0) + 1}/{station.stationImageUrl.length}
+                            {(imageIndexes[station._id] ?? 0) + 1}/
+                            {station.stationImageUrl.length}
                           </div>
                         </>
                       )}
@@ -759,6 +783,7 @@ const StationList = () => {
         editData={editData}
         createStation={createStation}
         modifyStation={modifyStation}
+        isStation={false}
       />
 
       {/* View Station Modal */}

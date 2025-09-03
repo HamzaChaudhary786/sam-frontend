@@ -124,7 +124,6 @@ const TransferReturnModal = ({
     date: "",           // Changed from 'transferDate' to 'date'
     reason: "",         // Changed from 'description' to 'reason'
     newEmployeeId: "",
-    condition: "",      // Changed from "Good" to empty string for placeholder
     notes: "",          // Added notes field for additional info
   });
 
@@ -137,7 +136,6 @@ const TransferReturnModal = ({
         date: today,        // Use 'date' instead of 'transferDate'
         reason: "",         // Use 'reason' instead of 'description'
         newEmployeeId: "",
-        condition: "",      // Start with empty string for placeholder
         notes: "",
       });
     }
@@ -164,7 +162,6 @@ const TransferReturnModal = ({
       date: "",
       reason: "",
       newEmployeeId: "",
-      condition: "",      // Reset to empty string
       notes: "",
     });
     onClose();
@@ -205,7 +202,6 @@ const TransferReturnModal = ({
       action: formData.action,
       date: dateValue,
       reason: formData.reason,
-      condition: formData.condition,
       notes: formData.notes,
     };
 
@@ -318,13 +314,6 @@ const TransferReturnModal = ({
     { value: "transfer", label: "Transfer Asset" },
   ];
 
-  const conditionOptions = [
-    { value: "Excellent", label: "Excellent" },
-    { value: "Good", label: "Good" },
-    { value: "Fair", label: "Fair" },
-    { value: "Poor", label: "Poor" },
-    { value: "Damaged", label: "Damaged" },
-  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -438,20 +427,6 @@ const TransferReturnModal = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Asset Condition *
-                </label>
-                <input
-                  type="text"
-                  value={formData.condition}
-                  onChange={(e) => handleInputChange("condition", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter asset condition (e.g., Good, Fair, Excellent, etc.)"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Reason *
                 </label>
                 <textarea
@@ -491,7 +466,6 @@ const TransferReturnModal = ({
                       {employeeOptions.find(emp => emp.value === formData.newEmployeeId)?.label || "Selected Employee"}
                     </span></p>
                   )}
-                  <p>• Condition: <span className="font-medium">{formData.condition}</span></p>
                   {formData.reason && (
                     <p>• Reason: <span className="font-medium">{formData.reason}</span></p>
                   )}
