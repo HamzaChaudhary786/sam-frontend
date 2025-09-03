@@ -149,7 +149,9 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
     if (filters.approvalStatus) {
       filtered = filtered.filter((assignment) => {
         if (filters.approvalStatus === "pending") {
-          return assignment.isApproved === null || assignment.isApproved === false;
+          return (
+            assignment.isApproved === null || assignment.isApproved === false
+          );
         } else if (filters.approvalStatus === "approved") {
           return assignment.isApproved === true;
         }
@@ -196,14 +198,14 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   // Delete assignment
   const handleDelete = async (assignmentId) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can delete status assignments");
+      toast.error(
+        "Access denied: Only administrators can delete status assignments"
+      );
       return;
     }
 
     if (
-      !window.confirm(
-        "Are you sure you want to delete this status assignment?"
-      )
+      !window.confirm("Are you sure you want to delete this status assignment?")
     ) {
       return;
     }
@@ -224,7 +226,9 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
   // Approve assignment
   const handleApprove = async (assignment) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can approve status assignments");
+      toast.error(
+        "Access denied: Only administrators can approve status assignments"
+      );
       return;
     }
 
@@ -546,7 +550,8 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 assignment.currentStatus
                               )}`}
                             >
-                              {getStatusDisplayName(assignment.currentStatus) || "Unknown Status"}
+                              {getStatusDisplayName(assignment.currentStatus) ||
+                                "Unknown Status"}
                             </span>
                           </div>
                         </div>
@@ -557,7 +562,10 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                             From: {formatDate(assignment.from)}
                           </div>
                           <div className="text-gray-500">
-                            To: {assignment.to ? formatDate(assignment.to) : "Ongoing"}
+                            To:{" "}
+                            {assignment.to
+                              ? formatDate(assignment.to)
+                              : "Ongoing"}
                           </div>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
@@ -596,7 +604,9 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                           <div className="mb-2">{assignment.description}</div>
                           {assignment.approvalComment && (
                             <div className="text-xs text-gray-500 border-l-2 border-gray-200 pl-2">
-                              <span className="font-medium">Admin Comment:</span>{" "}
+                              <span className="font-medium">
+                                Admin Comment:
+                              </span>{" "}
                               {assignment.approvalComment}
                             </div>
                           )}
@@ -611,82 +621,90 @@ const StatusAssignmentList = ({ employee, onEdit, refreshTrigger }) => {
                                 role.accessRequirement?.some(
                                   (access) =>
                                     access.resourceName.toLowerCase() ===
-                                    "employee" && access.canApprove === true
+                                      "employee" && access.canApprove === true
                                 )
                               ) && (
-                                  <button
-                                    onClick={() => handleApprove(assignment)}
-                                    className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
-                                    title="Approve Assignment"
+                                <button
+                                  onClick={() => handleApprove(assignment)}
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                                  title="Approve Assignment"
+                                >
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <svg
-                                      className="w-3 h-3 mr-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                    Approve
-                                  </button>
-                                )}
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                  Approve
+                                </button>
+                              )}
 
                               {/* Edit Button */}
-                              <button
-                                onClick={() => onEdit(assignment)}
-                                className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
-                                title="Edit Assignment"
-                              >
-                                <svg
-                                  className="w-3 h-3 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                      "employee" && access.canEdit === true
+                                )
+                              ) && (
+                                <button
+                                  onClick={() => onEdit(assignment)}
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                  title="Edit Assignment"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                  />
-                                </svg>
-                                Edit
-                              </button>
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                  Edit
+                                </button>
+                              )}
 
                               {/* Delete Button - Admin Only */}
                               {permissions?.userData?.roles?.some((role) =>
                                 role.accessRequirement?.some(
                                   (access) =>
                                     access.resourceName.toLowerCase() ===
-                                    "employee" && access.canDelete === true
+                                      "employee" && access.canDelete === true
                                 )
                               ) && (
-                                  <button
-                                    onClick={() => handleDelete(assignment._id)}
-                                    className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                                    title="Delete Assignment"
+                                <button
+                                  onClick={() => handleDelete(assignment._id)}
+                                  className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                                  title="Delete Assignment"
+                                >
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <svg
-                                      className="w-3 h-3 mr-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                      />
-                                    </svg>
-                                    Delete
-                                  </button>
-                                )}
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  Delete
+                                </button>
+                              )}
                             </>
                           )}
                           {assignment.isApproved && (

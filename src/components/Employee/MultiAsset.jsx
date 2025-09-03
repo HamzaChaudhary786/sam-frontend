@@ -411,17 +411,8 @@ const MultiAssetAssignmentForm = ({
                               {asset.type === "weapons" && asset.weaponNumber && (
                                 <span>Weapon No: {asset.weaponNumber}</span>
                               )}
-                              {asset.type === "pistol" && asset.pistolNumber && (
-                                <span>Pistol No: {asset.pistolNumber}</span>
-                              )}
-                              {(asset.type === "vehicle" || asset.type === "vehicles") && asset.vehicleNumber && (
-                                <span>Vehicle No: {asset.vehicleNumber}</span>
-                              )}
-                              {(asset.type === "round" || asset.type === "weaponRound") && (
-                                <>
-                                  {asset.weaponName && <span>Weapon: {asset.weaponName} | </span>}
-                                  {asset.numberOfRounds && <span>Total Rounds: {asset.numberOfRounds}</span>}
-                                </>
+                              {(asset.type === "vehicle" || asset.type === "motorcycle") && asset.registerNumber && (
+                                <span>Vehicle No: {asset.registerNumber}</span>
                               )}
                               {"availableQuantity" in asset && (
                                 <span> | Available: {asset.availableQuantity}</span>

@@ -180,7 +180,7 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
             </div>
 
             {/* Weapon/Equipment Details Section */}
-            {(asset.weaponNumber || asset.pistolNumber || asset.assignedRounds || asset.consumedRounds || asset.numberOfRounds || asset.weaponName) && (
+            {(asset.weaponNumber || asset.assignedRounds || asset.consumedRounds ) && (
               <div className="border-t pt-6">
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">
                   {asset.type === 'weapons' || asset.type === 'pistol' ? 'Weapon Details' : 'Equipment Details'}
@@ -189,16 +189,7 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
                   asset.type === 'weapons' || asset.type === 'pistol' ? 'bg-red-50' : 'bg-blue-50'
                 }`}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {asset.weaponName && (
-                      <div>
-                        <label className={`block text-sm font-medium ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-700' : 'text-blue-700'
-                        }`}>Weapon Name</label>
-                        <p className={`text-sm font-mono ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-900' : 'text-blue-900'
-                        }`}>{asset.weaponName}</p>
-                      </div>
-                    )}
+                    
                     {asset.weaponNumber && (
                       <div>
                         <label className={`block text-sm font-medium ${
@@ -207,26 +198,6 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
                         <p className={`text-sm font-mono ${
                           asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-900' : 'text-blue-900'
                         }`}>{asset.weaponNumber}</p>
-                      </div>
-                    )}
-                    {asset.pistolNumber && (
-                      <div>
-                        <label className={`block text-sm font-medium ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-700' : 'text-blue-700'
-                        }`}>Pistol Number</label>
-                        <p className={`text-sm font-mono ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-900' : 'text-blue-900'
-                        }`}>{asset.pistolNumber}</p>
-                      </div>
-                    )}
-                    {asset.numberOfRounds && (
-                      <div>
-                        <label className={`block text-sm font-medium ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-700' : 'text-blue-700'
-                        }`}>Total Rounds</label>
-                        <p className={`text-sm ${
-                          asset.type === 'weapons' || asset.type === 'pistol' ? 'text-red-900' : 'text-blue-900'
-                        }`}>{asset.numberOfRounds}</p>
                       </div>
                     )}
                     {asset.assignedRounds && (
@@ -298,12 +269,7 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h4>
                 <div className="bg-green-50 rounded-lg p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {asset.vehicleNumber && (
-                      <div>
-                        <label className="block text-sm font-medium text-green-700">Vehicle Number</label>
-                        <p className="text-sm text-green-900 font-mono">{asset.vehicleNumber}</p>
-                      </div>
-                    )}
+                   
                     {asset.registerNumber && (
                       <div>
                         <label className="block text-sm font-medium text-green-700">Register Number</label>
@@ -353,12 +319,6 @@ const AssetViewModal = ({ isOpen, onClose, asset }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Asset Status</label>
                     <p className="text-sm text-gray-900 capitalize">{asset.assetStatus}</p>
-                  </div>
-                )}
-                {asset.condition && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Condition</label>
-                    <p className="text-sm text-gray-900 capitalize">{asset.condition}</p>
                   </div>
                 )}
                 {asset.cost && (

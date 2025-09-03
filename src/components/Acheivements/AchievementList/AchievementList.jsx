@@ -1,15 +1,21 @@
 // AchievementList.jsx - Updated with Dynamic Lookup and Admin-Only Approval Functionality
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { getEmployeeAchievement, deleteAchievement, approveAchievement } from "../AchievementsApi.js";
+import {
+  getEmployeeAchievement,
+  deleteAchievement,
+  approveAchievement,
+} from "../AchievementsApi.js";
 import { getStatusWithEnum } from "../LookUp.js";
 import { role_admin } from "../../../constants/Enum.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
   const [achievements, setAchievements] = useState([]);
   const [filteredAchievements, setFilteredAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const permissions = usePermissions();
 
   // User role state
   const [userType, setUserType] = useState("");
@@ -17,7 +23,8 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
 
   // Dynamic achievement types from API
   const [achievementTypes, setAchievementTypes] = useState({});
-  const [isLoadingAchievementTypes, setIsLoadingAchievementTypes] = useState(false);
+  const [isLoadingAchievementTypes, setIsLoadingAchievementTypes] =
+    useState(false);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -79,7 +86,7 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
     setIsLoadingAchievementTypes(true);
     try {
       const result = await getStatusWithEnum(); // Using your existing API function
-      
+
       if (result.success) {
         setAchievementTypes(result.data);
         console.log("✅ Achievement types loaded:", result.data);
@@ -127,14 +134,18 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
           achievementsData = [result.data];
         }
 
-        achievementsData = achievementsData.filter((item) => item != null && item._id);
+        achievementsData = achievementsData.filter(
+          (item) => item != null && item._id
+        );
         setAchievements(achievementsData);
       } else {
         setError(result.error || "Failed to fetch achievements");
         setAchievements([]);
       }
     } catch (error) {
-      setError(error.message || "An error occurred while fetching achievements");
+      setError(
+        error.message || "An error occurred while fetching achievements"
+      );
       setAchievements([]);
     } finally {
       setLoading(false);
@@ -149,18 +160,25 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
     }
 
     let filtered = achievements.filter(
-      (achievement) => achievement != null && typeof achievement === "object" && achievement._id
+      (achievement) =>
+        achievement != null &&
+        typeof achievement === "object" &&
+        achievement._id
     );
 
     if (filters.achievementType) {
-      filtered = filtered.filter((a) => a.achievementType === filters.achievementType);
+      filtered = filtered.filter(
+        (a) => a.achievementType === filters.achievementType
+      );
     }
 
     if (filters.month) {
       filtered = filtered.filter((a) => {
         if (!a.createdAt) return false;
         const achievementDate = new Date(a.createdAt);
-        const achievementMonth = (achievementDate.getMonth() + 1).toString().padStart(2, '0');
+        const achievementMonth = (achievementDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0");
         return achievementMonth === filters.month;
       });
     }
@@ -222,7 +240,9 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
   // Approve achievement
   const handleApprove = async (achievementId) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can approve achievements");
+      toast.error(
+        "Access denied: Only administrators can approve achievements"
+      );
       return;
     }
 
@@ -231,7 +251,10 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
     }
 
     try {
-      const result = await approveAchievement(achievementId, "Approved from list");
+      const result = await approveAchievement(
+        achievementId,
+        "Approved from list"
+      );
       if (result.success) {
         toast.success("Achievement approved successfully");
         fetchAchievements();
@@ -304,7 +327,8 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
-              Showing {filteredAchievements.length} of {achievements.length} achievements
+              Showing {filteredAchievements.length} of {achievements.length}{" "}
+              achievements
             </span>
             {hasActiveFilters() && (
               <button
@@ -415,10 +439,9 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                 : "No achievements to display"}
             </p>
             <p className="text-gray-400 text-sm mt-1">
-              {achievements.length === 0 
+              {achievements.length === 0
                 ? "No achievements have been recorded yet."
-                : "Try adjusting your filter criteria to see more results."
-              }
+                : "Try adjusting your filter criteria to see more results."}
             </p>
           </div>
         ) : (
@@ -474,7 +497,9 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {achievement.amount ? `PKR ${achievement.amount.toLocaleString()}` : "N/A"}
+                      {achievement.amount
+                        ? `PKR ${achievement.amount.toLocaleString()}`
+                        : "N/A"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -513,7 +538,13 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                       {!achievement?.isApproved && (
                         <>
                           {/* Approve Button - Admin Only */}
-                          {isAdmin ? (
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canApprove === true
+                            )
+                          ) && (
                             <button
                               onClick={() => handleApprove(achievement._id)}
                               className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
@@ -534,11 +565,20 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                               </svg>
                               Approve
                             </button>
-                          ) : (
+                          )}
+
+                          {/* Edit Button */}
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canEdit === true
+                            )
+                          ) && (
                             <button
-                              disabled
-                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
-                              title="Only administrators can approve achievements"
+                              onClick={() => onEdit(achievement)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                              title="Edit Achievement"
                             >
                               <svg
                                 className="w-3 h-3 mr-1"
@@ -550,62 +590,25 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                 />
                               </svg>
-                              Approve
+                              Edit
                             </button>
                           )}
-                          
-                          {/* Edit Button */}
-                          <button
-                            onClick={() => onEdit(achievement)}
-                            className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
-                            title="Edit Achievement"
-                          >
-                            <svg
-                              className="w-3 h-3 mr-1"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            Edit
-                          </button>
-                          
+
                           {/* Delete Button - Admin Only */}
-                          {isAdmin ? (
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canDelete === true
+                            )
+                          ) && (
                             <button
                               onClick={() => handleDelete(achievement._id)}
                               className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
                               title="Delete Achievement"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                              Delete
-                            </button>
-                          ) : (
-                            <button
-                              disabled
-                              className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
-                              title="Only administrators can delete achievements"
                             >
                               <svg
                                 className="w-3 h-3 mr-1"

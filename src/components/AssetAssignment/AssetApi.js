@@ -12,10 +12,10 @@ const getCurrentUserType = () => localStorage.getItem("userType");
 // Get all asset assignments for a specific employee
 export const getAllAssetAssignments = async (filters = {}) => {
 
-  return {
-        success: false,
-        error: "TODO: Failed to fetch asset assignments",
-      };
+  // return {
+  //       success: false,
+  //       error: "TODO: Failed to fetch asset assignments",
+  //     };
 
   try {
     const queryParams = new URLSearchParams();
@@ -570,7 +570,6 @@ export const transferAssetAssignment = async (assignmentId, transferData) => {
       transferredTo: transferData.newEmployeeId,
       transferredBy: getCurrentUserId(),
       transferReason: transferData.reason || "Asset transfer",
-      condition: transferData.condition || "Good",
       ...(transferData.notes && { notes: transferData.notes }),
     };
 
@@ -617,7 +616,6 @@ export const returnAssetAssignment = async (assignmentId, returnData) => {
       returnedDate: returnData.date || new Date().toISOString(),
       returnedBy: getCurrentUserId(),
       returnReason: returnData.reason || "Asset return",
-      condition: returnData.condition || "Good",
       ...(returnData.notes && { notes: returnData.notes }),
       // Add any round history if provided
       ...(returnData.roundHistory && {

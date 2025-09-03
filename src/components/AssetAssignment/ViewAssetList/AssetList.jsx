@@ -370,7 +370,6 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
           newEmployeeName: newEmployeeName,
           reason: data.reason || "Asset transfer",
           date: data.date || new Date().toISOString(),
-          condition: data.condition || "Good",
           transferRounds: parseInt(data.transferRounds) || 0,
           notes: data.notes || "",
         };
@@ -383,7 +382,6 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
         const returnData = {
           reason: data.reason || "Asset return",
           date: data.date || new Date().toISOString(),
-          condition: data.condition || "Good",
           returnRounds: parseInt(data.returnRounds) || 0,
           notes: data.notes || "",
           // Include round history if provided
