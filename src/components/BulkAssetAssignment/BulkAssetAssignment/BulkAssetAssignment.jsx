@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BulkAssetHeader from "../../BulkAsset/Header/Header.jsx";
 import BulkAssetFilters from "../../BulkAsset/Filter/Filter.jsx";
-import { getEmployees } from "../../Employee/EmployeeApi.js";
-import { getAllStationsWithoutPage, getStations } from "../../Station/StationApi.js";
+import { getEmployees, getEmployeesWithoutPagination } from "../../Employee/EmployeeApi.js";
+import {
+  getAllStationsWithoutPage,
+  getStations,
+} from "../../Station/StationApi.js";
 import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api.js";
 import AssetAssignmentsList from "../List/List.jsx";
@@ -63,7 +66,7 @@ const BulkAssetAssignment = () => {
   const [isStationEditMode, setIsStationEditMode] = useState(false);
   const [stationEditData, setStationEditData] = useState(null);
   const { createStation, modifyStation } = useStations();
-  const [selectedEmployee, setSelectedEmployee] = useState({})
+  const [selectedEmployee, setSelectedEmployee] = useState({});
 
   // Loading states for search
   const [isSearching, setIsSearching] = useState({});
@@ -80,7 +83,10 @@ const BulkAssetAssignment = () => {
   // Helper function to get employee image
   const getEmployeeImage = (employee) => {
     if (!employee) return "/default-avatar.png";
-    if (Array.isArray(employee?.profileUrl) && employee?.profileUrl.length > 0) {
+    if (
+      Array.isArray(employee?.profileUrl) &&
+      employee?.profileUrl.length > 0
+    ) {
       return employee.profileUrl[0];
     }
     return employee.profileUrl || "/default-avatar.png";
@@ -273,7 +279,6 @@ const BulkAssetAssignment = () => {
       );
     });
 
-
     setSearchResults((prev) => ({
       ...prev,
       assets: { ...prev.assets, [rowId]: filteredAssets },
@@ -293,7 +298,7 @@ const BulkAssetAssignment = () => {
     setIsSearching((prev) => ({ ...prev, [`employee_${rowId}`]: true }));
 
     try {
-      const result = await getEmployees({
+      const result = await getEmployeesWithoutPagination({
         name: query,
         limit: 25,
       });
@@ -315,9 +320,6 @@ const BulkAssetAssignment = () => {
       setIsSearching((prev) => ({ ...prev, [`employee_${rowId}`]: false }));
     }
   };
-
-
-
 
   // Search stations
   const searchStations = async (query, rowId) => {
@@ -381,7 +383,7 @@ const BulkAssetAssignment = () => {
 
   const selectEmployee = (employee, rowId) => {
     console.log("Selected employee:", employee);
-    setSelectedEmployee(employee)
+    setSelectedEmployee(employee);
     setAssignmentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, employee } : row))
     );
@@ -436,7 +438,8 @@ const BulkAssetAssignment = () => {
       }
       if (!row.employee && !row.station) {
         errors.push(
-          `Row ${index + 1
+          `Row ${
+            index + 1
           }: At least one of Employee or Station must be selected`
         );
       }
@@ -452,7 +455,6 @@ const BulkAssetAssignment = () => {
   // Replace the entire handleSaveAll function with this:
 
   const handleSaveAll = async () => {
-
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       toast.error(
@@ -484,7 +486,6 @@ const BulkAssetAssignment = () => {
         assignments: assignments,
         mallkhana: headerData.mallkhana,
       };
-
 
       // Make the actual API call to your backend
       const response = await axios.post(
@@ -542,7 +543,8 @@ const BulkAssetAssignment = () => {
         }, 1500);
       } else {
         toast.error(
-          `Failed to create asset assignments: ${response.data?.message || "Unknown error"
+          `Failed to create asset assignments: ${
+            response.data?.message || "Unknown error"
           }`
         );
       }
@@ -659,9 +661,6 @@ const BulkAssetAssignment = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {assignmentRows.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50">
-
-
-
                   {/* Station Column */}
                   <td className="px-6 py-4 relative">
                     {row.station ? (
@@ -750,7 +749,10 @@ const BulkAssetAssignment = () => {
                     )}
                   </td>
 
-                  {console.log("Selected employee: hahahhahahhahahahhah", selectedEmployee)}
+                  {console.log(
+                    "Selected employee: hahahhahahhahahahhah",
+                    selectedEmployee
+                  )}
                   {/* Employee Column */}
                   <td className="px-6 py-4 relative">
                     {row.employee ? (
@@ -758,7 +760,6 @@ const BulkAssetAssignment = () => {
                         <img
                           className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
                           src={getEmployeeImage(row?.employee)}
-
                           alt={`${row.employee.firstName} ${row.employee.lastName}`}
                           onError={(e) => {
                             e.target.src = "/default-avatar.png";
@@ -770,7 +771,6 @@ const BulkAssetAssignment = () => {
                               onClick={() => handleEmployeeView(row.employee)}
                               className="text-gray-900 text-sm hover:text-blue-600 cursor-pointer hover:underline"
                             >
-
                               {row.employee.firstName}
                             </div>
                             <div className="text-xs">
@@ -779,10 +779,9 @@ const BulkAssetAssignment = () => {
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {row.employee.personalNumber ||
-                              row.employee.pnumber || row.employee.rank}
+                              row.employee.pnumber ||
+                              row.employee.rank}
                           </div>
-
-
                         </div>
                         <button
                           onClick={() => clearEmployee(row.id)}
@@ -848,7 +847,6 @@ const BulkAssetAssignment = () => {
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium text-gray-900 truncate">
                                     {employee.firstName} {employee.lastName}
-
                                   </div>
                                   <div className="text-xs text-gray-500 truncate">
                                     {employee.personalNumber ||
@@ -867,6 +865,7 @@ const BulkAssetAssignment = () => {
 
                   <td>
                     <div>
+                      Employee:
                       {row?.employee?.assignedAssets?.map((item) => (
                         <div key={item._id} className="flex flex-row">
                           {item.asset?.map((itm) => (
@@ -877,10 +876,10 @@ const BulkAssetAssignment = () => {
                         </div>
                       ))}
                     </div>
-                    {console.log(row, "this is my row X hahahha")
-                    }
-                    <div >
-                      {row?.stations?.stationAssets?.map((item) => (
+                    {console.log(row, "this is my row X hahahha")}
+                    <div>
+                      Stations:
+                      {row?.station?.stationAssets?.map((item) => (
                         <div key={item._id} className="flex flex-row">
                           {item.asset?.map((itm) => (
                             <span key={itm._id} className="text-xs mt-0.5">
@@ -902,20 +901,20 @@ const BulkAssetAssignment = () => {
                           <div className="text-xs text-gray-500 truncate">
                             Type: {row.asset.type || "N/A"}
                             <br />
-                            Category:{" "}
-                            {row.asset.category || "N/A"}
+                            Category: {row.asset.category || "N/A"}
                             <br />
-                            availible Quantity:{row?.asset?.availableQuantity || "N/A"}
+                            availible Quantity:
+                            {row?.asset?.availableQuantity || "N/A"}
                           </div>
                           {(row.asset.weaponNumber ||
                             row.asset.pistolNumber ||
                             row.asset.vehicleNumber) && (
-                              <div className="text-xs text-gray-500 truncate">
-                                {row.asset.weaponNumber ||
-                                  row.asset.pistolNumber ||
-                                  row.asset.vehicleNumber}
-                              </div>
-                            )}
+                            <div className="text-xs text-gray-500 truncate">
+                              {row.asset.weaponNumber ||
+                                row.asset.pistolNumber ||
+                                row.asset.vehicleNumber}
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => clearAsset(row.id)}
@@ -978,12 +977,12 @@ const BulkAssetAssignment = () => {
                                 {(asset.weaponNumber ||
                                   asset.pistolNumber ||
                                   asset.vehicleNumber) && (
-                                    <div className="text-xs text-gray-400 truncate">
-                                      {asset.weaponNumber ||
-                                        asset.pistolNumber ||
-                                        asset.vehicleNumber}
-                                    </div>
-                                  )}
+                                  <div className="text-xs text-gray-400 truncate">
+                                    {asset.weaponNumber ||
+                                      asset.pistolNumber ||
+                                      asset.vehicleNumber}
+                                  </div>
+                                )}
                               </button>
                             ))}
                           </div>
@@ -997,20 +996,25 @@ const BulkAssetAssignment = () => {
                       value={row.outQuantity}
                       disabled={loading}
                       onChange={(e) => {
-                        if (Number(row?.asset?.availableQuantity) < Number(e.target.value)) {
-                          toast.warn("Issue quantity should be less than available quantity");
+                        if (
+                          Number(row?.asset?.availableQuantity) <
+                          Number(e.target.value)
+                        ) {
+                          toast.warn(
+                            "Issue quantity should be less than available quantity"
+                          );
                         }
 
                         handleAssignmentChange(
                           row.id,
                           "outQuantity",
                           e.target.value
-                        )
+                        );
                       }}
                       className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
-                      placeholder="issue quantity.." />
+                      placeholder="issue quantity.."
+                    />
                   </td>
-
 
                   {/* Assignment Date */}
                   <td className="px-6 py-4">

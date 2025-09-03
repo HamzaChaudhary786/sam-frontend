@@ -62,7 +62,7 @@ export const getEmployees = async (filters = {}) => {
 
 export const getEmployeesWithoutPagination = async (filters = {}) => {
 
-    return await getEmployees(filters); // TODO: Remove this line when API is ready
+    // return await getEmployees(filters); // TODO: Remove this line when API is ready
 
   try {
     // Build query string from filters and pagination
