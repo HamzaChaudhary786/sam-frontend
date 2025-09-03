@@ -7,6 +7,7 @@ import {
 } from "../SalaryDeductionApi.js";
 import { getStatusWithEnum } from "../Lookup.js"; // Update with correct path
 import { role_admin } from "../../../constants/Enum.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
 const SalaryDeductionForm = ({
   employee,
@@ -19,6 +20,8 @@ const SalaryDeductionForm = ({
   const [userType, setUserType] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const permissions = usePermissions();
+
   const [formData, setFormData] = useState({
     deductionType: "",
     month: "",
@@ -30,7 +33,7 @@ const SalaryDeductionForm = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Dynamic deduction types from API
   const [deductionTypes, setDeductionTypes] = useState({});
   const [isLoadingDeductionTypes, setIsLoadingDeductionTypes] = useState(false);
@@ -82,7 +85,7 @@ const SalaryDeductionForm = ({
     setIsLoadingDeductionTypes(true);
     try {
       const result = await getStatusWithEnum(); // Using your existing API function
-      
+
       if (result.success) {
         setDeductionTypes(result.data);
         console.log("✅ Deduction types loaded for form:", result.data);
@@ -134,10 +137,11 @@ const SalaryDeductionForm = ({
         deductionReason: formData.deductionReason,
         amount: parseFloat(formData.amount) || 0,
         // Only include approval fields when editing and user is admin
-        ...(editingDeduction && isAdmin && {
-          isApproved: formData.isApproved,
-          approvalComment: formData.approvalComment,
-        }),
+        ...(editingDeduction &&
+          isAdmin && {
+            isApproved: formData.isApproved,
+            approvalComment: formData.approvalComment,
+          }),
       };
 
       let result;
@@ -268,7 +272,9 @@ const SalaryDeductionForm = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">
-                {isLoadingDeductionTypes ? "Loading types..." : "Select deduction type"}
+                {isLoadingDeductionTypes
+                  ? "Loading types..."
+                  : "Select deduction type"}
               </option>
               {Object.entries(deductionTypes).map(([id, name]) => (
                 <option key={id} value={id}>
@@ -358,61 +364,80 @@ const SalaryDeductionForm = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors resize-vertical"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Provide comprehensive details about why this deduction is being made
+              Provide comprehensive details about why this deduction is being
+              made
             </p>
           </div>
 
           {/* Approval Section - Only show when editing and user is admin */}
-          {editingDeduction && isAdmin && (
-            <>
-              <div className="border-t border-gray-200 pt-4">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                  <h3 className="text-sm font-medium text-yellow-800 mb-3">
-                    Approval Settings
-                  </h3>
-                  
-                  <div className="flex items-center mb-3">
-                    <input
-                      type="checkbox"
-                      name="isApproved"
-                      checked={formData.isApproved}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors"
-                    />
-                    <label className="ml-2 text-sm font-medium text-gray-700">
-                      Mark as Approved
-                    </label>
-                  </div>
+          {editingDeduction &&
+            permissions?.userData?.roles?.some((role) =>
+              role.accessRequirement?.some(
+                (access) =>
+                  access.resourceName.toLowerCase() === "employee" &&
+                  access.canApprove === true
+              )
+            ) && (
+              <>
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                    <h3 className="text-sm font-medium text-yellow-800 mb-3">
+                      Approval Settings
+                    </h3>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Approval Comments *
-                    </label>
-                    <textarea
-                      name="approvalComment"
-                      value={formData.approvalComment}
-                      onChange={handleChange}
-                      placeholder="Enter detailed reason for this approval/comments..."
-                      rows={2}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors resize-vertical"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Provide approval comments or additional notes about this deduction
-                    </p>
+                    <div className="flex items-center mb-3">
+                      <input
+                        type="checkbox"
+                        name="isApproved"
+                        checked={formData.isApproved}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors"
+                      />
+                      <label className="ml-2 text-sm font-medium text-gray-700">
+                        Mark as Approved
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Approval Comments *
+                      </label>
+                      <textarea
+                        name="approvalComment"
+                        value={formData.approvalComment}
+                        onChange={handleChange}
+                        placeholder="Enter detailed reason for this approval/comments..."
+                        rows={2}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors resize-vertical"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Provide approval comments or additional notes about this
+                        deduction
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
           {/* Non-Admin Approval Info - Show when editing but user is not admin */}
           {editingDeduction && !isAdmin && (
             <div className="border-t border-gray-200 pt-4">
               <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  <svg
+                    className="w-5 h-5 text-gray-400 mr-3 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">
@@ -420,17 +445,22 @@ const SalaryDeductionForm = ({
                     </h3>
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Status:</span>{" "}
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        editingDeduction.isApproved 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {editingDeduction.isApproved ? 'Approved' : 'Pending Approval'}
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          editingDeduction.isApproved
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {editingDeduction.isApproved
+                          ? "Approved"
+                          : "Pending Approval"}
                       </span>
                     </p>
                     {editingDeduction.approvalComment && (
                       <p className="text-xs text-gray-500 mt-2">
-                        <span className="font-medium">Admin Comment:</span> {editingDeduction.approvalComment}
+                        <span className="font-medium">Admin Comment:</span>{" "}
+                        {editingDeduction.approvalComment}
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-2">
@@ -446,18 +476,27 @@ const SalaryDeductionForm = ({
           {editingDeduction && isAdmin && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
               <div className="flex">
-                <svg className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <svg
+                  className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <div>
                   <h3 className="text-sm font-medium text-blue-800">
                     Deduction Update Process
                   </h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    {formData.isApproved 
+                    {formData.isApproved
                       ? "This deduction will be updated as approved and will be active immediately."
-                      : "This deduction will be updated as pending approval and will need to be approved before becoming active."
-                    }
+                      : "This deduction will be updated as pending approval and will need to be approved before becoming active."}
                   </p>
                 </div>
               </div>
@@ -467,15 +506,26 @@ const SalaryDeductionForm = ({
           {editingDeduction && !isAdmin && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
               <div className="flex">
-                <svg className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <svg
+                  className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <div>
                   <h3 className="text-sm font-medium text-yellow-800">
                     Deduction Update Process
                   </h3>
                   <p className="text-sm text-yellow-700 mt-1">
-                    This deduction will be updated and may require administrator approval before becoming active.
+                    This deduction will be updated and may require administrator
+                    approval before becoming active.
                   </p>
                 </div>
               </div>
@@ -485,15 +535,26 @@ const SalaryDeductionForm = ({
           {!editingDeduction && (
             <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
               <div className="flex">
-                <svg className="w-5 h-5 text-orange-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <svg
+                  className="w-5 h-5 text-orange-400 mr-2 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <div>
                   <h3 className="text-sm font-medium text-orange-800">
                     Deduction Creation Process
                   </h3>
                   <p className="text-sm text-orange-700 mt-1">
-                    This deduction will be created as pending approval and will need to be approved before becoming active.
+                    This deduction will be created as pending approval and will
+                    need to be approved before becoming active.
                   </p>
                 </div>
               </div>

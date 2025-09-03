@@ -129,8 +129,8 @@ const StationModal = ({
   onClose,
   isEdit = false,
   editData = null,
-  createMethod,
-  modifyMethod,
+  createStation,
+  modifyStation,
   isStation,
 }) => {
   const mapRef = useRef(null);
@@ -568,8 +568,9 @@ const StationModal = ({
           ...assetsData.map((asset) => ({
             value: asset._id,
             label: asset.name,
-            subtitle: `${asset.type}${asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
-              }${asset.registerNumber ? ` - ${asset.registerNumber}` : ""}`,
+            subtitle: `${asset.type}${
+              asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
+            }${asset.registerNumber ? ` - ${asset.registerNumber}` : ""}`,
           })),
         ];
         setAssetOptions(assetOptions);
@@ -1094,13 +1095,11 @@ const StationModal = ({
         stationIncharge: formData.stationIncharge,
         stationMinimumRequirements: formData.stationMinimumRequirements,
       };
-
       let result;
-
       if (isEdit) {
-        result = await modifyMethod(editData._id, submitData);
+        result = await modifyStation(editData._id, submitData);
       } else {
-        result = await createMethod(submitData);
+        result = await createStation(submitData);
       }
 
       if (result.success) {

@@ -1,11 +1,20 @@
 // StationAssignmentForm.jsx
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { createStationAssignment, updateStationAssignment } from "../StationAssignmentApi.js";
+import {
+  createStationAssignment,
+  updateStationAssignment,
+} from "../StationAssignmentApi.js";
 import { useLocationEnum } from "../../../components/Employee/AddEmployee/LocationHook.js";
+import { usePermissions } from "../../../hook/usePermission.js";
 
-
-const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess, onCancel }) => {
+const StationAssignmentForm = ({
+  employee,
+  editingAssignment,
+  isOpen,
+  onSuccess,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState({
     currentStation: "",
     lastStation: "",
@@ -15,7 +24,8 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
     approvalComment: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-    console.log(employee,"hahahahahahahahahahhahaha")
+  const permissions = usePermissions();
+
   // Get location/station data
   const { locationEnum, loading: locationLoading } = useLocationEnum();
 
@@ -50,7 +60,9 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
         employee: employee._id,
         currentStation: formData.currentStation,
         lastStation: employee?.stations?._id,
-        fromDate: formData.fromDate ? new Date(formData.fromDate).toISOString() : new Date().toISOString(),
+        fromDate: formData.fromDate
+          ? new Date(formData.fromDate).toISOString()
+          : new Date().toISOString(),
         remarks: formData.remarks,
         // Only include approval fields when editing
         ...(editingAssignment && {
@@ -61,14 +73,19 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
 
       let result;
       if (editingAssignment) {
-        result = await updateStationAssignment(editingAssignment._id, submitData);
+        result = await updateStationAssignment(
+          editingAssignment._id,
+          submitData
+        );
       } else {
         result = await createStationAssignment(submitData);
       }
 
       if (result.success) {
         toast.success(
-          `Station assignment ${editingAssignment ? "updated" : "created"} successfully`
+          `Station assignment ${
+            editingAssignment ? "updated" : "created"
+          } successfully`
         );
         resetForm();
         onSuccess();
@@ -101,8 +118,8 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
       setFormData({
         currentStation: editingAssignment.currentStation?._id || "",
         lastStation: editingAssignment.lastStation?._id || "",
-        fromDate: editingAssignment.fromDate 
-          ? new Date(editingAssignment.fromDate).toISOString().split('T')[0] 
+        fromDate: editingAssignment.fromDate
+          ? new Date(editingAssignment.fromDate).toISOString().split("T")[0]
           : "",
         remarks: editingAssignment.remarks || "",
         isApproved: editingAssignment.isApproved || false,
@@ -112,9 +129,9 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
       resetForm();
       // Set employee's current station as last station for new assignments
       if (employee?.station) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          lastStation: employee.station
+          lastStation: employee.station,
         }));
       }
     }
@@ -123,10 +140,9 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
   // Don't render if modal is not open
   if (!isOpen) return null;
 
-  console.log(locationEnum,"hahahahahah location")
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
@@ -135,7 +151,9 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {editingAssignment ? "Edit Station Assignment" : "New Station Assignment"}
+              {editingAssignment
+                ? "Edit Station Assignment"
+                : "New Station Assignment"}
             </h2>
             {/* <p className="text-sm text-gray-600 mt-1">
               {editingAssignment ? "Update" : "Create"} station assignment for{" "}
@@ -172,10 +190,12 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
               Current Employee Station
             </h3>
             <p className="text-sm text-blue-700">
-              <span className="font-medium">Station:</span> {locationEnum[employee.station] || "Unknown Station"}
+              <span className="font-medium">Station:</span>{" "}
+              {locationEnum[employee.station] || "Unknown Station"}
             </p>
             <p className="text-xs text-blue-600 mt-1">
-              This will be automatically set as the "Last Station" for the new assignment.
+              This will be automatically set as the "Last Station" for the new
+              assignment.
             </p>
           </div>
         )}
@@ -187,14 +207,13 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Last Station (Employee's Current Station) *
             </label>
-           <div className="border border-gray-300 p-2 w-full rounded-lg">
-               <h1> { employee?.stations?.name}    </h1>
+            <div className="border border-gray-300 p-2 w-full rounded-lg">
+              <h1> {employee?.stations?.name} </h1>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {editingAssignment 
-                ? "The station where the employee was previously assigned" 
-                : "Automatically filled from employee's current station"
-              }
+              {editingAssignment
+                ? "The station where the employee was previously assigned"
+                : "Automatically filled from employee's current station"}
             </p>
           </div>
 
@@ -263,60 +282,76 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
           </div>
 
           {/* Approval Fields - Only show when editing */}
-          {editingAssignment && (
-            <>
-              {/* Approval Checkbox */}
-              <div className="flex flex-row gap-2 items-center">
-                <input
-                  type="checkbox"
-                  name="isApproved"
-                  checked={formData.isApproved}
-                  onChange={handleChange}
-                  className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                />
-                <label className="block text-sm font-medium text-gray-700">
-                  Approved
-                </label>
-              </div>
+          {editingAssignment &&
+            permissions?.userData?.roles?.some((role) =>
+              role.accessRequirement?.some(
+                (access) =>
+                  access.resourceName.toLowerCase() === "employee" &&
+                  access.canApprove === true
+              )
+            ) && (
+              <>
+                {/* Approval Checkbox */}
+                <div className="flex flex-row gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    name="isApproved"
+                    checked={formData.isApproved}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Approved
+                  </label>
+                </div>
 
-              {/* Approval Comment */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Approval Comments *
-                </label>
-                <textarea
-                  name="approvalComment"
-                  value={formData.approvalComment}
-                  onChange={handleChange}
-                  placeholder="Enter detailed reason for this approval/comments..."
-                  rows={2}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Provide approval comments or additional notes
-                </p>
-              </div>
-            </>
-          )}
+                {/* Approval Comment */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Approval Comments *
+                  </label>
+                  <textarea
+                    name="approvalComment"
+                    value={formData.approvalComment}
+                    onChange={handleChange}
+                    placeholder="Enter detailed reason for this approval/comments..."
+                    rows={2}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Provide approval comments or additional notes
+                  </p>
+                </div>
+              </>
+            )}
 
           {/* Info Note */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
             <div className="flex">
-              <svg className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <svg
+                className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <div>
                 <h3 className="text-sm font-medium text-yellow-800">
                   Assignment Process
                 </h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  {editingAssignment 
-                    ? (formData.isApproved 
-                        ? "This assignment will be updated as approved and will be active immediately."
-                        : "This assignment will be updated as pending approval and will need to be approved before becoming active.")
-                    : "This assignment will be created as pending approval and will need to be approved before becoming active."
-                  }
+                  {editingAssignment
+                    ? formData.isApproved
+                      ? "This assignment will be updated as approved and will be active immediately."
+                      : "This assignment will be updated as pending approval and will need to be approved before becoming active."
+                    : "This assignment will be created as pending approval and will need to be approved before becoming active."}
                 </p>
               </div>
             </div>
@@ -335,9 +370,9 @@ const StationAssignmentForm = ({ employee, editingAssignment, isOpen, onSuccess,
             <button
               type="submit"
               disabled={
-                isSubmitting || 
-                !formData.currentStation || 
-                !formData.fromDate || 
+                isSubmitting ||
+                !formData.currentStation ||
+                !formData.fromDate ||
                 !formData.remarks ||
                 (editingAssignment && !formData.approvalComment) // Only require approval comment when editing
               }

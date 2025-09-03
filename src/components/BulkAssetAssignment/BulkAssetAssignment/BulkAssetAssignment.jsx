@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BulkAssetHeader from "../../BulkAsset/Header/Header.jsx";
 import BulkAssetFilters from "../../BulkAsset/Filter/Filter.jsx";
-import { getEmployees, getEmployeesWithoutPagination } from "../../Employee/EmployeeApi.js";
+import {
+  getEmployees,
+  getEmployeesWithoutPagination,
+} from "../../Employee/EmployeeApi.js";
 import {
   getAllStationsWithoutPage,
   getStations,
@@ -431,18 +434,22 @@ const BulkAssetAssignment = () => {
     }
 
     assignmentRows.forEach((row, index) => {
-      if (!row.asset) {
-        errors.push(`Row ${index + 1}: Asset is required`);
-      }
-      if (!row.employee && !row.station) {
-        errors.push(
-          `Row ${
-            index + 1
-          }: At least one of Employee or Station must be selected`
-        );
-      }
-      if (!row.assignmentDate) {
-        errors.push(`Row ${index + 1}: Assignment date is required`);
+      if (!row.asset && !row.employee && !row.station) {
+        //continue
+      } else {
+        if (!row.asset) {
+          errors.push(`Row ${index + 1}: Asset is required`);
+        }
+        if (!row.employee && !row.station) {
+          errors.push(
+            `Row ${
+              index + 1
+            }: At least one of Employee or Station must be selected`
+          );
+        }
+        if (!row.assignmentDate) {
+          errors.push(`Row ${index + 1}: Assignment date is required`);
+        }
       }
     });
 
@@ -906,11 +913,11 @@ const BulkAssetAssignment = () => {
                           </div>
                           {(row.asset.weaponNumber ||
                             row.asset.registerNumber) && (
-                              <div className="text-xs text-gray-500 truncate">
-                                {row.asset.weaponNumber ||
-                                  row.asset.registerNumber}
-                              </div>
-                            )}
+                            <div className="text-xs text-gray-500 truncate">
+                              {row.asset.weaponNumber ||
+                                row.asset.registerNumber}
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => clearAsset(row.id)}
@@ -972,11 +979,10 @@ const BulkAssetAssignment = () => {
                                 </div>
                                 {(asset.weaponNumber ||
                                   asset.registerNumber) && (
-                                    <div className="text-xs text-gray-400 truncate">
-                                      {asset.weaponNumber ||
-                                        asset.registerNumber}
-                                    </div>
-                                  )}
+                                  <div className="text-xs text-gray-400 truncate">
+                                    {asset.weaponNumber || asset.registerNumber}
+                                  </div>
+                                )}
                               </button>
                             ))}
                           </div>
