@@ -40,24 +40,27 @@ const BulkAssetRows = ({
     let detectedCategory = "";
 
     if (/round|bore|bor|mm|magazine/.test(type)) {
-      detectedCategory = "weaponRound";
-    } else if (/cabin|truck|motorcycle|bowser/.test(type)) {
+      detectedCategory = "round";
+    } else if (/cabin|truck|car/.test(type)) {
       detectedCategory = "vehicle";
-    } else if (/gun|rifle|ak|g3|lmg|mp5|rpd|rpg|draganov|sniper/.test(type)) {
+    } else if (/motorcycle|motorbike/.test(type)) {
+      detectedCategory = "motorcycle";
+    } else if (/pistol|tt|gun|rifle|ak|g3|lmg|mp5|rpd|rpg|draganov|sniper/.test(type)) {
       detectedCategory = "weapons";
-    } else if (/pistol|tt/.test(type)) {
-      detectedCategory = "pistol";
+    } else if (/set/.test(type)) {
+      detectedCategory = "equipment";
     } else {
-      detectedCategory = "weapons";
+      detectedCategory = "other";
     }
 
     const allCategories = [
-      { value: "weapons", label: "Weapons" },
-      { value: "pistol", label: "Pistol" },
+      { value: "weapons", label: "Weapons" },      
+      { value: "round", label: "Round" },      
+      { value: "equipment", label: "Equipment" },
+      { value: "motorcycle", label: "Motorcycle" },
       { value: "vehicle", label: "Vehicle" },
-      { value: "weaponRound", label: "Weapon Round" },
-      { value: "pistolRound", label: "Pistol Round" },
       { value: "other", label: "Other" },
+
     ];
 
     return allCategories.sort((a, b) => {
@@ -69,19 +72,15 @@ const BulkAssetRows = ({
 
   // Define which fields to show for each category
   const getCategoryFields = (category) => {
-    const commonFields = ['type', 'category', 'availableQuantity', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+    const commonFields = ['type', 'category', 'availableQuantity', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
 
     switch (category) {
+      case 'pistol':
       case 'weapons':
         return [...commonFields, 'weaponNumber'];
-      case 'pistol':
-        return [...commonFields, 'pistolNumber'];
       case 'vehicle':
-        return [...commonFields, 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color'];
-      case 'weaponRound':
-      case 'pistolRound':
-        return [...commonFields, 'numberOfRounds', 'weaponName'];
-      case 'other':
+      case 'motorcycle':
+        return [...commonFields, 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color'];
       default:
         return commonFields;
     }
@@ -98,11 +97,11 @@ const BulkAssetRows = ({
 
     // Always include basic fields even if no rows exist
     if (allVisibleFields.size === 0) {
-      return ['type', 'availableQuantity', 'category', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+      return ['type', 'availableQuantity', 'category', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
     }
 
     // Return fields in a logical order
-    const fieldOrder = ['type', 'availableQuantity', 'category', 'weaponNumber', 'pistolNumber', 'vehicleNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'numberOfRounds', 'weaponName', 'condition', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
+    const fieldOrder = ['type', 'availableQuantity', 'category', 'weaponNumber', 'registerNumber', 'chassiNumber', 'engineNumber', 'model', 'make', 'color', 'purchaseDate', 'cost', 'supplier', 'assetStatus', 'pictures', 'additionalInfo'];
 
     return fieldOrder.filter(field => allVisibleFields.has(field));
   };
@@ -130,16 +129,12 @@ const BulkAssetRows = ({
       category: autoSelectedCategory,
       // Reset category-specific fields
       weaponNumber: "",
-      pistolNumber: "",
-      vehicleNumber: "",
       registerNumber: "",
       chassiNumber: "",
       engineNumber: "",
       model: "",
       make: "",
       color: "",
-      numberOfRounds: "",
-      weaponName: "",
     };
 
     // Update the entire row
@@ -226,21 +221,6 @@ const BulkAssetRows = ({
       }
     },
 
-
-    // quantity: {
-    //   label: "Quantity",
-    //   render: (row) => (
-    //     <input
-    //       type="number"
-    //       value={row.quantity || ''}
-    //       onChange={(e) => handleAssetChange(row.id, 'quantity', e.target.value)}
-    //       disabled={loading}
-    //       min="1"
-    //       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[80px]"
-    //       placeholder="1"
-    //     />
-    //   )
-    // },
     weaponNumber: {
       label: "Weapon Number",
       render: (row) => (
@@ -253,33 +233,7 @@ const BulkAssetRows = ({
           placeholder="Enter weapon number"
         />
       )
-    },
-    pistolNumber: {
-      label: "Pistol Number",
-      render: (row) => (
-        <input
-          type="text"
-          value={row.pistolNumber || ''}
-          onChange={(e) => handleAssetChange(row.id, 'pistolNumber', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[150px]"
-          placeholder="Enter pistol number"
-        />
-      )
-    },
-    vehicleNumber: {
-      label: "Vehicle Number",
-      render: (row) => (
-        <input
-          type="text"
-          value={row.vehicleNumber || ''}
-          onChange={(e) => handleAssetChange(row.id, 'vehicleNumber', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[150px]"
-          placeholder="Enter vehicle number"
-        />
-      )
-    },
+    },  
     registerNumber: {
       label: "Register Number",
       render: (row) => (
@@ -358,46 +312,7 @@ const BulkAssetRows = ({
         />
       )
     },
-    numberOfRounds: {
-      label: "Number of Rounds",
-      render: (row) => (
-        <input
-          type="number"
-          value={row.numberOfRounds || ''}
-          onChange={(e) => handleAssetChange(row.id, 'numberOfRounds', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[120px]"
-          placeholder="Rounds count"
-        />
-      )
-    },
-    weaponName: {
-      label: "Weapon Name",
-      render: (row) => (
-        <input
-          type="text"
-          value={row.weaponName || ''}
-          onChange={(e) => handleAssetChange(row.id, 'weaponName', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[150px]"
-          placeholder="Weapon name"
-        />
-      )
-    },
-
-    condition: {
-      label: "Condition",
-      render: (row) => (
-        <input
-          type="text"
-          value={row.condition || ''}
-          onChange={(e) => handleAssetChange(row.id, 'condition', e.target.value)}
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[120px]"
-          placeholder="Good, Fair, etc."
-        />
-      )
-    },
+    
     purchaseDate: {
       label: "Purchase Date",
       render: (row) => (
@@ -558,17 +473,7 @@ const BulkAssetRows = ({
         </table>
       </div>
 
-      {/* Category Legend */}
-      {/* <div className="p-4 bg-gray-50 border-t">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Category Field Guide:</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-600">
-          <div><strong>Weapons:</strong> Weapon Number, Available Quantity</div>
-          <div><strong>Pistol:</strong> Pistol Number, Available Quantity</div>
-          <div><strong>Vehicle:</strong> Vehicle Number, Register Number, Chassis, Engine, Model, Make, Color</div>
-          <div><strong>Weapon/Pistol Round:</strong> Number of Rounds, Weapon Name, Available Quantity</div>
-          <div><strong>Other:</strong> Basic fields only</div>
-        </div>
-      </div> */}
+      
     </div>
   );
 };

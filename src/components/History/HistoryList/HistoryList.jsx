@@ -604,11 +604,6 @@ const UnifiedHistoryList = () => {
                     Weapon #: {historyItem.lastAsset.weaponNumber}
                   </div>
                 )}
-                {historyItem.lastAsset.pistolNumber && (
-                  <div className="text-gray-500">
-                    Pistol #: {historyItem.lastAsset.pistolNumber}
-                  </div>
-                )}
               </div>
             ) : historyItem.action === "allocated" &&
               historyItem.currentAsset ? (
@@ -628,11 +623,6 @@ const UnifiedHistoryList = () => {
                 {historyItem.currentAsset.weaponNumber && (
                   <div className="text-gray-500">
                     Weapon #: {historyItem.currentAsset.weaponNumber}
-                  </div>
-                )}
-                {historyItem.currentAsset.pistolNumber && (
-                  <div className="text-gray-500">
-                    Pistol #: {historyItem.currentAsset.pistolNumber}
                   </div>
                 )}
               </div>

@@ -272,10 +272,8 @@ const BulkAssetAssignment = () => {
         (asset.category && asset.category.toLowerCase().includes(searchTerm)) ||
         (asset.weaponNumber &&
           asset.weaponNumber.toLowerCase().includes(searchTerm)) ||
-        (asset.pistolNumber &&
-          asset.pistolNumber.toLowerCase().includes(searchTerm)) ||
-        (asset.vehicleNumber &&
-          asset.vehicleNumber.toLowerCase().includes(searchTerm))
+        (asset.registerNumber &&
+          asset.registerNumber.toLowerCase().includes(searchTerm))
       );
     });
 
@@ -907,14 +905,12 @@ const BulkAssetAssignment = () => {
                             {row?.asset?.availableQuantity || "N/A"}
                           </div>
                           {(row.asset.weaponNumber ||
-                            row.asset.pistolNumber ||
-                            row.asset.vehicleNumber) && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {row.asset.weaponNumber ||
-                                row.asset.pistolNumber ||
-                                row.asset.vehicleNumber}
-                            </div>
-                          )}
+                            row.asset.registerNumber) && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {row.asset.weaponNumber ||
+                                  row.asset.registerNumber}
+                              </div>
+                            )}
                         </div>
                         <button
                           onClick={() => clearAsset(row.id)}
@@ -975,14 +971,12 @@ const BulkAssetAssignment = () => {
                                   {asset.type} - {asset.category}
                                 </div>
                                 {(asset.weaponNumber ||
-                                  asset.pistolNumber ||
-                                  asset.vehicleNumber) && (
-                                  <div className="text-xs text-gray-400 truncate">
-                                    {asset.weaponNumber ||
-                                      asset.pistolNumber ||
-                                      asset.vehicleNumber}
-                                  </div>
-                                )}
+                                  asset.registerNumber) && (
+                                    <div className="text-xs text-gray-400 truncate">
+                                      {asset.weaponNumber ||
+                                        asset.registerNumber}
+                                    </div>
+                                  )}
                               </button>
                             ))}
                           </div>

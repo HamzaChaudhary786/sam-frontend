@@ -568,9 +568,8 @@ const StationModal = ({
           ...assetsData.map((asset) => ({
             value: asset._id,
             label: asset.name,
-            subtitle: `${asset.type}${
-              asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
-            }${asset.vehicleNumber ? ` - ${asset.vehicleNumber}` : ""}`,
+            subtitle: `${asset.type}${asset.weaponNumber ? ` - ${asset.weaponNumber}` : ""
+              }${asset.registerNumber ? ` - ${asset.registerNumber}` : ""}`,
           })),
         ];
         setAssetOptions(assetOptions);

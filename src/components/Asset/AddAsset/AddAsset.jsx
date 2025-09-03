@@ -28,13 +28,9 @@ const AssetModal = ({
     category: "", // Add category field
     // Weapon fields
     weaponNumber: "",
-    // Pistol fields
-    pistolNumber: "",
-    // Vehicle fields
-    vehicleNumber: "",
+    // Vehicle fields   
     registerNumber: "",
     chassiNumber: "",
-    condition: "",
     engineNumber: "",
     model: "",
     make: "",
@@ -43,9 +39,6 @@ const AssetModal = ({
     purchaseDate: "",
     supplier: "",
     cost: "",
-    // Weapon round fields
-    numberOfRounds: "",
-    weaponName: "",
     availableQuantity: "",
     // Common fields
     additionalInfo: "",
@@ -64,21 +57,24 @@ const AssetModal = ({
 
     if (/round|bore|bor|mm|magazine/.test(type)) {
       detectedCategory = "round";
-    } else if (/cabin|truck|motorcycle|bowser/.test(type)) {
+    } else if (/cabin|truck|car/.test(type)) {
       detectedCategory = "vehicle";
-    } else if (/gun|rifle|ak|g3|lmg|mp5|rpd|rpg|draganov|sniper/.test(type)) {
+    } else if (/motorcycle|motorbike/.test(type)) {
+      detectedCategory = "motorcycle";
+    } else if (/pistol|tt|gun|rifle|ak|g3|lmg|mp5|rpd|rpg|draganov|sniper/.test(type)) {
       detectedCategory = "weapons";
-    } else if (/pistol|tt/.test(type)) {
-      detectedCategory = "pistol";
+    } else if (/set/.test(type)) {
+      detectedCategory = "equipment";
     } else {
-      detectedCategory = "weapons";
+      detectedCategory = "other";
     }
 
     const allCategories = [
-      { value: "weapons", label: "Weapons" },
-      { value: "pistol", label: "Pistol" },
+      { value: "weapons", label: "Weapons" },      
+      { value: "round", label: "Round" },      
+      { value: "equipment", label: "Equipment" },
+      { value: "motorcycle", label: "Motorcycle" },
       { value: "vehicle", label: "Vehicle" },
-      { value: "round", label: "Round" },
       { value: "other", label: "Other" },
 
     ];
@@ -132,14 +128,11 @@ const AssetModal = ({
         type: editData.type || "",
         assetNumber: editData.assetNumber || "", // Add this line
         category: editData.category || "",
-        weaponNumber: editData.weaponNumber || "",
-        pistolNumber: editData.pistolNumber || "",
-        vehicleNumber: editData.vehicleNumber || "",
+        weaponNumber: editData.weaponNumber || "",      
         registerNumber: editData.registerNumber || "",
         chassiNumber: editData.chassiNumber || "",
         engineNumber: editData.engineNumber || "",
         purchaseDate: formatDateForInput(editData.purchaseDate),
-        condition: editData.condition || "",
         assetStatus: editData.assetStatus || "",
         cost: editData.cost || "",
         supplier: editData.supplier || "",
@@ -147,8 +140,6 @@ const AssetModal = ({
         make: editData.make || "",
         color: editData.color || "",
         availableQuantity: editData.availableQuantity || "",
-        numberOfRounds: editData.numberOfRounds || "",
-        weaponName: editData.weaponName || "",
         additionalInfo: editData.additionalInfo || "",
         pictures: editData.pictures || editData.assetImageUrl || [],
       });
@@ -184,7 +175,6 @@ const AssetModal = ({
       type: newType,
       category: autoSelectedCategory,
       assetStatus: prev.assetStatus,
-      condition: prev.condition,
       purchaseDate: prev.purchaseDate,
       supplier: prev.supplier,
       cost: prev.cost,
@@ -234,7 +224,6 @@ const AssetModal = ({
         assetNumber: formData.assetNumber,
         type: formData.type,
         category: formData.category,
-        condition: formData.condition,
         assetStatus: formData.assetStatus,
         purchaseDate: formData.purchaseDate,
         supplier: formData.supplier,
@@ -245,21 +234,14 @@ const AssetModal = ({
 
       switch (formData.category) {
         case "weapons":
-          submitData.weaponNumber = formData.weaponNumber;
-          submitData.pistolNumber = "";
-          submitData.assignedRounds = "";
-          submitData.consumedRounds = "";
-          submitData.availableQuantity = formData.availableQuantity;
-          break;
         case "pistol":
-          submitData.pistolNumber = formData.pistolNumber;
-          submitData.weaponNumber = "";
+          submitData.weaponNumber = formData.weaponNumber;
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           submitData.availableQuantity = formData.availableQuantity;
           break;
+        case "motorcycle":
         case "vehicle":
-          submitData.vehicleNumber = formData.vehicleNumber;
           submitData.registerNumber = formData.registerNumber;
           submitData.chassiNumber = formData.chassiNumber;
           submitData.engineNumber = formData.engineNumber;
@@ -268,15 +250,13 @@ const AssetModal = ({
           submitData.color = formData.color;
           // Explicitly set weapon fields to empty for vehicles
           submitData.weaponNumber = "";
-          submitData.pistolNumber = "";
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           break;
-        case "round":
-          submitData.numberOfRounds = formData.numberOfRounds;
-          submitData.weaponName = formData.weaponName;
+        case "weaponRound":
+        case "pistolRound":
+        case "round":              
           submitData.weaponNumber = "";
-          submitData.pistolNumber = "";
           submitData.assignedRounds = "";
           submitData.consumedRounds = "";
           submitData.availableQuantity = formData.availableQuantity;
@@ -316,6 +296,8 @@ const AssetModal = ({
 
   const renderTypeSpecificFields = () => {
     switch (formData.category) {
+      
+      case "pistol":
       case "weapons":
         return (
           <div className="">
@@ -353,64 +335,14 @@ const AssetModal = ({
           </div>
         );
 
-      case "pistol":
-        return (
-          <div className="">
-            <h3 className="text-lg font-medium text-orange-800 mb-4">
-              Pistol Information
-            </h3>
-            <div>
-              <label className="block text-sm font-medium text-orange-700 mb-1">
-                Pistol Number *
-              </label>
-              <input
-                type="text"
-                name="pistolNumber"
-                value={formData.pistolNumber}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-orange-300 rounded-md"
-                placeholder="Enter pistol number"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">
-                Available Quantity
-              </label>
-              <input
-                type="number"
-                name="availableQuantity"
-                value={formData.availableQuantity}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-green-300 rounded-md"
-                placeholder="Enter stock quantity"
-              />
-            </div>
-          </div>
-        );
-
+      case "motorcycle":
       case "vehicle":
         return (
           <div className="">
             <h3 className="text-lg font-medium text-blue-800 mb-4">
               Vehicle Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-blue-700 mb-1">
-                  Vehicle Number *
-                </label>
-                <input
-                  type="text"
-                  name="vehicleNumber"
-                  value={formData.vehicleNumber}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-blue-300 rounded-md"
-                  placeholder="Enter vehicle number (e.g., ABC-123)"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">              
               <div>
                 <label className="block text-sm font-medium text-blue-700 mb-1">
                   Register Number *
@@ -499,6 +431,8 @@ const AssetModal = ({
           </div>
         );
 
+      case "weaponRound":
+      case "pistolRound":
       case "round":
         return (
           <div className="">
@@ -506,35 +440,7 @@ const AssetModal = ({
               Round Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">
-                  Number of Rounds *
-                </label>
-                <input
-                  type="number"
-                  name="numberOfRounds"
-                  value={formData.numberOfRounds}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  className="w-full px-3 py-2 border border-green-300 rounded-md"
-                  placeholder="Enter number of rounds"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">
-                  Weapon Name *
-                </label>
-                <input
-                  type="text"
-                  name="weaponName"
-                  value={formData.weaponName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-green-300 rounded-md"
-                  placeholder="Enter weapon name"
-                />
-              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-green-700 mb-1">
                   Available Quantity
@@ -564,13 +470,20 @@ const AssetModal = ({
         return "e.g., Fully automatic rifle for field operations";
       case "pistol":
         return "e.g., Service pistol for personal defense";
+      case "motorcycle":
+        return "e.g., motorcycle bike";
       case "vehicle":
         return "e.g., Off-road patrol vehicle for mountainous terrain";
+      case "weaponRound":
+      case "pistolRound":
       case "round":
         return "e.g., High-velocity rounds for training purposes";
+      case "equipment":
+        return "e.g., equipment";
       default:
-        return "Enter additional information";
-    }
+        return "e.g., other";
+      
+      }
   };
 
   if (!isOpen) return null;
@@ -687,22 +600,7 @@ const AssetModal = ({
 
           {renderTypeSpecificFields()}
 
-          <div className="flex flex-row gap-2">
-            <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Condition *
-              </label>
-              <input
-                type="text"
-                name="condition"
-                value={formData.condition}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="e.g., Good, Fair, Excellent"
-              />
-            </div>
-          </div>
-
+          
           <div className="flex flex-row gap-2">
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -35,20 +35,15 @@ const BulkAssetCreation = () => {
       quantity: 1,
       assetStatus: '',
       // Category-specific fields
-      weaponNumber: '',
-      pistolNumber: '',
-      vehicleNumber: '',
+      weaponNumber: '',    
       registerNumber: '',
       chassiNumber: '',
       engineNumber: '',
       model: '',
       make: '',
       color: '',
-      numberOfRounds: '',
-      weaponName: '',
       availableQuantity: '',
       // Common fields
-      condition: '',
       purchaseDate: '',
       cost: '',
       supplier: '',
@@ -107,19 +102,14 @@ const BulkAssetCreation = () => {
       assetStatus: '',
       // Category-specific fields
       weaponNumber: '',
-      pistolNumber: '',
-      vehicleNumber: '',
       registerNumber: '',
       chassiNumber: '',
       engineNumber: '',
       model: '',
       make: '',
       color: '',
-      numberOfRounds: '',
-      weaponName: '',
       availableQuantity: '',
       // Common fields
-      condition: '',
       purchaseDate: '',
       cost: '',
       supplier: '',
@@ -158,67 +148,7 @@ const BulkAssetCreation = () => {
       if (!row.quantity || row.quantity < 1) {
         errors.push(`Asset ${index + 1}: Valid quantity is required`);
       }
-      // if (!row.assetStatus) {
-      //   errors.push(`Asset ${index + 1}: Asset status is required`);
-      // }
-      // if (!row.condition) {
-      //   errors.push(`Asset ${index + 1}: Condition is required`);
-      // }
-      // if (!row.purchaseDate) {
-      //   errors.push(`Asset ${index + 1}: Purchase date is required`);
-      // }
-      // if (!row.cost || row.cost < 0) {
-      //   errors.push(`Asset ${index + 1}: Valid cost is required`);
-      // }
-      // if (!row.supplier) {
-      //   errors.push(`Asset ${index + 1}: Supplier is required`);
-      // }
-
-      // Category-specific validation
-      // switch (row.category) {
-      //   case "weapons":
-      //     if (!row.weaponNumber) {
-      //       errors.push(`Asset ${index + 1}: Weapon number is required`);
-      //     }
-      //     break;
-      //   case "pistol":
-      //     if (!row.pistolNumber) {
-      //       errors.push(`Asset ${index + 1}: Pistol number is required`);
-      //     }
-      //     break;
-      //   case "vehicle":
-      //     if (!row.vehicleNumber) {
-      //       errors.push(`Asset ${index + 1}: Vehicle number is required`);
-      //     }
-      //     if (!row.registerNumber) {
-      //       errors.push(`Asset ${index + 1}: Register number is required`);
-      //     }
-      //     if (!row.chassiNumber) {
-      //       errors.push(`Asset ${index + 1}: Chassi number is required`);
-      //     }
-      //     if (!row.engineNumber) {
-      //       errors.push(`Asset ${index + 1}: Engine number is required`);
-      //     }
-      //     if (!row.model) {
-      //       errors.push(`Asset ${index + 1}: Model is required`);
-      //     }
-      //     if (!row.make) {
-      //       errors.push(`Asset ${index + 1}: Make is required`);
-      //     }
-      //     if (!row.color) {
-      //       errors.push(`Asset ${index + 1}: Color is required`);
-      //     }
-      //     break;
-      //   case "weaponRound":
-      //   case "pistolRound":
-      //     if (!row.numberOfRounds) {
-      //       errors.push(`Asset ${index + 1}: Number of rounds is required`);
-      //     }
-      //     if (!row.weaponName) {
-      //       errors.push(`Asset ${index + 1}: Weapon name is required`);
-      //     }
-      //     break;
-      // }
+      
     });
 
     return errors;
@@ -285,7 +215,6 @@ const BulkAssetCreation = () => {
               type: row.type,
               category: row.category,
               assetStatus: row.assetStatus,
-              condition: row.condition,
               purchaseDate: row.purchaseDate,
               cost: parseFloat(row.cost),
               supplier: row.supplier,
@@ -295,17 +224,15 @@ const BulkAssetCreation = () => {
 
             // Add category-specific fields
             switch (row.category) {
+              
+              case "pistol": // support old data
               case "weapons":
                 asset.weaponNumber = `${row.weaponNumber}${i > 0 ? `-${i + 1}` : ''}`;
                 asset.availableQuantity = row.availableQuantity;
                 break;
-              case "pistol":
-                asset.pistolNumber = `${row.pistolNumber}${i > 0 ? `-${i + 1}` : ''}`;
-                asset.availableQuantity = row.availableQuantity;
-                break;
+              case "motorcycle":
               case "vehicle":
-                asset.vehicleNumber = `${row.vehicleNumber}${i > 0 ? `-${i + 1}` : ''}`;
-                asset.registerNumber = row.registerNumber;
+                asset.registerNumber = `${row.registerNumber}${i > 0 ? `-${i + 1}` : ''}`;
                 asset.chassiNumber = row.chassiNumber;
                 asset.engineNumber = row.engineNumber;
                 asset.model = row.model;
@@ -314,8 +241,8 @@ const BulkAssetCreation = () => {
                 break;
               case "weaponRound":
               case "pistolRound":
-                asset.numberOfRounds = row.numberOfRounds;
-                asset.weaponName = row.weaponName;
+              case "other":
+              case "equipment":
                 asset.availableQuantity = row.availableQuantity;
                 break;
             }
@@ -368,18 +295,13 @@ const BulkAssetCreation = () => {
               quantity: 1,
               assetStatus: '',
               weaponNumber: '',
-              pistolNumber: '',
-              vehicleNumber: '',
               registerNumber: '',
               chassiNumber: '',
               engineNumber: '',
               model: '',
               make: '',
               color: '',
-              numberOfRounds: '',
-              weaponName: '',
               availableQuantity: '',
-              condition: '',
               purchaseDate: '',
               cost: '',
               supplier: '',

@@ -359,39 +359,6 @@ const AssetForm = ({ employee, editingAsset, isOpen, onSuccess, onCancel }) => {
                             </p>
                           )}
 
-                          {/* Pistol Number */}
-                          {asset.type === "pistol" && asset.pistolNumber && (
-                            <p className="text-xs text-gray-500">
-                              Pistol No: {asset.pistolNumber}
-                            </p>
-                          )}
-
-                          {/* Vehicle Number */}
-                          {(asset.type === "vehicle" ||
-                            asset.type === "vehicles") &&
-                            asset.vehicleNumber && (
-                              <p className="text-xs text-gray-500">
-                                Vehicle No: {asset.vehicleNumber}
-                              </p>
-                            )}
-
-                          {/* Round Details */}
-                          {(asset.type === "round" ||
-                            asset.type === "weaponRound") && (
-                            <>
-                              {asset.weaponName && (
-                                <p className="text-xs text-gray-500">
-                                  Weapon: {asset.weaponName}
-                                </p>
-                              )}
-                              {asset.numberOfRounds && (
-                                <p className="text-xs text-gray-500">
-                                  Total Rounds: {asset.numberOfRounds}
-                                </p>
-                              )}
-                            </>
-                          )}
-
                           {/* Available Quantity */}
                           {"availableQuantity" in asset && (
                             <p className="text-xs text-gray-500">
