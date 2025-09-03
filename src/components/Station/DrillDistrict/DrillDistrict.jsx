@@ -1287,7 +1287,7 @@ const DrillDistrictPage = ({
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Count:</span>
-                      <span className="font-medium">{`${facility.count} / ${data?.districtInfo?.totalFacilities}`}</span>
+                      <span className="font-medium">{`${facility.count} / ${summary.totalStations}`}</span>
                     </div>
                   </div>
                 </div>

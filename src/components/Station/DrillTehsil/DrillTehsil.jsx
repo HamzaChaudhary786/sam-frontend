@@ -68,6 +68,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     setError(null);
 
     try {
+      // First call: Get all data for statistics and summaries (without pagination)
       const response = await fetch(
         `${BACKEND_URL}/stations/by-tehsil?tehsil=${encodeURIComponent(
           tehsil
@@ -96,13 +97,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
       console.log("API Response:", result);
       setData(result.data);
 
-      // Set initial employees data and pagination
+      // Set total employees count from the response
+      if (result.data.summary?.totalActiveEmployees) {
+        setTotalEmployees(result.data.summary.totalActiveEmployees);
+      }
+
+      // Set initial employees data (first page)
       if (result.data.employees?.data) {
         setEmployees(result.data.employees.data);
-        setTotalEmployees(
-          result.data.employees.pagination?.totalEmployees ||
-            result.data.employees.data.length
-        );
       }
     } catch (err) {
       setError(err.message);
@@ -112,13 +114,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     }
   }, [tehsil]);
 
-  // Fetch employees with pagination
+  // Update the fetchEmployees function to properly handle pagination
   const fetchEmployees = useCallback(
     async (page = 1) => {
       if (!data) return;
 
       setEmployeesLoading(true);
       try {
+        // Fetch employees for specific page
         const response = await fetch(
           `${BACKEND_URL}/stations/by-tehsil?tehsil=${encodeURIComponent(
             tehsil
@@ -138,24 +141,31 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
 
         const result = await response.json();
 
-        if (result.success && result.data) {
-          setEmployees(result.data.data || []);
-          setTotalEmployees(result.data.pagination?.totalEmployees || 0);
+        if (result.success && result.data?.employees) {
+          // Update employees with paginated data
+          setEmployees(result.data.employees.data || []);
+
+          // Update pagination info
+          if (result.data.employees.pagination) {
+            setTotalEmployees(
+              result.data.employees.pagination.totalEmployees || 0
+            );
+          }
         }
       } catch (err) {
         console.error("Error fetching employees:", err);
-        // Use existing employees data as fallback
+        // Keep existing employees data on error
       } finally {
         setEmployeesLoading(false);
       }
     },
     [tehsil, employeesPerPage, data]
   );
-
-  // Initial data load
+  // Update the useEffect for initial data load
   useEffect(() => {
     if (tehsil) {
       fetchComprehensiveTehsilData();
+      setCurrentPage(1); // Reset to first page
     }
   }, [tehsil, fetchComprehensiveTehsilData]);
 
@@ -271,7 +281,6 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     setIsViewEmployee(true);
   };
 
-  // Pagination component
   const PaginationControls = ({
     currentPage,
     totalPages,
@@ -516,7 +525,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
               <div className="ml-2">
                 <div className="text-xs text-gray-600">{facility}</div>
                 <div className="text-sm font-bold text-gray-900">
-                  {count} / {data?.allStationsFacilitiesSummary?.total || 0}
+                  {count} / {data.summary?.totalStations || 0}
                 </div>
               </div>
             </div>
@@ -1065,7 +1074,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
 
   if (!data) return null;
 
-  // Calculate pagination values
+  // Calculate pagination values correctly
   const totalPages = Math.ceil(totalEmployees / employeesPerPage);
   const groupedEmployees = groupEmployeesByStation(employees);
   const sortedStationNames = Object.keys(groupedEmployees).sort();
@@ -1262,9 +1271,6 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   Contact
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Actions
-                                </th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -1290,7 +1296,12 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                           )}&background=6366f1&color=ffffff&size=40&rounded=true`;
                                         }}
                                       />
-                                      <div className="ml-4">
+                                      <div
+                                        className="ml-4 cursor-pointer"
+                                        onClick={() =>
+                                          handleEmployeeView(employee)
+                                        }
+                                      >
                                         <div className="text-sm font-medium text-gray-900">
                                           {employee?.firstName || "N/A"}
                                         </div>
@@ -1331,17 +1342,6 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                       <Phone className="h-4 w-4 mr-1 text-gray-400" />
                                       {employee.mobileNumber || "N/A"}
                                     </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <button
-                                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                      onClick={() =>
-                                        handleEmployeeView(employee)
-                                      }
-                                    >
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View
-                                    </button>
                                   </td>
                                 </tr>
                               ))}
