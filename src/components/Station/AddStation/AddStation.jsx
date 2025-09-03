@@ -131,7 +131,7 @@ const StationModal = ({
   editData = null,
   createStation,
   modifyStation,
-  isStation,
+  isStation = true,
 }) => {
   const mapRef = useRef(null);
   const autocompleteRef = useRef(null);
