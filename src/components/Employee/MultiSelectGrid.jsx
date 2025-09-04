@@ -135,9 +135,10 @@ const EmployeeMultiSelect = ({
       type="checkbox"
       checked={selectAll}
       onChange={handleSelectAll}
-      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      className="rounded border-gray-300  text-blue-600 focus:ring-blue-500"
       disabled={loading || employees.length === 0}
     />
+    
   );
 
   const renderEmployeeCheckbox = (employee) => (
@@ -145,7 +146,7 @@ const EmployeeMultiSelect = ({
       type="checkbox"
       checked={selectedEmployees.has(employee._id)}
       onChange={() => handleSelectEmployee(employee._id)}
-      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      className="rounded border-gray-300 mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500"
       disabled={loading}
     />
   );
@@ -154,7 +155,7 @@ const EmployeeMultiSelect = ({
     if (selectedEmployees.size === 0) return null;
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md mb-4 ` }>
         <span className="text-sm text-blue-800 font-medium">
           {selectedEmployees.size} employee(s) selected
         </span>

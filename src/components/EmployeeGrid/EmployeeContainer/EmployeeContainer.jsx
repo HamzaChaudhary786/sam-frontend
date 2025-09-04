@@ -110,21 +110,24 @@ const EmployeeGridContainer = () => {
         ]);
 
         const processEnumData = (response, key) => {
-          if (response.success && response.data) {
-            if (key === "stations") {
-              return (
-                response.data.stations?.map((station) => ({
-                  _id: station._id,
-                  name: station.name,
-                })) || []
-              );
-            }
-            return Object.entries(response.data).map(([_id, name]) => ({
-              _id,
-              name,
-            }));
+          if (!response) return [];
+          const dataRoot = response.data ?? response.result ?? response;
+
+          if (key === "stations") {
+            const stationArray =
+              dataRoot?.stations ||
+              dataRoot?.result ||
+              dataRoot?.data ||
+              (Array.isArray(dataRoot) ? dataRoot : []);
+
+            return (stationArray || []).map((station) => ({
+              _id: station?._id ?? station?.id ?? station?.value ?? "",
+              name: station?.name ?? station?.label ?? "",
+            })).filter((s) => s._id && s.name);
           }
-          return [];
+
+          const obj = dataRoot || {};
+          return Object.entries(obj).map(([_id, name]) => ({ _id, name }));
         };
 
         setEnums({
@@ -146,12 +149,10 @@ const EmployeeGridContainer = () => {
     fetchEnums();
   }, []);
 
-  // Change page size to 15
+  // Set initial page size once on mount
   useEffect(() => {
-    if (pagination.limit !== 15) {
-      changePageSize(15);
-    }
-  }, [pagination.limit, changePageSize]);
+    changePageSize(500);
+  }, []);
 
   // Sorting
   const handleSort = (key) => {
