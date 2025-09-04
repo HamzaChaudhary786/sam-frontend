@@ -49,6 +49,7 @@ const BulkAssetCreation = () => {
       supplier: "",
       additionalInfo: "",
       pictures: [],
+      serialNumbers: [],
     }));
   });
 
@@ -189,7 +190,6 @@ const BulkAssetCreation = () => {
 
   // Save all data
   const handleSaveAll = async () => {
-    console.log("=== STARTING BULK ASSET CREATION ===");
 
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
@@ -204,17 +204,19 @@ const BulkAssetCreation = () => {
     try {
       // Prepare asset list with image uploads
       const processedAssetList = await Promise.all(
-        assetRows.map(async (row) => {
+        assetRows.map(async (row, rowIndex) => {
+
           // Upload images if any
           let uploadedUrls = [];
           if (row.pictures && row.pictures.length > 0) {
             uploadedUrls = await uploadImages(row.pictures);
           }
 
-          // Create multiple assets based on quantity
           const assets = [];
+
+          // Loop over quantity
           for (let i = 0; i < parseInt(row.quantity); i++) {
-            const asset = {
+            let baseAsset = {
               name: row.name,
               type: row.type,
               category: row.category,
@@ -228,33 +230,55 @@ const BulkAssetCreation = () => {
 
             // Add category-specific fields
             switch (row.category) {
-              case "pistol": // support old data
+              case "pistol":
               case "weapons":
-                asset.weaponNumber = `${row.weaponNumber}${
+                baseAsset.weaponNumber = `${row.weaponNumber}${
                   i > 0 ? `-${i + 1}` : ""
                 }`;
-                asset.availableQuantity = row.availableQuantity;
+                baseAsset.availableQuantity = row.availableQuantity;
                 break;
               case "motorcycle":
               case "vehicle":
-                asset.registerNumber = `${row.registerNumber}${
+                baseAsset.registerNumber = `${row.registerNumber}${
                   i > 0 ? `-${i + 1}` : ""
                 }`;
-                asset.chassiNumber = row.chassiNumber;
-                asset.engineNumber = row.engineNumber;
-                asset.model = row.model;
-                asset.make = row.make;
-                asset.color = row.color;
+                baseAsset.chassiNumber = row.chassiNumber;
+                baseAsset.engineNumber = row.engineNumber;
+                baseAsset.model = row.model;
+                baseAsset.make = row.make;
+                baseAsset.color = row.color;
                 break;
               case "weaponRound":
               case "pistolRound":
               case "other":
               case "equipment":
-                asset.availableQuantity = row.availableQuantity;
+                baseAsset.availableQuantity = row.availableQuantity;
                 break;
             }
 
-            assets.push(asset);
+            // Serial numbers / register numbers
+            let serialNumberDat = row?.serialNumbers || [];
+            if (serialNumberDat.length > 0) {
+
+              for (let j = 0; j < serialNumberDat.length; j++) {
+                let newAsset = { ...baseAsset };
+
+                switch (row.category) {
+                  case "pistol":
+                  case "weapons":
+                    newAsset.weaponNumber = `${serialNumberDat[j]}`;
+                    break;
+                  case "motorcycle":
+                  case "vehicle":
+                    newAsset.registerNumber = `${serialNumberDat[j]}`;
+                    break;
+                }
+
+                assets.push(newAsset);
+              }
+            } else {
+              assets.push(baseAsset);
+            }
           }
 
           return assets;
@@ -276,7 +300,6 @@ const BulkAssetCreation = () => {
         mallkhana: headerData.mallkhana,
       };
 
-      console.log("Submitting batch data:", batchData);
 
       const result = await createAssetBatch(batchData);
 
@@ -292,7 +315,6 @@ const BulkAssetCreation = () => {
               "Assets created successfully! Would you like to create another batch?"
             )
           ) {
-            // Reset form
             setHeaderData({
               receiveDate: new Date().toISOString().split("T")[0],
               referenceNumber: "",
@@ -321,6 +343,7 @@ const BulkAssetCreation = () => {
                 supplier: "",
                 additionalInfo: "",
                 pictures: [],
+                serialNumbers: [],
               },
             ]);
           } else {

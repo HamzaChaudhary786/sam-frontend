@@ -15,6 +15,8 @@ import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
 
 import { toast } from "react-toastify";
 import { usePermissions } from "../../../hook/usePermission.js";
+import { MultiEnumSelect } from "../../Multiselect.jsx";
+import { getTrainingsWithEnum } from "../../Employee/AddEmployee/Training.js";
 
 const EmployeeGridTable = ({
   // parent-managed state and methods (single source of truth)
@@ -77,6 +79,18 @@ const EmployeeGridTable = ({
   const [confirmPopup, setConfirmPopup] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const permissions = usePermissions();
+  const [trainingEnum, setTrainingEnum] = useState({});
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getTrainingsWithEnum();
+        if (res?.success) {
+          setTrainingEnum(res.data || {});
+        }
+      } catch (_) {}
+    })();
+  }, []);
 
   // View Modal state
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -238,8 +252,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-        ? 1
-        : 0;
+      ? 1
+      : 0;
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -495,6 +509,25 @@ const EmployeeGridTable = ({
           />
         );
 
+      case "training": {
+        const currentArray = Array.isArray(value) ? value : [];
+        return (
+          <MultiEnumSelect
+            label=""
+            name={fieldKey}
+            value={currentArray}
+            onChange={(e) => {
+              const next = Array.isArray(e?.target?.value) ? e.target.value : [];
+              onCellChange(fieldKey, next);
+            }}
+            enumObject={trainingEnum}
+            placeholder="Search and select trainings..."
+            readOnly={false}
+            className="w-full"
+          />
+        );
+      }
+
       default:
         return (
           <input
@@ -534,8 +567,9 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
-                }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                statusClasses[value] || statusClasses.default
+              }`}
             >
               {displayName}
             </span>
@@ -556,8 +590,12 @@ const EmployeeGridTable = ({
             return value || `Mohalla N/A`;
           case "address.tehsil":
             return value || `Tehsil N/A`;
-          case "training":
-            return value || `Trainings N/A`;
+          case "training": {
+            const arr = Array.isArray(value) ? value : [];
+            if (!arr.length) return "Trainings N/A";
+            const labels = arr.map((id) => trainingEnum?.[id] || id);
+            return labels.join(", ");
+          }
 
           default:
             return value || `${fieldKey} N/A`;
@@ -579,16 +617,17 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
-      ? "cursor-pointer hover:bg-gray-100"
-      : "cursor-default"
-      }`;
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
+      isAdmin && isEditable
+        ? "cursor-pointer hover:bg-gray-100"
+        : "cursor-default"
+    }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-        ? "Click Edit button to enable editing"
-        : "Double-click to edit";
+      ? "Click Edit button to enable editing"
+      : "Double-click to edit";
 
     return (
       <>
@@ -625,7 +664,7 @@ const EmployeeGridTable = ({
     return (
       <div className="relative">
         <img
-          className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+          className="h-8 w-8 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
           src={currentImage}
           alt={`${employee.firstName} ${employee.lastName}`}
           onClick={() => onImageClick({ image: currentImage, employee })}
@@ -815,7 +854,7 @@ const EmployeeGridTable = ({
 
       {/* Save All Button for multiple edits */}
       {Object.keys(editingData).length > 0 && (
-        <div className="flex justify-end gap-2 mb-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md p-4 flex gap-3 justify-end z-50">
           <button
             onClick={handleSaveAll}
             className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
@@ -831,114 +870,74 @@ const EmployeeGridTable = ({
         </div>
       )}
 
-
-
-
       <div class="overflow-x-auto rounded-t-xl">
         <table class="min-w-full text-left text-sm text-gray-500 border border-gray-200">
           <thead class="bg-[#ede8e8] text-[#000] h-12">
             <tr class="text-left text-xs font-medium uppercase tracking-wider">
+              <th class="px-4 py-2 border border-gray-200 ">Photo</th>
+              <th class="px-4 py-2 border border-gray-200">Actions</th>
+              <th class="px-4 py-2 border border-gray-200">Name</th>
 
-              <th class="px-4 py-2 border border-gray-200 ">
-                Photo
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Actions
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Name
-              </th>
-
-              <th class="px-4 py-2 border border-gray-200">
-                Status
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Status</th>
 
               <th class="px-4 py-2 border border-gray-200 row-span-2">
                 Personal #
               </th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Station
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Station</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Rank
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Rank</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Cast
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Cast</th>
 
               <th class="px-4 py-2 border border-gray-200 row-span-2">
                 Address
               </th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Tehsil
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Tehsil</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-
-              </th>
+              <th class="px-4 py-2 border border-gray-200"></th>
 
               <th colSpan={4} class="px-4 py-2 border border-gray-200">
                 Employee's
               </th>
-
-
             </tr>
             <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              <th class="px-4 py-2 border border-gray-200">
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Father's Name
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Grade
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                CNIC
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Mobile
-              </th>
+              <th class="px-4 py-2 border border-gray-200"></th>
+              <th class="px-4 py-2 border border-gray-200"></th>
+              <th class="px-4 py-2 border border-gray-200">Father's Name</th>
+              <th class="px-4 py-2 border border-gray-200">Grade</th>
+              <th class="px-4 py-2 border border-gray-200">CNIC</th>
+              <th class="px-4 py-2 border border-gray-200">Mobile</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Date of Birth
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Date of Birth</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Designation
-              </th>
-              <th class="px-4 py-2 border border-gray-200">
-                Mohalla
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Designation</th>
+              <th class="px-4 py-2 border border-gray-200">Mohalla</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                District
-              </th>
+              <th class="px-4 py-2 border border-gray-200">District</th>
 
-              <th class="px-4 py-2 border border-gray-200">
-                Service Type
-              </th>
+              <th class="px-4 py-2 border border-gray-200">Service Type</th>
 
-              <th class="px-4 py-2 border border-gray-200 text-center"> Trainings
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Trainings
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center"> Assets
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Assets
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center"> Awards
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Awards
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center"> Deductions
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Deductions
               </th>
-
-
             </tr>
           </thead>
           <tbody>
-
-
             {/* Employee Rows - Updated with checkboxes */}
             {safeEmployees?.map((employee) => {
               const isEditing = editingCell?.rowId === employee._id;
@@ -946,53 +945,53 @@ const EmployeeGridTable = ({
 
               return (
                 <>
-
                   {/* {renderCell(employee, "address.line1", "textarea")}
                   {renderCell(employee, "address.muhala", "input")} */}
 
-
-                  <tr key={employee._id}
-                    className={`bg-white hover:bg-gray-50 text-left text-xs 
-                font-medium uppercase tracking-wider  ${isSelected(employee._id) ? "bg-blue-50" : ""
-                      }`}>
-
+                  <tr
+                    key={employee._id}
+                    className={`text-left text-xs font-medium uppercase tracking-wider ${
+                      isSelected(employee._id)
+                        ? "bg-blue-50 ring-1 ring-blue-300"
+                        : "bg-white hover:bg-gray-50"
+                    }`}
+                  >
                     <td rowSpan={2} className="border border-gray-200">
-                      <div
-                        className="border border-gray-200 items-center justify-center p-1">
-
+                      <div className="border border-gray-200 items-center justify-center p-1">
                         {renderEmployeeCheckbox(employee)}
                         {renderImageCell(employee)}
                       </div>
-
                     </td>
 
                     <td rowSpan={2} className="border border-gray-200">
                       {/* Vertical action buttons - spans 2 rows */}
                       <div className=" flex flex-col items-stretch gap-1 py-1">
-                        {(isAdmin || permissions?.userData?.roles?.some((role) =>
-                          role.accessRequirement?.some(
-                            (access) =>
-                              access.resourceName.toLowerCase() === "employee" &&
-                              access.canEdit === true
-                          )
-                        )) && (
-                            <button
-                              onClick={() => toggleEditMode(employee._id)}
-                              className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
+                        {(isAdmin ||
+                          permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canEdit === true
+                            )
+                          )) && (
+                          <button
+                            onClick={() => toggleEditMode(employee._id)}
+                            className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
+                              editableEmployees.has(employee._id)
                                 ? "bg-orange-600 text-white hover:bg-orange-700"
                                 : "bg-blue-600 text-white hover:bg-blue-700"
-                                }`}
-                              title={
-                                editableEmployees.has(employee._id)
-                                  ? "Disable editing"
-                                  : "Enable editing"
-                              }
-                            >
-                              {editableEmployees.has(employee._id)
-                                ? "Disable Edit"
-                                : "Edit"}
-                            </button>
-                          )}
+                            }`}
+                            title={
+                              editableEmployees.has(employee._id)
+                                ? "Disable editing"
+                                : "Enable editing"
+                            }
+                          >
+                            {editableEmployees.has(employee._id)
+                              ? "Disable Edit"
+                              : "Edit"}
+                          </button>
+                        )}
                         {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
@@ -1025,9 +1024,7 @@ const EmployeeGridTable = ({
                           </>
                         )}
                       </div>
-
                     </td>
-
 
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "firstName", "input")}
@@ -1050,31 +1047,23 @@ const EmployeeGridTable = ({
                     </td>
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "address.line1", "textarea")}
-
                     </td>
                     <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "address.tehsil", "select", "tehsil")}
+                      {renderCell(
+                        employee,
+                        "address.tehsil",
+                        "select",
+                        "tehsil"
+                      )}
                     </td>
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "serviceType", "serviceType")}
                     </td>
 
-
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      {/* {renderCell(employee, "training", "training")} */}
-                      <div>
-                        {
-                          employee?.training?.map((itm) => (
-                            <div className="flex flex-row">
-                              <span className="text-xs mt-0.5">
-                                {itm}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
+                      {renderCell(employee, "training", "training")}
                     </td>
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-
                       <div>
                         {employee?.assignedAssets?.map((item) => (
                           <div key={item._id} className="flex flex-row">
@@ -1086,7 +1075,6 @@ const EmployeeGridTable = ({
                           </div>
                         ))}
                       </div>
-
                     </td>
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
                       Awards pending
@@ -1094,17 +1082,15 @@ const EmployeeGridTable = ({
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
                       Deduction pending
                     </td>
-
-
                   </tr>
 
-
-                  <tr className={`bg-white hover:bg-gray-50 text-left text-xs 
-                font-medium uppercase tracking-wider border-b-2 
-                border-black pb-2 pt-2 ${isSelected(employee._id) ? "bg-blue-50" : ""
-                    }`}>
-
-
+                  <tr
+                    className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
+                      isSelected(employee._id)
+                        ? "bg-blue-50 ring-1 ring-blue-300"
+                        : "bg-white hover:bg-gray-50"
+                    }`}
+                  >
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "fatherFirstName", "input")}
                     </td>
@@ -1114,39 +1100,42 @@ const EmployeeGridTable = ({
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "cnic", "input")}
                     </td>
-                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "mobileNumber", "input")}
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(employee, "mobileNumber", "input")}
                     </td>
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "dateOfBirth", "date")}
                     </td>
-                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "designation", "select", "designations")}
-
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(
+                        employee,
+                        "designation",
+                        "select",
+                        "designations"
+                      )}
                     </td>
-                    <td className="x-4 py-2 border border-gray-200"> {renderCell(employee, "address.muhala", "input")}
-
+                    <td className="x-4 py-2 border border-gray-200">
+                      {" "}
+                      {renderCell(employee, "address.muhala", "input")}
                     </td>
-                    <td className="x-4 py-2 border border-gray-200">{renderCell(employee, "address.line2", "select", "district")}
-
+                    <td className="x-4 py-2 border border-gray-200">
+                      {renderCell(
+                        employee,
+                        "address.line2",
+                        "select",
+                        "district"
+                      )}
                     </td>
-
-
                   </tr>
                 </>
               );
             })}
-
-
           </tbody>
         </table>
       </div>
 
-
-
-
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-
-
         {/* Confirmation Modal */}
         {confirmPopup && renderConfirmationModal()}
 
@@ -1162,23 +1151,7 @@ const EmployeeGridTable = ({
         )}
       </div>
 
-      {/* Save All Button for multiple edits */}
-      {Object.keys(editingData).length > 0 && (
-        <div className="flex justify-end gap-2 mt-2">
-          <button
-            onClick={handleSaveAll}
-            className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold"
-          >
-            Save All Changes
-          </button>
-          <button
-            onClick={handleCancelAll}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
-          >
-            Cancel All Changes
-          </button>
-        </div>
-      )}
+    
 
       <MultiStationAssignmentForm
         selectedEmployees={selectedEmployeesForPosting}
@@ -1218,7 +1191,7 @@ const EmployeeGridTable = ({
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
         showPageSizeOptions={true}
-        pageSizeOptions={[500, 10, 20, 50, 200, 5]}
+        pageSizeOptions={[5, 10, 15, 20, 50, 200, 500]}
       />
     </div>
   );
