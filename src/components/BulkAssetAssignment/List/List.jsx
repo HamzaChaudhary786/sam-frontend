@@ -768,197 +768,276 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {assignments.map((assignment, index) => (
-                  <tr
-                    key={assignment._id || index}
-                    className="hover:bg-gray-50"
-                  >
-                    {/* Asset */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-start">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">
-                            {Array.isArray(assignment.asset)
-                              ? assignment.asset.map((a) => a.name).join(", ")
-                              : assignment.asset?.name || "N/A"}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {Array.isArray(assignment.asset)
-                              ? `${assignment.asset.length} assets`
-                              : `${assignment.asset?.type || "N/A"} - ${
-                                  assignment.asset?.category || "N/A"
+                  <>
+                    <tr
+                      key={assignment._id || index}
+                      className="hover:bg-gray-50"
+                    >
+                      {/* Asset */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-start">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 truncate">
+                              {Array.isArray(assignment.asset)
+                                ? assignment.asset.map((a) => a.name).join(", ")
+                                : assignment.asset?.name || "N/A"}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {Array.isArray(assignment.asset)
+                                ? `${assignment.asset.length} assets`
+                                : `${assignment.asset?.type || "N/A"} - ${assignment.asset?.category || "N/A"
                                 }`}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Assigned To */}
-                    <td className="px-6 py-4">
-                      {assignment.assignmentType === "employee" ||
-                      assignment.employee ? (
-                        <div className="flex items-center">
-                          <img
-                            className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                            src={getEmployeeImage(assignment.employee)}
-                            alt=""
-                          />
+                      {/* Assigned To */}
+                      <td className="px-6 py-4">
+                        {assignment.assignmentType === "employee" ||
+                          assignment.employee ? (
+                          <div className="flex items-center">
+                            <img
+                              className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                              src={getEmployeeImage(assignment.employee)}
+                              alt=""
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 truncate">
+                                <span
+                                  onClick={() =>
+                                    handleEmployeeView(assignment.employee)
+                                  }
+                                  className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                                >
+                                  {assignment.employee?.firstName}{" "}
+                                  {assignment.employee?.lastName}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                {assignment.employee?.personalNumber ||
+                                  assignment.employee?.pnumber}
+                              </div>
+                            </div>
+                          </div>
+                        ) : assignment.station ? (
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-gray-900 truncate">
                               <span
                                 onClick={() =>
-                                  handleEmployeeView(assignment.employee)
+                                  handleStationView(assignment.station)
                                 }
                                 className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
                               >
-                                {assignment.employee?.firstName}{" "}
-                                {assignment.employee?.lastName}
+                                {assignment.station.name}
                               </span>
                             </div>
-                            <div className="text-xs text-gray-500 truncate">
-                              {assignment.employee?.personalNumber ||
-                                assignment.employee?.pnumber}
-                            </div>
+                            {assignment.station.district && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {assignment.station.district}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ) : assignment.station ? (
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">
-                            <span
-                              onClick={() =>
-                                handleStationView(assignment.station)
-                              }
-                              className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                            >
-                              {assignment.station.name}
-                            </span>
-                          </div>
-                          {assignment.station.district && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {assignment.station.district}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">N/A</span>
-                      )}
-                    </td>
+                        ) : (
+                          <span className="text-gray-400">N/A</span>
+                        )}
+                      </td>
 
-                    {/* Type */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          assignment.assignmentType === "employee" ||
-                          assignment.employee
+                      {/* Type */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${assignment.assignmentType === "employee" ||
+                            assignment.employee
                             ? "bg-blue-100 text-blue-800"
                             : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {assignment.assignmentType === "employee" ||
-                        assignment.employee
-                          ? "Employee"
-                          : "Station"}
-                      </span>
-                    </td>
-
-                    {/* Assignment Date */}
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {formatDate(assignment.assignedDate)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(
-                          assignment.status
-                        )}`}
-                      >
-                        {assignment.status || "N/A"}
-                      </span>
-                    </td>
-
-                    {/* Batch */}
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div
-                        className="truncate max-w-32"
-                        title={assignment.assetBatch?.referenceNumber}
-                      >
-                        {assignment.assetBatch?.referenceNumber || "N/A"}
-                      </div>
-                    </td>
-
-                    {/* Actions - Only show for employee assignments */}
-                    <td className="px-6 py-4">
-                      {isEmployeeAssignment(assignment) ? (
-                        <div className="flex items-center space-x-2">
-                          {/* Approve Button */}
-                          {!assignment.isApproved && isAdmin && (
-                            <button
-                              onClick={() => handleApprove(assignment)}
-                              className="text-green-600 hover:text-green-900 text-xs font-medium bg-green-50 hover:bg-green-100 px-2 py-1 rounded"
-                              title="Approve Assignment"
-                            >
-                              Approve
-                            </button>
-                          )}
-
-                          {/* Issue Rounds Button */}
-                          {supportsRounds(assignment) && isAdmin && (
-                            <button
-                              onClick={() => handleIssueRounds(assignment)}
-                              className="text-blue-600 hover:text-blue-900 text-xs font-medium bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
-                              title="Issue Rounds"
-                            >
-                              Issue
-                            </button>
-                          )}
-
-                          {/* Consume Rounds Button */}
-                          {supportsRounds(assignment) && isAdmin && (
-                            <button
-                              onClick={() => handleConsumeRounds(assignment)}
-                              className="text-orange-600 hover:text-orange-900 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded"
-                              title="Consume Rounds"
-                            >
-                              Consume
-                            </button>
-                          )}
-
-                          {/* Transfer/Return Button */}
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleTransferReturn(assignment)}
-                              className="text-purple-600 hover:text-purple-900 text-xs font-medium bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded"
-                              title="Transfer or Return"
-                            >
-                              Transfer
-                            </button>
-                          )}
-
-                          {/* Delete Button */}
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleDelete(assignment)}
-                              className="text-red-600 hover:text-red-900 text-xs font-medium bg-red-50 hover:bg-red-100 px-2 py-1 rounded"
-                              title="Delete Assignment"
-                            >
-                              Delete
-                            </button>
-                          )}
-
-                          {/* Show message if no admin access */}
-                          {!isAdmin && (
-                            <span className="text-xs text-gray-400 italic">
-                              Admin only
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">
-                          Station assignment
+                            }`}
+                        >
+                          {assignment.assignmentType === "employee" ||
+                            assignment.employee
+                            ? "Employee"
+                            : "Station"}
                         </span>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+
+                      {/* Assignment Date */}
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {formatDate(assignment.assignedDate)}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(
+                            assignment.status
+                          )}`}
+                        >
+                          {assignment.status || "N/A"}
+                        </span>
+                      </td>
+
+                      {/* Batch */}
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div
+                          className="truncate max-w-32"
+                          title={assignment.assetBatch?.referenceNumber}
+                        >
+                          {assignment.assetBatch?.referenceNumber || "N/A"}
+                        </div>
+                      </td>
+
+                      {/* Actions - Only show for employee assignments */}
+                      <td className="px-6 py-4">
+                        {isEmployeeAssignment(assignment) ? (
+                          <div className="flex items-center space-x-2">
+                            {/* Approve Button */}
+                            {!assignment.isApproved && isAdmin && (
+                              <button
+                                onClick={() => handleApprove(assignment)}
+                                className="text-green-600 hover:text-green-900 text-xs font-medium bg-green-50 hover:bg-green-100 px-2 py-1 rounded"
+                                title="Approve Assignment"
+                              >
+                                Approve
+                              </button>
+                            )}
+
+                            {/* Issue Rounds Button */}
+                            {supportsRounds(assignment) && isAdmin && (
+                              <button
+                                onClick={() => handleIssueRounds(assignment)}
+                                className="text-blue-600 hover:text-blue-900 text-xs font-medium bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+                                title="Issue Rounds"
+                              >
+                                Issue
+                              </button>
+                            )}
+
+                            {/* Consume Rounds Button */}
+                            {supportsRounds(assignment) && isAdmin && (
+                              <button
+                                onClick={() => handleConsumeRounds(assignment)}
+                                className="text-orange-600 hover:text-orange-900 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded"
+                                title="Consume Rounds"
+                              >
+                                Consume
+                              </button>
+                            )}
+
+                            {/* Transfer/Return Button */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleTransferReturn(assignment)}
+                                className="text-purple-600 hover:text-purple-900 text-xs font-medium bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded"
+                                title="Transfer or Return"
+                              >
+                                Transfer
+                              </button>
+                            )}
+
+                            {/* Delete Button */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDelete(assignment)}
+                                className="text-red-600 hover:text-red-900 text-xs font-medium bg-red-50 hover:bg-red-100 px-2 py-1 rounded"
+                                title="Delete Assignment"
+                              >
+                                Delete
+                              </button>
+                            )}
+
+                            {/* Show message if no admin access */}
+                            {!isAdmin && (
+                              <span className="text-xs text-gray-400 italic">
+                                Admin only
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">
+                            Station assignment
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={6} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {assignment.asset?.map((itm) => (
+                          <div key={itm._id} className="flex flex-row">
+                            <div key={itm._id} className="text-xs text-gray-500 truncate">
+
+                              <span className="text-xs mt-0.5">
+{itm.weaponNumber && (
+                                  <>
+                                    weapon #: {itm.weaponNumber} ,
+                                  </>
+                                )}
+                                {itm.registerNumber && (
+                                  <>
+                                    registration #: {itm.registerNumber} ,
+                                  </>
+                                )}
+                                {itm.category && (
+                                  <>
+                                    Type: {itm.category} ,
+                                  </>
+                                )}
+
+                                {itm.chassiNumber && (
+                                  <>
+                                    chassis #: {itm.chassiNumber} ,
+                                  </>
+                                )}
+                                {itm.engineNumber && (
+                                  <>
+                                    engine #: {itm.engineNumber} ,
+                                  </>
+                                )}
+                                {itm.make && (
+                                  <>
+                                    make: {itm.make} ,
+                                  </>
+                                )}
+                                {itm.color && (
+                                  <>
+                                    color: {itm.color} ,
+                                  </>
+                                )}   
+                                {itm.condition && (
+                                  <>
+                                    condition: {itm.condition} ,
+                                  </>
+                                )}  
+                                {itm.assetStatus && (
+                                  <>
+                                     Status: {itm.assetStatus} ,
+                                  </>
+                                )}  
+                                {itm.cost && (
+                                  <>
+                                    cost: {itm.cost} ,
+                                  </>
+                                )}  
+                                {itm.shellCollected && (
+                                  <>
+                                    Shell Collected: {itm.shellCollected} ,
+                                  </>
+                                )}  
+                                {itm.outQuantity && (
+                                  <>
+                                    Issue: {itm.outQuantity} ,
+                                  </>
+                                )} 
+                                {itm.availableQuantity && (
+                                  <>
+                                    Quantity: {itm.availableQuantity}
+                                  </>
+                                )} 
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>

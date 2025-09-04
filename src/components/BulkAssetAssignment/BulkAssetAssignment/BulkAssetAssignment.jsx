@@ -849,7 +849,7 @@ const BulkAssetAssignment = () => {
                   </td>
 
                   <td>
-                    <div>
+                    <div className="text-xs mt-0.5">
                       Employee:
                       {row?.employee?.assignedAssets?.map((item) => (
                         <div key={item._id} className="flex flex-row">
@@ -862,7 +862,7 @@ const BulkAssetAssignment = () => {
                       ))}
                     </div>
 
-                    <div>
+                    <div className="text-xs mt-0.5">
                       Stations:
                       {row?.station?.stationAssets?.map((item) => (
                         <div key={item._id} className="flex flex-row">

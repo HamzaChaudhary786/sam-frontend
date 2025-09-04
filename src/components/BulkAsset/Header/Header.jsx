@@ -148,7 +148,7 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
 
 
         {/* Letter Info */}
-        <div className="md:col-span-2 lg:col-span-3">
+        {/* <div className="md:col-span-2 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Letter Info
           </label>
@@ -161,20 +161,20 @@ const BulkAssetHeader = ({ headerData, onHeaderChange, loading }) => {
             placeholder="Enter letter information"
             className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
           />
-        </div>
+        </div> */}
 
         {/* Description */}
         <div className="md:col-span-2 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
+            Letter Info
           </label>
           <textarea
             name="description"
             value={headerData.description}
             onChange={handleChange}
             disabled={loading}
-            rows={3}
-            placeholder="Enter batch description"
+            rows={2}
+            placeholder="Enter batch description Letter Info"
             className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
           />
         </div>

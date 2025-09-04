@@ -88,7 +88,7 @@ const EmployeeGridTable = ({
         if (res?.success) {
           setTrainingEnum(res.data || {});
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
   }, []);
 
@@ -252,8 +252,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-      ? 1
-      : 0;
+        ? 1
+        : 0;
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -567,9 +567,8 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                statusClasses[value] || statusClasses.default
-              }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
+                }`}
             >
               {displayName}
             </span>
@@ -617,17 +616,16 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
-      isAdmin && isEditable
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
         ? "cursor-pointer hover:bg-gray-100"
         : "cursor-default"
-    }`;
+      }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-      ? "Click Edit button to enable editing"
-      : "Double-click to edit";
+        ? "Click Edit button to enable editing"
+        : "Double-click to edit";
 
     return (
       <>
@@ -839,6 +837,12 @@ const EmployeeGridTable = ({
     toast.info("All changes cancelled.");
   };
 
+    // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
   // Main render with multi-select functionality
   return (
     <div>
@@ -950,11 +954,10 @@ const EmployeeGridTable = ({
 
                   <tr
                     key={employee._id}
-                    className={`text-left text-xs font-medium uppercase tracking-wider ${
-                      isSelected(employee._id)
+                    className={`text-left text-xs font-medium uppercase tracking-wider ${isSelected(employee._id)
                         ? "bg-blue-50 ring-1 ring-blue-300"
                         : "bg-white hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <td rowSpan={2} className="border border-gray-200">
                       <div className="border border-gray-200 items-center justify-center p-1">
@@ -971,27 +974,26 @@ const EmployeeGridTable = ({
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canEdit === true
+                                "employee" && access.canEdit === true
                             )
                           )) && (
-                          <button
-                            onClick={() => toggleEditMode(employee._id)}
-                            className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
-                              editableEmployees.has(employee._id)
-                                ? "bg-orange-600 text-white hover:bg-orange-700"
-                                : "bg-blue-600 text-white hover:bg-blue-700"
-                            }`}
-                            title={
-                              editableEmployees.has(employee._id)
-                                ? "Disable editing"
-                                : "Enable editing"
-                            }
-                          >
-                            {editableEmployees.has(employee._id)
-                              ? "Disable Edit"
-                              : "Edit"}
-                          </button>
-                        )}
+                            <button
+                              onClick={() => toggleEditMode(employee._id)}
+                              className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
+                                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                                  : "bg-blue-600 text-white hover:bg-blue-700"
+                                }`}
+                              title={
+                                editableEmployees.has(employee._id)
+                                  ? "Disable editing"
+                                  : "Enable editing"
+                              }
+                            >
+                              {editableEmployees.has(employee._id)
+                                ? "Disable Edit"
+                                : "Edit"}
+                            </button>
+                          )}
                         {/* <button
                   onClick={() => handleDelete(employee?._id)}
                   className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
@@ -1068,28 +1070,45 @@ const EmployeeGridTable = ({
                         {employee?.assignedAssets?.map((item) => (
                           <div key={item._id} className="flex flex-row">
                             {item.asset?.map((itm) => (
-                              <span key={itm._id} className="text-xs mt-0.5">
-                                {itm.name} {itm.category}
-                              </span>
+                              <div key={itm._id} className="text-xs text-gray-500 truncate">
+                                {itm.weaponNumber ||
+                                  itm.registerNumber}
+
+                                <span className="text-xs mt-0.5">
+                                  {itm.name} {itm.category}
+                                </span>
+                              </div>
+
                             ))}
                           </div>
                         ))}
                       </div>
                     </td>
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      Awards pending
+                      <div className="flex flex-row">
+                        {employee?.assignedAwards?.map((itm) => (
+                          <span key={itm._id} className="text-xs mt-0.5">
+                            {itm.achievementType} {itm.amount} {formatDate(itm.date)}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      Deduction pending
+                      <div className="flex flex-row">
+                        {employee?.assignedDeduction?.map((itm) => (
+                          <span key={itm._id} className="text-xs mt-0.5">
+                            {itm.deductionType} {itm.amount} {formatDate(itm.date)}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                   </tr>
 
                   <tr
-                    className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
-                      isSelected(employee._id)
+                    className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${isSelected(employee._id)
                         ? "bg-blue-50 ring-1 ring-blue-300"
                         : "bg-white hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "fatherFirstName", "input")}
@@ -1151,7 +1170,7 @@ const EmployeeGridTable = ({
         )}
       </div>
 
-    
+
 
       <MultiStationAssignmentForm
         selectedEmployees={selectedEmployeesForPosting}
