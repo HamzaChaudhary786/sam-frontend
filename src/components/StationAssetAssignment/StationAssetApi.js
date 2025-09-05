@@ -42,8 +42,8 @@ export const getStationAssetAssignments = async (stationId, filters = {}) => {
     const data = await response.json();
 
     if (response.ok) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         data: data.data?.assetAssignments || data.data || data,
         pagination: data.data?.pagination || null
       };
@@ -90,7 +90,7 @@ export const getAssetAssignmentById = async (assignmentId) => {
 export const createStationAssetAssignment = async (assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -105,9 +105,9 @@ export const createStationAssetAssignment = async (assignmentData) => {
         // If admin and isApproved is true, add approval data
         ...(isAdmin && assignmentData.isApproved
           ? {
-              approvalDate: new Date().toISOString(),
-              isApprovedBy: getCurrentUserId(),
-            }
+            approvalDate: new Date().toISOString(),
+            isApprovedBy: getCurrentUserId(),
+          }
           : {}),
       }),
     });
@@ -132,17 +132,17 @@ export const createStationAssetAssignment = async (assignmentData) => {
 export const updateStationAssetAssignment = async (assignmentId, assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const body = JSON.stringify({
       ...assignmentData,
       ...(isAdmin && assignmentData.isApproved
         ? {
-            approvalDate: new Date().toISOString(),
-            isApprovedBy: getCurrentUserId(),
-          }
+          approvalDate: new Date().toISOString(),
+          isApprovedBy: getCurrentUserId(),
+        }
         : {
-            editBy: getCurrentUserId(),
-          }),
+          editBy: getCurrentUserId(),
+        }),
     });
 
     const response = await fetch(`${API_URL}/${assignmentId}`, {
@@ -406,7 +406,7 @@ export const getAllAvailableAssets = async () => {
 export const processAndFilterStationAssignments = (rawData, filters, assetTypes) => {
   try {
     let assignmentsData = [];
-    
+
     if (rawData) {
       if (Array.isArray(rawData)) {
         assignmentsData = rawData;
@@ -433,8 +433,8 @@ export const processAndFilterStationAssignments = (rawData, filters, assetTypes)
         }
         const selectedTypeName = assetTypes[filters.assetType];
         if (!selectedTypeName) return false;
-        
-        return assignment.asset.some(asset => 
+
+        return assignment.asset.some(asset =>
           asset && asset.name && asset.name.toLowerCase() === selectedTypeName.toLowerCase()
         );
       });
@@ -454,13 +454,13 @@ export const processAndFilterStationAssignments = (rawData, filters, assetTypes)
 
     // Filter by date range
     if (filters.fromDate) {
-      filtered = filtered.filter(assignment => 
+      filtered = filtered.filter(assignment =>
         new Date(assignment.fromDate) >= new Date(filters.fromDate)
       );
     }
 
     if (filters.toDate) {
-      filtered = filtered.filter(assignment => 
+      filtered = filtered.filter(assignment =>
         !assignment.toDate || new Date(assignment.toDate) <= new Date(filters.toDate)
       );
     }
@@ -502,11 +502,11 @@ export const getAssetTypes = (assets) => {
   if (!assets || !Array.isArray(assets) || assets.length === 0) {
     return [];
   }
-  
+
   const validTypes = assets
     .filter(asset => asset && asset.type)
     .map(asset => asset.type);
-  
+
   return [...new Set(validTypes)];
 };
 
@@ -556,6 +556,7 @@ export const addRoundHistory = async (assignmentId, roundData) => {
           Reason: roundData.reason,
           assignedRounds: roundData.assignedRounds.toString(),
           consumedRounds: roundData.consumedRounds.toString(),
+          shellCollected: roundData?.shellCollected.toString(),
         }),
       }
     );
@@ -624,10 +625,11 @@ export const consumeRoundsFromAssignment = async (assignmentId, consumeData) => 
   try {
     // Add the round history entry for consumption
     const roundHistoryResult = await addRoundHistory(assignmentId, {
-      date: consumeData.date || new Date().toISOString(),
-      reason: consumeData.reason || "Rounds consumed",
+      date: consumeData?.date || new Date().toISOString(),
+      reason: consumeData?.reason || "Rounds consumed",
       assignedRounds: 0, // No new assignment when consuming
-      consumedRounds: consumeData.roundsConsumed,
+      consumedRounds: consumeData?.roundsConsumed,
+      shellCollected: consumeData?.shellCollected,
     });
 
     if (!roundHistoryResult.success) {
@@ -736,8 +738,8 @@ export const returnAssetAssignment = async (assignmentId, returnData) => {
       ...(returnData.notes && { notes: returnData.notes }),
       // Add any round history if provided
       ...(returnData.roundHistory && {
-        roundStation: Array.isArray(returnData.roundHistory) 
-          ? returnData.roundHistory 
+        roundStation: Array.isArray(returnData.roundHistory)
+          ? returnData.roundHistory
           : [returnData.roundHistory]
       }),
     };

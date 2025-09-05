@@ -220,6 +220,7 @@ const BulkAssetCreation = () => {
               name: row.name,
               type: row.type,
               category: row.category,
+              availableQuantity: row?.availableQuantity,
               assetStatus: row.assetStatus,
               purchaseDate: row.purchaseDate,
               cost: parseFloat(row.cost),

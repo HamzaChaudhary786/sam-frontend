@@ -447,10 +447,11 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   };
 
   const handleConsumeRounds = (assignment) => {
-    if (!supportsRounds(assignment)) {
-      toast.warning("This asset type doesn't support round management");
-      return;
-    }
+    // if (!supportsRounds(assignment)) {
+    //   toast.warning("This asset type doesn't support round management");
+    //   return;
+    // }
+
     setConsumeRoundsModal({
       isOpen: true,
       assignment: assignment,
@@ -514,6 +515,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
     try {
       const consumeData = {
         roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        shellCollected: parseInt(data.shellCollected) || 0,
         reason: data.reason || "Rounds consumed",
         date: data.date || new Date().toISOString(),
         isCompleteConsumption: data.isCompleteConsumption || false,
@@ -803,9 +805,8 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                   </th>
                 </tr>
               </thead>
-              {console.log(assignments, "my assignement data")}
               <tbody className="bg-white divide-y divide-gray-200">
-                {assignments.map((assignment, index) => (
+                {assignments?.map((assignment, index) => (
                   <>
                     <tr
                       key={assignment._id || index}
@@ -885,10 +886,13 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                   <span className="font-medium">
                                     {inchargeInfo.type}:
                                   </span>{" "}
-                                  {inchargeInfo.name}<br/>
-                                  {inchargeInfo.fName}<br/>
+                                  {inchargeInfo.name}
+                                  <br />
+                                  {inchargeInfo.fName}
+                                  <br />
                                   {inchargeInfo.rank &&
-                                    ` (${inchargeInfo.rank})`}<br/>
+                                    ` (${inchargeInfo.rank})`}
+                                  <br />
                                   {inchargeInfo.grade &&
                                     ` (${inchargeInfo.grade})`}
                                   {inchargeInfo.personalNumber &&
@@ -1288,7 +1292,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
             setConsumeRoundsModal({ isOpen: false, assignment: null })
           }
           onSave={handleConsumeRoundsSave}
-          assignment={consumeRoundsModal.assignment}
+          assignment={consumeRoundsModal?.assignment}
           loading={modalLoading}
         />
       </div>

@@ -956,9 +956,15 @@ const BulkAssetAssignment = () => {
                                     {asset.name || "Unnamed Asset"}
                                   </div>
                                   <div className="text-xs text-gray-500 truncate">
-                                    {asset.type} - {asset.category} -
-                                    {asset?.weaponNumber || "N/A"}
+                                    {asset.type} - {asset.category}{" "}
+                                    {asset?.weaponNumber && (
+                                      <>-{asset?.weaponNumber}</>
+                                    )}
+                                    {asset?.availableQuantity && (
+                                      <>-{asset?.availableQuantity}</>
+                                    )}
                                   </div>
+
                                   {(asset.weaponNumber ||
                                     asset.registerNumber) && (
                                     <div className="text-xs text-gray-400 truncate">

@@ -1,9 +1,9 @@
 // AssetList.jsx - Updated with new API integration
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { 
-  getAllAssetAssignments, 
-  deleteAssetAssignment, 
+import {
+  getAllAssetAssignments,
+  deleteAssetAssignment,
   bulkDeleteAssetAssignments,
   bulkApproveAssetAssignments,
   approveAssetAssignment,
@@ -12,7 +12,7 @@ import {
   issueRoundsToAssignment,
   consumeRoundsFromAssignment,
   transferAssetAssignment,
-  returnAssetAssignment
+  returnAssetAssignment,
 } from "../AssetApi.js";
 import { getAssetTypesWithEnum } from "../TypeLookup.js";
 import { role_admin } from "../../../constants/Enum.js";
@@ -23,9 +23,12 @@ import ConsumeRoundsModal from "../ConsumeRound.jsx";
 import TransferReturnModal from "../TransferAsset.jsx";
 import { BACKEND_URL } from "../../../constants/api.js";
 
-const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger }) => {
-
-  
+const AssetList = ({
+  employee,
+  employees: propEmployees,
+  onEdit,
+  refreshTrigger,
+}) => {
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +87,11 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
 
   // Fetch employees from API if not provided as prop
   const fetchEmployees = async () => {
-    if (propEmployees && Array.isArray(propEmployees) && propEmployees.length > 0) {
+    if (
+      propEmployees &&
+      Array.isArray(propEmployees) &&
+      propEmployees.length > 0
+    ) {
       setEmployees(propEmployees);
       return;
     }
@@ -93,13 +100,16 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     setEmployeesError("");
 
     try {
-      const response = await fetch(`${BACKEND_URL}/employee?limit=2000&page=1`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/employee?limit=2000&page=1`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -107,24 +117,34 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
 
       const result = await response.json();
       let employeesData = [];
-      
+
       if (result.employees && Array.isArray(result.employees)) {
         employeesData = result.employees;
-        
-        if (result.pagination && result.pagination.hasNext && employeesData.length < result.pagination.totalEmployees) {
+
+        if (
+          result.pagination &&
+          result.pagination.hasNext &&
+          employeesData.length < result.pagination.totalEmployees
+        ) {
           if (result.pagination.totalEmployees <= 2000) {
             try {
-              const allEmployeesResponse = await fetch(`${BACKEND_URL}/employee?limit=${result.pagination.totalEmployees}&page=1`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-              });
-              
+              const allEmployeesResponse = await fetch(
+                `${BACKEND_URL}/employee?limit=${result.pagination.totalEmployees}&page=1`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  },
+                }
+              );
+
               if (allEmployeesResponse.ok) {
                 const allEmployeesResult = await allEmployeesResponse.json();
-                if (allEmployeesResult.employees && Array.isArray(allEmployeesResult.employees)) {
+                if (
+                  allEmployeesResult.employees &&
+                  Array.isArray(allEmployeesResult.employees)
+                ) {
                   employeesData = allEmployeesResult.employees;
                 }
               }
@@ -134,16 +154,17 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
           }
         }
       } else {
-        throw new Error("Invalid API response structure - expected 'employees' array");
+        throw new Error(
+          "Invalid API response structure - expected 'employees' array"
+        );
       }
-      
+
       if (employeesData.length > 0) {
         setEmployees(employeesData);
       } else {
         setEmployees([]);
         setEmployeesError("No employees found");
       }
-
     } catch (error) {
       setEmployeesError(error.message || "Failed to fetch employees");
       setEmployees([]);
@@ -156,7 +177,9 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Alternative method to get employees data
   const tryAlternativeEmployeeSource = () => {
     try {
-      const storedEmployees = localStorage.getItem('employees') || sessionStorage.getItem('employees');
+      const storedEmployees =
+        localStorage.getItem("employees") ||
+        sessionStorage.getItem("employees");
       if (storedEmployees) {
         const parsedEmployees = JSON.parse(storedEmployees);
         if (Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
@@ -203,7 +226,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
       setError("");
 
       const result = await getAllAssetAssignments({ employee: employee._id });
-      
+
       if (result.success) {
         setAssignments(result.data || []);
       } else {
@@ -211,7 +234,9 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
         setAssignments([]);
       }
     } catch (error) {
-      setError(error.message || "An error occurred while fetching asset assignments");
+      setError(
+        error.message || "An error occurred while fetching asset assignments"
+      );
       setAssignments([]);
     } finally {
       setLoading(false);
@@ -226,16 +251,20 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Apply filters using API helper
   useEffect(() => {
     if (!loading && assignments.length >= 0) {
-      const filtered = processAndFilterAssignments(assignments, filters, assetTypes);
+      const filtered = processAndFilterAssignments(
+        assignments,
+        filters,
+        assetTypes
+      );
       setFilteredAssignments(filtered);
     }
   }, [filters, assignments, loading, assetTypes]);
 
   // Handle checkbox selection
   const handleSelectItem = (assignmentId) => {
-    setSelectedItems(prev => 
+    setSelectedItems((prev) =>
       prev.includes(assignmentId)
-        ? prev.filter(id => id !== assignmentId)
+        ? prev.filter((id) => id !== assignmentId)
         : [...prev, assignmentId]
     );
   };
@@ -245,7 +274,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     if (selectedItems.length === filteredAssignments.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(filteredAssignments.map(a => a._id));
+      setSelectedItems(filteredAssignments.map((a) => a._id));
     }
   };
 
@@ -296,7 +325,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
       };
 
       const result = await issueRoundsToAssignment(
-        issueRoundsModal.assignment._id, 
+        issueRoundsModal.assignment._id,
         issueData
       );
 
@@ -324,6 +353,7 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     try {
       const consumeData = {
         roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        shellCollected: parseInt(data.shellCollected, 10),
         reason: data.reason || "Rounds consumed",
         date: data.date || new Date().toISOString(),
         isCompleteConsumption: data.isCompleteConsumption || false,
@@ -357,13 +387,15 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     setModalLoading(true);
     try {
       let result;
-      
+
       if (data.action === "transfer") {
         // Find the selected employee name for better messaging
-        const selectedEmployee = employees.find(emp => emp._id === data.newEmployeeId);
-        const newEmployeeName = selectedEmployee ? 
-          `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 
-          'another employee';
+        const selectedEmployee = employees.find(
+          (emp) => emp._id === data.newEmployeeId
+        );
+        const newEmployeeName = selectedEmployee
+          ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}`
+          : "another employee";
 
         const transferData = {
           newEmployeeId: data.newEmployeeId,
@@ -385,12 +417,14 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
           returnRounds: parseInt(data.returnRounds) || 0,
           notes: data.notes || "",
           // Include round history if provided
-          roundHistory: data.roundHistory ? {
-            Date: data.date || new Date().toISOString(),
-            Reason: data.reason || "Asset return",
-            assignedRounds: "0",
-            consumedRounds: data.returnRounds?.toString() || "0"
-          } : null,
+          roundHistory: data.roundHistory
+            ? {
+                Date: data.date || new Date().toISOString(),
+                Reason: data.reason || "Asset return",
+                assignedRounds: "0",
+                consumedRounds: data.returnRounds?.toString() || "0",
+              }
+            : null,
         };
 
         result = await returnAssetAssignment(
@@ -419,7 +453,9 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Handle bulk delete
   const handleBulkDelete = async () => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can delete asset assignments");
+      toast.error(
+        "Access denied: Only administrators can delete asset assignments"
+      );
       return;
     }
 
@@ -428,14 +464,20 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} asset assignment(s)?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedItems.length} asset assignment(s)?`
+      )
+    ) {
       return;
     }
 
     try {
       const result = await bulkDeleteAssetAssignments(selectedItems);
       if (result.success) {
-        toast.success(`${selectedItems.length} asset assignment(s) deleted successfully`);
+        toast.success(
+          `${selectedItems.length} asset assignment(s) deleted successfully`
+        );
         setSelectedItems([]);
         fetchAssetAssignments();
       } else {
@@ -449,7 +491,9 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Handle bulk approve
   const handleBulkApprove = async () => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can approve asset assignments");
+      toast.error(
+        "Access denied: Only administrators can approve asset assignments"
+      );
       return;
     }
 
@@ -458,14 +502,20 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to approve ${selectedItems.length} asset assignment(s)?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to approve ${selectedItems.length} asset assignment(s)?`
+      )
+    ) {
       return;
     }
 
     try {
       const result = await bulkApproveAssetAssignments(selectedItems);
       if (result.success) {
-        toast.success(`${selectedItems.length} asset assignment(s) approved successfully`);
+        toast.success(
+          `${selectedItems.length} asset assignment(s) approved successfully`
+        );
         setSelectedItems([]);
         fetchAssetAssignments();
       } else {
@@ -479,11 +529,15 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Delete single assignment
   const handleDelete = async (assignmentId) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can delete asset assignments");
+      toast.error(
+        "Access denied: Only administrators can delete asset assignments"
+      );
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this asset assignment?")) {
+    if (
+      !window.confirm("Are you sure you want to delete this asset assignment?")
+    ) {
       return;
     }
 
@@ -503,11 +557,15 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
   // Approve assignment
   const handleApprove = async (assignment) => {
     if (!isAdmin) {
-      toast.error("Access denied: Only administrators can approve asset assignments");
+      toast.error(
+        "Access denied: Only administrators can approve asset assignments"
+      );
       return;
     }
 
-    if (!window.confirm("Are you sure you want to approve this asset assignment?")) {
+    if (
+      !window.confirm("Are you sure you want to approve this asset assignment?")
+    ) {
       return;
     }
 
@@ -543,13 +601,13 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     if (!assets || !Array.isArray(assets) || assets.length === 0) {
       return "No assets assigned";
     }
-    
-    const validAssets = assets.filter(asset => asset && asset.name);
+
+    const validAssets = assets.filter((asset) => asset && asset.name);
     if (validAssets.length === 0) {
       return "No valid assets";
     }
-    
-    return validAssets.map(asset => asset.name).join(", ");
+
+    return validAssets.map((asset) => asset.name).join(", ");
   };
 
   // Get asset types
@@ -557,11 +615,11 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
     if (!assets || !Array.isArray(assets) || assets.length === 0) {
       return [];
     }
-    
+
     const validTypes = assets
-      .filter(asset => asset && asset.type)
-      .map(asset => asset.type);
-    
+      .filter((asset) => asset && asset.type)
+      .map((asset) => asset.type);
+
     return [...new Set(validTypes)];
   };
 
@@ -596,7 +654,11 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
 
   // Update employees when prop changes
   useEffect(() => {
-    if (propEmployees && Array.isArray(propEmployees) && propEmployees.length > 0) {
+    if (
+      propEmployees &&
+      Array.isArray(propEmployees) &&
+      propEmployees.length > 0
+    ) {
       setEmployees(propEmployees);
       setEmployeesError("");
     }
@@ -629,7 +691,8 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
-              Showing {filteredAssignments.length} of {assignments.length} assignments
+              Showing {filteredAssignments.length} of {assignments.length}{" "}
+              assignments
             </span>
             <div className="text-xs text-gray-500 border-l pl-2">
               Employees: {employees.length}
@@ -645,9 +708,11 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
             <div className="flex items-center">
               <div className="text-orange-600 mr-2">⚠️</div>
               <div>
-                <p className="text-sm text-orange-700 font-medium">Employee Data Issue</p>
+                <p className="text-sm text-orange-700 font-medium">
+                  Employee Data Issue
+                </p>
                 <p className="text-xs text-orange-600">{employeesError}</p>
-                <button 
+                <button
                   onClick={fetchEmployees}
                   className="text-xs text-orange-600 underline hover:text-orange-800 mt-1"
                 >
@@ -733,16 +798,20 @@ const AssetList = ({ employee, employees: propEmployees, onEdit, refreshTrigger 
       {/* Consume Rounds Modal */}
       <ConsumeRoundsModal
         isOpen={consumeRoundsModal.isOpen}
-        onClose={() => setConsumeRoundsModal({ isOpen: false, assignment: null })}
+        onClose={() =>
+          setConsumeRoundsModal({ isOpen: false, assignment: null })
+        }
         onSave={handleConsumeRoundsSave}
-        assignment={consumeRoundsModal.assignment}
+        assignment={consumeRoundsModal?.assignment}
         loading={modalLoading}
       />
 
       {/* Transfer/Return Modal */}
       <TransferReturnModal
         isOpen={transferReturnModal.isOpen}
-        onClose={() => setTransferReturnModal({ isOpen: false, assignment: null })}
+        onClose={() =>
+          setTransferReturnModal({ isOpen: false, assignment: null })
+        }
         onSave={handleTransferReturnSave}
         assignment={transferReturnModal.assignment}
         employees={employees}

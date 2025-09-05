@@ -84,7 +84,7 @@ const AssetTable = ({
         </tr>
       </thead>
       <tbody className="bg-white divide-y divide-gray-200">
-        {filteredAssignments.map((assignment) => {
+        {filteredAssignments?.map((assignment) => {
           const consumed = isConsumed(assignment);
           const assetTypes = getAssetTypes(assignment.asset);
           const hasWeapons = assetTypes.includes("weapons");

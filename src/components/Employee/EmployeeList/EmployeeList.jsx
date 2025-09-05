@@ -440,7 +440,6 @@ const EmployeeList = ({
     );
   }
 
-  console.log(permissions, "my permissions hahahhaha");
 
   return (
     <div className={compactView ? "p-0" : "p-3 sm:p-6 lg:p-0"}>
@@ -471,8 +470,8 @@ const EmployeeList = ({
               {permissions?.userData?.roles?.some((role) =>
                 role.accessRequirement?.some(
                   (access) =>
-                    (access.resourceName.toLowerCase() === "employee"  &&
-                      access.canAdd === true)
+                    access.resourceName.toLowerCase() === "employee" &&
+                    access.canAdd === true
                 )
               ) && (
                 <button
@@ -580,6 +579,16 @@ const EmployeeList = ({
                     employee,
                     currentImageIndex
                   );
+                  const isStationIncharge =
+                    employee.stations?.stationIncharge?.some(
+                      (incharge) => incharge.employee === employee._id
+                    );
+                  const isMallkhanaIncharge = employee.assignedAssets?.some(
+                    (asset) => asset.asset[0]?.mallkhana !== null
+                  );
+                  const hasAward = employee.assignedAwards?.some(
+                    (award) => award.isMonitor === true
+                  );
 
                   return (
                     <tr
@@ -591,6 +600,23 @@ const EmployeeList = ({
                       {!compactView && (
                         <td className="px-1 py-2">
                           {multiSelect.renderEmployeeCheckbox(employee)}
+                          <div className="flex flex-wrap gap-1">
+                            {isStationIncharge && (
+                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                                Station Incharge
+                              </span>
+                            )}
+                            {isMallkhanaIncharge && (
+                              <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                                Mallkhana Incharge
+                              </span>
+                            )}
+                            {hasAward && (
+                              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                Award
+                              </span>
+                            )}
+                          </div>
                         </td>
                       )}
 

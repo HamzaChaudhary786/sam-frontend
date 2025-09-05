@@ -617,8 +617,8 @@ const EmployeeGridTable = ({
     }
 
     const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
-        ? "cursor-pointer hover:bg-gray-100"
-        : "cursor-default"
+      ? "cursor-pointer hover:bg-gray-100"
+      : "cursor-default"
       }`;
 
     const titleText = !isAdmin
@@ -837,7 +837,7 @@ const EmployeeGridTable = ({
     toast.info("All changes cancelled.");
   };
 
-    // Format date
+  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -946,6 +946,16 @@ const EmployeeGridTable = ({
             {safeEmployees?.map((employee) => {
               const isEditing = editingCell?.rowId === employee._id;
               const isEditable = editableEmployees.has(employee._id);
+              const isStationIncharge =
+                employee.stations?.stationIncharge?.some(
+                  (incharge) => incharge.employee === employee._id
+                );
+              const isMallkhanaIncharge = employee.assignedAssets?.some(
+                (asset) => asset.asset[0]?.mallkhana !== null
+              );
+              const hasAward = employee.assignedAwards?.some(
+                (award) => award.isMonitor === true
+              );
 
               return (
                 <>
@@ -955,11 +965,46 @@ const EmployeeGridTable = ({
                   <tr
                     key={employee._id}
                     className={`text-left text-xs font-medium uppercase tracking-wider ${isSelected(employee._id)
-                        ? "bg-blue-50 ring-1 ring-blue-300"
-                        : "bg-white hover:bg-gray-50"
+                      ? "bg-blue-50 ring-1 ring-blue-300"
+                      : "bg-white hover:bg-gray-50"
                       }`}
                   >
-                    <td rowSpan={2} className="border border-gray-200">
+                    <td rowSpan={2} className="border border-gray-200 mx-2">
+                      <div className="flex flex-wrap gap-1">
+                        {isStationIncharge && (
+                          <div
+                            className="bg-blue-100 text-blue-800 w-fit text-[8px] font-medium px-2 py-1 rounded"
+
+                          >
+                            <p>
+
+                              Station
+                            </p>
+                            <p>
+                              Incharge
+                            </p>
+                          </div>
+                        )}
+                        {isMallkhanaIncharge && (
+                          <div
+                            className="bg-blue-100 text-blue-800 w-fit text-[8px] font-medium px-2 py-1 rounded"
+
+                          >
+                            <p>
+
+                              Mallkhana
+                            </p>
+                            <p>
+                              Incharge
+                            </p>
+                          </div>
+                        )}
+                        {hasAward && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                            Award
+                          </span>
+                        )}
+                      </div>
                       <div className="border border-gray-200 items-center justify-center p-1">
                         {renderEmployeeCheckbox(employee)}
                         {renderImageCell(employee)}
@@ -980,8 +1025,8 @@ const EmployeeGridTable = ({
                             <button
                               onClick={() => toggleEditMode(employee._id)}
                               className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
-                                  ? "bg-orange-600 text-white hover:bg-orange-700"
-                                  : "bg-blue-600 text-white hover:bg-blue-700"
+                                ? "bg-orange-600 text-white hover:bg-orange-700"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
                                 }`}
                               title={
                                 editableEmployees.has(employee._id)
@@ -1106,8 +1151,8 @@ const EmployeeGridTable = ({
 
                   <tr
                     className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${isSelected(employee._id)
-                        ? "bg-blue-50 ring-1 ring-blue-300"
-                        : "bg-white hover:bg-gray-50"
+                      ? "bg-blue-50 ring-1 ring-blue-300"
+                      : "bg-white hover:bg-gray-50"
                       }`}
                   >
                     <td className="x-4 py-2 border border-gray-200">
