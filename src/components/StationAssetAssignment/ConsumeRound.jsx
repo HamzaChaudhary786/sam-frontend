@@ -10,17 +10,18 @@ const ConsumeRoundsModal = ({
 }) => {
   const [formData, setFormData] = useState({
     roundsConsumed: "",
+    shellCollected: "",
     date: "",
     reason: "",
     isCompleteConsumption: false,
   });
-       console.log(assignment,"my assgnment data hehehehehehhe")
   useEffect(() => {
     if (isOpen) {
       // Reset form when modal opens
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       setFormData({
         roundsConsumed: "",
+        shellCollected: "",
         date: today,
         reason: "",
         isCompleteConsumption: false,
@@ -36,17 +37,25 @@ const ConsumeRoundsModal = ({
 
     let totalAssigned = 0;
     let totalConsumed = 0;
+    let totalShells = 0;
 
-    assignment.roundStation.forEach(entry => {
+    assignment.roundStation.forEach((entry) => {
       if (entry.assignedRounds) {
         totalAssigned += parseInt(entry.assignedRounds) || 0;
       }
       if (entry.consumedRounds) {
         totalConsumed += parseInt(entry.consumedRounds) || 0;
       }
+      if (entry.shellCollected) {
+        totalShells += parseInt(entry.shellCollected) || 0;
+      }
     });
 
-    return { assignedRounds: totalAssigned, consumedRounds: totalConsumed };
+    return {
+      assignedRounds: totalAssigned,
+      consumedRounds: totalConsumed,
+      collectedShells: totalShells,
+    };
   };
 
   const handleInputChange = (field, value) => {
@@ -59,6 +68,7 @@ const ConsumeRoundsModal = ({
   const handleClose = () => {
     setFormData({
       roundsConsumed: "",
+      shellCollected: "",
       date: "",
       reason: "",
       isCompleteConsumption: false,
@@ -68,19 +78,39 @@ const ConsumeRoundsModal = ({
 
   const handleSave = () => {
     // Basic validation
-    if (!formData.roundsConsumed || !formData.date || !formData.reason) {
+    if (
+      !formData.roundsConsumed ||
+      !formData.shellCollected ||
+      !formData.date ||
+      !formData.reason
+    ) {
       alert("Please fill in all required fields");
       return;
     }
+    const rounds = parseInt(formData?.roundsConsumed, 10);
+    const shells = parseInt(formData?.shellCollected, 10);
 
-    const rounds = parseInt(formData.roundsConsumed);
+    if (isNaN(rounds) || isNaN(shells)) {
+      alert("Invalid input: shells and rounds must be valid numbers.");
+      return;
+    }
+
+    if (shells > rounds) {
+      alert(
+        `Number of shells collected (${shells}) must be less than or equal to consumed rounds (${rounds}).`
+      );
+      return;
+    }
+
     if (rounds <= 0) {
       alert("Number of rounds must be greater than 0");
       return;
     }
 
     // Calculate available rounds from round history
-    const { assignedRounds, consumedRounds } = calculateRoundTotals(assignment);
+    const { assignedRounds, consumedRounds, collectedShells } =
+      calculateRoundTotals(assignment);
+
     const availableRounds = assignedRounds - consumedRounds;
 
     if (rounds > availableRounds) {
@@ -89,7 +119,9 @@ const ConsumeRoundsModal = ({
     }
 
     // Convert date to ISO string if it's not already
-    const dateValue = formData.date.includes('T') ? formData.date : `${formData.date}T00:00:00.000Z`;
+    const dateValue = formData.date.includes("T")
+      ? formData.date
+      : `${formData.date}T00:00:00.000Z`;
 
     // Check if this consumption will use all available rounds
     const isCompleteConsumption = rounds >= availableRounds;
@@ -98,6 +130,7 @@ const ConsumeRoundsModal = ({
     onSave({
       roundsConsumed: rounds,
       reason: formData.reason,
+      shellCollected: formData?.shellCollected,
       date: dateValue,
       isCompleteConsumption: isCompleteConsumption,
     });
@@ -107,24 +140,28 @@ const ConsumeRoundsModal = ({
     if (!assets || !Array.isArray(assets) || assets.length === 0) {
       return "No assets assigned";
     }
-    
-    const validAssets = assets.filter(asset => asset && asset.name);
+
+    const validAssets = assets.filter((asset) => asset && asset.name);
     if (validAssets.length === 0) {
       return "No valid assets";
     }
-    
-    return validAssets.map(asset => asset.name).join(", ");
+
+    return validAssets.map((asset) => asset.name).join(", ");
   };
 
   const getEmployeeName = (employee) => {
     if (!employee) return "Unknown Employee";
-    return `${employee.name || ""} ${employee.lastName || ""}`.trim() || "Unknown Employee";
+    return (
+      `${employee.name || ""} ${employee.lastName || ""}`.trim() ||
+      "Unknown Employee"
+    );
   };
 
   if (!isOpen || !assignment) return null;
 
   // Calculate round totals from round history
-  const { assignedRounds, consumedRounds } = calculateRoundTotals(assignment);
+  const { assignedRounds, consumedRounds, collectedShells } =
+    calculateRoundTotals(assignment);
   const availableRounds = assignedRounds - consumedRounds;
 
   // Debug log
@@ -133,8 +170,8 @@ const ConsumeRoundsModal = ({
     calculated: { assignedRounds, consumedRounds, availableRounds },
     original: {
       assignedRounds: assignment.assignedRounds,
-      consumedRounds: assignment.consumedRounds
-    }
+      consumedRounds: assignment.consumedRounds,
+    },
   });
 
   return (
@@ -160,7 +197,7 @@ const ConsumeRoundsModal = ({
               <h4 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2">
                 Assignment Details
               </h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -175,7 +212,7 @@ const ConsumeRoundsModal = ({
                     </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Assets
@@ -183,23 +220,31 @@ const ConsumeRoundsModal = ({
                   <p className="text-sm font-medium text-gray-900">
                     {getAssetNames(assignment.asset)}
                   </p>
-                  {assignment.asset && Array.isArray(assignment.asset) && assignment.asset.length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {assignment.asset
-                        .filter(asset => asset && (asset.serialNumber || asset.weaponNumber))
-                        .map((asset, index) => (
-                          <div key={index}>
-                            {asset.serialNumber && `Serial: ${asset.serialNumber}`}
-                            {asset.weaponNumber && ` | Weapon: ${asset.weaponNumber}`}
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                  {assignment.asset &&
+                    Array.isArray(assignment.asset) &&
+                    assignment.asset.length > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {assignment.asset
+                          .filter(
+                            (asset) =>
+                              asset &&
+                              (asset.serialNumber || asset.weaponNumber)
+                          )
+                          .map((asset, index) => (
+                            <div key={index}>
+                              {asset.serialNumber &&
+                                `Serial: ${asset.serialNumber}`}
+                              {asset.weaponNumber &&
+                                ` | Weapon: ${asset.weaponNumber}`}
+                            </div>
+                          ))}
+                      </div>
+                    )}
                 </div>
               </div>
 
               {/* Round Summary - Now calculated from round history */}
-              <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+              <div className="grid grid-cols-4 gap-4 pt-3 border-t border-gray-200">
                 <div className="text-center">
                   <p className="text-xs text-gray-500">Total Assigned</p>
                   <p className="text-lg font-semibold text-blue-600">
@@ -213,6 +258,12 @@ const ConsumeRoundsModal = ({
                   </p>
                 </div>
                 <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Shells</p>
+                  <p className="text-lg font-semibold text-red-600">
+                    {collectedShells}
+                  </p>
+                </div>
+                <div className="text-center">
                   <p className="text-xs text-gray-500">Available</p>
                   <p className="text-lg font-semibold text-green-600">
                     {availableRounds}
@@ -221,24 +272,36 @@ const ConsumeRoundsModal = ({
               </div>
 
               {/* Round History Display */}
-              {assignment.roundStation && assignment.roundStation.length > 0 && (
-                <div className="pt-3 border-t border-gray-200">
-                  <h5 className="text-xs font-medium text-gray-600 mb-2">Recent Round History:</h5>
-                  <div className="max-h-24 overflow-y-auto">
-                    {assignment.roundStation.slice(-3).map((entry, index) => (
-                      <div key={entry._id || index} className="text-xs text-gray-500 mb-1">
-                        <span className="font-medium">{entry.Reason}</span>
-                        {parseInt(entry.assignedRounds) > 0 && (
-                          <span className="text-blue-600"> (+{entry.assignedRounds} assigned)</span>
-                        )}
-                        {parseInt(entry.consumedRounds) > 0 && (
-                          <span className="text-red-600"> (-{entry.consumedRounds} consumed)</span>
-                        )}
-                      </div>
-                    ))}
+              {assignment.roundStation &&
+                assignment.roundStation.length > 0 && (
+                  <div className="pt-3 border-t border-gray-200">
+                    <h5 className="text-xs font-medium text-gray-600 mb-2">
+                      Recent Round History:
+                    </h5>
+                    <div className="max-h-24 overflow-y-auto">
+                      {assignment.roundStation.slice(-3).map((entry, index) => (
+                        <div
+                          key={entry._id || index}
+                          className="text-xs text-gray-500 mb-1"
+                        >
+                          <span className="font-medium">{entry.Reason}</span>
+                          {parseInt(entry.assignedRounds) > 0 && (
+                            <span className="text-blue-600">
+                              {" "}
+                              (+{entry.assignedRounds} assigned)
+                            </span>
+                          )}
+                          {parseInt(entry.consumedRounds) > 0 && (
+                            <span className="text-red-600">
+                              {" "}
+                              (-{entry.consumedRounds} consumed)
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {availableRounds <= 0 ? (
@@ -246,9 +309,12 @@ const ConsumeRoundsModal = ({
                 <div className="flex items-center">
                   <div className="text-yellow-600 mr-2">⚠️</div>
                   <div>
-                    <p className="text-sm text-yellow-700 font-medium">No Rounds Available</p>
+                    <p className="text-sm text-yellow-700 font-medium">
+                      No Rounds Available
+                    </p>
                     <p className="text-xs text-yellow-600">
-                      All assigned rounds have been consumed. No rounds available for consumption.
+                      All assigned rounds have been consumed. No rounds
+                      available for consumption.
                     </p>
                   </div>
                 </div>
@@ -265,21 +331,45 @@ const ConsumeRoundsModal = ({
                     min="1"
                     max={availableRounds}
                     value={formData.roundsConsumed}
-                    onChange={(e) => handleInputChange("roundsConsumed", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("roundsConsumed", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder={`Enter number of rounds (max: ${availableRounds})`}
                     required
                   />
-                  {formData.roundsConsumed && parseInt(formData.roundsConsumed) > availableRounds && (
-                    <p className="text-xs text-red-600 mt-1">
-                      Cannot consume more than {availableRounds} available rounds
-                    </p>
-                  )}
-                  {formData.roundsConsumed && parseInt(formData.roundsConsumed) === availableRounds && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      ℹ️ This will consume all remaining rounds and mark the assignment as complete
-                    </p>
-                  )}
+                  {formData.roundsConsumed &&
+                    parseInt(formData.roundsConsumed) > availableRounds && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Cannot consume more than {availableRounds} available
+                        rounds
+                      </p>
+                    )}
+                  {formData.roundsConsumed &&
+                    parseInt(formData.roundsConsumed) === availableRounds && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        ℹ️ This will consume all remaining rounds and mark the
+                        assignment as complete
+                      </p>
+                    )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of shell Collected *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={formData?.roundsConsumed}
+                    value={formData?.shellCollected}
+                    onChange={(e) =>
+                      handleInputChange("shellCollected", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder={`Enter number of shell collected`}
+                    required
+                  />
                 </div>
 
                 <div>
@@ -302,7 +392,9 @@ const ConsumeRoundsModal = ({
                   <textarea
                     rows="3"
                     value={formData.reason}
-                    onChange={(e) => handleInputChange("reason", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("reason", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="Enter reason for consuming rounds (e.g., training exercise, practice session, qualification test, etc.)..."
                     required

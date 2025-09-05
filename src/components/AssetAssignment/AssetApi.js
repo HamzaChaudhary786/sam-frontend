@@ -12,10 +12,10 @@ const getCurrentUserType = () => localStorage.getItem("userType");
 // Get all asset assignments for a specific employee
 export const getAllAssetAssignments = async (filters = {}) => {
 
-  return {
-         success: false,
-         error: "TODO: Failed to fetch asset assignments",
-       };
+  // return {
+  //   success: false,
+  //   error: "TODO: Failed to fetch asset assignments",
+  // };
 
   try {
     const queryParams = new URLSearchParams();
@@ -28,8 +28,7 @@ export const getAllAssetAssignments = async (filters = {}) => {
     });
 
     const response = await fetch(
-      `${API_URL}/asset-history/employee/${
-        filters.employee
+      `${API_URL}/asset-history/employee/${filters.employee
       }?${queryParams.toString()}`,
       {
         method: "GET",
@@ -61,7 +60,7 @@ export const processAndFilterAssignments = (rawData, filters, assetTypes) => {
   try {
     // Handle the correct data structure from the API response
     let assignmentsData = [];
-    
+
     if (rawData) {
       // Check if the data has a 'history' property (pagination response)
       if (rawData.history && Array.isArray(rawData.history)) {
@@ -102,8 +101,8 @@ export const processAndFilterAssignments = (rawData, filters, assetTypes) => {
         // Get the asset type name from the enum
         const selectedTypeName = assetTypes[filters.assetType];
         if (!selectedTypeName) return false;
-        
-        return assignment.asset.some(asset => 
+
+        return assignment.asset.some(asset =>
           asset && asset.type && asset.type.toLowerCase() === selectedTypeName.toLowerCase()
         );
       });
@@ -209,7 +208,7 @@ export const getAllAssets = async () => {
 export const createAssetAssignment = async (assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const response = await fetch(`${API_URL}/asset-history`, {
       method: "POST",
       headers: {
@@ -222,9 +221,9 @@ export const createAssetAssignment = async (assignmentData) => {
         // If admin and isApproved is true, add approval data
         ...(isAdmin && assignmentData.isApproved
           ? {
-              approvalDate: new Date(),
-              isApprovedBy: getCurrentUserId(),
-            }
+            approvalDate: new Date(),
+            isApprovedBy: getCurrentUserId(),
+          }
           : {}),
       }),
     });
@@ -249,17 +248,17 @@ export const createAssetAssignment = async (assignmentData) => {
 export const updateAssetAssignment = async (assignmentId, assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const body = JSON.stringify({
       ...assignmentData,
       ...(isAdmin && assignmentData.isApproved
         ? {
-            approvalDate: new Date(),
-            isApprovedBy: getCurrentUserId(),
-          }
+          approvalDate: new Date(),
+          isApprovedBy: getCurrentUserId(),
+        }
         : {
-            editBy: getCurrentUserId(),
-          }),
+          editBy: getCurrentUserId(),
+        }),
     });
 
     const response = await fetch(`${API_URL}/asset-history/${assignmentId}`, {
@@ -434,6 +433,7 @@ export const addRoundHistory = async (assignmentId, roundData) => {
           Reason: roundData.reason,
           assignedRounds: roundData.assignedRounds.toString(),
           consumedRounds: roundData.consumedRounds.toString(),
+          shellCollected: roundData.shellCollected,
         }),
       }
     );
@@ -505,12 +505,16 @@ export const issueRoundsToAssignment = async (assignmentId, issueData) => {
 // Consume rounds from an asset assignment
 export const consumeRoundsFromAssignment = async (assignmentId, consumeData) => {
   try {
+    console.log(consumeData, "hhehehhehehehhehehhehehehhehehehehehehehheheheheheh");
+
     // Add the round history entry for consumption
     const roundHistoryResult = await addRoundHistory(assignmentId, {
       date: consumeData.date || new Date().toISOString(),
       reason: consumeData.reason || "Rounds consumed",
       assignedRounds: 0, // No new assignment when consuming
-      consumedRounds: consumeData.roundsConsumed,
+      consumedRounds: consumeData?.roundsConsumed,
+      shellCollected: consumeData?.shellCollected,
+
     });
 
     if (!roundHistoryResult.success) {
@@ -619,8 +623,8 @@ export const returnAssetAssignment = async (assignmentId, returnData) => {
       ...(returnData.notes && { notes: returnData.notes }),
       // Add any round history if provided
       ...(returnData.roundHistory && {
-        roundHistory: Array.isArray(returnData.roundHistory) 
-          ? returnData.roundHistory 
+        roundHistory: Array.isArray(returnData.roundHistory)
+          ? returnData.roundHistory
           : [returnData.roundHistory]
       }),
     };
