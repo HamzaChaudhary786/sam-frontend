@@ -82,7 +82,7 @@ export const getEmployeeCurrentStation = async (employeeId) => {
 export const createStationAssignment = async (assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const response = await fetch(`${API_URL}/station-history`, {
       method: "POST",
       headers: {
@@ -95,14 +95,14 @@ export const createStationAssignment = async (assignmentData) => {
         // If admin and isApproved is true, add approval data
         ...(isAdmin && assignmentData.isApproved
           ? {
-              approvalDate: new Date(),
-              isApprovedBy: getCurrentUserId(),
-            }
+            approvalDate: new Date(),
+            isApprovedBy: getCurrentUserId(),
+          }
           : {}),
       }),
     });
 
-    console.log(response,"my response testin hahahahah")
+    console.log(response, "my response testin hahahahah")
     const data = await response.json();
 
 
@@ -124,17 +124,17 @@ export const createStationAssignment = async (assignmentData) => {
 export const updateStationAssignment = async (assignmentId, assignmentData) => {
   try {
     const isAdmin = getCurrentUserType() === role_admin;
-    
+
     const body = JSON.stringify({
       ...assignmentData,
       ...(isAdmin && assignmentData.isApproved
         ? {
-            approvalDate: new Date(),
-            isApprovedBy: getCurrentUserId(),
-          }
+          approvalDate: new Date(),
+          isApprovedBy: getCurrentUserId(),
+        }
         : {
-            editBy: getCurrentUserId(),
-          }),
+          editBy: getCurrentUserId(),
+        }),
     });
 
     const response = await fetch(`${API_URL}/station-history/${assignmentId}`, {
@@ -262,6 +262,20 @@ export const getPendingApprovals = async (filters = {}) => {
         queryParams.append(key, filters[key]);
       }
     });
+
+
+    const userData = localStorage.getItem("userData");
+    const user = JSON.parse(userData);
+
+    if (user?.userType === "admin") {
+      const myTehsil = user?.roles?.[0]?.tehsil;
+      const myDistrict = user?.roles?.[0]?.district;
+
+      if (myTehsil) queryParams.append("tehsil", myTehsil);
+      if (myDistrict) queryParams.append("district", myDistrict);
+    }
+
+
 
     const response = await fetch(
       `${API_URL}/station-history/approvals/pending?${queryParams.toString()}`,

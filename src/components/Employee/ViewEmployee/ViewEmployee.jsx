@@ -89,8 +89,8 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
   const profileImages = Array.isArray(employee.profileUrl)
     ? employee.profileUrl
     : employee.profileUrl
-    ? [employee.profileUrl]
-    : [];
+      ? [employee.profileUrl]
+      : [];
 
   const currentImage =
     profileImages[currentImageIndex] || "/default-avatar.png";
@@ -120,6 +120,24 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
       onClose(); // Close the view modal when edit is clicked
     }
   };
+
+  const isStationIncharge =
+    employee.stations?.stationIncharge?.some(
+      (incharge) => incharge.employee === employee._id
+    );
+  const isMallkhanaIncharge = employee.assignedAssets?.some(
+    (asset) => asset.asset[0]?.mallkhana !== null
+  );
+  const hasAward = employee.assignedAwards?.some(
+    (award) => award.isMonitor === true
+  );
+  // const hasDisciplinary = employee.disciplinaryActions?.some(
+  //   (dis) => dis.isDisciplinaryAction === true
+  // );
+  const disciplinaryObjects =
+    employee?.disciplinaryActions?.filter(
+      (dis) => dis.isDisciplinaryAction === true
+    ) || [];
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -201,27 +219,56 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-900">
                   {employee.firstName} {employee.lastName}
+
                 </h3>
                 <p className="text-lg text-gray-600 mt-1">
                   {getDesignationName(employee.designation)}
                 </p>
                 <div className="mt-2">
                   <span
-                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                      employee.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : employee.status === "retired"
+                    className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${employee.status === "active"
+                      ? "bg-green-100 text-green-800"
+                      : employee.status === "retired"
                         ? "bg-blue-100 text-blue-800"
                         : employee.status === "terminated"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
                   >
                     {employee.status?.charAt(0).toUpperCase() +
                       employee.status?.slice(1)}
                   </span>
                 </div>
               </div>
+            </div>
+            <hr className="w-full border-t pt-6" />
+            <div className="flex flex-col">
+              <h1 className="text-lg font-bold italic my-3">
+                Tags
+              </h1>
+              <div className="flex flex-row gap-x-3 flex-wrap ">
+                {isStationIncharge && (
+                  <span className="bg-blue-100 text-blue-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                    Station Incharge
+                  </span>
+                )}
+                {isMallkhanaIncharge && (
+                  <span className="bg-green-100 text-green-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                    Mallkhana Incharge
+                  </span>
+                )}
+                {hasAward && (
+                  <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                    Award
+                  </span>
+                )}
+              </div>
+              {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
+                <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                  {disciplinaryObjects[0].description}
+                </span>
+              )}
+
             </div>
 
             {/* Personal Information */}
@@ -288,8 +335,8 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
                     {employee.fatherFirstName && employee.fatherLastName
                       ? `${employee.fatherFirstName} ${employee.fatherLastName}`
                       : employee.fatherFirstName ||
-                        employee.fatherLastName ||
-                        "N/A"}
+                      employee.fatherLastName ||
+                      "N/A"}
                   </p>
                 </div>
               </div>
@@ -430,11 +477,10 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
                   {employee.assets.map((asset, index) => (
                     <div
                       key={index}
-                      className={`rounded-lg p-4 ${
-                        asset.asset?.type === "weapons"
-                          ? "bg-red-50 border border-red-200"
-                          : "bg-blue-50 border border-blue-200"
-                      }`}
+                      className={`rounded-lg p-4 ${asset.asset?.type === "weapons"
+                        ? "bg-red-50 border border-red-200"
+                        : "bg-blue-50 border border-blue-200"
+                        }`}
                     >
                       {/* Asset content remains the same as in your original code */}
                       <div className="flex items-center mb-3">
@@ -468,11 +514,10 @@ const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit }) => {
                           </svg>
                         )}
                         <h5
-                          className={`font-semibold ${
-                            asset.asset?.type === "weapons"
-                              ? "text-red-800"
-                              : "text-blue-800"
-                          }`}
+                          className={`font-semibold ${asset.asset?.type === "weapons"
+                            ? "text-red-800"
+                            : "text-blue-800"
+                            }`}
                         >
                           {asset.asset?.name || "Unknown Asset"} (
                           {asset.asset?.type || "Unknown Type"})
