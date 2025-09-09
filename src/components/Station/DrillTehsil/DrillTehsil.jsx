@@ -31,8 +31,12 @@ import {
   ArrowUp,
   ChevronLeft,
   ChevronDown,
+  Package,
+  Truck,
+  Wrench,
+  Info,
   Eye,
-  Loader2,
+  Loader2
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
 import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
@@ -288,6 +292,27 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
       return <Lock className="h-3 w-3" />;
     return <Building className="h-3 w-3" />;
   };
+  const getAssetIcon = (assetType) => {
+    switch (assetType?.toLowerCase()) {
+      case 'truck':
+        return <Truck className="h-5 w-5 text-blue-600" />;
+      case 'ak-47':
+      case 'weapon':
+        return <Shield className="h-5 w-5 text-red-600" />;
+      case 'equipment':
+        return <Wrench className="h-5 w-5 text-green-600" />;
+      default:
+        return <Package className="h-5 w-5 text-gray-600" />;
+    }
+  };
+  const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
 
   const handleEmployeeView = (employee) => {
     setSelectedEmployee(employee);
@@ -572,8 +597,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-blue-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
+                      width: `${(count /
                         Math.max(
                           ...Object.values(
                             data.allStationEmployeeSummary.breakdown
@@ -610,8 +634,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-purple-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
+                      width: `${(count /
                         Math.max(
                           ...Object.values(
                             data.allStationEmployeeSummary.breakdown.byGrade
@@ -647,8 +670,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-green-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
+                      width: `${(count /
                         Math.max(
                           ...Object.values(
                             data.allStationEmployeeSummary.breakdown
@@ -685,8 +707,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-indigo-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
+                      width: `${(count /
                         Math.max(
                           ...Object.values(
                             data.allStationEmployeeSummary.breakdown.byCast
@@ -722,8 +743,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-emerald-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        count > 0
+                      width: `${count > 0
                         ? (count /
                           Math.max(
                             ...Object.values(
@@ -927,7 +947,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
 
                   {/* In-charges */}
                   <div>
-                    <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <h5 className="text-md font-semibent text-gray-900 mb-3 flex items-center">
                       <UserCheck className="h-4 w-4 mr-2" />
                       Station In-charges
                     </h5>
@@ -962,8 +982,119 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   </div>
                 </div>
 
-                {/* Station Metrics */}
+                {/* Station Assets */}
                 <div className="mt-6 pt-6 border-t">
+                  <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Package className="h-4 w-4 mr-2" />
+                    Station Assets ({station.rawStationAssets?.length || 0})
+                  </h5>
+                  {station.rawStationAssets?.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                      {station.rawStationAssets.map((assetRecord, index) => {
+                        const asset = assetRecord.asset?.[0];
+                        return (
+                          <div key={assetRecord._id || index} className="bg-gray-50 rounded-lg p-4 border">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center">
+                                {getAssetIcon(asset?.type)}
+                                <h6 className="ml-2 font-medium text-gray-900">
+                                  {asset?.name || 'Unnamed Asset'}
+                                </h6>
+                              </div>
+                              <span className={`px-2 py-1 text-xs rounded-full ${assetRecord.status === 'Active'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                {assetRecord.status || 'Unknown'}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Type:</span>
+                                <span className="text-gray-900 font-medium">
+                                  {asset?.type || 'N/A'}
+                                </span>
+                              </div>
+
+                              {asset?.model && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Model:</span>
+                                  <span className="text-gray-900">{asset.model}</span>
+                                </div>
+                              )}
+
+                              {asset?.make && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Make:</span>
+                                  <span className="text-gray-900">{asset.make}</span>
+                                </div>
+                              )}
+
+                              {asset?.color && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Color:</span>
+                                  <span className="text-gray-900">{asset.color}</span>
+                                </div>
+                              )}
+
+                              {asset?.weaponNumber && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Weapon No:</span>
+                                  <span className="text-gray-900 font-mono">{asset.weaponNumber}</span>
+                                </div>
+                              )}
+
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Assigned:</span>
+                                <span className="text-gray-900">
+                                  {formatDate(assetRecord.assignedDate)}
+                                </span>
+                              </div>
+
+                              {assetRecord.assignedBy && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Assigned By:</span>
+                                  <span className="text-gray-900">{assetRecord.assignedBy}</span>
+                                </div>
+                              )}
+
+                              {asset?.cost && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Cost:</span>
+                                  <span className="text-gray-900 font-medium">
+                                    ${asset.cost.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="pt-2 border-t border-gray-200">
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  Created: {formatDate(assetRecord.createdAt)}
+                                </div>
+                                {assetRecord.updatedAt !== assetRecord.createdAt && (
+                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Updated: {formatDate(assetRecord.updatedAt)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600">No assets assigned to this station</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Station Metrics */}
+                <div className="pt-6 border-t">
                   <h5 className="text-md font-semibold text-gray-900 mb-3">
                     Station Metrics
                   </h5>
@@ -1011,7 +1142,6 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
       </div>
     </div>
   );
-
   // Show district view if needed
   if (showDistrictView) {
     return (
@@ -1276,6 +1406,9 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                   Service Type
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Assigned Assets
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   Contact
                                 </th>
                               </tr>
@@ -1296,9 +1429,31 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
 
                                 const hasAward = employee.assignedAwards?.some(
                                   (award) => award.isMonitor === true
-
                                 );
 
+                                // Group assets by type for better display
+                                const assetsByType = {};
+                                (employee.assets || []).forEach(asset => {
+                                  const type = asset.type || 'Other';
+                                  if (!assetsByType[type]) {
+                                    assetsByType[type] = [];
+                                  }
+                                  assetsByType[type].push(asset);
+                                });
+
+                                const getAssetIcon = (assetType) => {
+                                  const type = assetType?.toLowerCase();
+                                  if (type?.includes('truck') || type?.includes('vehicle')) return '🚛';
+                                  if (type?.includes('rifle') || type?.includes('ak') || type?.includes('9mm')) return '🔫';
+                                  return '📦';
+                                };
+
+                                const getAssetColor = (assetType) => {
+                                  const type = assetType?.toLowerCase();
+                                  if (type?.includes('truck') || type?.includes('vehicle')) return 'bg-blue-100 text-blue-800';
+                                  if (type?.includes('rifle') || type?.includes('ak') || type?.includes('9mm')) return 'bg-red-100 text-red-800';
+                                  return 'bg-gray-100 text-gray-800';
+                                };
 
                                 return (
                                   <tr
@@ -1379,6 +1534,38 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                         {employee.serviceType || "N/A"}
                                       </span>
                                     </td>
+                                    <td className="px-6 py-4">
+                                      <div className="max-w-xs">
+                                        {Object.keys(assetsByType).length > 0 ? (
+                                          <div className="space-y-1">
+                                            {Object.entries(assetsByType).map(([type, assets]) => (
+                                              <div key={type} className="flex items-center space-x-1">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAssetColor(type)}`}>
+                                                  <span className="mr-1">{getAssetIcon(type)}</span>
+                                                  {type} ({assets.length})
+                                                </span>
+                                              </div>
+                                            ))}
+                                            <div className="text-xs text-gray-500 mt-1">
+                                              Total: {employee.assets?.length || 0} assets
+                                            </div>
+                                            {/* Show weapon numbers if available */}
+                                            {employee.assets?.some(asset => asset.weaponNumber) && (
+                                              <div className="text-xs text-gray-400 mt-1">
+                                                {employee.assets
+                                                  .filter(asset => asset.weaponNumber)
+                                                  .slice(0, 2)
+                                                  .map(asset => asset.weaponNumber)
+                                                  .join(', ')}
+                                                {employee.assets.filter(asset => asset.weaponNumber).length > 2 && '...'}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs text-gray-400">No assets assigned</span>
+                                        )}
+                                      </div>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                       <div className="flex items-center">
                                         <Phone className="h-4 w-4 mr-1 text-gray-400" />
@@ -1397,12 +1584,13 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                       <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
                         <div className="flex justify-between items-center text-sm text-gray-600">
                           <span>
-                            Station Total: {stationData.employees.length}{" "}
-                            employees
+                            Station Total: {stationData.employees.length} employees
                           </span>
                           <span>
-                            Click to {isExpanded ? "collapse" : "expand"}{" "}
-                            employee details
+                            Total Assets: {stationData.employees.reduce((total, emp) => total + (emp.assets?.length || 0), 0)}
+                          </span>
+                          <span>
+                            Click to {isExpanded ? "collapse" : "expand"} employee details
                           </span>
                         </div>
                       </div>

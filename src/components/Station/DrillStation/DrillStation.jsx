@@ -620,8 +620,8 @@ const DrillStationPage = ({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}
                         >
                           {asset.status}
@@ -677,8 +677,8 @@ const DrillStationPage = ({
                       </h3>
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${asset.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                           }`}
                       >
                         {asset.status}
@@ -1143,64 +1143,134 @@ const DrillStationPage = ({
                                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                         <div>
                                           <span className="font-medium text-gray-600">Asset:</span>
-                                          <div className="text-gray-900">{asset.name}</div>
+                                          <div className="text-gray-900">{asset.name || 'N/A'}</div>
                                           <div className="text-xs text-gray-500">
-                                            {asset.category} - {asset.type}
+                                            {asset.category || 'N/A'} - {asset.type || 'N/A'}
                                           </div>
                                         </div>
 
                                         <div>
                                           <span className="font-medium text-gray-600">Status:</span>
-                                          <div className={`inline-flex px-2 py-1 text-xs rounded-full ${asset.status === 'Active'
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {asset.status}
+                                          <div
+                                            className={`inline-flex px-2 py-1 text-xs rounded-full ${asset.status === 'Active'
+                                              ? 'bg-green-100 text-green-800'
+                                              : 'bg-red-100 text-red-800'
+                                              }`}
+                                          >
+                                            {asset.status || 'N/A'}
                                           </div>
                                         </div>
 
                                         <div>
                                           <span className="font-medium text-gray-600">Assigned Date:</span>
                                           <div className="text-gray-900">
-                                            {new Date(asset.assignedDate).toLocaleDateString()}
+                                            {asset.assignedDate
+                                              ? new Date(asset.assignedDate).toLocaleDateString()
+                                              : 'N/A'}
                                           </div>
                                         </div>
 
                                         <div>
                                           <span className="font-medium text-gray-600">Approval:</span>
-                                          <div className={`inline-flex px-2 py-1 text-xs rounded-full ${asset.isApproved
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
+                                          <div
+                                            className={`inline-flex px-2 py-1 text-xs rounded-full ${asset.isApproved
+                                              ? 'bg-green-100 text-green-800'
+                                              : 'bg-yellow-100 text-yellow-800'
+                                              }`}
+                                          >
                                             {asset.isApproved ? 'Approved' : 'Pending'}
                                           </div>
                                         </div>
                                       </div>
 
-                                      {/* Round History for ammunition assets */}
-                                      {asset.roundHistory && asset.roundHistory.length > 0 && (
+                                      {/* Vehicle-Specific Details */}
+                                      {asset.category === 'vehicle' && (
                                         <div className="mt-3 pt-3 border-t border-gray-100">
-                                          <div className="font-medium text-gray-600 mb-2">Round History:</div>
-                                          <div className="space-y-1">
-                                            {asset.roundHistory.slice(-2).map((round, roundIndex) => (
-                                              <div key={roundIndex} className="text-xs text-gray-600 flex justify-between">
-                                                <span>{round.Reason}</span>
-                                                <span>
-                                                  Assigned: {round.assignedRounds}
-                                                  {round.consumedRounds && ` | Consumed: ${round.consumedRounds}`}
-                                                </span>
-                                                <span>{new Date(round.Date).toLocaleDateString()}</span>
-                                              </div>
-                                            ))}
+                                          <div className="font-medium text-gray-600 mb-2">Vehicle Details:</div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                                            <div>
+                                              <span className="font-medium">Vehicle Number:</span> {asset.vehicleNumber || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Register Number:</span> {asset.registerNumber || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Chassis Number:</span> {asset.chassiNumber || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Engine Number:</span> {asset.engineNumber || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Model:</span> {asset.model || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Make:</span> {asset.make || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Color:</span> {asset.color || 'N/A'}
+                                            </div>
                                           </div>
+                                        </div>
+                                      )}
+
+                                      {/* Weapon-Specific Round History */}
+                                      {asset.category === 'weapons' && (
+                                        <div className="mt-3 pt-3 border-t border-gray-100">
+                                          <div className="font-medium text-gray-600 mb-2">Weapon Details:</div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                                            <div>
+                                              <span className="font-medium">Weapon Number:</span> {asset.weaponNumber || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Available Quantity:</span> {asset.availableQuantity || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">In Quantity:</span> {asset.inQuantity || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Out Quantity:</span> {asset.outQuantity || 'N/A'}
+                                            </div>
+                                            <div>
+                                              <span className="font-medium">Shell Collected:</span> {asset.shellCollected || 'N/A'}
+                                            </div>
+                                          </div>
+
+                                          {asset.roundHistory && asset.roundHistory.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                              <div className="font-medium text-gray-600 mb-2">Round History:</div>
+                                              <div className="space-y-1">
+                                                {asset.roundHistory.slice(-2).map((round, roundIndex) => (
+                                                  <div
+                                                    key={roundIndex}
+                                                    className="text-xs text-gray-600 flex justify-between"
+                                                  >
+                                                    <span>{round.Reason || 'N/A'}</span>
+                                                    <span>
+                                                      Assigned: {round.assignedRounds || 'N/A'}
+                                                      {round.consumedRounds &&
+                                                        ` | Consumed: ${round.consumedRounds}`}
+                                                    </span>
+                                                    <span>
+                                                      {round.Date
+                                                        ? new Date(round.Date).toLocaleDateString()
+                                                        : 'N/A'}
+                                                    </span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
 
                                       {/* Approval Details */}
                                       {asset.isApproved && asset.approvedBy && (
                                         <div className="mt-2 text-xs text-gray-500">
-                                          Approved by: {asset.approvedBy.firstName} {asset.approvedBy.lastName}
-                                          {asset.approvalDate && ` on ${new Date(asset.approvalDate).toLocaleDateString()}`}
+                                          Approved by:{' '}
+                                          {asset.approvedBy.firstName || 'N/A'}{' '}
+                                          {asset.approvedBy.lastName || ''}
+                                          {asset.approvalDate &&
+                                            ` on ${new Date(asset.approvalDate).toLocaleDateString()}`}
                                         </div>
                                       )}
                                     </div>
