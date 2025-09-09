@@ -235,8 +235,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof stationsValue === "string"
         ? stationsValue.trim() !== ""
         : typeof stationsValue === "object"
-        ? stationsValue._id
-        : false)
+          ? stationsValue._id
+          : false)
     );
   };
 
@@ -251,8 +251,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       (typeof statusValue === "string"
         ? statusValue.trim() !== ""
         : typeof statusValue === "object"
-        ? statusValue._id
-        : false)
+          ? statusValue._id
+          : false)
     );
   };
 
@@ -600,6 +600,24 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     }
   };
 
+  const isStationIncharge =
+    editData.stations?.stationIncharge?.some(
+      (incharge) => incharge.employee === editData._id
+    );
+  const isMallkhanaIncharge = editData.assignedAssets?.some(
+    (asset) => asset.asset[0]?.mallkhana !== null
+  );
+  const hasAward = editData.assignedAwards?.some(
+    (award) => award.isMonitor === true
+  );
+  // const hasDisciplinary = editData.disciplinaryActions?.some(
+  //   (dis) => dis.isDisciplinaryAction === true
+  // );
+  const disciplinaryObjects =
+    editData?.disciplinaryActions?.filter(
+      (dis) => dis.isDisciplinaryAction === true
+    ) || [];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -622,6 +640,42 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
         profileUrls={profile}
       />
 
+      {isEdit && (
+        <>
+          <hr className="w-full border-t pt-6" />
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold italic my-3">
+              Tags
+            </h1>
+            <div className="flex flex-row gap-x-3 flex-wrap ">
+              {isStationIncharge && (
+                <span className="bg-blue-100 text-blue-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                  Station Incharge
+                </span>
+              )}
+              {isMallkhanaIncharge && (
+                <span className="bg-green-100 text-green-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                  Mallkhana Incharge
+                </span>
+              )}
+              {hasAward && (
+                <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                  Award
+                </span>
+              )}
+            </div>
+            {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
+              <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                {disciplinaryObjects[0].description}
+              </span>
+            )}
+
+          </div>
+          <hr className="w-full border-t my-6" />
+
+        </>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -635,9 +689,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             required
             placeholder="EMP-12345"
             readOnly={isEdit}
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
+              }`}
           />
           {isEdit && (
             <p className="mt-1 text-xs text-gray-500">
@@ -719,11 +772,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             title="CNIC must be exactly 13 digits with no hyphens"
             maxLength="13"
             readOnly={isEdit}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              validationErrors.cnic
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-300 focus:border-blue-500"
-            } ${isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""}`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.cnic
+              ? "border-red-300 focus:border-red-500"
+              : "border-gray-300 focus:border-blue-500"
+              } ${isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""}`}
           />
           {validationErrors.cnic && (
             <p className="mt-1 text-sm text-red-600">{validationErrors.cnic}</p>
@@ -758,9 +810,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
             value={formData.dateOfBirth}
             onChange={handleChange}
             readOnly={isEdit}
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? "bg-gray-50 text-gray-600 cursor-not-allowed" : ""
+              }`}
           />
           {isEdit && (
             <p className="mt-1 text-xs text-gray-500">
@@ -913,11 +964,10 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
                 onChange={handleLocationChange}
                 required={isEdit} // Only required in edit mode
                 disabled={isStationsReadOnly()} // Use the helper function
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isStationsReadOnly()
-                    ? "bg-gray-50 text-gray-600 cursor-not-allowed"
-                    : ""
-                }`}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isStationsReadOnly()
+                  ? "bg-gray-50 text-gray-600 cursor-not-allowed"
+                  : ""
+                  }`}
               >
                 <option value="">
                   {locationLoading ? "Loading stations..." : "Select station"}
@@ -994,12 +1044,12 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
           {uploading
             ? "Uploading Photo..."
             : loading
-            ? isEdit
-              ? "Updating..."
-              : "Adding..."
-            : isEdit
-            ? "Update Employee"
-            : "Add Employee"}
+              ? isEdit
+                ? "Updating..."
+                : "Adding..."
+              : isEdit
+                ? "Update Employee"
+                : "Add Employee"}
         </button>
       </div>
     </form>

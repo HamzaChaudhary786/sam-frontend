@@ -31,12 +31,17 @@ import {
   ArrowUp,
   ChevronLeft,
   ChevronDown,
+  Package,
+  Truck,
+  Wrench,
+  Info,
   Eye,
-  Loader2,
+  Loader2
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
 import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
 import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
+import { useNavigate } from "react-router-dom";
 
 const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
   const [data, setData] = useState(null);
@@ -57,6 +62,18 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
 
   // Grouped stations state for employee display
   const [expandedStations, setExpandedStations] = useState(new Set());
+
+  const navigate = useNavigate();
+  const [editData, setEditData] = useState({});
+  const handleEdit = async (data) => {
+    setEditData(data);
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: data,
+      },
+    });
+  };
 
   const handleClose = () => {
     setIsViewEmployee(!isViewEmployee);
@@ -247,7 +264,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         setEmployees(result.data.employees.data);
         setTotalEmployees(
           result.data.employees.pagination?.totalEmployees ||
-            result.data.employees.data.length
+          result.data.employees.data.length
         );
       }
     } catch (err) {
@@ -275,6 +292,27 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
       return <Lock className="h-3 w-3" />;
     return <Building className="h-3 w-3" />;
   };
+  const getAssetIcon = (assetType) => {
+    switch (assetType?.toLowerCase()) {
+      case 'truck':
+        return <Truck className="h-5 w-5 text-blue-600" />;
+      case 'ak-47':
+      case 'weapon':
+        return <Shield className="h-5 w-5 text-red-600" />;
+      case 'equipment':
+        return <Wrench className="h-5 w-5 text-green-600" />;
+      default:
+        return <Package className="h-5 w-5 text-gray-600" />;
+    }
+  };
+  const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
 
   const handleEmployeeView = (employee) => {
     setSelectedEmployee(employee);
@@ -361,11 +399,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   key={page}
                   onClick={() => onPageChange(page)}
                   disabled={loading}
-                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                    page === currentPage
-                      ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                      : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === currentPage
+                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {page}
                 </button>
@@ -560,16 +597,15 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-blue-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byDesignation
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byDesignation
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -598,15 +634,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-purple-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown.byGrade
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown.byGrade
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -635,16 +670,15 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-green-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown
-                                .byServiceType
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown
+                              .byServiceType
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -673,15 +707,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-indigo-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        (count /
-                          Math.max(
-                            ...Object.values(
-                              data.allStationEmployeeSummary.breakdown.byCast
-                            )
-                          )) *
+                      width: `${(count /
+                        Math.max(
+                          ...Object.values(
+                            data.allStationEmployeeSummary.breakdown.byCast
+                          )
+                        )) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -710,17 +743,16 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   <div
                     className="bg-emerald-600 h-2 rounded-full"
                     style={{
-                      width: `${
-                        count > 0
-                          ? (count /
-                              Math.max(
-                                ...Object.values(
-                                  data.allStationEmployeeSummary.breakdown.byAge
-                                )
-                              )) *
-                            100
-                          : 0
-                      }%`,
+                      width: `${count > 0
+                        ? (count /
+                          Math.max(
+                            ...Object.values(
+                              data.allStationEmployeeSummary.breakdown.byAge
+                            )
+                          )) *
+                        100
+                        : 0
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -807,11 +839,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                         {station.name}
                       </h4>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          station.totalEmployees > 0
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 text-xs rounded-full ${station.totalEmployees > 0
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {station.totalEmployees} employees
                       </span>
@@ -860,11 +891,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   </div>
                   <div className="text-center">
                     <p
-                      className={`text-lg font-bold ${
-                        station.totalEmployees > 0
-                          ? "text-blue-600"
-                          : "text-red-600"
-                      }`}
+                      className={`text-lg font-bold ${station.totalEmployees > 0
+                        ? "text-blue-600"
+                        : "text-red-600"
+                        }`}
                     >
                       {station.totalEmployees}
                     </p>
@@ -908,16 +938,16 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                           </span>
                         </div>
                       )) || (
-                        <p className="text-sm text-gray-500">
-                          No facilities listed
-                        </p>
-                      )}
+                          <p className="text-sm text-gray-500">
+                            No facilities listed
+                          </p>
+                        )}
                     </div>
                   </div>
 
                   {/* In-charges */}
                   <div>
-                    <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <h5 className="text-md font-semibent text-gray-900 mb-3 flex items-center">
                       <UserCheck className="h-4 w-4 mr-2" />
                       Station In-charges
                     </h5>
@@ -952,8 +982,119 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                   </div>
                 </div>
 
-                {/* Station Metrics */}
+                {/* Station Assets */}
                 <div className="mt-6 pt-6 border-t">
+                  <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Package className="h-4 w-4 mr-2" />
+                    Station Assets ({station.rawStationAssets?.length || 0})
+                  </h5>
+                  {station.rawStationAssets?.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                      {station.rawStationAssets.map((assetRecord, index) => {
+                        const asset = assetRecord.asset?.[0];
+                        return (
+                          <div key={assetRecord._id || index} className="bg-gray-50 rounded-lg p-4 border">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center">
+                                {getAssetIcon(asset?.type)}
+                                <h6 className="ml-2 font-medium text-gray-900">
+                                  {asset?.name || 'Unnamed Asset'}
+                                </h6>
+                              </div>
+                              <span className={`px-2 py-1 text-xs rounded-full ${assetRecord.status === 'Active'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                {assetRecord.status || 'Unknown'}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Type:</span>
+                                <span className="text-gray-900 font-medium">
+                                  {asset?.type || 'N/A'}
+                                </span>
+                              </div>
+
+                              {asset?.model && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Model:</span>
+                                  <span className="text-gray-900">{asset.model}</span>
+                                </div>
+                              )}
+
+                              {asset?.make && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Make:</span>
+                                  <span className="text-gray-900">{asset.make}</span>
+                                </div>
+                              )}
+
+                              {asset?.color && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Color:</span>
+                                  <span className="text-gray-900">{asset.color}</span>
+                                </div>
+                              )}
+
+                              {asset?.weaponNumber && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Weapon No:</span>
+                                  <span className="text-gray-900 font-mono">{asset.weaponNumber}</span>
+                                </div>
+                              )}
+
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Assigned:</span>
+                                <span className="text-gray-900">
+                                  {formatDate(assetRecord.assignedDate)}
+                                </span>
+                              </div>
+
+                              {assetRecord.assignedBy && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Assigned By:</span>
+                                  <span className="text-gray-900">{assetRecord.assignedBy}</span>
+                                </div>
+                              )}
+
+                              {asset?.cost && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Cost:</span>
+                                  <span className="text-gray-900 font-medium">
+                                    ${asset.cost.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="pt-2 border-t border-gray-200">
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  Created: {formatDate(assetRecord.createdAt)}
+                                </div>
+                                {assetRecord.updatedAt !== assetRecord.createdAt && (
+                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Updated: {formatDate(assetRecord.updatedAt)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600">No assets assigned to this station</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Station Metrics */}
+                <div className="pt-6 border-t">
                   <h5 className="text-md font-semibold text-gray-900 mb-3">
                     Station Metrics
                   </h5>
@@ -978,11 +1119,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <p
-                        className={`text-lg font-bold ${
-                          station.meetsStaffRequirement
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                        className={`text-lg font-bold ${station.meetsStaffRequirement
+                          ? "text-green-600"
+                          : "text-red-600"
+                          }`}
                       >
                         {station.meetsStaffRequirement ? "Yes" : "No"}
                       </p>
@@ -994,15 +1134,14 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
             )}
           </div>
         )) || (
-          <div className="text-center py-12">
-            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No stations found for this tehsil.</p>
-          </div>
-        )}
+            <div className="text-center py-12">
+              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No stations found for this tehsil.</p>
+            </div>
+          )}
       </div>
     </div>
   );
-
   // Show district view if needed
   if (showDistrictView) {
     return (
@@ -1145,11 +1284,10 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
                 {tab.label}
@@ -1223,9 +1361,8 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                             </span>
                           </h4>
                           <ChevronDown
-                            className={`h-5 w-5 text-blue-700 transition-transform ${
-                              isExpanded ? "transform rotate-180" : ""
-                            }`}
+                            className={`h-5 w-5 text-blue-700 transition-transform ${isExpanded ? "transform rotate-180" : ""
+                              }`}
                           />
                         </div>
                         {stationData.stationInfo && (
@@ -1269,82 +1406,175 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                                   Service Type
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Assigned Assets
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   Contact
                                 </th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                              {stationData.employees.map((employee) => (
-                                <tr
-                                  key={employee._id}
-                                  className="hover:bg-gray-50"
-                                >
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                      <img
-                                        src={
-                                          employee.profileUrl?.[0] ||
-                                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                            employee?.firstName || "N"
-                                          )}&background=6366f1&color=ffffff&size=40&rounded=true`
-                                        }
-                                        alt={employee?.firstName}
-                                        className="h-10 w-10 rounded-full object-cover"
-                                        onError={(e) => {
-                                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                            employee?.firstName || "N"
-                                          )}&background=6366f1&color=ffffff&size=40&rounded=true`;
-                                        }}
-                                      />
-                                      <div
-                                        className="ml-4 cursor-pointer"
-                                        onClick={() =>
-                                          handleEmployeeView(employee)
-                                        }
-                                      >
-                                        <div className="text-sm font-medium text-gray-900">
-                                          {employee?.firstName || "N/A"}
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                          {employee?.fatherFirstName || "N/A"}
+                              {stationData.employees.map((employee) => {
+                                const isStationIncharge =
+                                  employee?.stations?.stationIncharge?.some(
+                                    (incharge) =>
+                                      incharge?.employee?.toString() ===
+                                      employee?._id?.toString()
+                                  );
+
+                                const disciplinaryObjects =
+                                  employee?.disciplinaryActions?.filter(
+                                    (dis) => dis.isDisciplinaryAction === true
+                                  ) || [];
+
+                                const hasAward = employee.assignedAwards?.some(
+                                  (award) => award.isMonitor === true
+                                );
+
+                                // Group assets by type for better display
+                                const assetsByType = {};
+                                (employee.assets || []).forEach(asset => {
+                                  const type = asset.type || 'Other';
+                                  if (!assetsByType[type]) {
+                                    assetsByType[type] = [];
+                                  }
+                                  assetsByType[type].push(asset);
+                                });
+
+                                const getAssetIcon = (assetType) => {
+                                  const type = assetType?.toLowerCase();
+                                  if (type?.includes('truck') || type?.includes('vehicle')) return '🚛';
+                                  if (type?.includes('rifle') || type?.includes('ak') || type?.includes('9mm')) return '🔫';
+                                  return '📦';
+                                };
+
+                                const getAssetColor = (assetType) => {
+                                  const type = assetType?.toLowerCase();
+                                  if (type?.includes('truck') || type?.includes('vehicle')) return 'bg-blue-100 text-blue-800';
+                                  if (type?.includes('rifle') || type?.includes('ak') || type?.includes('9mm')) return 'bg-red-100 text-red-800';
+                                  return 'bg-gray-100 text-gray-800';
+                                };
+
+                                return (
+                                  <tr
+                                    key={employee._id}
+                                    className="hover:bg-gray-50"
+                                  >
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="flex items-center">
+                                        <img
+                                          src={
+                                            employee.profileUrl?.[0] ||
+                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                              employee?.firstName || "N"
+                                            )}&background=6366f1&color=ffffff&size=40&rounded=true`
+                                          }
+                                          alt={employee?.firstName}
+                                          className="h-10 w-10 rounded-full object-cover"
+                                          onError={(e) => {
+                                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                              employee?.firstName || "N"
+                                            )}&background=6366f1&color=ffffff&size=40&rounded=true`;
+                                          }}
+                                        />
+                                        <div
+                                          className="ml-4 cursor-pointer"
+                                          onClick={() =>
+                                            handleEmployeeView(employee)
+                                          }
+                                        >
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {employee?.firstName || "N/A"}
+                                          </div>
+                                          <div className="text-sm text-gray-500">
+                                            {employee?.fatherFirstName || "N/A"}
+                                          </div>
+                                          {isStationIncharge && (
+                                            <div className="bg-blue-100 text-blue-800 text-[10px] font-medium px-2 py-1 rounded">
+                                              <p>Station Incharge</p>
+                                            </div>
+                                          )}
+                                          {hasAward && (
+                                            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                              Award
+                                            </span>
+                                          )}
+                                          {
+                                            disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
+                                              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                                {disciplinaryObjects[0].description}
+                                              </span>
+                                            )
+                                          }
                                         </div>
                                       </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {employee?.personalNumber || "N/A"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {employee?.cnic || "N/A"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {employee?.designation || "N/A"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {employee?.grade || "N/A"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                        employee.serviceType === "federal"
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      {employee?.personalNumber || "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      {employee?.cnic || "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      {employee?.designation || "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      {employee?.grade || "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <span
+                                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.serviceType === "federal"
                                           ? "bg-green-100 text-green-800"
                                           : employee.serviceType ===
                                             "provincial"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-gray-100 text-gray-800"
-                                      }`}
-                                    >
-                                      {employee.serviceType || "N/A"}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <div className="flex items-center">
-                                      <Phone className="h-4 w-4 mr-1 text-gray-400" />
-                                      {employee.mobileNumber || "N/A"}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-gray-100 text-gray-800"
+                                          }`}
+                                      >
+                                        {employee.serviceType || "N/A"}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <div className="max-w-xs">
+                                        {Object.keys(assetsByType).length > 0 ? (
+                                          <div className="space-y-1">
+                                            {Object.entries(assetsByType).map(([type, assets]) => (
+                                              <div key={type} className="flex items-center space-x-1">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAssetColor(type)}`}>
+                                                  <span className="mr-1">{getAssetIcon(type)}</span>
+                                                  {type} ({assets.length})
+                                                </span>
+                                              </div>
+                                            ))}
+                                            <div className="text-xs text-gray-500 mt-1">
+                                              Total: {employee.assets?.length || 0} assets
+                                            </div>
+                                            {/* Show weapon numbers if available */}
+                                            {employee.assets?.some(asset => asset.weaponNumber) && (
+                                              <div className="text-xs text-gray-400 mt-1">
+                                                {employee.assets
+                                                  .filter(asset => asset.weaponNumber)
+                                                  .slice(0, 2)
+                                                  .map(asset => asset.weaponNumber)
+                                                  .join(', ')}
+                                                {employee.assets.filter(asset => asset.weaponNumber).length > 2 && '...'}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs text-gray-400">No assets assigned</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      <div className="flex items-center">
+                                        <Phone className="h-4 w-4 mr-1 text-gray-400" />
+                                        {employee.mobileNumber || "N/A"}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -1354,12 +1584,13 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                       <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
                         <div className="flex justify-between items-center text-sm text-gray-600">
                           <span>
-                            Station Total: {stationData.employees.length}{" "}
-                            employees
+                            Station Total: {stationData.employees.length} employees
                           </span>
                           <span>
-                            Click to {isExpanded ? "collapse" : "expand"}{" "}
-                            employee details
+                            Total Assets: {stationData.employees.reduce((total, emp) => total + (emp.assets?.length || 0), 0)}
+                          </span>
+                          <span>
+                            Click to {isExpanded ? "collapse" : "expand"} employee details
                           </span>
                         </div>
                       </div>
@@ -1479,11 +1710,11 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                 <span className="font-semibold text-green-900">
                   {data.summary?.totalStations
                     ? Math.round(
-                        ((data.summary.totalStations -
-                          (data.stationsNotMeetingRequirements?.count || 0)) /
-                          data.summary.totalStations) *
-                          100
-                      )
+                      ((data.summary.totalStations -
+                        (data.stationsNotMeetingRequirements?.count || 0)) /
+                        data.summary.totalStations) *
+                      100
+                    )
                     : 0}
                   %
                 </span>
@@ -1495,9 +1726,9 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
                 <span className="font-semibold text-purple-900">
                   {data.summary?.totalStations
                     ? (
-                        (data.summary.totalActiveEmployees || 0) /
-                        data.summary.totalStations
-                      ).toFixed(1)
+                      (data.summary.totalActiveEmployees || 0) /
+                      data.summary.totalStations
+                    ).toFixed(1)
                     : "0.0"}
                 </span>
               </div>
@@ -1507,42 +1738,42 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
           {/* Recommendations */}
           {((data.summary?.stationsWithoutEmployees || 0) > 0 ||
             (data.stationsNotMeetingRequirements?.count || 0) > 0) && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
-                Action Items
-              </h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {(data.summary?.stationsWithoutEmployees || 0) > 0 && (
-                  <li>
-                    • Urgent: Assign staff to{" "}
-                    {data.summary.stationsWithoutEmployees} stations with zero
-                    employees
-                  </li>
-                )}
-                {(data.stationsNotMeetingRequirements?.count || 0) > 0 && (
-                  <li>
-                    • Priority: Address staff shortages in{" "}
-                    {data.stationsNotMeetingRequirements.count} stations not
-                    meeting requirements
-                  </li>
-                )}
-                {(data.summary?.totalStationAssets || 0) === 0 && (
-                  <li>
-                    • Review: No station assets recorded - verify asset
-                    management system
-                  </li>
-                )}
-                {(data.allStationEmployeeSummary?.breakdown?.byAge?.Unknown ||
-                  0) > 0 && (
-                  <li>
-                    • Data Quality: Update missing age information for better
-                    analytics
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-1 text-yellow-500" />
+                  Action Items
+                </h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {(data.summary?.stationsWithoutEmployees || 0) > 0 && (
+                    <li>
+                      • Urgent: Assign staff to{" "}
+                      {data.summary.stationsWithoutEmployees} stations with zero
+                      employees
+                    </li>
+                  )}
+                  {(data.stationsNotMeetingRequirements?.count || 0) > 0 && (
+                    <li>
+                      • Priority: Address staff shortages in{" "}
+                      {data.stationsNotMeetingRequirements.count} stations not
+                      meeting requirements
+                    </li>
+                  )}
+                  {(data.summary?.totalStationAssets || 0) === 0 && (
+                    <li>
+                      • Review: No station assets recorded - verify asset
+                      management system
+                    </li>
+                  )}
+                  {(data.allStationEmployeeSummary?.breakdown?.byAge?.Unknown ||
+                    0) > 0 && (
+                      <li>
+                        • Data Quality: Update missing age information for better
+                        analytics
+                      </li>
+                    )}
+                </ul>
+              </div>
+            )}
         </div>
       )}
 
@@ -1552,6 +1783,7 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
           isOpen={isViewEmployee}
           onClose={handleClose}
           employee={selectedEmployee}
+          onEdit={handleEdit}
         />
       )}
     </div>

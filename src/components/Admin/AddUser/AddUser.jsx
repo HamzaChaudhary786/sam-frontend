@@ -5,7 +5,7 @@ import {
   role_data_entery,
   role_admin,
   role_view_only,
-  
+
 } from "../../../constants/Enum";
 import { EnumSelect } from "../../SearchableDropdown.jsx";
 
@@ -443,31 +443,42 @@ const UserModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Assign Direct Roles
                 </label>
+
+                {/* Search Input */}
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search roles..."
+                    value={formData.roleSearch || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, roleSearch: e.target.value }))
+                    }
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
                 <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 bg-blue-50">
                   {roles.length > 0 ? (
-                    roles.map((role) => (
-                      <label
-                        key={role._id}
-                        className="flex items-center space-x-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.roles.includes(role._id)}
-                          onChange={(e) =>
-                            handleRoleChange(role._id, e.target.checked)
-                          }
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                        />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">
-                            {role.name}
-                          </span>
-                          <p className="text-xs text-gray-500">
-                            {role.description}
-                          </p>
-                        </div>
-                      </label>
-                    ))
+                    roles
+                      .filter((role) =>
+                        role.name
+                          .toLowerCase()
+                          .includes((formData.roleSearch || "").toLowerCase())
+                      )
+                      .map((role) => (
+                        <label key={role._id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.roles.includes(role._id)}
+                            onChange={(e) => handleRoleChange(role._id, e.target.checked)}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          />
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">{role.name}</span>
+                            <p className="text-xs text-gray-500">{role.description}</p>
+                          </div>
+                        </label>
+                      ))
                   ) : (
                     <p className="text-sm text-gray-500">No roles available</p>
                   )}

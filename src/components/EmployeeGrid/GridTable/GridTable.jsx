@@ -105,7 +105,6 @@ const EmployeeGridTable = ({
   //   useEmployeeAssets(safeEmployees);
 
   function handleMultiPosting(selectedEmployeeObjects) {
-    console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
     setSelectedEmployeesForPosting(selectedEmployeeObjects);
     setIsMultiStationModalOpen(true);
@@ -125,7 +124,6 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForPosting([]);
   };
   function handleMultiDeduction(selectedEmployeeObjects) {
-    console.log("🚀 Multi-deduction triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForDeduction(selectedEmployeeObjects);
     setIsMultiDeductionModalOpen(true);
   }
@@ -143,7 +141,6 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForDeduction([]);
   };
   function handleMultiAchievement(selectedEmployeeObjects) {
-    console.log("🚀 Multi-achievement triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForAchievement(selectedEmployeeObjects);
     setIsMultiAchievementModalOpen(true);
   }
@@ -176,10 +173,6 @@ const EmployeeGridTable = ({
     setSelectedEmployeesForStatus([]);
   };
   function handleMultiAsset(selectedEmployeeObjects) {
-    console.log(
-      "🚀 Multi-asset assignment triggered!",
-      selectedEmployeeObjects
-    );
     setSelectedEmployeesForAsset(selectedEmployeeObjects);
     setIsMultiAssetModalOpen(true);
   }
@@ -318,8 +311,6 @@ const EmployeeGridTable = ({
   };
 
   const handleApplyFilters = (filters) => {
-    console.log("🔍 Applying filters:", filters);
-
     const backendFilters = {};
 
     // Handle array filters (multi-select and multi-text inputs)
@@ -956,6 +947,11 @@ const EmployeeGridTable = ({
               const hasAward = employee.assignedAwards?.some(
                 (award) => award.isMonitor === true
               );
+              const disciplinaryObjects =
+                employee?.disciplinaryActions?.filter(
+                  (dis) => dis.isDisciplinaryAction === true
+                ) || [];
+
 
               return (
                 <>
@@ -970,41 +966,7 @@ const EmployeeGridTable = ({
                       }`}
                   >
                     <td rowSpan={2} className="border border-gray-200 mx-2">
-                      <div className="flex flex-wrap gap-1">
-                        {isStationIncharge && (
-                          <div
-                            className="bg-blue-100 text-blue-800 w-fit text-[8px] font-medium px-2 py-1 rounded"
 
-                          >
-                            <p>
-
-                              Station
-                            </p>
-                            <p>
-                              Incharge
-                            </p>
-                          </div>
-                        )}
-                        {isMallkhanaIncharge && (
-                          <div
-                            className="bg-blue-100 text-blue-800 w-fit text-[8px] font-medium px-2 py-1 rounded"
-
-                          >
-                            <p>
-
-                              Mallkhana
-                            </p>
-                            <p>
-                              Incharge
-                            </p>
-                          </div>
-                        )}
-                        {hasAward && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
-                            Award
-                          </span>
-                        )}
-                      </div>
                       <div className="border border-gray-200 items-center justify-center p-1">
                         {renderEmployeeCheckbox(employee)}
                         {renderImageCell(employee)}
@@ -1075,6 +1037,40 @@ const EmployeeGridTable = ({
 
                     <td className="x-4 py-2 border border-gray-200">
                       {renderCell(employee, "firstName", "input")}
+                      <div className="flex flex-wrap gap-1">
+                        {isStationIncharge && (
+                          <div
+                            className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded"
+
+                          >
+                            <p>
+                              S.Incharge
+                            </p>
+                          </div>
+                        )}
+                        {isMallkhanaIncharge && (
+                          <div
+                            className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded"
+
+                          >
+                            <p>
+                              M.Incharge
+                            </p>
+                          </div>
+                        )}
+                        {hasAward && (
+                          <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
+                            Award
+                          </span>
+                        )}
+
+                        {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
+                          <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
+                            {disciplinaryObjects[0].description}
+                          </span>
+                        )}
+
+                      </div>
                     </td>
 
                     <td className="x-4 py-2 border border-gray-200">
