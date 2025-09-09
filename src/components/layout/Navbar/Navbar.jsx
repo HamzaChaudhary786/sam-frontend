@@ -212,7 +212,7 @@ const Navbar = () => {
             <div className=" relative cursor-pointer" onClick={handleNavigate}>
               <IoMdNotifications className="text-blue-600 h-6 w-6 " />
               <span className="absolute -top-3 -right-1 text-red-600 text-lg font-semibold">
-                {pendingApproval.length}
+                {pendingApproval?.length}
               </span>
             </div>
 

@@ -158,6 +158,41 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
     return employee.profileUrl || "/default-avatar.png";
   };
 
+  // Helper function to get station incharge information
+  const getStationInchargeInfo = (station) => {
+    if (
+      !station ||
+      !station.stationIncharge ||
+      !Array.isArray(station.stationIncharge)
+    ) {
+      return null;
+    }
+
+    // Find first incharge (priority) or any incharge
+    const firstIncharge = station.stationIncharge.find(
+      (inc) => inc.type === "firstIncharge"
+    );
+    const incharge = firstIncharge || station.stationIncharge[0];
+
+    if (!incharge || !incharge.employee) {
+      return null;
+    }
+
+    return {
+      name: `${incharge.employee.firstName} ${incharge.employee.lastName || ""
+        }`.trim(),
+      fName: `${incharge.employee.fatherFirstName} ${incharge.employee.fatherLastName || ""
+        }`.trim(),
+      type:
+        incharge.type === "firstIncharge"
+          ? "First Incharge"
+          : "Second Incharge",
+      personalNumber: incharge.employee.personalNumber,
+      rank: incharge.employee.rank,
+      cnic: incharge.employee.cnic,
+    };
+  };
+
   // Add these handler functions
   const handleEmployeeView = (employee) => {
     setSelectedEmployeeForView(employee);
@@ -410,10 +445,11 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   };
 
   const handleConsumeRounds = (assignment) => {
-    if (!supportsRounds(assignment)) {
-      toast.warning("This asset type doesn't support round management");
-      return;
-    }
+    // if (!supportsRounds(assignment)) {
+    //   toast.warning("This asset type doesn't support round management");
+    //   return;
+    // }
+
     setConsumeRoundsModal({
       isOpen: true,
       assignment: assignment,
@@ -477,6 +513,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
     try {
       const consumeData = {
         roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        shellCollected: parseInt(data.shellCollected) || 0,
         reason: data.reason || "Rounds consumed",
         date: data.date || new Date().toISOString(),
         isCompleteConsumption: data.isCompleteConsumption || false,
@@ -767,7 +804,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {assignments.map((assignment, index) => (
+                {assignments?.map((assignment, index) => (
                   <>
                     <tr
                       key={assignment._id || index}
@@ -837,6 +874,29 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                 {assignment.station.district}
                               </div>
                             )}
+                            {(() => {
+                              const inchargeInfo = getStationInchargeInfo(
+                                assignment.station
+                              );
+                              return inchargeInfo ? (
+                                <div className="text-xs text-blue-600 truncate mt-1">
+                                  <span className="font-medium">
+                                    {inchargeInfo.type}:
+                                  </span>{" "}
+                                  {inchargeInfo.name}
+                                  <br />
+                                  {inchargeInfo.fName}
+                                  <br />
+                                  {inchargeInfo.rank &&
+                                    ` (${inchargeInfo.rank})`}
+                                  <br />
+                                  {inchargeInfo.grade &&
+                                    ` (${inchargeInfo.grade})`}
+                                  {inchargeInfo.personalNumber &&
+                                    ` (${inchargeInfo.personalNumber})`}
+                                </div>
+                              ) : null;
+                            })()}
                           </div>
                         ) : (
                           <span className="text-gray-400">N/A</span>
@@ -847,9 +907,9 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${assignment.assignmentType === "employee" ||
-                            assignment.employee
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
+                              assignment.employee
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
                             }`}
                         >
                           {assignment.assignmentType === "employee" ||
@@ -959,82 +1019,212 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={6} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {assignment.asset?.map((itm) => (
-                          <div key={itm._id} className="flex flex-row">
-                            <div key={itm._id} className="text-xs text-gray-500 truncate">
+                      <td
+                        colSpan={7}
+                        className="px-6 py-4 bg-gray-50 border-t border-gray-200"
+                      >
+                        <div className="space-y-3">
+                          {assignment.asset?.map((itm, assetIndex) => (
+                            <div
+                              key={itm._id}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+                            >
+                              {/* Asset Header */}
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-semibold text-gray-800">
+                                  Asset #{assetIndex + 1}
+                                </h4>
+                                {(itm.weaponNumber || itm.registerNumber) && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                    {itm.weaponNumber ? `Weapon #: ${itm.weaponNumber}` : `Reg #: ${itm.registerNumber}`}
+                                  </span>
+                                )}
+                              </div>
 
-                              <span className="text-xs mt-0.5">
-{itm.weaponNumber && (
-                                  <>
-                                    weapon #: {itm.weaponNumber} ,
-                                  </>
-                                )}
-                                {itm.registerNumber && (
-                                  <>
-                                    registration #: {itm.registerNumber} ,
-                                  </>
-                                )}
-                                {itm.category && (
-                                  <>
-                                    Type: {itm.category} ,
-                                  </>
-                                )}
+                              {/* Rounds Information (for weapons) */}
+                              {itm.category?.toLowerCase().includes("weapon") && (
+                                <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                                  <h5 className="text-xs font-semibold text-yellow-800 mb-2">
+                                    Rounds Information
+                                  </h5>
+                                  <div className="grid grid-cols-3 gap-4 text-xs">
+                                    {itm.inQuantity && (
+                                      <div className="text-center">
+                                        <div className="text-yellow-600 font-medium">
+                                          Total Received
+                                        </div>
+                                        <div className="text-gray-800 font-bold">
+                                          {itm.inQuantity}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.availableQuantity && (
+                                      <div className="text-center">
+                                        <div className="text-green-600 font-medium">
+                                          Available
+                                        </div>
+                                        <div className="text-gray-800 font-bold">
+                                          {itm.availableQuantity}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
 
-                                {itm.chassiNumber && (
-                                  <>
-                                    chassis #: {itm.chassiNumber} ,
-                                  </>
-                                )}
-                                {itm.engineNumber && (
-                                  <>
-                                    engine #: {itm.engineNumber} ,
-                                  </>
-                                )}
-                                {itm.make && (
-                                  <>
-                                    make: {itm.make} ,
-                                  </>
-                                )}
-                                {itm.color && (
-                                  <>
-                                    color: {itm.color} ,
-                                  </>
-                                )}   
-                                {itm.condition && (
-                                  <>
-                                    condition: {itm.condition} ,
-                                  </>
-                                )}  
-                                {itm.assetStatus && (
-                                  <>
-                                     Status: {itm.assetStatus} ,
-                                  </>
-                                )}  
-                                {itm.cost && (
-                                  <>
-                                    cost: {itm.cost} ,
-                                  </>
-                                )}  
-                                {itm.shellCollected && (
-                                  <>
-                                    Shell Collected: {itm.shellCollected} ,
-                                  </>
-                                )}  
-                                {itm.outQuantity && (
-                                  <>
-                                    Issue: {itm.outQuantity} ,
-                                  </>
-                                )} 
-                                {itm.availableQuantity && (
-                                  <>
-                                    Quantity: {itm.availableQuantity}
-                                  </>
-                                )} 
-                              </span>
+                              {/* Vehicle Information */}
+                              {itm.category?.toLowerCase().includes("vehicle") && (
+                                <div className="mb-3 p-3 bg-green-50 rounded-md border border-green-200">
+                                  <h5 className="text-xs font-semibold text-green-800 mb-2">
+                                    Vehicle Details
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                                    {itm.registerNumber && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Registration:
+                                        </span>
+                                        <div className="text-gray-800 font-semibold">
+                                          {itm.registerNumber}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.color && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Color:
+                                        </span>
+                                        <div className="text-gray-800">
+                                          {itm.color}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.make && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Make:
+                                        </span>
+                                        <div className="text-gray-800">
+                                          {itm.make}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.chassiNumber && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Chassis #:
+                                        </span>
+                                        <div className="text-gray-800 font-mono text-xs">
+                                          {itm.chassiNumber}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.engineNumber && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Engine #:
+                                        </span>
+                                        <div className="text-gray-800 font-mono text-xs">
+                                          {itm.engineNumber}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.condition && (
+                                      <div>
+                                        <span className="text-green-600 font-medium">
+                                          Condition:
+                                        </span>
+                                        <div className="text-gray-800">
+                                          {itm.condition}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Weapon Information */}
+                              {itm.category?.toLowerCase().includes("weapon") && (
+                                <div className="mb-3 p-3 bg-red-50 rounded-md border border-red-200">
+                                  <h5 className="text-xs font-semibold text-red-800 mb-2">
+                                    Weapon Details
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                                    {itm.weaponNumber && (
+                                      <div>
+                                        <span className="text-red-600 font-medium">
+                                          Weapon #:
+                                        </span>
+                                        <div className="text-gray-800 font-mono">
+                                          {itm.weaponNumber}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {itm.category && (
+                                      <div>
+                                        <span className="text-red-600 font-medium">
+                                          Type:
+                                        </span>
+                                        <div className="text-gray-800">
+                                          {itm.type || itm.category}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* General Asset Information */}
+                              <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                                <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                                  General Information
+                                </h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                  {itm.assetStatus && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">
+                                        Status:
+                                      </span>
+                                      <div className="text-gray-800">
+                                        {itm.assetStatus || "N/A"}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {itm.cost && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">
+                                        Cost:
+                                      </span>
+                                      <div className="text-gray-800">
+                                        PKR {itm.cost}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {itm.outQuantity && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">
+                                        Issued:
+                                      </span>
+                                      <div className="text-gray-800">
+                                        {itm.outQuantity}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {itm.availableQuantity && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">
+                                        Available:
+                                      </span>
+                                      <div className="text-gray-800">
+                                        {itm.availableQuantity}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   </>
@@ -1066,7 +1256,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
             setConsumeRoundsModal({ isOpen: false, assignment: null })
           }
           onSave={handleConsumeRoundsSave}
-          assignment={consumeRoundsModal.assignment}
+          assignment={consumeRoundsModal?.assignment}
           loading={modalLoading}
         />
       </div>

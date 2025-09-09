@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MapContainer,
@@ -15,7 +13,7 @@ import {
 import L from "leaflet";
 import { locationAPI, externalAPI } from "../../../services/locationApi";
 import { getFixLocationData } from "./mapStationApi.js";
-// push & commit & type first
+
 // Fix for default markers in React-Leaflet and create proper location marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -77,7 +75,6 @@ function LocationMarker({
           Lat: {clickedPosition.lat.toFixed(6)}
           <br />
           Lng: {clickedPosition.lng.toFixed(6)}
-
           {disabled && (
             <>
               <br />
@@ -98,9 +95,9 @@ function MapController({ center, zoom }) {
 
   useEffect(() => {
     if (center) {
-      map.setView(center, zoom, {
+      map.flyTo(center, zoom, {
         animate: true,
-        duration: 1.5,
+        duration: 1.0, // Smooth animation duration in seconds
       });
     }
   }, [center, zoom, map]);
@@ -112,7 +109,7 @@ const MapLocation = ({
   onPositionChange,
   hidePanels = false,
   stationData = [],
-  onEditStation = () => { },
+  onEditStation = () => {},
   refreshKey = 0,
   disabled = false,
 }) => {
@@ -126,12 +123,11 @@ const MapLocation = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSaveForm, setShowSaveForm] = useState(false);
-
+  const [locationSearchTerm, setLocationSearchTerm] = useState("");
+  const [expandedLocationId, setExpandedLocationId] = useState(null); // State to track expanded location
   // Default map settings for Balochistan, Pakistan
   const [mapCenter, setMapCenter] = useState([28.3, 66.6]); // Balochistan coordinates
   const [mapZoom, setMapZoom] = useState(7); // Adjusted zoom level to show the province
-  const [locationSearchTerm, setLocationSearchTerm] = useState('');
-
 
   const searchTimeoutRef = useRef(null);
   const [newLocation, setNewLocation] = useState({
@@ -150,7 +146,6 @@ const MapLocation = ({
 
   // Notify parent component when position changes
   useEffect(() => {
-
     if (disabled) {
       return;
     }
@@ -158,11 +153,11 @@ const MapLocation = ({
       onPositionChange(clickedPosition);
     }
   }, [clickedPosition, onPositionChange, disabled]);
+
   useEffect(() => {
     const fetchData = async () => {
       const data = await getFixLocationData();
       console.log(data, "refresh location data");
-
     };
 
     fetchData();
@@ -206,14 +201,12 @@ const MapLocation = ({
         );
       }
 
-      // Check individual staff designation requirements (if you want to add this later)
+      // Check individual staff designation requirements
       if (requirement.staffDetail && requirement.staffDetail.length > 0) {
         requirement.staffDetail.forEach((staffReq) => {
           const designation = staffReq.designation;
           const requiredCount = staffReq.numberOfPersonal || 0;
 
-          // For now, we assume all employees can fulfill any designation requirement
-          // You can modify this logic based on actual staff designation data if available
           if (actualEmployeeCount < requiredCount) {
             meetRequirements = false;
             details.push(
@@ -225,25 +218,21 @@ const MapLocation = ({
             );
           }
 
-          // Asset requirements (keeping this for future use)
+          // Asset requirements
           if (
             requirement.assetRequirement &&
             requirement.assetRequirement.length > 0
           ) {
             requirement.assetRequirement.forEach((assetReq) => {
-              const asset = assetReq.assets; // This is the full asset object
+              const asset = assetReq.assets;
               const requiredQuantity = assetReq.quantity || 0;
 
-              if (asset && typeof asset === 'object') {
-                // Asset data is available as a full object
-                const assetName = asset.name || 'Unknown Asset';
-                const assetType = asset.type || 'Unknown Type';
-
+              if (asset && typeof asset === "object") {
+                const assetName = asset.name || "Unknown Asset";
+                const assetType = asset.type || "Unknown Type";
                 let assetDetails = `${assetName} (${assetType}): Required ${requiredQuantity}`;
-
                 details.push(assetDetails);
               } else {
-                // Fallback for when asset is just an ID (shouldn't happen based on your data)
                 const assetId = assetReq.assets;
                 details.push(
                   `Asset ${assetId}: Required ${requiredQuantity} (Asset data not available)`
@@ -284,7 +273,8 @@ const MapLocation = ({
         return MARKER_COLORS.SAVED;
     }
   };
-  const filteredSavedLocations = savedLocations.filter(location => {
+
+  const filteredSavedLocations = savedLocations.filter((location) => {
     if (!locationSearchTerm.trim()) return true;
 
     const searchTerm = locationSearchTerm.toLowerCase();
@@ -301,31 +291,42 @@ const MapLocation = ({
     if (location?.station?.district?.toLowerCase().includes(searchTerm)) return true;
 
     // Search in facilities
-    if (location?.station?.facilities?.some(facility =>
-      facility.toLowerCase().includes(searchTerm)
-    )) return true;
+    if (
+      location?.station?.facilities?.some((facility) =>
+        facility.toLowerCase().includes(searchTerm)
+      )
+    )
+      return true;
 
     // Search in staff designations
-    if (location?.station?.stationMinimumRequirements?.some(req =>
-      req?.staffDetail?.some(staff =>
-        staff?.designation?.toLowerCase().includes(searchTerm)
-      )
-    )) return true;
-
-    // Search in asset names
-    if (location?.station?.stationMinimumRequirements?.some(req =>
-      req?.assetRequirement?.some(asset =>
-        asset?.assets?.name?.toLowerCase().includes(searchTerm)
-      ) ||
-      req?.staffDetail?.some(staff =>
-        staff?.assetRequirement?.some(staffAsset =>
-          staffAsset?.assets?.name?.toLowerCase().includes(searchTerm)
+    if (
+      location?.station?.stationMinimumRequirements?.some((req) =>
+        req?.staffDetail?.some((staff) =>
+          staff?.designation?.toLowerCase().includes(searchTerm)
         )
       )
-    )) return true;
+    )
+      return true;
+
+    // Search in asset names
+    if (
+      location?.station?.stationMinimumRequirements?.some(
+        (req) =>
+          req?.assetRequirement?.some((asset) =>
+            asset?.assets?.name?.toLowerCase().includes(searchTerm)
+          ) ||
+          req?.staffDetail?.some((staff) =>
+            staff?.assetRequirement?.some((staffAsset) =>
+              staffAsset?.assets?.name?.toLowerCase().includes(searchTerm)
+            )
+          )
+      )
+    )
+      return true;
 
     return false;
   });
+
   /**
    * Get status icon based on requirements
    * @param {string} status - Status string
@@ -366,7 +367,6 @@ const MapLocation = ({
    */
   const handleLocationSelect = useCallback(
     async (coordinates) => {
-
       if (disabled) {
         return;
       }
@@ -576,7 +576,7 @@ const MapLocation = ({
   };
 
   /**
-   * Handle clicking saved location to move map (without affecting clicked position)
+   * Handle clicking saved location to move map with animation and toggle details
    * @param {Object} location - Saved location object
    */
   const viewSavedLocation = (location) => {
@@ -584,11 +584,14 @@ const MapLocation = ({
       lat: location.coordinates.lat,
       lng: location.coordinates.lng,
     };
-    // Only move the map, don't change the clicked position
+    // Move the map smoothly to the location
     setMapCenter([coordinates.lat, coordinates.lng]);
     setMapZoom(15);
     setClickedPosition(coordinates);
-    // Don't call setClickedPosition here to preserve the original clicked location
+    // Toggle the expanded state for the clicked location
+    setExpandedLocationId(
+      expandedLocationId === location._id ? null : location._id
+    );
   };
 
   // Hide suggestions when clicking outside
@@ -753,10 +756,9 @@ const MapLocation = ({
           <div className="flex-1 overflow-y-auto">
             {filteredSavedLocations.length === 0 ? (
               <p className="text-gray-500 text-sm">
-                {locationSearchTerm ?
-                  `No locations found matching "${locationSearchTerm}"` :
-                  "No saved locations yet"
-                }
+                {locationSearchTerm
+                  ? `No locations found matching "${locationSearchTerm}"`
+                  : "No saved locations yet"}
               </p>
             ) : (
               <div className="space-y-2">
@@ -764,19 +766,41 @@ const MapLocation = ({
                   // Check requirements using the location data directly
                   const requirementCheck = checkStationRequirements(location);
                   const statusIcon = getStatusIcon(requirementCheck.status);
+                  const isExpanded = expandedLocationId === location._id;
 
                   return (
                     <div
                       key={location._id}
                       className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex justify-between items-start">
-                        <div
-                          className="flex-1 cursor-pointer"
+                      <div className="flex justify-between items-center">
+                        {/* Show Location Button */}
+                        <button
                           onClick={() => viewSavedLocation(location)}
+                          className="flex-1 text-left px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-transform transform hover:scale-105"
                         >
+                          📍 {location?.title}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditStation(location);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-xs ml-2 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"
+                        >
+                          ✏️ Edit
+                        </button>
+                      </div>
+
+                      {/* Collapsible Details Section */}
+                      <div
+                        className={`mt-2 overflow-hidden transition-all duration-300 ease-in-out ${
+                          isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+                        }`}
+                      >
+                        <div className="p-3 bg-gray-50 rounded-lg">
                           {/* Title and Status */}
-                          <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                          <h4 className="font-semibold text-sm text-blue-600 flex items-center">
                             <span className="mr-1">{statusIcon}</span>
                             {location?.title}
                           </h4>
@@ -883,10 +907,13 @@ const MapLocation = ({
                                             </p>
                                             {req?.staffDetail?.map(
                                               (staff, staffIndex) => (
-                                                <div key={staffIndex} className="ml-2 mb-2 p-1 bg-gray-50 rounded">
+                                                <div
+                                                  key={staffIndex}
+                                                  className="ml-2 mb-2 p-1 bg-gray-50 rounded"
+                                                >
                                                   <p className="mb-1">
-                                                    - {staff?.designation || "Staff"}
-                                                    : {staff?.numberOfPersonal} personnel
+                                                    - {staff?.designation || "Staff"}:{" "}
+                                                    {staff?.numberOfPersonal} personnel
                                                   </p>
 
                                                   {/* Staff Asset Requirements */}
@@ -929,21 +956,7 @@ const MapLocation = ({
                                 )}
                               </div>
                             )}
-
-                          <p className="text-xs text-blue-500 mt-2">
-                            👆 Click to view on map
-                          </p>
                         </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditStation(location);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-xs ml-2 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"
-                        >
-                          ✏️ Edit
-                        </button>
                       </div>
                     </div>
                   );
@@ -1057,12 +1070,13 @@ const MapLocation = ({
                 <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`${requirementCheck.status === "requirements_met"
-                        ? "bg-green-500"
-                        : requirementCheck.status === "requirements_not_met"
+                      className={`${
+                        requirementCheck.status === "requirements_met"
+                          ? "bg-green-500"
+                          : requirementCheck.status === "requirements_not_met"
                           ? "bg-red-500"
                           : "bg-gray-400"
-                        } inline-block w-2.5 h-2.5 rounded-full`}
+                      } inline-block w-2.5 h-2.5 rounded-full`}
                     />
                     <span className="text-xs font-semibold text-gray-900">
                       {location?.title}
@@ -1073,17 +1087,20 @@ const MapLocation = ({
                   <div className="text-sm">
                     <h4 className="font-semibold flex items-center">
                       {getStatusIcon(requirementCheck.status)} {location.title}
-                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${requirementCheck.status === "requirements_met"
-                        ? "bg-green-100 text-green-700"
-                        : requirementCheck.status === "requirements_not_met"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
-                        }`}>
+                      <span
+                        className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                          requirementCheck.status === "requirements_met"
+                            ? "bg-green-100 text-green-700"
+                            : requirementCheck.status === "requirements_not_met"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
                         {requirementCheck.status === "requirements_met"
                           ? "Requirements Met"
                           : requirementCheck.status === "requirements_not_met"
-                            ? "Requirements Not Met"
-                            : "No Requirements"}
+                          ? "Requirements Not Met"
+                          : "No Requirements"}
                       </span>
                     </h4>
                     {location.description && (
@@ -1136,10 +1153,11 @@ const MapLocation = ({
                       <h5 className="font-semibold text-xs mb-1">
                         Requirements Status:
                         <span
-                          className={`ml-1 ${requirementCheck.meetRequirements
-                            ? "text-green-600"
-                            : "text-orange-600"
-                            }`}
+                          className={`ml-1 ${
+                            requirementCheck.meetRequirements
+                              ? "text-green-600"
+                              : "text-orange-600"
+                          }`}
                         >
                           {requirementCheck.meetRequirements
                             ? "Met"

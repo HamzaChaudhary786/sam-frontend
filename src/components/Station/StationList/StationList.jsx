@@ -406,13 +406,11 @@ const StationList = () => {
                 <tr>
                   <td>${escapeHtml(station.name)}</td>
                   <td>${escapeHtml(getStationLocationName(station.tehsil))}</td>
-                  <td>${escapeHtml(station.address?.line1 || "")}${
-            station.address?.line2
+                  <td>${escapeHtml(station.address?.line1 || "")}${station.address?.line2
               ? ", " + escapeHtml(station.address.line2)
               : ""
-          }${
-            station.address?.city ? ", " + escapeHtml(station.address.city) : ""
-          }</td>
+            }${station.address?.city ? ", " + escapeHtml(station.address.city) : ""
+            }</td>
                   <td>${escapeHtml(station.district || "")}</td>
                   <td>${escapeHtml(station.status || "")}</td>
                 </tr>
@@ -437,18 +435,18 @@ const StationList = () => {
               </thead>
               <tbody>
                 ${employees
-                  .map((e) => {
-                    const fullName = `${escapeHtml(
-                      e.firstName || ""
-                    )} ${escapeHtml(e.lastName || "")}`.trim();
-                    const designation =
-                      e.designation?.title || e.designation || "";
-                    const grade = e.grade?.name || e.grade || "";
-                    const serviceType = e.serviceType || "";
-                    const assets = exportOptions.includeAssets
-                      ? `<td>${escapeHtml(e.__assets || "")}</td>`
-                      : "";
-                    return `<tr>
+              .map((e) => {
+                const fullName = `${escapeHtml(
+                  e.firstName || ""
+                )} ${escapeHtml(e.lastName || "")}`.trim();
+                const designation =
+                  e.designation?.title || e.designation || "";
+                const grade = e.grade?.name || e.grade || "";
+                const serviceType = e.serviceType || "";
+                const assets = exportOptions.includeAssets
+                  ? `<td>${escapeHtml(e.__assets || "")}</td>`
+                  : "";
+                return `<tr>
                       <td>${fullName}</td>
                       <td>${escapeHtml(e.personalNumber || "")}</td>
                       <td>${escapeHtml(designation)}</td>
@@ -456,8 +454,8 @@ const StationList = () => {
                       <td>${escapeHtml(serviceType)}</td>
                       ${assets}
                     </tr>`;
-                  })
-                  .join("")}
+              })
+              .join("")}
               </tbody>
             </table>
           `);
@@ -493,7 +491,7 @@ const StationList = () => {
         win.document.open();
         win.document.write(
           html +
-            "<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>"
+          "<script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 500);}</script>"
         );
         win.document.close();
       } else if (format === "xls") {
@@ -543,9 +541,8 @@ const StationList = () => {
           const empRows = [];
           data.forEach(({ station, employees }) => {
             employees.forEach((e) => {
-              const fullName = `${e?.firstName || ""} ${
-                e?.lastName || ""
-              }`.trim();
+              const fullName = `${e?.firstName || ""} ${e?.lastName || ""
+                }`.trim();
               const row = [
                 station?.name || "",
                 fullName,
@@ -833,6 +830,9 @@ const StationList = () => {
                     Address
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Assets
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Minimum Requirements
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -854,19 +854,19 @@ const StationList = () => {
                         />
                         {/* Show main image if available */}
                         {station.stationImageUrl &&
-                        station.stationImageUrl.length > 0 ? (
+                          station.stationImageUrl.length > 0 ? (
                           <div className="relative">
                             <img
                               src={
                                 station.stationImageUrl[
-                                  imageIndexes[station._id] ?? 0
+                                imageIndexes[station._id] ?? 0
                                 ]
                               }
                               alt="Station"
                               onClick={() =>
                                 setImageModal(
                                   station.stationImageUrl[
-                                    imageIndexes[station._id] ?? 0
+                                  imageIndexes[station._id] ?? 0
                                   ]
                                 )
                               }
@@ -941,11 +941,10 @@ const StationList = () => {
                                   !expandedStations.has(station._id)
                                 )
                               }
-                              className={`px-3 py-1 text-xs rounded-md transition ${
-                                expandedStations.has(station._id)
-                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                  : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                              }`}
+                              className={`px-3 py-1 text-xs rounded-md transition ${expandedStations.has(station._id)
+                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                }`}
                               title={
                                 expandedStations.has(station._id)
                                   ? "Hide employees"
@@ -969,7 +968,7 @@ const StationList = () => {
                                         (itm, index) => (
                                           <span
                                             key={index}
-                                            // className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
+                                          // className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
                                           >
                                             {itm?.employee?.firstName}{" "}
                                             {itm?.employee?.lastName}{" "}
@@ -1024,6 +1023,52 @@ const StationList = () => {
                           {station.address?.line2 &&
                             `${station.address.line2}, `}
                           {station.address?.city}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {station?.stationAssets && station?.stationAssets.length > 0 ? (
+                            <div className="space-y-2">
+                              {station.stationAssets.map((stationAsset, index) => (
+                                <div
+                                  key={index}
+                                  className="p-2 bg-purple-50 rounded-md"
+                                >
+                                  {stationAsset.asset.map((asset, assetIndex) => (
+                                    <div key={assetIndex} className="mb-1">
+                                      <p className="font-medium">
+                                        {asset.name || "Unknown Asset"}
+                                        <span className="text-purple-600 font-medium">
+                                          {" × "}
+                                          {asset.availableQuantity || "N/A"}
+                                        </span>
+                                      </p>
+                                      <p className="text-xs text-gray-500 capitalize">
+                                        Type: {asset.type || "N/A"}
+                                      </p>
+                                      <p className="text-xs text-gray-500 capitalize">
+                                        Category: {asset.category || "N/A"}
+                                      </p>
+                                      {asset.registerNumber && (
+                                        <p className="text-xs text-gray-500">
+                                          Register: {asset.registerNumber}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ))}
+                                  <p className="text-xs text-gray-500">
+                                    Assigned: {new Date(stationAsset.assignedDate).toLocaleDateString()}
+                                  </p>
+                                  <p className="text-xs text-gray-500 capitalize">
+                                    Status: {stationAsset.status || "N/A"}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500">No assets assigned</p>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1249,19 +1294,19 @@ const StationList = () => {
                 <div className="flex-shrink-0 relative">
                   {/* Station Image */}
                   {station.stationImageUrl &&
-                  station.stationImageUrl.length > 0 ? (
+                    station.stationImageUrl.length > 0 ? (
                     <div className="relative">
                       <img
                         src={
                           station.stationImageUrl[
-                            imageIndexes[station._id] ?? 0
+                          imageIndexes[station._id] ?? 0
                           ]
                         }
                         alt="Station"
                         onClick={() =>
                           setImageModal(
                             station.stationImageUrl[
-                              imageIndexes[station._id] ?? 0
+                            imageIndexes[station._id] ?? 0
                             ]
                           )
                         }
@@ -1382,11 +1427,10 @@ const StationList = () => {
                             !expandedStations.has(station._id)
                           )
                         }
-                        className={`px-3 py-1 text-xs rounded-md text-center transition ${
-                          expandedStations.has(station._id)
-                            ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                        }`}
+                        className={`px-3 py-1 text-xs rounded-md text-center transition ${expandedStations.has(station._id)
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                          }`}
                       >
                         {expandedStations.has(station._id)
                           ? "Hide Employees"
@@ -1482,7 +1526,7 @@ const StationList = () => {
         isStation={true}
       />
 
-   
+
 
       {/* View Station Modal */}
       <StationViewModal

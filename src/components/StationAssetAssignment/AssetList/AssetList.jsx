@@ -298,7 +298,8 @@ const StationAssetList = ({ station, onEdit, refreshTrigger }) => {
     setModalLoading(true);
     try {
       const consumeData = {
-        roundsConsumed: parseInt(data.roundsConsumed) || 0,
+        roundsConsumed: parseInt(data?.roundsConsumed) || 0,
+        shellCollected: parseInt(data?.shellCollected) || 0,
         reason: data.reason || "Rounds consumed",
         date: data.date || new Date().toISOString(),
         isCompleteConsumption: data.isCompleteConsumption || false,

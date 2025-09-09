@@ -90,7 +90,6 @@ const EmployeeList = ({
 
   // Handle multi-posting functionality
   function handleMultiPosting(selectedEmployeeObjects) {
-    console.log("🚀 Multi-posting triggered!", selectedEmployeeObjects);
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
     setSelectedEmployeesForPosting(selectedEmployeeObjects);
     setIsMultiStationModalOpen(true);
@@ -111,7 +110,6 @@ const EmployeeList = ({
   };
 
   function handleMultiDeduction(selectedEmployeeObjects) {
-    console.log("🚀 Multi-deduction triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForDeduction(selectedEmployeeObjects);
     setIsMultiDeductionModalOpen(true);
   }
@@ -129,7 +127,6 @@ const EmployeeList = ({
     setSelectedEmployeesForDeduction([]);
   };
   function handleMultiAchievement(selectedEmployeeObjects) {
-    console.log("🚀 Multi-achievement triggered!", selectedEmployeeObjects);
     setSelectedEmployeesForAchievement(selectedEmployeeObjects);
     setIsMultiAchievementModalOpen(true);
   }
@@ -162,10 +159,7 @@ const EmployeeList = ({
     setSelectedEmployeesForStatus([]);
   };
   function handleMultiAsset(selectedEmployeeObjects) {
-    console.log(
-      "🚀 Multi-asset assignment triggered!",
-      selectedEmployeeObjects
-    );
+    
     setSelectedEmployeesForAsset(selectedEmployeeObjects);
     setIsMultiAssetModalOpen(true);
   }
@@ -301,8 +295,8 @@ const EmployeeList = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-      ? 1
-      : 0;
+        ? 1
+        : 0;
   };
 
   // Image navigation functions
@@ -339,7 +333,6 @@ const EmployeeList = ({
     }
 
     try {
-      console.log("Attempting to delete employee with ID:", id);
 
       // The hook function expects just the string ID and returns a result object
       const result = await removeEmployee(id.trim());
@@ -440,7 +433,6 @@ const EmployeeList = ({
     );
   }
 
-  console.log(permissions, "my permissions hahahhaha");
 
   return (
     <div className={compactView ? "p-0" : "p-3 sm:p-6 lg:p-0"}>
@@ -471,17 +463,17 @@ const EmployeeList = ({
               {permissions?.userData?.roles?.some((role) =>
                 role.accessRequirement?.some(
                   (access) =>
-                    (access.resourceName.toLowerCase() === "employee"  &&
-                      access.canAdd === true)
+                    access.resourceName.toLowerCase() === "employee" &&
+                    access.canAdd === true
                 )
               ) && (
-                <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                  onClick={handleAddEmployee}
-                >
-                  Add Employee
-                </button>
-              )}
+                  <button
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                    onClick={handleAddEmployee}
+                  >
+                    Add Employee
+                  </button>
+                )}
               {permissions?.hasStationAccess && (
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
@@ -580,17 +572,37 @@ const EmployeeList = ({
                     employee,
                     currentImageIndex
                   );
+                  const isStationIncharge =
+                    employee.stations?.stationIncharge?.some(
+                      (incharge) => incharge.employee === employee._id
+                    );
+                  const isMallkhanaIncharge = employee.assignedAssets?.some(
+                    (asset) => asset.asset[0]?.mallkhana !== null
+                  );
+                  const hasAward = employee.assignedAwards?.some(
+                    (award) => award.isMonitor === true
+                  );
+                  // const hasDisciplinary = employee.disciplinaryActions?.some(
+                  //   (dis) => dis.isDisciplinaryAction === true
+                  // );
+                  const disciplinaryObjects =
+                    employee?.disciplinaryActions?.filter(
+                      (dis) => dis.isDisciplinaryAction === true
+                    ) || [];
+
+               
+
 
                   return (
                     <tr
                       key={employee._id}
-                      className={`hover:bg-gray-50 ${
-                        multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                      }`}
+                      className={`hover:bg-gray-50 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                        }`}
                     >
                       {!compactView && (
                         <td className="px-1 py-2">
                           {multiSelect.renderEmployeeCheckbox(employee)}
+
                         </td>
                       )}
 
@@ -648,22 +660,45 @@ const EmployeeList = ({
                             <div className="text-[10px] text-gray-500 truncate">
                               {getDesignationName(employee.designation)}
                             </div>
+                            <div className="flex flex-wrap gap-1">
+                              {isStationIncharge && (
+                                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                                  Station Incharge
+                                </span>
+                              )}
+                              {isMallkhanaIncharge && (
+                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                                  Mallkhana Incharge
+                                </span>
+                              )}
+                              {hasAward && (
+                                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                  Award
+                                </span>
+                              )}
+                              {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
+                                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                  {disciplinaryObjects[0].description}
+                                </span>
+                              )}
+
+                            </div>
                           </div>
+
                         </div>
                       </td>
 
                       {/* Information Column - Ultra Compact */}
                       <td className="px-1 py-2">
                         <div
-                          className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${
-                            employee.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : employee.status === "retired"
+                          className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${employee.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : employee.status === "retired"
                               ? "bg-blue-100 text-blue-800"
                               : employee.status === "terminated"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
                         >
                           {employee.status}
                         </div>
@@ -706,30 +741,30 @@ const EmployeeList = ({
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canEdit === true
+                                "employee" && access.canEdit === true
                             )
                           ) && (
-                            <button
-                              onClick={() => handleEdit(employee)}
-                              className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                            >
-                              Edit
-                            </button>
-                          )}
+                              <button
+                                onClick={() => handleEdit(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                              >
+                                Edit
+                              </button>
+                            )}
                           {permissions?.userData?.roles?.some((role) =>
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canDelete === true
+                                "employee" && access.canDelete === true
                             )
                           ) && (
-                            <button
-                              onClick={() => handleDelete(employee._id)}
-                              className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                            >
-                              Delete
-                            </button>
-                          )}
+                              <button
+                                onClick={() => handleDelete(employee._id)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                              >
+                                Delete
+                              </button>
+                            )}
 
                           <button
                             onClick={() => handleAssets(employee)}
@@ -782,9 +817,8 @@ const EmployeeList = ({
             return (
               <div
                 key={employee._id}
-                className={`border-b border-gray-200 p-4 ${
-                  multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                }`}
+                className={`border-b border-gray-200 p-4 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                  }`}
               >
                 <div className="flex items-start space-x-3">
                   {/* Using the component's render function */}
@@ -841,15 +875,14 @@ const EmployeeList = ({
                         </h3>
                       </h3>
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : employee.status === "retired"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : employee.status === "retired"
                             ? "bg-blue-100 text-blue-800"
                             : employee.status === "terminated"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {employee.status}
                       </span>
@@ -903,16 +936,16 @@ const EmployeeList = ({
                           role.accessRequirement?.some(
                             (access) =>
                               access.resourceName.toLowerCase() ===
-                                "employee" && access.canEdit === true
+                              "employee" && access.canEdit === true
                           )
                         ) && (
-                          <button
-                            onClick={() => handleEdit(employee)}
-                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
-                          >
-                            Edit
-                          </button>
-                        )}
+                            <button
+                              onClick={() => handleEdit(employee)}
+                              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
+                            >
+                              Edit
+                            </button>
+                          )}
                       </div>
 
                       {/* Secondary Actions Row */}
@@ -960,16 +993,16 @@ const EmployeeList = ({
                           role.accessRequirement?.some(
                             (access) =>
                               access.resourceName.toLowerCase() ===
-                                "employee" && access.canDelete === true
+                              "employee" && access.canDelete === true
                           )
                         ) && (
-                          <button
-                            onClick={() => handleDelete(employee._id)}
-                            className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
-                          >
-                            Delete
-                          </button>
-                        )}
+                            <button
+                              onClick={() => handleDelete(employee._id)}
+                              className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
+                            >
+                              Delete
+                            </button>
+                          )}
                       </div>
                     </div>
                   </div>
