@@ -159,7 +159,7 @@ const EmployeeList = ({
     setSelectedEmployeesForStatus([]);
   };
   function handleMultiAsset(selectedEmployeeObjects) {
-    
+
     setSelectedEmployeesForAsset(selectedEmployeeObjects);
     setIsMultiAssetModalOpen(true);
   }
@@ -590,7 +590,7 @@ const EmployeeList = ({
                       (dis) => dis.isDisciplinaryAction === true
                     ) || [];
 
-               
+
 
 
                   return (
@@ -1054,13 +1054,16 @@ const EmployeeList = ({
       {/* Pagination Component */}
       {/* Pagination Component */}
       {!compactView ? (
-        <Pagination
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          showPageSizeOptions={true}
-          pageSizeOptions={[500, 10, 20, 50, 100, 200, 5]}
-        />
+        <div className="mt-10">
+          <Pagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showPageSizeOptions={true}
+            pageSizeOptions={[500, 10, 20, 50, 100, 200, 5]}
+          />
+        </div>
+
       ) : (
         // Simplified pagination for embedded view
         safeEmployees.length > 0 && (

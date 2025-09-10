@@ -135,7 +135,7 @@ const EmployeeMultiSelect = ({
       type="checkbox"
       checked={selectAll}
       onChange={handleSelectAll}
-      className="rounded border-gray-300  text-blue-600 focus:ring-blue-500"
+      className="rounded border-gray-300 w-4 h-4  text-blue-600 focus:ring-blue-500"
       disabled={loading || employees.length === 0}
     />
     

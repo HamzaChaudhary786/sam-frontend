@@ -1,8 +1,8 @@
 import React from 'react';
 
-const Pagination = ({ 
-  pagination, 
-  onPageChange, 
+const Pagination = ({
+  pagination,
+  onPageChange,
   onPageSizeChange,
   showPageSizeOptions = true,
   pageSizeOptions = [500, 10, 20, 50, 100, 200, 5]
@@ -20,19 +20,19 @@ const Pagination = ({
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // Adjust startPage if we're near the end
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -45,17 +45,16 @@ const Pagination = ({
   const endItem = Math.min(currentPage * limit, totalEmployees);
 
   return (
-    <div className="bg-white md:px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+    <div className="fixed bottom-0 left-0 right-0 bg-white md:px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 shadow-lg z-50">
       {/* Mobile view */}
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!hasPrev}
-          className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-            hasPrev
+          className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${hasPrev
               ? 'text-gray-700 bg-white hover:bg-gray-50'
               : 'text-gray-400 bg-gray-100 cursor-not-allowed'
-          }`}
+            }`}
         >
           Previous
         </button>
@@ -65,11 +64,10 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!hasNext}
-          className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-            hasNext
+          className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${hasNext
               ? 'text-gray-700 bg-white hover:bg-gray-50'
               : 'text-gray-400 bg-gray-100 cursor-not-allowed'
-          }`}
+            }`}
         >
           Next
         </button>
@@ -139,11 +137,10 @@ const Pagination = ({
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!hasPrev}
-                className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
-                  hasPrev
+                className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${hasPrev
                     ? 'text-gray-500 bg-white hover:bg-gray-50'
                     : 'text-gray-300 bg-gray-100 cursor-not-allowed'
-                }`}
+                  }`}
               >
                 <span className="sr-only">Previous</span>
                 <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -173,11 +170,10 @@ const Pagination = ({
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                    page === currentPage
+                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === currentPage
                       ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   {page}
                 </button>
@@ -204,8 +200,7 @@ const Pagination = ({
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!hasNext}
-                className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
-                  hasNext
+                className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${hasNext
                     ? 'text-gray-500 bg-white hover:bg-gray-50'
                     : 'text-gray-300 bg-gray-100 cursor-not-allowed'
                   }`}

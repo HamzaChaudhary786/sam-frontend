@@ -619,7 +619,7 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
     ) || [];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 pb-24">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-red-800">{error}</p>
@@ -1028,7 +1028,8 @@ const AddEmployeeForm = ({ onClose, isEdit, editData }) => {
       )}
 
       {/* Form Actions */}
-      <div className="flex justify-end space-x-3 pt-4 border-t">
+      <div
+        className="fixed bottom-0 left-0 right-0 flex justify-end space-x-3 p-4 bg-white border-t shadow-md z-50"       >
         <button
           type="button"
           onClick={handleCancel}

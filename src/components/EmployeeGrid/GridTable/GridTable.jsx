@@ -342,6 +342,13 @@ const EmployeeGridTable = ({
       backendFilters.assetType = filters.assetType;
     if (filters.serviceType && filters.serviceType.length > 0)
       backendFilters.serviceType = filters.serviceType;
+    if (filters.serialNumber && filters.serialNumber.length > 0)
+      backendFilters.serialNumber = filters.serialNumber;
+
+    if (filters.fromDOB && filters.fromDOB.trim() !== '')
+      backendFilters.fromDOB = filters.fromDOB;
+    if (filters.toDOB && filters.toDOB.trim() !== '')
+      backendFilters.toDOB = filters.toDOB;
 
     updateFilters(backendFilters);
   };
@@ -869,7 +876,13 @@ const EmployeeGridTable = ({
         <table class="min-w-full text-left text-sm text-gray-500 border border-gray-200">
           <thead class="bg-[#ede8e8] text-[#000] h-12">
             <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              <th class="px-4 py-2 border border-gray-200 ">Photo</th>
+              {/* <th class="px-4 py-2 border border-gray-200 ">Photo</th> */}
+              <th class="px-4 py-2 border border-gray-200">
+                <div className="flex flex-col items-center gap-1 mt-5">
+                  <span className="text-xs">Photo</span>
+                  {renderSelectAllCheckbox()}
+                </div>
+              </th>
               <th class="px-4 py-2 border border-gray-200">Actions</th>
               <th class="px-4 py-2 border border-gray-200">Name</th>
 
@@ -929,6 +942,10 @@ const EmployeeGridTable = ({
               <th class="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Deductions
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Posting
               </th>
             </tr>
           </thead>
@@ -1143,6 +1160,34 @@ const EmployeeGridTable = ({
                         ))}
                       </div>
                     </td>
+                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 align-top">
+                      <div className="flex flex-col space-y-1">
+                        {employee?.postings?.map((itm) => (
+                          <>
+
+                            <div
+                              key={itm._id}
+                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
+                            >
+                              <span className="font-medium">C.Station:</span> {itm.currentStation?.name || 'N/A'}
+                            </div>
+                            <div
+                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
+
+                            >
+                              <span className="font-medium">L.Station:</span> {itm.lastStation?.name || 'N/A'}
+                            </div>
+                            <div
+                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
+                            >
+                              <span className="font-medium">Date:</span>{" "} {itm.fromDate ? new Date(itm.fromDate).toLocaleDateString() : 'N/A'}
+
+                            </div>
+                          </>
+                        ))}
+                      </div>
+                    </td>
+
                   </tr>
 
                   <tr
