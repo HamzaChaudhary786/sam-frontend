@@ -13,7 +13,7 @@ import { useLookupOptions } from "../../services/LookUp.js";
 import { STATUS_ENUM } from "./AddEmployee/EmployeeConstants";
 import { SearchableMultiSelect } from "./searchableMultiselect.jsx"; // 🆕 Import the new component
 import { MultiTextInput } from "./MultiTextInput"; // 🆕 Import the multi-text input component
-import { getEmployees , getEmployeesWithoutPagination } from "./EmployeeApi.js";
+import { getEmployees, getEmployeesWithoutPagination } from "./EmployeeApi.js";
 
 // Add this after your imports
 const SERVICE_TYPE_ENUM = {
@@ -79,186 +79,193 @@ const EmployeeFilters = ({
     cnic: false,
   });
 
- // ✅ COMPLETE FRONTEND FIX
-// Replace your existing searchPersonalNumbers and searchCNICs functions with these:
+  // ✅ COMPLETE FRONTEND FIX
+  // Replace your existing searchPersonalNumbers and searchCNICs functions with these:
 
-const searchPersonalNumbers = async (query) => {
-  if (!query.trim() || query.length < 2) {
-    setSuggestions((prev) => ({ ...prev, personalNumber: [] }));
-    return;
-  }
-
-  setIsSearching((prev) => ({ ...prev, personalNumber: true }));
-
-  try {
-    // ✅ FIX: Use 'name' parameter instead of 'personalNumber'
-    // The backend's name search includes personalNumber in the $or query
-    const result = await getEmployeesWithoutPagination({
-      name: query,  // This searches firstName, lastName, personalNumber, and cnic
-      limit: 10,
-    });
-
-    if (result.success) {
-      const employees = result.data.employees || result.data || [];
-      
-      // ✅ Extract only personal numbers and filter them client-side
-      const personalNumbers = employees
-        .map((emp) => emp.personalNumber)
-        .filter(Boolean) // Remove null/undefined values
-        .filter(pNum => pNum.toLowerCase().includes(query.toLowerCase())) // Only personal numbers that match our query
-        .slice(0, 10); // Limit suggestions
-        
-      setSuggestions((prev) => ({
-        ...prev,
-        personalNumber: [...new Set(personalNumbers)], // Remove duplicates
-      }));
+  const searchPersonalNumbers = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, personalNumber: [] }));
+      return;
     }
-  } catch (error) {
-    console.error("Error searching personal numbers:", error);
-  } finally {
-    setIsSearching((prev) => ({ ...prev, personalNumber: false }));
-  }
-};
 
-const searchCNICs = async (query) => {
-  if (!query.trim() || query.length < 3) {
-    setSuggestions((prev) => ({ ...prev, cnic: [] }));
-    return;
-  }
+    setIsSearching((prev) => ({ ...prev, personalNumber: true }));
 
-  setIsSearching((prev) => ({ ...prev, cnic: true }));
+    try {
+      // ✅ FIX: Use 'name' parameter instead of 'personalNumber'
+      // The backend's name search includes personalNumber in the $or query
+      const result = await getEmployeesWithoutPagination({
+        name: query,  // This searches firstName, lastName, personalNumber, and cnic
+        limit: 10,
+      });
 
-  try {
-    // ✅ FIX: Use 'name' parameter instead of 'cnic'
-    // The backend's name search includes cnic in the $or query
-    const result = await getEmployeesWithoutPagination({
-      name: query,  // This searches firstName, lastName, personalNumber, and cnic
-      limit: 10,
-    });
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
 
-    if (result.success) {
-      const employees = result.data.employees || result.data || [];
-      
-      // ✅ Extract only CNICs and filter them client-side
-      const cnics = employees
-        .map((emp) => emp.cnic)
-        .filter(Boolean) // Remove null/undefined values
-        .filter(cnic => cnic.toLowerCase().includes(query.toLowerCase())) // Only CNICs that match our query
-        .slice(0, 10); // Limit suggestions
-        
-      setSuggestions((prev) => ({ 
-        ...prev, 
-        cnic: [...new Set(cnics)] // Remove duplicates
-      }));
+        // ✅ Extract only personal numbers and filter them client-side
+        const personalNumbers = employees
+          .map((emp) => emp.personalNumber)
+          .filter(Boolean) // Remove null/undefined values
+          .filter(pNum => pNum.toLowerCase().includes(query.toLowerCase())) // Only personal numbers that match our query
+          .slice(0, 10); // Limit suggestions
+
+        setSuggestions((prev) => ({
+          ...prev,
+          personalNumber: [...new Set(personalNumbers)], // Remove duplicates
+        }));
+      }
+    } catch (error) {
+      console.error("Error searching personal numbers:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, personalNumber: false }));
     }
-  } catch (error) {
-    console.error("Error searching CNICs:", error);
-  } finally {
-    setIsSearching((prev) => ({ ...prev, cnic: false }));
-  }
-};
+  };
 
-// ✅ Keep your name search as is (it's already working)
-const searchEmployeeNames = async (query) => {
-  if (!query.trim() || query.length < 2) {
-    setSuggestions((prev) => ({ ...prev, name: [] }));
-    return;
-  }
-
-  setIsSearching((prev) => ({ ...prev, name: true }));
-
-  try {
-    const result = await getEmployeesWithoutPagination({
-      name: query,
-      limit: 10,
-    });
-
-    if (result.success) {
-      const employees = result.data.employees || result.data || [];
-      const names = employees
-        .map((emp) => `${emp.firstName} ${emp.lastName}`)
-        .filter(Boolean);
-      setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
+  const searchCNICs = async (query) => {
+    if (!query.trim() || query.length < 3) {
+      setSuggestions((prev) => ({ ...prev, cnic: [] }));
+      return;
     }
-  } catch (error) {
-    console.error("Error searching employee names:", error);
-  } finally {
-    setIsSearching((prev) => ({ ...prev, name: false }));
-  }
-};
+
+    setIsSearching((prev) => ({ ...prev, cnic: true }));
+
+    try {
+      // ✅ FIX: Use 'name' parameter instead of 'cnic'
+      // The backend's name search includes cnic in the $or query
+      const result = await getEmployeesWithoutPagination({
+        name: query,  // This searches firstName, lastName, personalNumber, and cnic
+        limit: 10,
+      });
+
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
+
+        // ✅ Extract only CNICs and filter them client-side
+        const cnics = employees
+          .map((emp) => emp.cnic)
+          .filter(Boolean) // Remove null/undefined values
+          .filter(cnic => cnic.toLowerCase().includes(query.toLowerCase())) // Only CNICs that match our query
+          .slice(0, 10); // Limit suggestions
+
+        setSuggestions((prev) => ({
+          ...prev,
+          cnic: [...new Set(cnics)] // Remove duplicates
+        }));
+      }
+    } catch (error) {
+      console.error("Error searching CNICs:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, cnic: false }));
+    }
+  };
+
+  // ✅ Keep your name search as is (it's already working)
+  const searchEmployeeNames = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions((prev) => ({ ...prev, name: [] }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, name: true }));
+
+    try {
+      const result = await getEmployeesWithoutPagination({
+        name: query,
+        limit: 10,
+      });
+
+      if (result.success) {
+        const employees = result.data.employees || result.data || [];
+        const names = employees
+          .map((emp) => `${emp.firstName} ${emp.lastName}`)
+          .filter(Boolean);
+        setSuggestions((prev) => ({ ...prev, name: [...new Set(names)] }));
+      }
+    } catch (error) {
+      console.error("Error searching employee names:", error);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, name: false }));
+    }
+  };
 
   // 🆕 Updated filter state to handle arrays for multi-select and multi-text inputs
   const [filterForm, setFilterForm] = useState({
     name: Array.isArray(filters.name)
       ? filters.name
       : filters.name
-      ? [filters.name]
-      : [],
+        ? [filters.name]
+        : [],
     address: Array.isArray(filters.address)
       ? filters.address
       : filters.address
-      ? [filters.address]
-      : [],
+        ? [filters.address]
+        : [],
     cast: Array.isArray(filters.cast)
       ? filters.cast
       : filters.cast
-      ? [filters.cast]
-      : [],
+        ? [filters.cast]
+        : [],
     rank: Array.isArray(filters.rank)
       ? filters.rank
       : filters.rank
-      ? [filters.rank]
-      : [],
+        ? [filters.rank]
+        : [],
     station: Array.isArray(filters.station)
       ? filters.station
       : filters.station
-      ? [filters.station]
-      : [],
+        ? [filters.station]
+        : [],
     district: Array.isArray(filters.district)
       ? filters.district
       : filters.district
-      ? [filters.district]
-      : [],
+        ? [filters.district]
+        : [],
     tehsil: Array.isArray(filters.tehsil)
       ? filters.tehsil
       : filters.tehsil
-      ? [filters.tehsil]
-      : [],
+        ? [filters.tehsil]
+        : [],
     status: Array.isArray(filters.status)
       ? filters.status
       : filters.status
-      ? [filters.status]
-      : [],
+        ? [filters.status]
+        : [],
     designation: Array.isArray(filters.designation)
       ? filters.designation
       : filters.designation
-      ? [filters.designation]
-      : [],
+        ? [filters.designation]
+        : [],
     grade: Array.isArray(filters.grade)
       ? filters.grade
       : filters.grade
-      ? [filters.grade]
-      : [],
+        ? [filters.grade]
+        : [],
     personalNumber: Array.isArray(filters.personalNumber)
       ? filters.personalNumber
       : filters.personalNumber
-      ? [filters.personalNumber]
-      : [],
+        ? [filters.personalNumber]
+        : [],
     cnic: Array.isArray(filters.cnic)
       ? filters.cnic
       : filters.cnic
-      ? [filters.cnic]
-      : [],
+        ? [filters.cnic]
+        : [],
     assetType: Array.isArray(filters.assetType)
       ? filters.assetType
       : filters.assetType
-      ? [filters.assetType]
-      : [],
+        ? [filters.assetType]
+        : [],
     serviceType: Array.isArray(filters.serviceType)
       ? filters.serviceType
       : filters.serviceType
-      ? [filters.serviceType]
-      : [],
+        ? [filters.serviceType]
+        : [],
+    serialNumber: Array.isArray(filters.serialNumber)
+      ? filters.serialNumber
+      : filters.serialNumber
+        ? [filters.serialNumber]
+        : [],
+    fromDOB: filters.fromDOB || '',
+    toDOB: filters.toDOB || '',
   });
 
   // Separate function to fetch stations
@@ -395,73 +402,80 @@ const searchEmployeeNames = async (query) => {
       name: Array.isArray(filters.name)
         ? filters.name
         : filters.name
-        ? [filters.name]
-        : [],
+          ? [filters.name]
+          : [],
       address: Array.isArray(filters.address)
         ? filters.address
         : filters.address
-        ? [filters.address]
-        : [],
+          ? [filters.address]
+          : [],
       cast: Array.isArray(filters.cast)
         ? filters.cast
         : filters.cast
-        ? [filters.cast]
-        : [],
+          ? [filters.cast]
+          : [],
       rank: Array.isArray(filters.rank)
         ? filters.rank
         : filters.rank
-        ? [filters.rank]
-        : [],
+          ? [filters.rank]
+          : [],
       station: Array.isArray(filters.station)
         ? filters.station
         : filters.station
-        ? [filters.station]
-        : [],
+          ? [filters.station]
+          : [],
       district: Array.isArray(filters.district)
         ? filters.district
         : filters.district
-        ? [filters.district]
-        : [],
+          ? [filters.district]
+          : [],
       tehsil: Array.isArray(filters.tehsil)
         ? filters.tehsil
         : filters.tehsil
-        ? [filters.tehsil]
-        : [],
+          ? [filters.tehsil]
+          : [],
       status: Array.isArray(filters.status)
         ? filters.status
         : filters.status
-        ? [filters.status]
-        : [],
+          ? [filters.status]
+          : [],
       designation: Array.isArray(filters.designation)
         ? filters.designation
         : filters.designation
-        ? [filters.designation]
-        : [],
+          ? [filters.designation]
+          : [],
       grade: Array.isArray(filters.grade)
         ? filters.grade
         : filters.grade
-        ? [filters.grade]
-        : [],
+          ? [filters.grade]
+          : [],
       personalNumber: Array.isArray(filters.personalNumber)
         ? filters.personalNumber
         : filters.personalNumber
-        ? [filters.personalNumber]
-        : [],
+          ? [filters.personalNumber]
+          : [],
       cnic: Array.isArray(filters.cnic)
         ? filters.cnic
         : filters.cnic
-        ? [filters.cnic]
-        : [],
+          ? [filters.cnic]
+          : [],
       assetType: Array.isArray(filters.assetType)
         ? filters.assetType
         : filters.assetType
-        ? [filters.assetType]
-        : [],
+          ? [filters.assetType]
+          : [],
       serviceType: Array.isArray(filters.serviceType)
         ? filters.serviceType
         : filters.serviceType
-        ? [filters.serviceType]
-        : [],
+          ? [filters.serviceType]
+          : [],
+      serialNumber: Array.isArray(filters.serialNumber)
+        ? filters.serialNumber
+        : filters.serialNumber
+          ? [filters.serialNumber]
+          : [],
+      fromDOB: filters.fromDOB || '',
+      toDOB: filters.toDOB || '',
     });
   }, [filters]);
 
@@ -497,7 +511,10 @@ const searchEmployeeNames = async (query) => {
       activeFilters.assetType = filterForm.assetType;
     if (filterForm.serviceType.length > 0)
       activeFilters.serviceType = filterForm.serviceType;
-
+    if (filterForm.fromDOB && filterForm.fromDOB.trim() !== '') activeFilters.fromDOB = filterForm.fromDOB;
+    if (filterForm.toDOB && filterForm.toDOB.trim() !== '') activeFilters.toDOB = filterForm.toDOB;
+    if (filterForm.serialNumber.length > 0)
+      activeFilters.serialNumber = filterForm.serialNumber;
     updateFilters(activeFilters);
     setShowFilters(false);
   };
@@ -519,6 +536,9 @@ const searchEmployeeNames = async (query) => {
       cnic: [],
       assetType: [],
       serviceType: [],
+      serialNumber: [],
+      fromDOB: null,
+      toDOB: null,
     });
     clearFilters();
   };
@@ -546,9 +566,8 @@ const searchEmployeeNames = async (query) => {
             )}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 transition-transform ${
-              showFilters ? "rotate-180" : ""
-            }`}
+            className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? "rotate-180" : ""
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -565,9 +584,8 @@ const searchEmployeeNames = async (query) => {
 
       {/* Filter Section - Responsive */}
       <div
-        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
-          showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
-        }`}
+        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${showFilters || window.innerWidth >= 1280 ? "block" : "hidden xl:block"
+          }`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base sm:text-lg font-medium text-gray-900">
@@ -661,6 +679,16 @@ const searchEmployeeNames = async (query) => {
             emptyMessage="No personal numbers found"
             minSearchLength={2}
             onSuggestionSelect={(suggestion) => suggestion}
+          />
+          <MultiTextInput
+            label="Serial Number"
+            name="serialNumber"
+            value={filterForm.serialNumber}
+            onChange={handleFilterChange}
+            placeholder="Weapon/Registration Number"
+            minLength={3}
+            maxLength={20}
+            enableSuggestions={false}
           />
 
           {/* 🆕 CNIC Filter - Now MultiTextInput */}
@@ -767,6 +795,69 @@ const searchEmployeeNames = async (query) => {
             emptyMessage="No service types found"
             allowNA={false} // NA is already included in the options
           />
+
+          {/* Date of Birth Range Filter - Single Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth Range
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                name="dateOfBirthRange"
+                value={
+                  filterForm.fromDOB && filterForm.toDOB
+                    ? `${filterForm.fromDOB} to ${filterForm.toDOB}`
+                    : filterForm.fromDOB || filterForm.toDOB || ''
+                }
+                onClick={() => document.getElementById('dateRangeHelper').showPicker?.()}
+                readOnly
+                placeholder="Select date range..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm cursor-pointer bg-white"
+              />
+              <input
+                id="dateRangeHelper"
+                type="date"
+                className="absolute opacity-0 pointer-events-none"
+                onChange={(e) => {
+                  if (!filterForm.fromDOB) {
+                    setFilterForm(prev => ({
+                      ...prev,
+                      fromDOB: e.target.value
+                    }));
+                  } else if (!filterForm.toDOB) {
+                    setFilterForm(prev => ({
+                      ...prev,
+                      toDOB: e.target.value
+                    }));
+                  } else {
+                    // Reset and start over
+                    setFilterForm(prev => ({
+                      ...prev,
+                      fromDOB: e.target.value,
+                      toDOB: ''
+                    }));
+                  }
+                }}
+              />
+              {(filterForm.fromDOB || filterForm.toDOB) && (
+                <button
+                  type="button"
+                  onClick={() => setFilterForm(prev => ({
+                    ...prev,
+                    fromDOB: '',
+                    toDOB: ''
+                  }))}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Click to select start date, then end date
+            </div>
+          </div>
 
           {/* 🆕 Station Filter - Now SearchableMultiSelect */}
           <SearchableMultiSelect

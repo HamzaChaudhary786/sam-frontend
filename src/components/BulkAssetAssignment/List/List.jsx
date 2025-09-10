@@ -19,12 +19,21 @@ import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
 import StationViewModal from "../../Station/ViewStation/ViewStation.jsx";
 import StationModal from "../../Station/AddStation/AddStation.jsx";
 import { useStations } from "../../Station/StationHook.js";
+// Add these imports at the top
+import { SearchableMultiSelect } from "../../Employee/searchableMultiselect.jsx";
+import { MultiTextInput } from "../../Employee/MultiTextInput.jsx";
+import { getStationDistrictWithEnum } from "../../Station/District.js";
+import { getStationLocationsWithEnum } from "../../Station/lookUp.js";
+import { useLookupOptions } from "../../../services/LookUp.js";
 
 const AssetAssignmentsList = ({ onModalStateChange }) => {
   const navigate = useNavigate();
 
   const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({
+    districts: false,
+    tehsils: false,
+  });
   const [filters, setFilters] = useState({
     type: "all", // "employee", "station", "all"
     employee: "",
@@ -34,6 +43,11 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
     status: "",
     fromDate: "",
     toDate: "",
+    district: "",
+    tehsil: "",
+    serialNumber: "",
+    mallkhana: "",
+    assetType: "",
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -72,6 +86,23 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   });
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Add these state variables after your existing useState declarations
+  const [districtEnum, setDistrictEnum] = useState([]);
+  const [tehsilEnum, setTehsilEnum] = useState([]);
+  // const [loading, setLoading] = useState({
+  //   districts: false,
+  //   tehsils: false,
+  // });
+
+  // Get asset type options using the lookup hook
+  const { options: assetTypeOptions } = useLookupOptions("assetTypes");
+
+  // Convert asset type options to the format expected by SearchableMultiSelect
+  const assetTypeEnumOptions = assetTypeOptions.map((option) => ({
+    _id: option.value,
+    name: option.label,
+  }));
+
   // Helper function to get token
   const getToken = () => localStorage.getItem("authToken");
   const getAuthHeaders = () => {
@@ -98,6 +129,51 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
     };
 
     checkUserRole();
+  }, []);
+
+  // Add these functions after your existing helper functions
+  const fetchDistricts = async () => {
+    setLoading((prev) => ({ ...prev, districts: true }));
+    try {
+      const districtRes = await getStationDistrictWithEnum();
+      if (districtRes && districtRes.success && districtRes.data) {
+        const districtArray = Object.entries(districtRes.data).map(
+          ([_id, name]) => ({ _id, name })
+        );
+        setDistrictEnum(districtArray);
+      } else {
+        setDistrictEnum([]);
+      }
+    } catch (error) {
+      console.error("Error fetching districts:", error);
+      setDistrictEnum([]);
+    }
+    setLoading((prev) => ({ ...prev, districts: false }));
+  };
+
+  const fetchTehsils = async () => {
+    setLoading((prev) => ({ ...prev, tehsils: true }));
+    try {
+      const tehsilRes = await getStationLocationsWithEnum();
+      if (tehsilRes && tehsilRes.success && tehsilRes.data) {
+        const tehsilArray = Object.entries(tehsilRes.data).map(
+          ([_id, name]) => ({ _id, name })
+        );
+        setTehsilEnum(tehsilArray);
+      } else {
+        setTehsilEnum([]);
+      }
+    } catch (error) {
+      console.error("Error fetching tehsils:", error);
+      setTehsilEnum([]);
+    }
+    setLoading((prev) => ({ ...prev, tehsils: false }));
+  };
+
+  // Add this useEffect after your existing useEffects
+  useEffect(() => {
+    fetchDistricts();
+    fetchTehsils();
   }, []);
 
   // Notify parent when modal state changes
@@ -301,7 +377,22 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   };
 
   // Apply filters
+  // Update handleApplyFilters to convert arrays to comma-separated strings for API
   const handleApplyFilters = () => {
+    const queryParams = new URLSearchParams();
+
+    // Add filters to query params, converting arrays to comma-separated strings
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        if (Array.isArray(filters[key]) && filters[key].length > 0) {
+          queryParams.append(key, filters[key].join(','));
+        } else if (!Array.isArray(filters[key])) {
+          queryParams.append(key, filters[key]);
+        }
+      }
+    });
+
+    // Make API call with converted parameters
     fetchAssignments();
   };
 
@@ -316,6 +407,11 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
       status: "",
       fromDate: "",
       toDate: "",
+      district: "",
+      tehsil: "",
+      serialNumber: "",
+      mallkhana: "",
+      assetType: "",
     });
   };
 
@@ -712,7 +808,77 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               />
             </div>
+            {/* Updated new filters section with SearchableMultiSelect */}
+
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
+            {/* District Filter */}
+            <SearchableMultiSelect
+              label="District"
+              name="district"
+              value={Array.isArray(filters.district) ? filters.district : filters.district ? [filters.district] : []}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              options={districtEnum}
+              placeholder="Select districts..."
+              loading={loading.districts}
+              searchPlaceholder="Search districts..."
+              emptyMessage="No districts found"
+              allowNA={true}
+            />
+
+            {/* Tehsil Filter */}
+            <SearchableMultiSelect
+              label="Tehsil"
+              name="tehsil"
+              value={Array.isArray(filters.tehsil) ? filters.tehsil : filters.tehsil ? [filters.tehsil] : []}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              options={tehsilEnum}
+              placeholder="Select tehsils..."
+              loading={loading.tehsils}
+              searchPlaceholder="Search tehsils..."
+              emptyMessage="No tehsils found"
+              allowNA={true}
+            />
+
+            {/* Serial Number Filter - MultiTextInput */}
+            <MultiTextInput
+              label="Serial Number"
+              name="serialNumber"
+              value={Array.isArray(filters.serialNumber) ? filters.serialNumber : filters.serialNumber ? [filters.serialNumber] : []}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              placeholder="Weapon/Registration Number"
+              minLength={3}
+              maxLength={20}
+              enableSuggestions={false}
+            />
+
+            {/* Mallkhana Filter - MultiTextInput */}
+            <MultiTextInput
+              label="Mallkhana"
+              name="mallkhana"
+              value={Array.isArray(filters.mallkhana) ? filters.mallkhana : filters.mallkhana ? [filters.mallkhana] : []}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              placeholder="Search by mallkhana"
+              minLength={2}
+              maxLength={50}
+              enableSuggestions={false}
+            />
+
+            {/* Asset Type Filter */}
+            <SearchableMultiSelect
+              label="Asset Type"
+              name="assetType"
+              value={Array.isArray(filters.assetType) ? filters.assetType : filters.assetType ? [filters.assetType] : []}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              options={assetTypeEnumOptions}
+              placeholder="Select asset types..."
+              loading={false}
+              searchPlaceholder="Search asset types..."
+              emptyMessage="No asset types found"
+              allowNA={true}
+            />
+          </div>
+
 
           <div className="flex gap-3 mt-4">
             <button
@@ -907,9 +1073,9 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${assignment.assignmentType === "employee" ||
-                              assignment.employee
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
+                            assignment.employee
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                             }`}
                         >
                           {assignment.assignmentType === "employee" ||

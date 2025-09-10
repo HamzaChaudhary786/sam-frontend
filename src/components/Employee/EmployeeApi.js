@@ -18,7 +18,7 @@ export const getEmployees = async (filters = {}) => {
   try {
     // Build query string from filters and pagination
     const queryParams = new URLSearchParams();
-    
+
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.address) queryParams.append('address', filters.address);
@@ -34,19 +34,21 @@ export const getEmployees = async (filters = {}) => {
     if (filters.station) queryParams.append('station', filters.station);
     if (filters.assetType) queryParams.append('assetType', filters.assetType);
     if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+    if (filters.serialNumber) queryParams.append('serialNumber', filters.serialNumber);
+    if (filters.fromDOB) queryParams.append('fromDOB', filters.fromDOB);
+    if (filters.toDOB) queryParams.append('toDOB', filters.toDOB);
 
-    
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page);
     if (filters.limit) queryParams.append('limit', filters.limit);
-    
+
     const queryString = queryParams.toString();
     const url = `${API_URL}/employee${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
@@ -62,12 +64,12 @@ export const getEmployees = async (filters = {}) => {
 
 export const getEmployeesWithoutPagination = async (filters = {}) => {
 
-    // return await getEmployees(filters); // TODO: Remove this line when API is ready
+  // return await getEmployees(filters); // TODO: Remove this line when API is ready
 
   try {
     // Build query string from filters and pagination
     const queryParams = new URLSearchParams();
-    
+
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.address) queryParams.append('address', filters.address);
@@ -83,19 +85,21 @@ export const getEmployeesWithoutPagination = async (filters = {}) => {
     if (filters.station) queryParams.append('station', filters.station);
     if (filters.assetType) queryParams.append('assetType', filters.assetType);
     if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+    // if (filters.fromDOB) queryParams.append('fromDOB', filters.fromDOB);
+    // if (filters.toDOB) queryParams.append('toDOB', filters.toDOB);
 
-    
+
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page);
     if (filters.limit) queryParams.append('limit', filters.limit);
-    
+
     const queryString = queryParams.toString();
     const url = `${API_URL}/employee/without-page${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
@@ -112,7 +116,7 @@ export const getEmployeesAll = async (filters = {}) => {
   try {
     // Build query string from filters and pagination
     const queryParams = new URLSearchParams();
-    
+
     // Add filter parameters
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.address) queryParams.append('address', filters.address);
@@ -125,18 +129,18 @@ export const getEmployeesAll = async (filters = {}) => {
     if (filters.rank) queryParams.append('rank', filters.rank);
 
 
-    
+
     // Add pagination parameters
     if (filters.page) queryParams.append('page', filters.page);
     if (filters.limit) queryParams.append('limit', filters.limit);
-    
+
     const queryString = queryParams.toString();
     const url = `${API_URL}/employee${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
@@ -154,7 +158,7 @@ export const getEmployee = async (id) => {
     const response = await axios.get(`${API_URL}/employee/${id}`, {
       headers: getAuthHeaders()
     });
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to fetch employee';
@@ -175,11 +179,11 @@ export const addEmployee = async (employeeData) => {
         'Content-Type': 'application/json'
       }
     });
-    
+
     // Success toast with employee name if available
     const employeeName = `${employeeData.firstName || 'New'} ${employeeData.lastName || 'Employee'}`.trim();
     toast.success(`Employee "${employeeName}" created successfully!`);
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to add employee';
@@ -197,11 +201,11 @@ export const updateEmployee = async (employeeData, id) => {
     const response = await axios.put(`${API_URL}/employee/${id}`, employeeData, {
       headers: getAuthHeaders()
     });
-    
+
     // Success toast with employee name if available
     const employeeName = `${employeeData.firstName || 'Employee'} ${employeeData.lastName || ''}`.trim();
     toast.success(`Employee "${employeeName}" updated successfully!`);
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to update employee';
@@ -219,9 +223,9 @@ export const deleteEmployee = async (id) => {
     const response = await axios.delete(`${API_URL}/employee/${id}`, {
       headers: getAuthHeaders()
     });
-    
+
     toast.success("Employee deleted successfully!");
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to delete employee';
@@ -236,24 +240,24 @@ export const deleteEmployee = async (id) => {
 export const getEmployeesWithPagination = async (page = 1, limit = 10, filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
-    
+
     // Add pagination first
     queryParams.append('page', page);
     queryParams.append('limit', limit);
-    
+
     // Add filter parameters
     Object.keys(filters).forEach(key => {
       if (filters[key] && filters[key] !== '') {
         queryParams.append(key, filters[key]);
       }
     });
-    
+
     const url = `${API_URL}/employee?${queryParams.toString()}`;
-    
+
     const response = await axios.get(url, {
       headers: getAuthHeaders()
     });
-    
+
     return { success: true, data: response.data };
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Failed to fetch employees';
