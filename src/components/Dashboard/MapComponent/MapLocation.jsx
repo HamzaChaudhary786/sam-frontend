@@ -35,6 +35,37 @@
 //   });
 // };
 
+// // Create custom tower icon for base stations
+// const createTowerIcon = (color = "#6b7280") => {
+//   return new L.DivIcon({
+//     className: "custom-tower-icon",
+//     html: `
+//             <div style="position: relative;">
+//                 <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+//                     <!-- Tower base -->
+//                     <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 20 12 20s12-11 12-20c0-6.627-5.373-12-12-12z" fill="${color}"/>
+//                     <!-- Tower structure -->
+//                     <g transform="translate(12,12)">
+//                         <!-- Main tower pole -->
+//                         <rect x="-1" y="-8" width="2" height="16" fill="white"/>
+//                         <!-- Tower signals -->
+//                         <circle cx="-6" cy="-2" r="1" fill="white" opacity="0.8"/>
+//                         <circle cx="6" cy="-2" r="1" fill="white" opacity="0.8"/>
+//                         <circle cx="-6" cy="2" r="1" fill="white" opacity="0.8"/>
+//                         <circle cx="6" cy="2" r="1" fill="white" opacity="0.8"/>
+//                         <!-- Signal waves -->
+//                         <path d="M-3,-4 Q-6,-4 -6,-1 Q-6,2 -3,2" stroke="white" stroke-width="0.5" fill="none" opacity="0.6"/>
+//                         <path d="M3,-4 Q6,-4 6,-1 Q6,2 3,2" stroke="white" stroke-width="0.5" fill="none" opacity="0.6"/>
+//                     </g>
+//                 </svg>
+//             </div>
+//         `,
+//     iconSize: [24, 32],
+//     iconAnchor: [12, 32],
+//     popupAnchor: [0, -32],
+//   });
+// };
+
 // // Predefined marker colors for different purposes
 // const MARKER_COLORS = {
 //   CLICKED: "#ef4444", // Red for clicked location
@@ -43,6 +74,8 @@
 //   REQUIREMENTS_NOT_MET: "#dc2626", // Red for stations not meeting requirements
 //   REQUIREMENTS_MET: "#16a34a", // Green for stations meeting requirements
 //   NO_REQUIREMENTS: "#6b7280", // Gray for stations with no requirements data
+//   BASE_SET_AVAILABLE: "#6b7280", // Gray for base set available
+//   BASE_SET_FUNCTIONAL: "#16a34a", // Green for base set functional
 // };
 
 // // Component to handle map clicks and auto-move
@@ -164,6 +197,43 @@
 //   }, []);
 
 //   /**
+//    * Check if station has tower facilities (Base set available or Base set functional)
+//    * @param {Object} locationData - Location object with station data
+//    * @returns {Object} - { hasTower: boolean, towerType: string, color: string }
+//    */
+//   const checkTowerFacilities = (locationData) => {
+//     const facilities = locationData?.station?.facilities || [];
+
+//     // Check for base set facilities
+//     const hasBaseSetAvailable = facilities.some(facility => 
+//       facility.toLowerCase().includes('base set available')
+//     );
+//     const hasBaseSetFunctional = facilities.some(facility => 
+//       facility.toLowerCase().includes('base set functional')
+//     );
+
+//     if (hasBaseSetFunctional) {
+//       return {
+//         hasTower: true,
+//         towerType: 'functional',
+//         color: MARKER_COLORS.BASE_SET_FUNCTIONAL
+//       };
+//     } else if (hasBaseSetAvailable) {
+//       return {
+//         hasTower: true,
+//         towerType: 'available',
+//         color: MARKER_COLORS.BASE_SET_AVAILABLE
+//       };
+//     }
+
+//     return {
+//       hasTower: false,
+//       towerType: null,
+//       color: null
+//     };
+//   };
+
+//   /**
 //    * Check if station meets minimum requirements
 //    * @param {Object} locationData - Location object with station data and employeeCount
 //    * @returns {Object} - { meetRequirements: boolean, details: Array }
@@ -255,23 +325,42 @@
 //   };
 
 //   /**
-//    * Get marker color based on station requirements status
+//    * Get marker color and icon type based on station facilities and requirements
 //    * @param {Object} locationData - Location object with station data and employeeCount
-//    * @returns {string} - Color hex code
+//    * @returns {Object} - { color: string, iconType: string }
 //    */
-//   const getStationMarkerColor = (locationData) => {
-//     const requirementCheck = checkStationRequirements(locationData);
+//   const getStationMarkerInfo = (locationData) => {
+//     // First check if it's a tower station
+//     const towerInfo = checkTowerFacilities(locationData);
+//     if (towerInfo.hasTower) {
+//       return {
+//         color: towerInfo.color,
+//         iconType: 'tower',
+//         towerType: towerInfo.towerType
+//       };
+//     }
 
+//     // If not a tower, use regular requirements-based coloring
+//     const requirementCheck = checkStationRequirements(locationData);
+//     let color;
 //     switch (requirementCheck.status) {
 //       case "requirements_met":
-//         return MARKER_COLORS.REQUIREMENTS_MET;
+//         color = MARKER_COLORS.REQUIREMENTS_MET;
+//         break;
 //       case "requirements_not_met":
-//         return MARKER_COLORS.REQUIREMENTS_NOT_MET;
+//         color = MARKER_COLORS.REQUIREMENTS_NOT_MET;
+//         break;
 //       case "no_requirements":
-//         return MARKER_COLORS.NO_REQUIREMENTS;
+//         color = MARKER_COLORS.NO_REQUIREMENTS;
+//         break;
 //       default:
-//         return MARKER_COLORS.SAVED;
+//         color = MARKER_COLORS.SAVED;
 //     }
+
+//     return {
+//       color: color,
+//       iconType: 'location'
+//     };
 //   };
 
 //   const filteredSavedLocations = savedLocations.filter((location) => {
@@ -668,30 +757,38 @@
 //           </div>
 //         )}
 
-//         {/* Legend */}
+//         {/* Updated Legend */}
 //         <div className="mb-3 text-xs">
 //           <h4 className="font-semibold mb-1">Station Status Legend:</h4>
-//           <div className="flex flex-wrap gap-2">
+//           <div className="space-y-1">
 //             <div className="flex items-center">
 //               <div
-//                 className="w-3 h-3 rounded-full mr-1"
+//                 className="w-3 h-3 rounded-full mr-2"
 //                 style={{ backgroundColor: MARKER_COLORS.REQUIREMENTS_MET }}
 //               ></div>
 //               <span>Requirements Met</span>
 //             </div>
 //             <div className="flex items-center">
 //               <div
-//                 className="w-3 h-3 rounded-full mr-1"
+//                 className="w-3 h-3 rounded-full mr-2"
 //                 style={{ backgroundColor: MARKER_COLORS.REQUIREMENTS_NOT_MET }}
 //               ></div>
 //               <span>Requirements Not Met</span>
 //             </div>
 //             <div className="flex items-center">
 //               <div
-//                 className="w-3 h-3 rounded-full mr-1"
+//                 className="w-3 h-3 rounded-full mr-2"
 //                 style={{ backgroundColor: MARKER_COLORS.NO_REQUIREMENTS }}
 //               ></div>
 //               <span>No Requirements</span>
+//             </div>
+//             <div className="flex items-center">
+//               <div className="mr-2 text-green-600">📡</div>
+//               <span>Base Set Functional (Tower)</span>
+//             </div>
+//             <div className="flex items-center">
+//               <div className="mr-2 text-gray-600">📡</div>
+//               <span>Base Set Available (Tower)</span>
 //             </div>
 //           </div>
 //         </div>
@@ -763,8 +860,9 @@
 //             ) : (
 //               <div className="space-y-2">
 //                 {filteredSavedLocations.map((location) => {
-//                   // Check requirements using the location data directly
+//                   // Check requirements and tower facilities
 //                   const requirementCheck = checkStationRequirements(location);
+//                   const towerInfo = checkTowerFacilities(location);
 //                   const statusIcon = getStatusIcon(requirementCheck.status);
 //                   const isExpanded = expandedLocationId === location._id;
 
@@ -774,12 +872,19 @@
 //                       className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
 //                     >
 //                       <div className="flex justify-between items-center">
-//                         {/* Show Location Button */}
+//                         {/* Show Location Button with tower indicator */}
 //                         <button
 //                           onClick={() => viewSavedLocation(location)}
-//                           className="flex-1 text-left px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-transform transform hover:scale-105"
+//                           className="flex-1 text-left px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-transform transform hover:scale-105 flex items-center"
 //                         >
-//                           📍 {location?.title}
+//                           {towerInfo.hasTower ? (
+//                             <span className={`mr-1 ${towerInfo.towerType === 'functional' ? 'text-green-300' : 'text-gray-300'}`}>
+//                               📡
+//                             </span>
+//                           ) : (
+//                             <span className="mr-1">📍</span>
+//                           )}
+//                           {location?.title}
 //                         </button>
 //                         <button
 //                           onClick={(e) => {
@@ -802,7 +907,21 @@
 //                           {/* Title and Status */}
 //                           <h4 className="font-semibold text-sm text-blue-600 flex items-center">
 //                             <span className="mr-1">{statusIcon}</span>
+//                             {towerInfo.hasTower && (
+//                               <span className={`mr-1 ${towerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
+//                                 📡
+//                               </span>
+//                             )}
 //                             {location?.title}
+//                             {towerInfo.hasTower && (
+//                               <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+//                                 towerInfo.towerType === 'functional' 
+//                                   ? 'bg-green-100 text-green-700' 
+//                                   : 'bg-gray-100 text-gray-700'
+//                               }`}>
+//                                 {towerInfo.towerType === 'functional' ? 'Base Set Functional' : 'Base Set Available'}
+//                               </span>
+//                             )}
 //                           </h4>
 
 //                           {/* Location Info */}
@@ -835,14 +954,29 @@
 //                                 </p>
 //                                 <div className="flex flex-wrap gap-1">
 //                                   {location?.station?.facilities?.map(
-//                                     (facility, index) => (
-//                                       <span
-//                                         key={index}
-//                                         className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
-//                                       >
-//                                         {facility}
-//                                       </span>
-//                                     )
+//                                     (facility, index) => {
+//                                       const isBaseSetFacility = facility.toLowerCase().includes('base set');
+//                                       const isFunctional = facility.toLowerCase().includes('functional');
+//                                       const isAvailable = facility.toLowerCase().includes('available');
+
+//                                       let facilityClass = "text-xs px-2 py-1 rounded-full";
+//                                       if (isBaseSetFacility) {
+//                                         facilityClass += isFunctional 
+//                                           ? " bg-green-100 text-green-700" 
+//                                           : " bg-gray-100 text-gray-700";
+//                                       } else {
+//                                         facilityClass += " bg-blue-100 text-blue-700";
+//                                       }
+
+//                                       return (
+//                                         <span key={index} className={facilityClass}>
+//                                           {isBaseSetFacility && (
+//                                             <span className="mr-1">📡</span>
+//                                           )}
+//                                           {facility}
+//                                         </span>
+//                                       );
+//                                     }
 //                                   )}
 //                                 </div>
 //                               </div>
@@ -1057,15 +1191,20 @@
 //         {/* Display saved locations - Only if panels are not hidden */}
 //         {!hidePanels &&
 //           savedLocations.map((location) => {
-//             // Check requirements using the location data directly
+//             // Get marker information (color and icon type)
+//             const markerInfo = getStationMarkerInfo(location);
 //             const requirementCheck = checkStationRequirements(location);
-//             const markerColor = getStationMarkerColor(location);
+
+//             // Choose the appropriate icon based on tower facilities
+//             const markerIcon = markerInfo.iconType === 'tower' 
+//               ? createTowerIcon(markerInfo.color)
+//               : createLocationIcon(markerInfo.color);
 
 //             return (
 //               <Marker
 //                 key={location._id}
 //                 position={[location.coordinates.lat, location.coordinates.lng]}
-//                 icon={createLocationIcon(markerColor)}
+//                 icon={markerIcon}
 //               >
 //                 <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent>
 //                   <div className="flex items-center gap-2">
@@ -1078,6 +1217,11 @@
 //                           : "bg-gray-400"
 //                       } inline-block w-2.5 h-2.5 rounded-full`}
 //                     />
+//                     {markerInfo.iconType === 'tower' && (
+//                       <span className={`${markerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
+//                         📡
+//                       </span>
+//                     )}
 //                     <span className="text-xs font-semibold text-gray-900">
 //                       {location?.title}
 //                     </span>
@@ -1086,7 +1230,13 @@
 //                 <Popup>
 //                   <div className="text-sm">
 //                     <h4 className="font-semibold flex items-center">
-//                       {getStatusIcon(requirementCheck.status)} {location.title}
+//                       {getStatusIcon(requirementCheck.status)}
+//                       {markerInfo.iconType === 'tower' && (
+//                         <span className={`mx-1 ${markerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
+//                           📡
+//                         </span>
+//                       )}
+//                       {location.title}
 //                       <span
 //                         className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
 //                           requirementCheck.status === "requirements_met"
@@ -1103,6 +1253,20 @@
 //                           : "No Requirements"}
 //                       </span>
 //                     </h4>
+
+//                     {/* Tower Type Badge */}
+//                     {markerInfo.iconType === 'tower' && (
+//                       <div className="mt-1">
+//                         <span className={`text-xs px-2 py-1 rounded-full ${
+//                           markerInfo.towerType === 'functional' 
+//                             ? 'bg-green-100 text-green-700' 
+//                             : 'bg-gray-100 text-gray-700'
+//                         }`}>
+//                           📡 {markerInfo.towerType === 'functional' ? 'Base Set Functional' : 'Base Set Available'}
+//                         </span>
+//                       </div>
+//                     )}
+
 //                     {location.description && (
 //                       <p className="text-gray-600 mt-1">
 //                         {location?.description}
@@ -1344,7 +1508,7 @@ const MapLocation = ({
   onPositionChange,
   hidePanels = false,
   stationData = [],
-  onEditStation = () => {},
+  onEditStation = () => { },
   refreshKey = 0,
   disabled = false,
 }) => {
@@ -1392,7 +1556,6 @@ const MapLocation = ({
   useEffect(() => {
     const fetchData = async () => {
       const data = await getFixLocationData();
-      console.log(data, "refresh location data");
     };
 
     fetchData();
@@ -1405,12 +1568,12 @@ const MapLocation = ({
    */
   const checkTowerFacilities = (locationData) => {
     const facilities = locationData?.station?.facilities || [];
-    
+
     // Check for base set facilities
-    const hasBaseSetAvailable = facilities.some(facility => 
+    const hasBaseSetAvailable = facilities.some(facility =>
       facility.toLowerCase().includes('base set available')
     );
-    const hasBaseSetFunctional = facilities.some(facility => 
+    const hasBaseSetFunctional = facilities.some(facility =>
       facility.toLowerCase().includes('base set functional')
     );
 
@@ -1435,13 +1598,9 @@ const MapLocation = ({
     };
   };
 
-  /**
-   * Check if station meets minimum requirements
-   * @param {Object} locationData - Location object with station data and employeeCount
-   * @returns {Object} - { meetRequirements: boolean, details: Array }
-   */
+
   const checkStationRequirements = (locationData) => {
-    // Priority: Check station.stationMinimumRequirements first, then fallback to root level
+
     const requirements =
       locationData.station?.stationMinimumRequirements ||
       locationData.stationMinimumRequirements;
@@ -1456,24 +1615,101 @@ const MapLocation = ({
 
     let meetRequirements = true;
     const details = [];
-    const actualEmployeeCount = locationData.employeeCount || 0;
+    const actualEmployeeCount = locationData.station?.employeeCount || locationData.employeeCount || 0;
 
-    requirements.forEach((requirement, reqIndex) => {
-      // Check total staff requirement against actual employee count
+    // FIXED: Track assets by name/type instead of exact ID
+    const availableAssetsByName = new Map(); // assetName -> total available quantity
+    const assetSourcesByName = new Map(); // assetName -> { station: qty, employee: qty, assignedTo: [], ids: [] }
+
+    // Process station assets
+    const stationAssets = locationData.station?.stationAssets || [];
+
+    stationAssets.forEach((stationAssetEntry) => {
+      const assetArray = stationAssetEntry.asset || [];
+
+      assetArray.forEach((assetObj) => {
+        if (assetObj && assetObj.name) {
+          const assetName = assetObj.name.toLowerCase(); // Use name as key
+          const qty = parseInt(assetObj.availableQuantity || 0, 10);
+
+
+          // Add to total available by name
+          availableAssetsByName.set(assetName, (availableAssetsByName.get(assetName) || 0) + qty);
+
+          // Track source by name
+          const source = assetSourcesByName.get(assetName) || {
+            station: 0, employee: 0, assignedTo: [], ids: [], displayName: assetObj.name
+          };
+          source.station += qty;
+          source.ids.push(assetObj._id);
+          source.displayName = assetObj.name;
+          assetSourcesByName.set(assetName, source);
+
+        }
+      });
+    });
+
+    // Process employee assets
+    const employeeAssets = locationData.station?.employeeAssets || [];
+
+    employeeAssets.forEach((employeeAssetEntry) => {
+      const assetArray = employeeAssetEntry.asset || [];
+      const employeeName = `${employeeAssetEntry.employee?.firstName || ''} ${employeeAssetEntry.employee?.lastName || ''}`.trim() || 'Unknown Employee';
+
+      assetArray.forEach((assetObj) => {
+        if (assetObj && assetObj.name) {
+          const assetName = assetObj.name.toLowerCase(); // Use name as key
+          const qty = parseInt(assetObj.availableQuantity || 0, 10);
+
+
+          // Add to total available by name
+          availableAssetsByName.set(assetName, (availableAssetsByName.get(assetName) || 0) + qty);
+
+          // Track source by name
+          const source = assetSourcesByName.get(assetName) || {
+            station: 0, employee: 0, assignedTo: [], ids: [], displayName: assetObj.name
+          };
+          source.employee += qty;
+          source.assignedTo.push(employeeName);
+          source.ids.push(assetObj._id);
+          source.displayName = assetObj.name;
+          assetSourcesByName.set(assetName, source);
+
+        }
+      });
+    });
+
+    availableAssetsByName.forEach((qty, name) => {
+      console.log(`📊 DEBUG: ${name}: ${qty} available`);
+    });
+
+    // FIXED: Aggregate required quantities by asset name
+    const requiredAssetsByName = {};
+
+    requirements.forEach((requirement) => {
+      // Check staff requirements
       const requiredTotalStaff = requirement.numberOfStaff || 0;
-
       if (actualEmployeeCount < requiredTotalStaff) {
         meetRequirements = false;
-        details.push(
-          `Staff shortage: Required ${requiredTotalStaff}, Available ${actualEmployeeCount}`
-        );
+        details.push(`Staff shortage: Required ${requiredTotalStaff}, Available ${actualEmployeeCount}`);
       } else {
-        details.push(
-          `Staff requirement met: Required ${requiredTotalStaff}, Available ${actualEmployeeCount}`
-        );
+        details.push(`Staff requirement met: Required ${requiredTotalStaff}, Available ${actualEmployeeCount}`);
       }
 
-      // Check individual staff designation requirements
+      // Aggregate general asset requirements by name
+      if (requirement.assetRequirement && requirement.assetRequirement.length > 0) {
+        requirement.assetRequirement.forEach((assetReq) => {
+          const asset = assetReq.assets;
+          if (asset && asset.name) {
+            const assetName = asset.name.toLowerCase(); // Use name as key
+            const reqQty = assetReq.quantity || 0;
+            requiredAssetsByName[assetName] = (requiredAssetsByName[assetName] || 0) + reqQty;
+
+          }
+        });
+      }
+
+      // Aggregate staff-specific asset requirements by name
       if (requirement.staffDetail && requirement.staffDetail.length > 0) {
         requirement.staffDetail.forEach((staffReq) => {
           const designation = staffReq.designation;
@@ -1481,34 +1717,19 @@ const MapLocation = ({
 
           if (actualEmployeeCount < requiredCount) {
             meetRequirements = false;
-            details.push(
-              `${designation} personnel shortage: Required ${requiredCount}, Available ${actualEmployeeCount}`
-            );
+            details.push(`${designation} personnel shortage: Required ${requiredCount}, Available ${actualEmployeeCount}`);
           } else {
-            details.push(
-              `${designation} requirement met: Required ${requiredCount}`
-            );
+            details.push(`${designation} requirement met: Required ${requiredCount}`);
           }
 
-          // Asset requirements
-          if (
-            requirement.assetRequirement &&
-            requirement.assetRequirement.length > 0
-          ) {
-            requirement.assetRequirement.forEach((assetReq) => {
+          if (staffReq.assetRequirement && staffReq.assetRequirement.length > 0) {
+            staffReq.assetRequirement.forEach((assetReq) => {
               const asset = assetReq.assets;
-              const requiredQuantity = assetReq.quantity || 0;
+              if (asset && asset.name) {
+                const assetName = asset.name.toLowerCase(); // Use name as key
+                const reqQty = assetReq.quantity || 0;
+                requiredAssetsByName[assetName] = (requiredAssetsByName[assetName] || 0) + reqQty;
 
-              if (asset && typeof asset === "object") {
-                const assetName = asset.name || "Unknown Asset";
-                const assetType = asset.type || "Unknown Type";
-                let assetDetails = `${assetName} (${assetType}): Required ${requiredQuantity}`;
-                details.push(assetDetails);
-              } else {
-                const assetId = assetReq.assets;
-                details.push(
-                  `Asset ${assetId}: Required ${requiredQuantity} (Asset data not available)`
-                );
               }
             });
           }
@@ -1516,23 +1737,53 @@ const MapLocation = ({
       }
     });
 
-    return {
+
+    // FIXED: Check asset requirements by name
+    Object.entries(requiredAssetsByName).forEach(([assetName, reqQty]) => {
+      const availQty = availableAssetsByName.get(assetName) || 0;
+      const source = assetSourcesByName.get(assetName);
+
+
+      // Build source information
+      let sourceInfo = '';
+      if (source) {
+        const sourceParts = [];
+        if (source.station > 0) sourceParts.push(`Station: ${source.station}`);
+        if (source.employee > 0) sourceParts.push(`Employee: ${source.employee}`);
+        if (source.assignedTo.length > 0) sourceParts.push(`Assigned to: ${source.assignedTo.join(', ')}`);
+        sourceInfo = sourceParts.join(', ');
+      }
+
+      const displayName = source?.displayName || assetName;
+
+      if (availQty < reqQty) {
+        meetRequirements = false;
+        const shortageMsg = `${displayName} shortage: Required ${reqQty}, Available ${availQty} (${sourceInfo})`;
+        details.push(shortageMsg);
+      } else {
+        const metMsg = `${displayName} met: Required ${reqQty}, Available ${availQty} (${sourceInfo})`;
+        details.push(metMsg);
+      }
+    });
+
+    const result = {
       meetRequirements,
       details,
       status: meetRequirements ? "requirements_met" : "requirements_not_met",
-      source: locationData.station?.stationMinimumRequirements
-        ? "station"
-        : "root",
+      source: locationData.station?.stationMinimumRequirements ? "station" : "root",
+      assetBreakdown: {
+        totalUniqueAssets: availableAssetsByName.size,
+        totalRequiredAssets: Object.keys(requiredAssetsByName).length,
+        stationAssetTypes: stationAssets.filter(sa => sa.asset && sa.asset.length > 0).length,
+        employeeAssetTypes: employeeAssets.filter(ea => ea.asset && ea.asset.length > 0).length,
+        stationAssetsCount: stationAssets.length,
+        employeeAssetsCount: employeeAssets.length
+      }
     };
-  };
 
-  /**
-   * Get marker color and icon type based on station facilities and requirements
-   * @param {Object} locationData - Location object with station data and employeeCount
-   * @returns {Object} - { color: string, iconType: string }
-   */
+    return result;
+  };
   const getStationMarkerInfo = (locationData) => {
-    // First check if it's a tower station
     const towerInfo = checkTowerFacilities(locationData);
     if (towerInfo.hasTower) {
       return {
@@ -1542,7 +1793,6 @@ const MapLocation = ({
       };
     }
 
-    // If not a tower, use regular requirements-based coloring
     const requirementCheck = checkStationRequirements(locationData);
     let color;
     switch (requirementCheck.status) {
@@ -1618,11 +1868,7 @@ const MapLocation = ({
     return false;
   });
 
-  /**
-   * Get status icon based on requirements
-   * @param {string} status - Status string
-   * @returns {string} - Emoji icon
-   */
+
   const getStatusIcon = (status) => {
     switch (status) {
       case "requirements_met":
@@ -1636,9 +1882,7 @@ const MapLocation = ({
     }
   };
 
-  /**
-   * Load saved locations from API
-   */
+
   const loadSavedLocations = async () => {
     try {
       setLoading(true);
@@ -1652,10 +1896,7 @@ const MapLocation = ({
     }
   };
 
-  /**
-   * Handle map click event
-   * @param {Object} coordinates - {lat, lng}
-   */
+
   const handleLocationSelect = useCallback(
     async (coordinates) => {
       if (disabled) {
@@ -1688,10 +1929,7 @@ const MapLocation = ({
     [hidePanels, disabled]
   );
 
-  /**
-   * Handle search input change with debouncing
-   * @param {Event} e - Input change event
-   */
+
   const handleSearchInputChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
@@ -1719,9 +1957,7 @@ const MapLocation = ({
     }
   };
 
-  /**
-   * Search for locations
-   */
+
   const searchLocation = async () => {
     if (!searchQuery.trim()) return;
 
@@ -1749,28 +1985,20 @@ const MapLocation = ({
       setLoading(false);
     }
   };
-
-  /**
-   * Handle suggestion selection
-   * @param {Object} suggestion - Selected suggestion object
-   */
   const selectSuggestion = (suggestion) => {
     const coordinates = {
       lat: parseFloat(suggestion.lat),
       lng: parseFloat(suggestion.lon),
     };
 
-    // Set search query and hide suggestions
     setSearchQuery(suggestion.display_name.split(",")[0]);
     setShowSuggestions(false);
     setSearchSuggestions([]);
 
-    // Move map and select location
     setMapCenter([coordinates.lat, coordinates.lng]);
     setMapZoom(15);
     handleLocationSelect(coordinates);
 
-    // Set location title (only if panels are visible)
     if (!hidePanels) {
       setNewLocation((prev) => ({
         ...prev,
@@ -1778,24 +2006,17 @@ const MapLocation = ({
       }));
     }
   };
-
-  /**
-   * Handle search result selection
-   * @param {Object} result - Selected search result object
-   */
   const selectSearchResult = (result) => {
     const coordinates = {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
     };
 
-    // Move map to selected result
     setMapCenter([coordinates.lat, coordinates.lng]);
     setMapZoom(15);
 
     handleLocationSelect(coordinates);
 
-    // Set location title and clear search (only if panels are visible)
     if (!hidePanels) {
       setNewLocation((prev) => ({
         ...prev,
@@ -1807,9 +2028,7 @@ const MapLocation = ({
     setSearchQuery("");
   };
 
-  /**
-   * Save location to database
-   */
+
   const saveLocation = async () => {
     if (!clickedPosition || !newLocation.title.trim()) {
       setError("Please select a location and provide a title");
@@ -1847,10 +2066,7 @@ const MapLocation = ({
     }
   };
 
-  /**
-   * Delete location from database
-   * @param {string} id - Location ID to delete
-   */
+
   const deleteLocation = async (id) => {
     if (!window.confirm("Are you sure you want to delete this location?")) {
       return;
@@ -1866,10 +2082,7 @@ const MapLocation = ({
     }
   };
 
-  /**
-   * Handle clicking saved location to move map with animation and toggle details
-   * @param {Object} location - Saved location object
-   */
+
   const viewSavedLocation = (location) => {
     const coordinates = {
       lat: location.coordinates.lat,
@@ -1885,7 +2098,6 @@ const MapLocation = ({
     );
   };
 
-  // Hide suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSuggestions(false);
@@ -1905,7 +2117,6 @@ const MapLocation = ({
           Location Search
         </h3>
 
-        {/* Search Input with Suggestions */}
         <div className="relative mb-3">
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -2101,9 +2312,8 @@ const MapLocation = ({
 
                       {/* Collapsible Details Section */}
                       <div
-                        className={`mt-2 overflow-hidden transition-all duration-300 ease-in-out ${
-                          isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-                        }`}
+                        className={`mt-2 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+                          }`}
                       >
                         <div className="p-3 bg-gray-50 rounded-lg">
                           {/* Title and Status */}
@@ -2116,11 +2326,10 @@ const MapLocation = ({
                             )}
                             {location?.title}
                             {towerInfo.hasTower && (
-                              <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                                towerInfo.towerType === 'functional' 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
+                              <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${towerInfo.towerType === 'functional'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                                }`}>
                                 {towerInfo.towerType === 'functional' ? 'Base Set Functional' : 'Base Set Available'}
                               </span>
                             )}
@@ -2160,16 +2369,16 @@ const MapLocation = ({
                                       const isBaseSetFacility = facility.toLowerCase().includes('base set');
                                       const isFunctional = facility.toLowerCase().includes('functional');
                                       const isAvailable = facility.toLowerCase().includes('available');
-                                      
+
                                       let facilityClass = "text-xs px-2 py-1 rounded-full";
                                       if (isBaseSetFacility) {
-                                        facilityClass += isFunctional 
-                                          ? " bg-green-100 text-green-700" 
+                                        facilityClass += isFunctional
+                                          ? " bg-green-100 text-green-700"
                                           : " bg-gray-100 text-gray-700";
                                       } else {
                                         facilityClass += " bg-blue-100 text-blue-700";
                                       }
-                                      
+
                                       return (
                                         <span key={index} className={facilityClass}>
                                           {isBaseSetFacility && (
@@ -2398,7 +2607,7 @@ const MapLocation = ({
             const requirementCheck = checkStationRequirements(location);
 
             // Choose the appropriate icon based on tower facilities
-            const markerIcon = markerInfo.iconType === 'tower' 
+            const markerIcon = markerInfo.iconType === 'tower'
               ? createTowerIcon(markerInfo.color)
               : createLocationIcon(markerInfo.color);
 
@@ -2411,13 +2620,12 @@ const MapLocation = ({
                 <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`${
-                        requirementCheck.status === "requirements_met"
-                          ? "bg-green-500"
-                          : requirementCheck.status === "requirements_not_met"
+                      className={`${requirementCheck.status === "requirements_met"
+                        ? "bg-green-500"
+                        : requirementCheck.status === "requirements_not_met"
                           ? "bg-red-500"
                           : "bg-gray-400"
-                      } inline-block w-2.5 h-2.5 rounded-full`}
+                        } inline-block w-2.5 h-2.5 rounded-full`}
                     />
                     {markerInfo.iconType === 'tower' && (
                       <span className={`${markerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
@@ -2430,128 +2638,309 @@ const MapLocation = ({
                   </div>
                 </Tooltip>
                 <Popup>
-                  <div className="text-sm">
-                    <h4 className="font-semibold flex items-center">
-                      {getStatusIcon(requirementCheck.status)}
-                      {markerInfo.iconType === 'tower' && (
-                        <span className={`mx-1 ${markerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
-                          📡
-                        </span>
-                      )}
-                      {location.title}
-                      <span
-                        className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                          requirementCheck.status === "requirements_met"
-                            ? "bg-green-100 text-green-700"
-                            : requirementCheck.status === "requirements_not_met"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {requirementCheck.status === "requirements_met"
-                          ? "Requirements Met"
-                          : requirementCheck.status === "requirements_not_met"
-                          ? "Requirements Not Met"
-                          : "No Requirements"}
-                      </span>
-                    </h4>
+                  <div className="text-sm max-w-md">
+                    {/* Header with Status */}
+                    <div className="border-b border-gray-200 pb-2 mb-3">
+                      <h4 className="font-bold text-base flex items-center gap-2">
+                        {getStatusIcon(requirementCheck.status)}
+                        {markerInfo.iconType === 'tower' && (
+                          <span className={`${markerInfo.towerType === 'functional' ? 'text-green-600' : 'text-gray-600'}`}>
+                            📡
+                          </span>
+                        )}
+                        <span className="text-gray-900">{location.title}</span>
+                      </h4>
 
-                    {/* Tower Type Badge */}
-                    {markerInfo.iconType === 'tower' && (
-                      <div className="mt-1">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          markerInfo.towerType === 'functional' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          📡 {markerInfo.towerType === 'functional' ? 'Base Set Functional' : 'Base Set Available'}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={`text-xs px-3 py-1 rounded-full font-medium ${requirementCheck.status === "requirements_met"
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : requirementCheck.status === "requirements_not_met"
+                              ? "bg-red-100 text-red-800 border border-red-200"
+                              : "bg-gray-100 text-gray-800 border border-gray-200"
+                            }`}
+                        >
+                          {requirementCheck.status === "requirements_met"
+                            ? "✓ All Requirements Met"
+                            : requirementCheck.status === "requirements_not_met"
+                              ? "⚠ Requirements Not Met"
+                              : "ℹ No Requirements Set"}
                         </span>
+
+                        {markerInfo.iconType === 'tower' && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${markerInfo.towerType === 'functional'
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`}>
+                            📡 {markerInfo.towerType === 'functional' ? 'Base Set Functional' : 'Base Set Available'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Basic Information */}
+                    <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+                      <div>
+                        <span className="text-gray-500">Location:</span>
+                        <div className="font-medium">{location?.station?.tehsil}, {location?.station?.district}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Coordinates:</span>
+                        <div className="font-medium font-mono">
+                          {location?.coordinates.lat.toFixed(4)}, {location?.coordinates?.lng.toFixed(4)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Staffing Overview */}
+                    <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                      <h5 className="font-semibold text-xs text-blue-900 mb-2 flex items-center">
+                        👥 Staffing Overview
+                      </h5>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-blue-600">Current Staff:</span>
+                          <div className="font-bold text-blue-900">{location?.station?.employeeCount || 0}</div>
+                        </div>
+                        <div>
+                          <span className="text-blue-600">Required Staff:</span>
+                          <div className="font-bold text-blue-900">
+                            {(() => {
+                              const requirements = location?.station?.stationMinimumRequirements || location?.stationMinimumRequirements;
+                              return requirements && requirements.length > 0 ? (requirements[0].numberOfStaff || 0) : 0;
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+
+
+                    {/* Requirements Status - Categorized */}
+                    {/* Professional Requirements Status */}
+                    {requirementCheck.details && requirementCheck.details.length > 0 && (
+                      <div className="mb-3">
+                        <h5 className="font-semibold text-xs text-gray-900 mb-3 flex items-center">
+                          📋 Requirements Compliance Status
+                        </h5>
+
+                        {(() => {
+                          // Separate fulfilled and unmet requirements
+                          const fulfilled = requirementCheck.details.filter(detail =>
+                            detail.includes('met:') || (detail.includes('requirement met') && !detail.includes('shortage'))
+                          );
+                          const unmet = requirementCheck.details.filter(detail =>
+                            detail.includes('shortage') || detail.includes('Not Met')
+                          );
+
+                          return (
+                            <div className="space-y-3">
+                              {/* Fulfilled Requirements */}
+                              {fulfilled.length > 0 && (
+                                <div className="p-3 bg-green-50 rounded-lg border border-green-200 shadow-sm">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h6 className="text-sm font-semibold text-green-800 flex items-center">
+                                      <span className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-2">
+                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      </span>
+                                      Compliant Requirements
+                                    </h6>
+                                    <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                                      {fulfilled.length} of {fulfilled.length + unmet.length}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {fulfilled.slice(0, 4).map((detail, idx) => (
+                                      <div key={idx} className="flex items-start">
+                                        <span className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </span>
+                                        <span className="text-xs text-green-800 leading-relaxed">{detail}</span>
+                                      </div>
+                                    ))}
+                                    {fulfilled.length > 4 && (
+                                      <div className="text-xs text-green-600 italic ml-7 pt-1">
+                                        + {fulfilled.length - 4} additional requirements met
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Unmet Requirements */}
+                              {unmet.length > 0 && (
+                                <div className="p-3 bg-red-50 rounded-lg border border-red-200 shadow-sm">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h6 className="text-sm font-semibold text-red-800 flex items-center">
+                                      <span className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-2">
+                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                      </span>
+                                      Non-Compliant Requirements
+                                    </h6>
+                                    <span className="text-xs font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full">
+                                      {unmet.length} missing
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {unmet.slice(0, 4).map((detail, idx) => (
+                                      <div key={idx} className="flex items-start">
+                                        <span className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                          </svg>
+                                        </span>
+                                        <span className="text-xs text-red-800 leading-relaxed">{detail}</span>
+                                      </div>
+                                    ))}
+                                    {unmet.length > 4 && (
+                                      <div className="text-xs text-red-600 italic ml-7 pt-1">
+                                        + {unmet.length - 4} additional deficiencies
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Overall Compliance Summary */}
+                              <div className={`p-2 rounded-lg border ${unmet.length === 0
+                                ? 'bg-green-50 border-green-200'
+                                : 'bg-orange-50 border-orange-200'
+                                }`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium">Overall Compliance:</span>
+                                  <div className="flex items-center">
+                                    {unmet.length === 0 ? (
+                                      <>
+                                        <span className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mr-2">
+                                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </span>
+                                        <span className="text-xs font-semibold text-green-700">Fully Compliant</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center mr-2">
+                                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                          </svg>
+                                        </span>
+                                        <span className="text-xs font-semibold text-orange-700">
+                                          {Math.round((fulfilled.length / (fulfilled.length + unmet.length)) * 100)}% Compliant
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
-                    {location.description && (
-                      <p className="text-gray-600 mt-1">
-                        {location?.description}
-                      </p>
+                    {/* Current Assets Detail */}
+                    {(location?.station?.stationAssets?.length > 0 || location?.station?.employeeAssets?.length > 0) && (
+                      <div className="mb-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h5 className="font-semibold text-xs text-yellow-900 mb-2 flex items-center">
+                          🔧 Current Assets
+                        </h5>
+
+                        {/* Station Assets */}
+                        {location?.station?.stationAssets?.length > 0 && (
+                          <div className="mb-2">
+                            <h6 className="text-xs font-medium text-yellow-800 mb-1">Station Assets:</h6>
+                            <div className="space-y-1">
+                              {location.station.stationAssets.slice(0, 2).map((stationAsset, index) => (
+                                <div key={index} className="text-xs">
+                                  {stationAsset.asset?.map((asset, assetIndex) => (
+                                    <div key={assetIndex} className="flex justify-between items-center bg-white p-1 rounded border">
+                                      <span className="font-medium text-yellow-900">{asset.name}</span>
+                                      <span className="text-yellow-700 font-bold">×{asset.availableQuantity || 0}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                              {location.station.stationAssets.length > 2 && (
+                                <div className="text-xs text-yellow-700 italic">
+                                  +{location.station.stationAssets.length - 2} more station assets
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Employee Assets */}
+                        {location?.station?.employeeAssets?.length > 0 && (
+                          <div>
+                            <h6 className="text-xs font-medium text-yellow-800 mb-1">Employee Assets:</h6>
+                            <div className="space-y-1">
+                              {location.station.employeeAssets.slice(0, 2).map((employeeAsset, index) => (
+                                <div key={index} className="text-xs">
+                                  <div className="text-yellow-700 font-medium mb-1">
+                                    👤 {employeeAsset.employee?.firstName} {employeeAsset.employee?.lastName}
+                                  </div>
+                                  {employeeAsset.asset?.map((asset, assetIndex) => (
+                                    <div key={assetIndex} className="flex justify-between items-center bg-white p-1 rounded border ml-3">
+                                      <span className="font-medium text-yellow-900">{asset.name}</span>
+                                      <span className="text-yellow-700 font-bold">×{asset.availableQuantity || 0}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                              {location.station.employeeAssets.length > 2 && (
+                                <div className="text-xs text-yellow-700 italic">
+                                  +{location.station.employeeAssets.length - 2} more employee assignments
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
 
-                    {/* Employee Information */}
-                    <div className="mt-2 p-2 bg-blue-50 rounded">
-                      <h5 className="font-semibold text-xs mb-1">
-                        Staff Information:
-                      </h5>
-                      <p className="text-xs text-gray-600">
-                        Current Employees:{" "}
-                        <span className="font-medium">
-                          {location?.employeeCount || 0}
-                        </span>
-                      </p>
-                      {/* Show requirements from the correct source */}
-                      {(() => {
-                        const requirements =
-                          location?.station?.stationMinimumRequirements ||
-                          location?.stationMinimumRequirements;
-                        const source = location.station
-                          ?.stationMinimumRequirements
-                          ? "Station"
-                          : "Root";
-                        return (
-                          requirements &&
-                          requirements.length > 0 && (
-                            <div>
-                              <p className="text-xs text-gray-600">
-                                Required Staff:{" "}
-                                <span className="font-medium">
-                                  {requirements[0].numberOfStaff || 0}
-                                </span>
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                Source: {source} level requirements
-                              </p>
-                            </div>
-                          )
-                        );
-                      })()}
-                    </div>
+                    {/* Facilities */}
+                    {location?.station?.facilities && location?.station?.facilities.length > 0 && (
+                      <div className="mb-3">
+                        <h6 className="text-xs font-medium text-gray-700 mb-1">🏢 Facilities:</h6>
+                        <div className="flex flex-wrap gap-1">
+                          {location.station.facilities.map((facility, index) => {
+                            const isBaseSet = facility.toLowerCase().includes('base set');
+                            const isFunctional = facility.toLowerCase().includes('functional');
 
-                    {/* Station Requirements Status */}
-                    <div className="mt-2 p-2 bg-gray-50 rounded">
-                      <h5 className="font-semibold text-xs mb-1">
-                        Requirements Status:
-                        <span
-                          className={`ml-1 ${
-                            requirementCheck.meetRequirements
-                              ? "text-green-600"
-                              : "text-orange-600"
-                          }`}
-                        >
-                          {requirementCheck.meetRequirements
-                            ? "Met"
-                            : "Not Met"}
-                        </span>
-                      </h5>
-                      <ul className="text-xs space-y-1">
-                        {requirementCheck.details
-                          .slice(0, 3)
-                          .map((detail, idx) => (
-                            <li key={idx} className="text-gray-600">
-                              • {detail}
-                            </li>
-                          ))}
-                        {requirementCheck.details.length > 3 && (
-                          <li className="text-gray-500">
-                            ... and {requirementCheck.details.length - 3} more
-                          </li>
-                        )}
-                      </ul>
-                    </div>
+                            return (
+                              <span
+                                key={index}
+                                className={`text-xs px-2 py-1 rounded-full border ${isBaseSet
+                                  ? isFunctional
+                                    ? 'bg-green-100 text-green-800 border-green-200'
+                                    : 'bg-gray-100 text-gray-800 border-gray-200'
+                                  : 'bg-blue-100 text-blue-800 border-blue-200'
+                                  }`}
+                              >
+                                {isBaseSet && '📡 '}{facility}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
-                    <p className="text-xs text-gray-500 mt-2">
-                      Category: {location?.category}
-                      <br />
-                      Coordinates: {location?.coordinates.lat.toFixed(6)},{" "}
-                      {location?.coordinates?.lng.toFixed(6)}
-                    </p>
+                    {/* Footer */}
+                    <div className="pt-2 border-t border-gray-200 text-xs text-gray-500">
+                      <div className="flex justify-between">
+                        <span>Category: {location?.category}</span>
+                        <span>ID: {location?.station?._id?.slice(-6)}</span>
+                      </div>
+                    </div>
                   </div>
                 </Popup>
               </Marker>

@@ -12,10 +12,6 @@ const getCurrentUserType = () => localStorage.getItem("userType");
 // Get all asset assignments for a specific employee
 export const getAllAssetAssignments = async (filters = {}) => {
 
-  // return {
-  //   success: false,
-  //   error: "TODO: Failed to fetch asset assignments",
-  // };
 
   try {
     const queryParams = new URLSearchParams();

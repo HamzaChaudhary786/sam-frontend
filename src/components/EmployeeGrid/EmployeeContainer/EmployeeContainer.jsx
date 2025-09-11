@@ -17,7 +17,6 @@ import { uploadToCloudinary } from "../../Employee/AddEmployee/Cloudinary.js";
 import { toast } from "react-toastify";
 import { role_admin } from "../../../constants/Enum.js";
 import EmployeeGridTable from "../GridTable/GridTable.jsx";
-import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 import { usePermissions } from "../../../hook/usePermission.js";
 
 const EmployeeGridContainer = () => {
@@ -428,7 +427,6 @@ const EmployeeGridContainer = () => {
   };
 
   const sortedEmployees = sortData(employees);
-  const { getEmployeeAssetsString } = useEmployeeAssets(sortedEmployees);
 
   const getEnumName = (enumKey, valueId) => {
     if (!valueId) return "";
@@ -493,7 +491,6 @@ const EmployeeGridContainer = () => {
         (e.address && e.address.muhala) || "",
         getEnumName("tehsil", e.address?.tehsil),
         getEnumName("district", e.address?.line2),
-        getEmployeeAssetsString(e._id),
       ]);
 
       const csvContent = [headers, ...rows]
@@ -569,7 +566,6 @@ const EmployeeGridContainer = () => {
             (e.address && e.address.muhala) || "",
             getEnumName("tehsil", e.address?.tehsil),
             getEnumName("district", e.address?.line2),
-            getEmployeeAssetsString(e._id),
           ];
           return `<tr>${row
             .map((c) => `<td>${String(c ?? "").replace(/</g, "&lt;")}</td>`)
