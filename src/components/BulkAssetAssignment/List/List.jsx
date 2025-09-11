@@ -1380,7 +1380,8 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                           </div>
                                         )}
                                         {
-                                          !itm.weaponNumber && (
+                                          !(itm.weaponNumber ||
+                            itm.registerNumber) && (
                                             <>
                                               {itm.availableQuantity && (
                                                 <div>
@@ -1393,8 +1394,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                                 </div>
                                               )}
                                             </>
-                                          )
-                                        }
+                                          )}
 
                                       </div>
                                     </div>
