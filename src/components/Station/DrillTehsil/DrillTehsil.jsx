@@ -36,7 +36,8 @@ import {
   Wrench,
   Info,
   Eye,
-  Loader2
+  Loader2,
+  User
 } from "lucide-react";
 import { BACKEND_URL } from "../../../constants/api";
 import DrillDistrictPage from "../DrillDistrict/DrillDistrict.jsx";
@@ -306,13 +307,13 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
     }
   };
   const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   const handleEmployeeView = (employee) => {
     setSelectedEmployee(employee);
@@ -820,320 +821,429 @@ const DrillTehsilPage = ({ tehsil, onBack, onDrillStation }) => {
         </h3>
       </div>
       <div className="divide-y divide-gray-200">
-        {data.stationsSummary?.map((station) => (
-          <div key={station._id} className="p-6">
-            <div
-              className="cursor-pointer"
-              onClick={() => handleStationSelect(station)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <Building className="h-8 w-8 text-gray-400" />
+        {data.stationsSummary?.map((station) => {
+          // Filter employees assigned to this station
+          const stationEmployees = data.employees?.data?.filter(
+            (employee) => employee.stations?._id === station._id
+          ) || [];
+
+          return (
+            <div key={station._id} className="p-6">
+              <div
+                className="cursor-pointer"
+                onClick={() => handleStationSelect(station)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Building className="h-8 w-8 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h4 className="text-lg font-semibold text-gray-900">
+                          {station.name}
+                        </h4>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${station.totalEmployees > 0
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                            }`}
+                        >
+                          {station.totalEmployees} employees
+                        </span>
+                        {!station.meetsStaffRequirement && (
+                          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                            Staff shortage: {station.staffShortage}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center text-gray-600 mb-2">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span className="text-sm">
+                          {station.address?.fullAddress || "Address not available"}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span className="flex items-center">
+                          <Map className="h-3 w-3 mr-1" />
+                          Coords: {station.coordinates?.latitude || "N/A"},{" "}
+                          {station.coordinates?.longitude || "N/A"}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Created:{" "}
+                          {station.createdAt
+                            ? new Date(station.createdAt).toLocaleDateString()
+                            : "N/A"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        {station.name}
-                      </h4>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${station.totalEmployees > 0
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+
+                  <div className="flex items-center space-x-6">
+                    <div className="text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDrillStation(station);
+                        }}
+                        className="flex items-center text-green-600 hover:text-green-800 mr-4 transition-colors"
+                      >
+                        <ArrowDown className="h-5 w-5 mr-1" />
+                        Drill Down
+                      </button>
+                    </div>
+                    <div className="text-center">
+                      <p
+                        className={`text-lg font-bold ${station.totalEmployees > 0
+                            ? "text-blue-600"
+                            : "text-red-600"
                           }`}
                       >
-                        {station.totalEmployees} employees
-                      </span>
-                      {!station.meetsStaffRequirement && (
-                        <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                          Staff shortage: {station.staffShortage}
-                        </span>
-                      )}
+                        {station.totalEmployees}
+                      </p>
+                      <p className="text-xs text-gray-500">Staff</p>
                     </div>
-                    <div className="flex items-center text-gray-600 mb-2">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span className="text-sm">
-                        {station.address?.fullAddress ||
-                          "Address not available"}
-                      </span>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-green-600">
+                        {station.totalAssets || 0}
+                      </p>
+                      <p className="text-xs text-gray-500">Assets</p>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <Map className="h-3 w-3 mr-1" />
-                        Coords: {station.coordinates?.latitude || "N/A"},{" "}
-                        {station.coordinates?.longitude || "N/A"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Created:{" "}
-                        {station.createdAt
-                          ? new Date(station.createdAt).toLocaleDateString()
-                          : "N/A"}
-                      </span>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-purple-600">
+                        {station.facilities?.length || 0}
+                      </p>
+                      <p className="text-xs text-gray-500">Facilities</p>
                     </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-6">
-                  <div className="text-center">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDrillStation(station);
-                      }}
-                      className="flex items-center text-green-600 hover:text-green-800 mr-4 transition-colors"
-                    >
-                      <ArrowDown className="h-5 w-5 mr-1" />
-                      Drill Down
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <p
-                      className={`text-lg font-bold ${station.totalEmployees > 0
-                        ? "text-blue-600"
-                        : "text-red-600"
-                        }`}
-                    >
-                      {station.totalEmployees}
-                    </p>
-                    <p className="text-xs text-gray-500">Staff</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-green-600">
-                      {station.totalAssets || 0}
-                    </p>
-                    <p className="text-xs text-gray-500">Assets</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-purple-600">
-                      {station.facilities?.length || 0}
-                    </p>
-                    <p className="text-xs text-gray-500">Facilities</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Expanded Station Details */}
-            {selectedStation?._id === station._id && (
-              <div className="mt-6 border-t pt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Station Facilities */}
-                  <div>
-                    <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                      <Layers className="h-4 w-4 mr-2" />
-                      Facilities ({station.facilities?.length || 0})
-                    </h5>
-                    <div className="space-y-2">
-                      {station.facilities?.map((facility, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center p-2 bg-gray-50 rounded"
-                        >
-                          {getFacilityIcon(facility)}
-                          <span className="ml-2 text-sm text-gray-700">
-                            {facility}
-                          </span>
+              {/* Expanded Station Details */}
+              {selectedStation?._id === station._id && (
+                <div className="mt-6 border-t pt-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Station Facilities */}
+                    <div>
+                      <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                        <Layers className="h-4 w-4 mr-2" />
+                        Facilities ({station.facilities?.length || 0})
+                      </h5>
+                      <div className="space-y-2">
+                        {station.facilities?.map((facility, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center p-2 bg-gray-50 rounded"
+                          >
+                            {getFacilityIcon(facility)}
+                            <span className="ml-2 text-sm text-gray-700">
+                              {facility}
+                            </span>
+                          </div>
+                        )) || (
+                            <p className="text-sm text-gray-500">
+                              No facilities listed
+                            </p>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* In-charges */}
+                    <div>
+                      <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Station In-charges
+                      </h5>
+                      {station.inCharges?.length > 0 ? (
+                        <div className="space-y-2">
+                          {station.inCharges.map((inCharge, index) => (
+                            <div
+                              key={index}
+                              className="p-3 bg-blue-50 rounded-lg"
+                            >
+                              <div className="font-medium text-blue-900">
+                                {inCharge.employee?.name || "N/A"}
+                              </div>
+                              <div className="text-sm text-blue-700">
+                                {inCharge.employee?.designation || "N/A"}
+                              </div>
+                              <div className="text-xs text-blue-600">
+                                {inCharge.employee?.personalNumber || "N/A"}
+                              </div>
+                              <div className="text-xs text-blue-600">
+                                Type: {inCharge.type || "N/A"}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      )) || (
-                          <p className="text-sm text-gray-500">
-                            No facilities listed
-                          </p>
-                        )}
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <UserX className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm">No in-charges assigned</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* In-charges */}
-                  <div>
-                    <h5 className="text-md font-semibent text-gray-900 mb-3 flex items-center">
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Station In-charges
+                  {/* Station Assets */}
+                  <div className="mt-6 pt-6 border-t">
+                    <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                      <Package className="h-4 w-4 mr-2" />
+                      Station Assets ({station.rawStationAssets?.length || 0})
                     </h5>
-                    {station.inCharges?.length > 0 ? (
-                      <div className="space-y-2">
-                        {station.inCharges.map((inCharge, index) => (
-                          <div
-                            key={index}
-                            className="p-3 bg-blue-50 rounded-lg"
-                          >
-                            <div className="font-medium text-blue-900">
-                              {inCharge.employee?.name || "N/A"}
+                    {station.rawStationAssets?.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        {station.rawStationAssets.map((assetRecord, index) => {
+                          const asset = assetRecord.asset?.[0];
+                          return (
+                            <div key={assetRecord._id || index} className="bg-gray-50 rounded-lg p-4 border">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center">
+                                  {getAssetIcon(asset?.type)}
+                                  <h6 className="ml-2 font-medium text-gray-900">
+                                    {asset?.name || "Unnamed Asset"}
+                                  </h6>
+                                </div>
+                                <span
+                                  className={`px-2 py-1 text-xs rounded-full ${assetRecord.status === "Active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                    }`}
+                                >
+                                  {assetRecord.status || "Unknown"}
+                                </span>
+                              </div>
+
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Type:</span>
+                                  <span className="text-gray-900 font-medium">
+                                    {asset?.type || "N/A"}
+                                  </span>
+                                </div>
+
+                                {asset?.model && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Model:</span>
+                                    <span className="text-gray-900">{asset.model}</span>
+                                  </div>
+                                )}
+
+                                {asset?.make && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Make:</span>
+                                    <span className="text-gray-900">{asset.make}</span>
+                                  </div>
+                                )}
+
+                                {asset?.color && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Color:</span>
+                                    <span className="text-gray-900">{asset.color}</span>
+                                  </div>
+                                )}
+
+                                {asset?.weaponNumber && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Weapon No:</span>
+                                    <span className="text-gray-900 font-mono">{asset.weaponNumber}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Assigned:</span>
+                                  <span className="text-gray-900">
+                                    {formatDate(assetRecord.assignedDate)}
+                                  </span>
+                                </div>
+
+                                {assetRecord.assignedBy && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Assigned By:</span>
+                                    <span className="text-gray-900">{assetRecord.assignedBy}</span>
+                                  </div>
+                                )}
+
+                                {asset?.cost && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Cost:</span>
+                                    <span className="text-gray-900 font-medium">
+                                      ${asset.cost.toLocaleString()}
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="pt-2 border-t border-gray-200">
+                                  <div className="flex items-center text-xs text-gray-500">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Created: {formatDate(assetRecord.createdAt)}
+                                  </div>
+                                  {assetRecord.updatedAt !== assetRecord.createdAt && (
+                                    <div className="flex items-center text-xs text-gray-500 mt-1">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Updated: {formatDate(assetRecord.updatedAt)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-sm text-blue-700">
-                              {inCharge.employee?.designation || "N/A"}
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
+                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600">No assets assigned to this station</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Employee Assets */}
+                  <div className="mt-6 pt-6 border-t">
+                    <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                      <Users className="h-4 w-4 mr-2" />
+                      Employee Assets ({stationEmployees.length} employees)
+                    </h5>
+                    {stationEmployees.length > 0 ? (
+                      <div className="space-y-6">
+                        {stationEmployees.map((employee, empIndex) => (
+                          <div key={employee._id || empIndex} className="bg-gray-50 rounded-lg p-4 border">
+                            <div className="flex items-center mb-3">
+                              <User className="h-5 w-5 mr-2 text-gray-600" />
+                              <h6 className="font-medium text-gray-900">
+                                {employee.firstName} ({employee.personalNumber})
+                              </h6>
+                              <span className="ml-2 text-sm text-gray-600">
+                                {employee.designation || "N/A"}
+                              </span>
                             </div>
-                            <div className="text-xs text-blue-600">
-                              {inCharge.employee?.personalNumber || "N/A"}
-                            </div>
-                            <div className="text-xs text-blue-600">
-                              Type: {inCharge.type || "N/A"}
+                            <div className="space-y-2">
+                              {employee.assets?.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {employee.assets.map((asset, assetIndex) => (
+                                    <div key={asset._id || assetIndex} className="p-3 bg-white rounded-lg border">
+                                      <div className="flex items-center mb-2">
+                                        {getAssetIcon(asset.type)}
+                                        <span className="ml-2 font-medium text-gray-900">
+                                          {asset.name || "Unnamed Asset"}
+                                        </span>
+                                      </div>
+                                      <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Type:</span>
+                                          <span className="text-gray-900">{asset.type || "N/A"}</span>
+                                        </div>
+                                        {asset.model && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Model:</span>
+                                            <span className="text-gray-900">{asset.model}</span>
+                                          </div>
+                                        )}
+                                        {asset.make && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Make:</span>
+                                            <span className="text-gray-900">{asset.make}</span>
+                                          </div>
+                                        )}
+                                        {asset.color && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Color:</span>
+                                            <span className="text-gray-900">{asset.color}</span>
+                                          </div>
+                                        )}
+                                        {asset.weaponNumber && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Weapon No:</span>
+                                            <span className="text-gray-900 font-mono">{asset.weaponNumber}</span>
+                                          </div>
+                                        )}
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Assigned:</span>
+                                          <span className="text-gray-900">
+                                            {formatDate(asset.assignedDate)}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Status:</span>
+                                          <span
+                                            className={`text-sm ${asset.assignmentStatus === "Active"
+                                                ? "text-green-600"
+                                                : "text-gray-600"
+                                              }`}
+                                          >
+                                            {asset.assignmentStatus || "Unknown"}
+                                          </span>
+                                        </div>
+                                        {asset.approvalComment && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Approval:</span>
+                                            <span className="text-gray-900">{asset.approvalComment}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-600">No assets assigned to this employee</p>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-4 text-gray-500">
-                        <UserX className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm">No in-charges assigned</p>
+                      <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
+                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600">No employees assigned to this station</p>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Station Assets */}
-                <div className="mt-6 pt-6 border-t">
-                  <h5 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                    <Package className="h-4 w-4 mr-2" />
-                    Station Assets ({station.rawStationAssets?.length || 0})
-                  </h5>
-                  {station.rawStationAssets?.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                      {station.rawStationAssets.map((assetRecord, index) => {
-                        const asset = assetRecord.asset?.[0];
-                        return (
-                          <div key={assetRecord._id || index} className="bg-gray-50 rounded-lg p-4 border">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center">
-                                {getAssetIcon(asset?.type)}
-                                <h6 className="ml-2 font-medium text-gray-900">
-                                  {asset?.name || 'Unnamed Asset'}
-                                </h6>
-                              </div>
-                              <span className={`px-2 py-1 text-xs rounded-full ${assetRecord.status === 'Active'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                {assetRecord.status || 'Unknown'}
-                              </span>
-                            </div>
-
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Type:</span>
-                                <span className="text-gray-900 font-medium">
-                                  {asset?.type || 'N/A'}
-                                </span>
-                              </div>
-
-                              {asset?.model && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Model:</span>
-                                  <span className="text-gray-900">{asset.model}</span>
-                                </div>
-                              )}
-
-                              {asset?.make && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Make:</span>
-                                  <span className="text-gray-900">{asset.make}</span>
-                                </div>
-                              )}
-
-                              {asset?.color && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Color:</span>
-                                  <span className="text-gray-900">{asset.color}</span>
-                                </div>
-                              )}
-
-                              {asset?.weaponNumber && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Weapon No:</span>
-                                  <span className="text-gray-900 font-mono">{asset.weaponNumber}</span>
-                                </div>
-                              )}
-
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Assigned:</span>
-                                <span className="text-gray-900">
-                                  {formatDate(assetRecord.assignedDate)}
-                                </span>
-                              </div>
-
-                              {assetRecord.assignedBy && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Assigned By:</span>
-                                  <span className="text-gray-900">{assetRecord.assignedBy}</span>
-                                </div>
-                              )}
-
-                              {asset?.cost && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Cost:</span>
-                                  <span className="text-gray-900 font-medium">
-                                    ${asset.cost.toLocaleString()}
-                                  </span>
-                                </div>
-                              )}
-
-                              <div className="pt-2 border-t border-gray-200">
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  Created: {formatDate(assetRecord.createdAt)}
-                                </div>
-                                {assetRecord.updatedAt !== assetRecord.createdAt && (
-                                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    Updated: {formatDate(assetRecord.updatedAt)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
-                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">No assets assigned to this station</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Station Metrics */}
-                <div className="pt-6 border-t">
-                  <h5 className="text-md font-semibold text-gray-900 mb-3">
-                    Station Metrics
-                  </h5>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-lg font-bold text-gray-900">
-                        {station.totalEmployees || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Current Staff</p>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-lg font-bold text-gray-900">
-                        {station.requiredStaff || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Required Staff</p>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-lg font-bold text-gray-900">
-                        {station.totalAssets || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Total Assets</p>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p
-                        className={`text-lg font-bold ${station.meetsStaffRequirement
-                          ? "text-green-600"
-                          : "text-red-600"
-                          }`}
-                      >
-                        {station.meetsStaffRequirement ? "Yes" : "No"}
-                      </p>
-                      <p className="text-sm text-gray-600">Requirement Met</p>
+                  {/* Station Metrics */}
+                  <div className="pt-6 border-t">
+                    <h5 className="text-md font-semibold text-gray-900 mb-3">
+                      Station Metrics
+                    </h5>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-lg font-bold text-gray-900">
+                          {station.totalEmployees || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Current Staff</p>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-lg font-bold text-gray-900">
+                          {station.requiredStaff || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Required Staff</p>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-lg font-bold text-gray-900">
+                          {station.totalAssets || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Total Assets</p>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p
+                          className={`text-lg font-bold ${station.meetsStaffRequirement
+                              ? "text-green-600"
+                              : "text-red-600"
+                            }`}
+                        >
+                          {station.meetsStaffRequirement ? "Yes" : "No"}
+                        </p>
+                        <p className="text-sm text-gray-600">Requirement Met</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )) || (
+              )}
+            </div>
+          );
+        }) || (
             <div className="text-center py-12">
               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No stations found for this tehsil.</p>

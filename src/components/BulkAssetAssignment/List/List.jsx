@@ -1341,53 +1341,66 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                               )}
 
                               {/* General Asset Information */}
-                              <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                                  General Information
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                  {itm.assetStatus && (
-                                    <div>
-                                      <span className="text-gray-600 font-medium">
-                                        Status:
-                                      </span>
-                                      <div className="text-gray-800">
-                                        {itm.assetStatus || "N/A"}
+                              {
+                                !itm.weaponNumber && (
+                                  <>
+                                    <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                                      <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                                        General Information
+                                      </h5>
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                        {itm.assetStatus && (
+                                          <div>
+                                            <span className="text-gray-600 font-medium">
+                                              Status:
+                                            </span>
+                                            <div className="text-gray-800">
+                                              {itm.assetStatus || "N/A"}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {itm.cost && (
+                                          <div>
+                                            <span className="text-gray-600 font-medium">
+                                              Cost:
+                                            </span>
+                                            <div className="text-gray-800">
+                                              PKR {itm.cost}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {itm.outQuantity && (
+                                          <div>
+                                            <span className="text-gray-600 font-medium">
+                                              Issued:
+                                            </span>
+                                            <div className="text-gray-800">
+                                              {itm.outQuantity}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {
+                                          !itm.weaponNumber && (
+                                            <>
+                                              {itm.availableQuantity && (
+                                                <div>
+                                                  <span className="text-gray-600 font-medium">
+                                                    Available:
+                                                  </span>
+                                                  <div className="text-gray-800">
+                                                    {itm.availableQuantity}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </>
+                                          )
+                                        }
+
                                       </div>
                                     </div>
-                                  )}
-                                  {itm.cost && (
-                                    <div>
-                                      <span className="text-gray-600 font-medium">
-                                        Cost:
-                                      </span>
-                                      <div className="text-gray-800">
-                                        PKR {itm.cost}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {itm.outQuantity && (
-                                    <div>
-                                      <span className="text-gray-600 font-medium">
-                                        Issued:
-                                      </span>
-                                      <div className="text-gray-800">
-                                        {itm.outQuantity}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {itm.availableQuantity && (
-                                    <div>
-                                      <span className="text-gray-600 font-medium">
-                                        Available:
-                                      </span>
-                                      <div className="text-gray-800">
-                                        {itm.availableQuantity}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                                  </>
+                                )
+                              }
                             </div>
                           ))}
                         </div>

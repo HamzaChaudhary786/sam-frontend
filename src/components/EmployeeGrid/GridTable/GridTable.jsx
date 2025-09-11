@@ -11,7 +11,6 @@ import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
-// import { useEmployeeAssets } from "../../Employee/EmployeeAsset.js";
 
 import { toast } from "react-toastify";
 import { usePermissions } from "../../../hook/usePermission.js";
@@ -101,8 +100,7 @@ const EmployeeGridTable = ({
   // Safety check for employees
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
-  // const { getEmployeeAssetsString, loading: assetsLoading } =
-  //   useEmployeeAssets(safeEmployees);
+  
 
   function handleMultiPosting(selectedEmployeeObjects) {
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
@@ -906,7 +904,7 @@ const EmployeeGridTable = ({
 
               <th class="px-4 py-2 border border-gray-200"></th>
 
-              <th colSpan={4} class="px-4 py-2 border border-gray-200">
+              <th colSpan={7} class="px-4 py-2 border border-gray-200">
                 Employee's
               </th>
             </tr>
@@ -946,6 +944,18 @@ const EmployeeGridTable = ({
               <th class="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Posting
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Disciplinary
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                History
+              </th>
+              <th class="px-4 py-2 border border-gray-200 text-center">
+                {" "}
+                Functions
               </th>
             </tr>
           </thead>
@@ -1160,29 +1170,23 @@ const EmployeeGridTable = ({
                         ))}
                       </div>
                     </td>
-                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 align-top">
-                      <div className="flex flex-col space-y-1">
+                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 w-full">
+                      <div className="flex flex-col w-full">
                         {employee?.postings?.map((itm) => (
                           <>
 
                             <div
                               key={itm._id}
-                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
+                              className="text-[10px] text-gray-700 bg-gray-50 w-48 rounded px-1"
                             >
-                              <span className="font-medium">C.Station:</span> {itm.currentStation?.name || 'N/A'}
-                            </div>
-                            <div
-                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
 
-                            >
-                              <span className="font-medium">L.Station:</span> {itm.lastStation?.name || 'N/A'}
-                            </div>
-                            <div
-                              className="text-[10px] flex text-gray-700 bg-gray-50 rounded px-1"
-                            >
-                              <span className="font-medium">Date:</span>{" "} {itm.fromDate ? new Date(itm.fromDate).toLocaleDateString() : 'N/A'}
+                              {itm.currentStation?.name || 'N/A'} {" from "}
+                              {itm.fromDate ? new Date(itm.fromDate).toLocaleDateString() : 'N/A'}
+
 
                             </div>
+
+
                           </>
                         ))}
                       </div>
