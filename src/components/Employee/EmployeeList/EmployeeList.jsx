@@ -15,7 +15,6 @@ import MultiSalaryDeductionForm from "../Multisalarydeductin.jsx";
 import MultiAchievementForm from "../MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../MultiAsset.jsx";
-import { useEmployeeAssets } from "../EmployeeAsset.js";
 import ClickableEmployeeName from "../ClickableName.jsx";
 import { usePermissions } from "../../../hook/usePermission.js";
 
@@ -83,8 +82,6 @@ const EmployeeList = ({
   const [showFilters, setShowFilters] = useState(false);
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
-  const { getEmployeeAssetsString, loading: assetsLoading } =
-    useEmployeeAssets(safeEmployees);
   const permissions = usePermissions();
   const navigate = useNavigate();
 
@@ -722,7 +719,7 @@ const EmployeeList = ({
                             </span>
                           ) : (
                             <div className="break-words line-clamp-2 overflow-hidden">
-                              {getEmployeeAssetsString(employee._id)}
+                              employee asset
                             </div>
                           )}
                         </div>
@@ -917,7 +914,7 @@ const EmployeeList = ({
                       {assetsLoading ? (
                         <span className="animate-pulse">Loading...</span>
                       ) : (
-                        <span>{getEmployeeAssetsString(employee._id)}</span>
+                        <span>Employee asset</span>
                       )}
                     </div>
 
