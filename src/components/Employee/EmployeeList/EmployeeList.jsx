@@ -542,11 +542,18 @@ const EmployeeList = ({
             <table className="w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-gray-50">
                 <tr>
+
                   {!compactView && (
                     <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
                       {multiSelect.renderSelectAllCheckbox()}
                     </th>
                   )}
+                  <th
+                    className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8"
+                  >
+                    N0.
+                  </th>
+
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[30%]">
                     Employee
                   </th>
@@ -562,7 +569,7 @@ const EmployeeList = ({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {safeEmployees.map((employee) => {
+                {safeEmployees.map((employee, index) => {
                   const currentImageIndex = imageIndexes[employee._id] || 0;
                   const totalImages = getImageCount(employee);
                   const currentImage = getEmployeeImage(
@@ -596,12 +603,17 @@ const EmployeeList = ({
                       className={`hover:bg-gray-50 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
                         }`}
                     >
+
                       {!compactView && (
                         <td className="px-1 py-2">
                           {multiSelect.renderEmployeeCheckbox(employee)}
 
                         </td>
                       )}
+                      <td className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8"
+                      >
+                        {index}
+                      </td>
 
                       {/* Employee Info Column - Ultra Compact */}
                       <td className="px-2 py-2">
@@ -713,15 +725,11 @@ const EmployeeList = ({
                       {/* Assets Column - Ultra Compact */}
                       <td className="px-1 py-2">
                         <div className="text-xs text-gray-900">
-                          {assetsLoading ? (
-                            <span className="text-gray-500 animate-pulse">
-                              Loading...
-                            </span>
-                          ) : (
-                            <div className="break-words line-clamp-2 overflow-hidden">
-                              employee asset
-                            </div>
-                          )}
+
+                          <div className="break-words line-clamp-2 overflow-hidden">
+                            employee asset
+                          </div>
+
                         </div>
                       </td>
 
@@ -911,11 +919,9 @@ const EmployeeList = ({
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       <span className="font-medium">Assets: </span>
-                      {assetsLoading ? (
-                        <span className="animate-pulse">Loading...</span>
-                      ) : (
-                        <span>Employee asset</span>
-                      )}
+
+                      <span>Employee asset</span>
+
                     </div>
 
                     {/* Mobile Action Buttons - Stacked vertically in columns */}
