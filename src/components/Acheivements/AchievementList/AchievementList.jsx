@@ -435,8 +435,8 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
               {achievements.length === 0
                 ? "No achievements found"
                 : hasActiveFilters()
-                ? "No achievements match your filter criteria"
-                : "No achievements to display"}
+                  ? "No achievements match your filter criteria"
+                  : "No achievements to display"}
             </p>
             <p className="text-gray-400 text-sm mt-1">
               {achievements.length === 0
@@ -448,6 +448,9 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  N0.
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
                 </th>
@@ -472,8 +475,11 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAchievements.map((achievement) => (
+              {filteredAchievements.map((achievement, index) => (
                 <tr key={achievement._id} className="hover:bg-gray-50">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {index}
+                  </th>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {getAchievementTypeLabel(achievement.achievementType)}
@@ -486,11 +492,10 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        achievement.isMonitor
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${achievement.isMonitor
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                        }`}
                     >
                       {achievement.isMonitor ? "Yes" : "No"}
                     </span>
@@ -510,11 +515,10 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-2">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          achievement?.isApproved
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${achievement?.isApproved
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {achievement?.isApproved ? "Approved" : "Pending"}
                       </span>
@@ -542,90 +546,90 @@ const AchievementList = ({ employee, onEdit, refreshTrigger }) => {
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canApprove === true
+                                "employee" && access.canApprove === true
                             )
                           ) && (
-                            <button
-                              onClick={() => handleApprove(achievement._id)}
-                              className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
-                              title="Approve Achievement"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                              <button
+                                onClick={() => handleApprove(achievement._id)}
+                                className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                                title="Approve Achievement"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Approve
-                            </button>
-                          )}
+                                <svg
+                                  className="w-3 h-3 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Approve
+                              </button>
+                            )}
 
                           {/* Edit Button */}
                           {permissions?.userData?.roles?.some((role) =>
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canEdit === true
+                                "employee" && access.canEdit === true
                             )
                           ) && (
-                            <button
-                              onClick={() => onEdit(achievement)}
-                              className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
-                              title="Edit Achievement"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                              <button
+                                onClick={() => onEdit(achievement)}
+                                className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                title="Edit Achievement"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                              Edit
-                            </button>
-                          )}
+                                <svg
+                                  className="w-3 h-3 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                                Edit
+                              </button>
+                            )}
 
                           {/* Delete Button - Admin Only */}
                           {permissions?.userData?.roles?.some((role) =>
                             role.accessRequirement?.some(
                               (access) =>
                                 access.resourceName.toLowerCase() ===
-                                  "employee" && access.canDelete === true
+                                "employee" && access.canDelete === true
                             )
                           ) && (
-                            <button
-                              onClick={() => handleDelete(achievement._id)}
-                              className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                              title="Delete Achievement"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                              <button
+                                onClick={() => handleDelete(achievement._id)}
+                                className="inline-flex items-center px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                                title="Delete Achievement"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                              Delete
-                            </button>
-                          )}
+                                <svg
+                                  className="w-3 h-3 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                Delete
+                              </button>
+                            )}
                         </>
                       )}
                       {achievement?.isApproved && (

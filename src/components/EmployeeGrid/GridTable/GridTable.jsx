@@ -11,6 +11,7 @@ import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
+import moment from "moment";
 
 import { toast } from "react-toastify";
 import { usePermissions } from "../../../hook/usePermission.js";
@@ -100,7 +101,7 @@ const EmployeeGridTable = ({
   // Safety check for employees
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
-  
+
 
   function handleMultiPosting(selectedEmployeeObjects) {
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
@@ -961,7 +962,7 @@ const EmployeeGridTable = ({
           </thead>
           <tbody>
             {/* Employee Rows - Updated with checkboxes */}
-            {safeEmployees?.map((employee) => {
+            {safeEmployees?.map((employee, index) => {
               const isEditing = editingCell?.rowId === employee._id;
               const isEditable = editableEmployees.has(employee._id);
               const isStationIncharge =
@@ -993,7 +994,13 @@ const EmployeeGridTable = ({
                       }`}
                   >
                     <td rowSpan={2} className="border border-gray-200 mx-2">
-
+                      <div className="p-3 text-lg font-semibold">
+                        <div className="p-3 text-lg font-semibold">
+                          {pagination?.currentPage && pagination?.limit
+                            ? (pagination.currentPage - 1) * pagination.limit + index + 1
+                            : index + 1}
+                        </div>
+                      </div>
                       <div className="border border-gray-200 items-center justify-center p-1">
                         {renderEmployeeCheckbox(employee)}
                         {renderImageCell(employee)}
@@ -1191,6 +1198,53 @@ const EmployeeGridTable = ({
                         ))}
                       </div>
                     </td>
+                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 w-full">
+                      <div className="flex flex-col w-full">
+                        {employee?.disciplinaryActions?.map((itm, idx) => (
+                          <div
+                            key={idx} // Use index as key since disciplinaryActions may not have _id
+                            className="text-[10px] text-gray-700 bg-gray-50 w-48 rounded px-1"
+                          >
+                            {itm.description || "N/A"}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 w-full">
+                      <div className="flex flex-col gap-1 w-full ">
+                        {employee?.statusHistory?.map((itm) => (
+                          <div
+                            key={itm._id}
+                            className="text-[8px] flex flex-row text-gray-700 border-b border-gray-100 pb-1 last:border-0 w-80 gap-x-2"
+                          >
+                            {/* Second row: changed fields */}
+                            <div className="text-gray-600">
+                              {itm.changedFields?.map((field, idx) => (
+                                <span key={idx}>
+                                  {field.currentStatus.toFieldValue} {" , "}
+                                </span>
+                              )) || "No changes"}
+
+                            </div>
+                            <div className="mt-0.5">
+                              From
+                            </div>
+
+                            <div className="text-gray-500 text-[10px] mt-0.5">
+                              {itm?.approvalDate
+                                ? moment(itm.approvalDate).format("DD-MMM-YYYY hh:mm A")
+                                : "No date"}
+                            </div>
+
+
+
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+
+
+
 
                   </tr>
 
