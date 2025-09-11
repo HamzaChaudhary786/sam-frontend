@@ -887,9 +887,17 @@ const BulkAssetAssignment = () => {
                             Type: {row.asset.type || "N/A"}
                             <br />
                             Category: {row.asset.category || "N/A"}
+
+                            {!(row.asset.weaponNumber ||
+                            row.asset.registerNumber) && (
+                              <>
+
                             <br />
                             availible Quantity:
                             {row?.asset?.availableQuantity || "N/A"}
+                            </>
+                          )}
+
                           </div>
                           {(row.asset.weaponNumber ||
                             row.asset.registerNumber) && (
