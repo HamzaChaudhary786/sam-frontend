@@ -64,7 +64,7 @@ const LookupPagination = ({
   // For single page, show simple info with page size selector
   if (totalPages === 1) {
     return (
-      <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-3 bg-white border-t border-gray-200 gap-4">
+      <div className="flex flex-col fixed bottom-0 inset-x-0 shadow-md  z-50 sm:flex-row justify-between items-center px-4 py-3 bg-white border-t border-gray-200 gap-4">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">Show</span>
           <select

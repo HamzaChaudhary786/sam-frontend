@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLookupOptions } from "../../services/LookUp.js";
+import { MultiTextInput } from "../Employee/MultiTextInput.jsx";
 
 const AssetFilters = ({
   filters,
@@ -13,6 +14,7 @@ const AssetFilters = ({
     type: filters.type || "",
     status: filters.status || "",
     purchaseDate: filters.purchaseDate || "",
+    serialNumber: filters.serialNumber || [],
   });
 
   // Get lookup options for dropdowns
@@ -26,6 +28,7 @@ const AssetFilters = ({
       type: filters.type || "",
       status: filters.status || "",
       purchaseDate: filters.purchaseDate || "",
+      serialNumber: filters.serialNumber || [],
     });
   }, [filters]);
 
@@ -43,15 +46,19 @@ const AssetFilters = ({
     if (filterForm.type.trim()) activeFilters.type = filterForm.type.trim();
     if (filterForm.status.trim()) activeFilters.status = filterForm.status.trim();
     if (filterForm.purchaseDate.trim()) activeFilters.purchaseDate = filterForm.purchaseDate.trim();
+    if (Array.isArray(filterForm.serialNumber) && filterForm.serialNumber.length > 0) {
+      activeFilters.serialNumber = filterForm.serialNumber;
+    }
     updateFilters(activeFilters);
   };
 
   const handleClearFilters = () => {
-    setFilterForm({ 
-      name: "", 
-      type: "", 
-      status: "", 
-      purchaseDate: "" 
+    setFilterForm({
+      name: "",
+      type: "",
+      status: "",
+      purchaseDate: "",
+      serialNumber: [],
     });
     clearFilters();
   };
@@ -79,9 +86,8 @@ const AssetFilters = ({
             )}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 transition-transform ${
-              showFilters ? "rotate-180" : ""
-            }`}
+            className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? "rotate-180" : ""
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -98,9 +104,8 @@ const AssetFilters = ({
 
       {/* Filter Section */}
       <div
-        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
-          showFilters || window.innerWidth >= 1024 ? "block" : "hidden lg:block"
-        }`}
+        className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${showFilters || window.innerWidth >= 1024 ? "block" : "hidden lg:block"
+          }`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Filter Assets</h3>
@@ -184,6 +189,16 @@ const AssetFilters = ({
             />
           </div>
         </div>
+        <MultiTextInput
+          label="Serial Number"
+          name="serialNumber"
+          value={filterForm.serialNumber}
+          onChange={handleFilterChange}
+          placeholder="Weapon/Registration Number"
+          minLength={3}
+          maxLength={20}
+          enableSuggestions={false}
+        />
 
         {/* Filter Action Buttons - Moved below the grid */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">

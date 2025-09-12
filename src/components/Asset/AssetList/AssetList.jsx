@@ -322,7 +322,7 @@ const AssetsList = () => {
       />
 
       {/* Assets Table/Cards - Responsive */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden pb-12">
         {/* Desktop Table View - Only for screens 1200px+ */}
         <div className="hidden xl:block">
           <div className="overflow-x-auto">

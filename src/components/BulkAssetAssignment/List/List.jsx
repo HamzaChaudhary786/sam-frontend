@@ -1192,30 +1192,32 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                     </tr>
                     <tr>
                       <td
-                        colSpan={7}
-                        className="px-6 py-4 bg-gray-50 border-t border-gray-200"
+                        colSpan="100%"
+                        className="px-0 py-4 bg-gray-50 border-t border-gray-200"
                       >
-                        <div className="space-y-3">
+                        <div className="w-full space-y-3">
                           {assignment.asset?.map((itm, assetIndex) => (
                             <div
                               key={itm._id}
-                              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+                              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 w-full"
                             >
                               {/* Asset Header */}
-                              <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center justify-between mb-3 w-full">
                                 <h4 className="text-sm font-semibold text-gray-800">
                                   Asset #{assetIndex + 1}
                                 </h4>
                                 {(itm.weaponNumber || itm.registerNumber) && (
                                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                    {itm.weaponNumber ? `Weapon #: ${itm.weaponNumber}` : `Reg #: ${itm.registerNumber}`}
+                                    {itm.weaponNumber
+                                      ? `Weapon #: ${itm.weaponNumber}`
+                                      : `Reg #: ${itm.registerNumber}`}
                                   </span>
                                 )}
                               </div>
 
                               {/* Rounds Information (for weapons) */}
                               {itm.category?.toLowerCase().includes("weapon") && (
-                                <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                                <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200 w-full">
                                   <h5 className="text-xs font-semibold text-yellow-800 mb-2">
                                     Rounds Information
                                   </h5>
@@ -1246,7 +1248,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
 
                               {/* Vehicle Information */}
                               {itm.category?.toLowerCase().includes("vehicle") && (
-                                <div className="mb-3 p-3 bg-green-50 rounded-md border border-green-200">
+                                <div className="mb-3 p-3 bg-green-50 rounded-md border border-green-200 w-full">
                                   <h5 className="text-xs font-semibold text-green-800 mb-2">
                                     Vehicle Details
                                   </h5>
@@ -1263,22 +1265,14 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                     )}
                                     {itm.color && (
                                       <div>
-                                        <span className="text-green-600 font-medium">
-                                          Color:
-                                        </span>
-                                        <div className="text-gray-800">
-                                          {itm.color}
-                                        </div>
+                                        <span className="text-green-600 font-medium">Color:</span>
+                                        <div className="text-gray-800">{itm.color}</div>
                                       </div>
                                     )}
                                     {itm.make && (
                                       <div>
-                                        <span className="text-green-600 font-medium">
-                                          Make:
-                                        </span>
-                                        <div className="text-gray-800">
-                                          {itm.make}
-                                        </div>
+                                        <span className="text-green-600 font-medium">Make:</span>
+                                        <div className="text-gray-800">{itm.make}</div>
                                       </div>
                                     )}
                                     {itm.chassiNumber && (
@@ -1306,9 +1300,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                         <span className="text-green-600 font-medium">
                                           Condition:
                                         </span>
-                                        <div className="text-gray-800">
-                                          {itm.condition}
-                                        </div>
+                                        <div className="text-gray-800">{itm.condition}</div>
                                       </div>
                                     )}
                                   </div>
@@ -1334,9 +1326,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                                     )}
                                     {itm.category && (
                                       <div>
-                                        <span className="text-red-600 font-medium">
-                                          Type:
-                                        </span>
+                                        <span className="text-red-600 font-medium">Type:</span>
                                         <div className="text-gray-800">
                                           {itm.type || itm.category}
                                         </div>
@@ -1347,71 +1337,54 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
                               )}
 
                               {/* General Asset Information */}
-                              {
-                                !itm.weaponNumber && (
-                                  <>
-                                    <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                                      <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                                        General Information
-                                      </h5>
-                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                        {itm.assetStatus && (
-                                          <div>
-                                            <span className="text-gray-600 font-medium">
-                                              Status:
-                                            </span>
-                                            <div className="text-gray-800">
-                                              {itm.assetStatus || "N/A"}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {itm.cost && (
-                                          <div>
-                                            <span className="text-gray-600 font-medium">
-                                              Cost:
-                                            </span>
-                                            <div className="text-gray-800">
-                                              PKR {itm.cost}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {itm.outQuantity && (
-                                          <div>
-                                            <span className="text-gray-600 font-medium">
-                                              Issued:
-                                            </span>
-                                            <div className="text-gray-800">
-                                              {itm.outQuantity}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {
-                                          !(itm.weaponNumber ||
-                            itm.registerNumber) && (
-                                            <>
-                                              {itm.availableQuantity && (
-                                                <div>
-                                                  <span className="text-gray-600 font-medium">
-                                                    Available:
-                                                  </span>
-                                                  <div className="text-gray-800">
-                                                    {itm.availableQuantity}
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </>
-                                          )}
-
+                              {!itm.weaponNumber && (
+                                <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                                  <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                                    General Information
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    {itm.assetStatus && (
+                                      <div>
+                                        <span className="text-gray-600 font-medium">Status:</span>
+                                        <div className="text-gray-800">
+                                          {itm.assetStatus || "N/A"}
+                                        </div>
                                       </div>
-                                    </div>
-                                  </>
-                                )
-                              }
+                                    )}
+                                    {itm.cost && (
+                                      <div>
+                                        <span className="text-gray-600 font-medium">Cost:</span>
+                                        <div className="text-gray-800">PKR {itm.cost}</div>
+                                      </div>
+                                    )}
+                                    {itm.outQuantity && (
+                                      <div>
+                                        <span className="text-gray-600 font-medium">Issued:</span>
+                                        <div className="text-gray-800">{itm.outQuantity}</div>
+                                      </div>
+                                    )}
+                                    {!(
+                                      itm.weaponNumber || itm.registerNumber
+                                    ) &&
+                                      itm.availableQuantity && (
+                                        <div>
+                                          <span className="text-gray-600 font-medium">
+                                            Available:
+                                          </span>
+                                          <div className="text-gray-800">
+                                            {itm.availableQuantity}
+                                          </div>
+                                        </div>
+                                      )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       </td>
                     </tr>
+
                   </>
                 ))}
               </tbody>

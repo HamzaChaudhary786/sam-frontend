@@ -20,23 +20,23 @@ const Pagination = ({
   const getPageNumbers = () => {
     const pages = [];
     const halfRange = Math.floor(maxVisiblePages / 2);
-    
+
     let startPage = Math.max(1, currentPage - halfRange);
     let endPage = Math.min(totalPages, currentPage + halfRange);
-    
+
     // Adjust if we're near the beginning or end
     if (currentPage <= halfRange) {
       endPage = Math.min(totalPages, maxVisiblePages);
     }
-    
+
     if (currentPage + halfRange >= totalPages) {
       startPage = Math.max(1, totalPages - maxVisiblePages + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -68,8 +68,10 @@ const Pagination = ({
   const itemRange = getItemRange();
 
   return (
-    <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 py-4 ${className}`}>
-      {/* Items per page selector */}
+    <div
+      className={`fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 
+              flex flex-col sm:flex-row justify-between items-center gap-4 py-4 z-50 ${className}`}
+    >      {/* Items per page selector */}
       {showItemsPerPage && onItemsPerPageChange && (
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-700">Show</span>
@@ -145,11 +147,10 @@ const Pagination = ({
                 key={page}
                 onClick={() => handlePageChange(page)}
                 disabled={disabled}
-                className={`px-3 py-2 text-sm border rounded-md disabled:cursor-not-allowed ${
-                  page === currentPage
+                className={`px-3 py-2 text-sm border rounded-md disabled:cursor-not-allowed ${page === currentPage
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
-                }`}
+                  }`}
               >
                 {page}
               </button>

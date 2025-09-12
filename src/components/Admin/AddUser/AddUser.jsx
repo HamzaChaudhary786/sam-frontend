@@ -504,7 +504,7 @@ const UserModal = ({
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 sticky bottom-0 left-0 bg-white  py-3 border-t">
               <button
                 type="button"
                 onClick={handleClose}
