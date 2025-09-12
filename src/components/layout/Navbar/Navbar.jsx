@@ -90,13 +90,12 @@ const Navbar = () => {
   const userName = `${parsed?.firstName} ${parsed?.lastName}`;
 
   const userDistrictTehsil = () => {
-    let myType = `${userName} as ${
-      userType === "admin"
-        ? "Admin"
-        : userType === "data_entry"
+    let myType = `${userName} as ${userType === "admin"
+      ? "Admin"
+      : userType === "data_entry"
         ? "User"
         : "View Only"
-    }`;
+      }`;
 
     if (parsed?.userType === "data_entry") {
       if (parsed?.roles[0]?.tehsil) {
@@ -152,7 +151,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => {
+            navigate("/");
+          }}>
             {/* Logo */}
             <div className="flex-shrink-0">
               <div className="h-8 w-8 sm:h-10 sm:w-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -239,9 +240,8 @@ const Navbar = () => {
                 </svg>
                 <span className="hidden xs:inline">Menu</span>
                 <svg
-                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${
-                    isDropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
+                  className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${isDropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -257,11 +257,10 @@ const Navbar = () => {
 
               {/* Dropdown Menu with Animation */}
               <div
-                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${
-                  isDropdownOpen
-                    ? "opacity-100 scale-100 translate-y-0"
-                    : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-                }`}
+                className={`absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transform transition-all duration-300 ease-in-out origin-top-right ${isDropdownOpen
+                  ? "opacity-100 scale-100 translate-y-0"
+                  : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                  }`}
               >
                 {/* Dropdown Header with Close Button */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
@@ -284,13 +283,12 @@ const Navbar = () => {
                     <div>
                       <p className="text-sm font-semibold text-gray-900 capitalize">
                         {userName}
-                        {` as ${
-                          userType === "admin"
-                            ? "Admin"
-                            : userType === "data_entry"
+                        {` as ${userType === "admin"
+                          ? "Admin"
+                          : userType === "data_entry"
                             ? "User"
                             : "View Only"
-                        }`}
+                          }`}
                       </p>
                       <p className="text-xs text-gray-500 sm:hidden">
                         Last login: {lastLogin}
@@ -635,9 +633,8 @@ const Navbar = () => {
 
       {/* Mobile backdrop with animation */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${
-          isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 ${isDropdownOpen ? "opacity-25" : "opacity-0 pointer-events-none"
+          }`}
         onClick={closeDropdown}
       />
     </nav>

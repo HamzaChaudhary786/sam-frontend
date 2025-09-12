@@ -162,9 +162,8 @@ const AdminManagementPage = () => {
 
   const StatusBadge = ({ isActive }) => (
     <span
-      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-        isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-      }`}
+      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+        }`}
     >
       {isActive ? "Active" : "Inactive"}
     </span>
@@ -180,9 +179,8 @@ const AdminManagementPage = () => {
 
     return (
       <span
-        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          colors[userType] || colors.data_entry
-        }`}
+        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${colors[userType] || colors.data_entry
+          }`}
       >
         {userType?.replace("_", " ").toUpperCase() || "DATA ENTRY"}
       </span>
@@ -206,33 +204,30 @@ const AdminManagementPage = () => {
         <div className="flex border-b border-gray-200 mb-8">
           <button
             onClick={() => setActiveTab("roles")}
-            className={`flex items-center px-6 py-3 font-medium transition-colors ${
-              activeTab === "roles"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex items-center px-6 py-3 font-medium transition-colors ${activeTab === "roles"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             <Shield className="w-5 h-5 mr-2" />
-            Roles Management 
+            Roles Management
           </button>
           <button
             onClick={() => setActiveTab("groups")}
-            className={`flex items-center px-6 py-3 font-medium transition-colors ${
-              activeTab === "groups"
-                ? "text-purple-600 border-b-2 border-purple-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex items-center px-6 py-3 font-medium transition-colors ${activeTab === "groups"
+              ? "text-purple-600 border-b-2 border-purple-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             <UsersIcon className="w-5 h-5 mr-2" />
-            Groups Management 
+            Groups Management
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`flex items-center px-6 py-3 font-medium transition-colors ${
-              activeTab === "users"
-                ? "text-green-600 border-b-2 border-green-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex items-center px-6 py-3 font-medium transition-colors ${activeTab === "users"
+              ? "text-green-600 border-b-2 border-green-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             <Users className="w-5 h-5 mr-2" />
             Users Management
@@ -519,11 +514,14 @@ const AdminManagementPage = () => {
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-10">
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            N0.
+                          </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             User
                           </th>
@@ -551,11 +549,14 @@ const AdminManagementPage = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {users?.data?.map((user) => {
+                        {users?.data?.map((user, index) => {
                           const userRoles = getUserRoles(user.roles);
                           const userGroups = getUserGroups(user.group);
                           return (
                             <tr key={user._id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {(userPagination.page - 1) * userPagination.limit + (index + 1)}
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
@@ -648,7 +649,7 @@ const AdminManagementPage = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg">
+                <div className="flex fixed bottom-0 inset-x-0 shadow-md  z-50 items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6  rounded-lg">
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
                       onClick={() => goToPage(userPagination.page - 1)}
@@ -728,11 +729,10 @@ const AdminManagementPage = () => {
                               <button
                                 key={pageNum}
                                 onClick={() => goToPage(pageNum)}
-                                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                                  pageNum === userPagination.page
-                                    ? "z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                                }`}
+                                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${pageNum === userPagination.page
+                                  ? "z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  }`}
                               >
                                 {pageNum}
                               </button>

@@ -95,6 +95,7 @@ const EmployeeGridTable = ({
   // View Modal state
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editData, setEditData] = useState({});
 
   const navigate = useNavigate();
 
@@ -352,6 +353,19 @@ const EmployeeGridTable = ({
     updateFilters(backendFilters);
   };
 
+  const handleEdit = async (data) => {
+    setEditData(data);
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: data,
+      },
+    });
+  };
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
   const handleClearFilters = () => {
     clearFilters();
   };
@@ -377,10 +391,10 @@ const EmployeeGridTable = ({
     navigate("/statusassignment", { state: { employee } });
   };
 
-  const handleView = (employee) => {
-    setSelectedEmployee(employee);
-    setIsViewModalOpen(true);
-  };
+  // const handleView = (employee) => {
+  //   setSelectedEmployee(employee);
+  //   setIsViewModalOpen(true);
+  // };
 
   const handleCloseViewModal = () => {
     setIsViewModalOpen(false);
@@ -840,6 +854,8 @@ const EmployeeGridTable = ({
     return new Date(dateString).toLocaleDateString();
   };
 
+
+
   // Main render with multi-select functionality
   return (
     <div>
@@ -871,90 +887,90 @@ const EmployeeGridTable = ({
         </div>
       )}
 
-      <div class="overflow-x-auto rounded-t-xl">
-        <table class="min-w-full text-left text-sm text-gray-500 border border-gray-200">
-          <thead class="bg-[#ede8e8] text-[#000] h-12">
-            <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              {/* <th class="px-4 py-2 border border-gray-200 ">Photo</th> */}
-              <th class="px-4 py-2 border border-gray-200">
+      <div className="overflow-x-auto rounded-t-xl">
+        <table className="min-w-full text-left text-sm text-gray-500 border border-gray-200">
+          <thead className="bg-[#ede8e8] text-[#000] h-12">
+            <tr className="text-left text-xs font-medium uppercase tracking-wider">
+              {/* <th className="px-4 py-2 border border-gray-200 ">Photo</th> */}
+              <th className="px-4 py-2 border border-gray-200">
                 <div className="flex flex-col items-center gap-1 mt-5">
                   <span className="text-xs">Photo</span>
                   {renderSelectAllCheckbox()}
                 </div>
               </th>
-              <th class="px-4 py-2 border border-gray-200">Actions</th>
-              <th class="px-4 py-2 border border-gray-200">Name</th>
+              <th className="px-4 py-2 border border-gray-200">Actions</th>
+              <th className="px-4 py-2 border border-gray-200">Name</th>
 
-              <th class="px-4 py-2 border border-gray-200">Status</th>
+              <th className="px-4 py-2 border border-gray-200">Status</th>
 
-              <th class="px-4 py-2 border border-gray-200 row-span-2">
+              <th className="px-4 py-2 border border-gray-200 row-span-2">
                 Personal #
               </th>
 
-              <th class="px-4 py-2 border border-gray-200">Station</th>
+              <th className="px-4 py-2 border border-gray-200">Station</th>
 
-              <th class="px-4 py-2 border border-gray-200">Rank</th>
+              <th className="px-4 py-2 border border-gray-200">Rank</th>
 
-              <th class="px-4 py-2 border border-gray-200">Cast</th>
+              <th className="px-4 py-2 border border-gray-200">Cast</th>
 
-              <th class="px-4 py-2 border border-gray-200 row-span-2">
+              <th className="px-4 py-2 border border-gray-200 row-span-2">
                 Address
               </th>
 
-              <th class="px-4 py-2 border border-gray-200">Tehsil</th>
+              <th className="px-4 py-2 border border-gray-200">Tehsil</th>
 
-              <th class="px-4 py-2 border border-gray-200"></th>
+              <th className="px-4 py-2 border border-gray-200"></th>
 
-              <th colSpan={7} class="px-4 py-2 border border-gray-200">
+              <th colSpan={7} className="px-4 py-2 border border-gray-200">
                 Employee's
               </th>
             </tr>
-            <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              <th class="px-4 py-2 border border-gray-200"></th>
-              <th class="px-4 py-2 border border-gray-200"></th>
-              <th class="px-4 py-2 border border-gray-200">Father's Name</th>
-              <th class="px-4 py-2 border border-gray-200">Grade</th>
-              <th class="px-4 py-2 border border-gray-200">CNIC</th>
-              <th class="px-4 py-2 border border-gray-200">Mobile</th>
+            <tr className="text-left text-xs font-medium uppercase tracking-wider">
+              <th className="px-4 py-2 border border-gray-200"></th>
+              <th className="px-4 py-2 border border-gray-200"></th>
+              <th className="px-4 py-2 border border-gray-200">Father's Name</th>
+              <th className="px-4 py-2 border border-gray-200">Grade</th>
+              <th className="px-4 py-2 border border-gray-200">CNIC</th>
+              <th className="px-4 py-2 border border-gray-200">Mobile</th>
 
-              <th class="px-4 py-2 border border-gray-200">Date of Birth</th>
+              <th className="px-4 py-2 border border-gray-200">Date of Birth</th>
 
-              <th class="px-4 py-2 border border-gray-200">Designation</th>
-              <th class="px-4 py-2 border border-gray-200">Mohalla</th>
+              <th className="px-4 py-2 border border-gray-200">Designation</th>
+              <th className="px-4 py-2 border border-gray-200">Mohalla</th>
 
-              <th class="px-4 py-2 border border-gray-200">District</th>
+              <th className="px-4 py-2 border border-gray-200">District</th>
 
-              <th class="px-4 py-2 border border-gray-200">Service Type</th>
+              <th className="px-4 py-2 border border-gray-200">Service Type</th>
 
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Trainings
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Assets
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Awards
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Deductions
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Posting
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Disciplinary
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 History
               </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
+              <th rowSpan={2} className="px-4 py-2 border border-gray-200 text-center">
                 {" "}
                 Functions
               </th>
@@ -1243,6 +1259,77 @@ const EmployeeGridTable = ({
                       </div>
                     </td>
 
+                    <td className="px-2 py-2 w-80">
+                      <div className="grid grid-cols-3 gap-0.5 text-[10px] w-80">
+                        <button
+                          onClick={() => handleView(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                        >
+                          View
+                        </button>
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                              "employee" && access.canEdit === true
+                          )
+                        ) && (
+                            <button
+                              onClick={() => handleEdit(employee)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        {permissions?.userData?.roles?.some((role) =>
+                          role.accessRequirement?.some(
+                            (access) =>
+                              access.resourceName.toLowerCase() ===
+                              "employee" && access.canDelete === true
+                          )
+                        ) && (
+                            <button
+                              onClick={() => handleDelete(employee._id)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                            >
+                              Delete
+                            </button>
+                          )}
+
+                        <button
+                          onClick={() => handleAssets(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
+                        >
+                          Assets
+                        </button>
+                        <button
+                          onClick={() => handlePosting(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
+                        >
+                          Posting
+                        </button>
+                        <button
+                          onClick={() => handleStatus(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
+                        >
+                          History
+                        </button>
+
+                        <button
+                          onClick={() => handleAchievements(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition col-span-1"
+                        >
+                          Awards
+                        </button>
+                        <button
+                          onClick={() => handleDeductions(employee)}
+                          className="px-1 py-0.5 text-[10px] rounded bg-pink-100 text-pink-700 hover:bg-pink-200 transition col-span-2"
+                        >
+                          Deduction
+                        </button>
+                      </div>
+                    </td>
+
 
 
 
@@ -1296,6 +1383,12 @@ const EmployeeGridTable = ({
           </tbody>
         </table>
       </div>
+      <EmployeeViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        employee={selectedEmployee}
+        onEdit={handleEdit} // Add this line
+      />
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">

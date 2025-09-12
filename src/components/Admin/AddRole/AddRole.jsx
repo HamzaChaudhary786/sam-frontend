@@ -380,7 +380,7 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 py-3  sticky bottom-0 left-0 bg-white border-t">
               <button
                 type="button"
                 onClick={handleClose}

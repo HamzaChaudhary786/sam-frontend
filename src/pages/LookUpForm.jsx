@@ -116,13 +116,13 @@ const LookupPage = () => {
       name: Array.isArray(currentFilters.search)
         ? currentFilters.search
         : currentFilters.search
-        ? [currentFilters.search]
-        : [],
+          ? [currentFilters.search]
+          : [],
       type: Array.isArray(currentFilters.lookupType)
         ? currentFilters.lookupType
         : currentFilters.lookupType
-        ? [currentFilters.lookupType]
-        : [],
+          ? [currentFilters.lookupType]
+          : [],
     });
   }, [currentFilters]);
 
@@ -349,9 +349,8 @@ const LookupPage = () => {
               )}
             </span>
             <svg
-              className={`w-5 h-5 text-gray-500 transition-transform ${
-                showFilters ? "rotate-180" : ""
-              }`}
+              className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? "rotate-180" : ""
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -368,11 +367,10 @@ const LookupPage = () => {
 
         {/* 🆕 Enhanced Filters Section */}
         <div
-          className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${
-            showFilters || window.innerWidth >= 1024
-              ? "block"
-              : "hidden lg:block"
-          }`}
+          className={`bg-white shadow-md rounded-lg p-4 mb-6 transition-all duration-300 ${showFilters || window.innerWidth >= 1024
+            ? "block"
+            : "hidden lg:block"
+            }`}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">
@@ -519,10 +517,13 @@ const LookupPage = () => {
 
         {/* Lookups Table */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto pb-10">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    N0.
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
@@ -543,6 +544,7 @@ const LookupPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
+
                     <td colSpan="5" className="text-center py-12">
                       <div className="flex justify-center items-center">
                         <svg
@@ -614,28 +616,29 @@ const LookupPage = () => {
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
+                        {(currentPage - 1) * itemsPerPage + (index + 1)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {item.name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            filterForm.type.includes(item.lookupType)
-                              ? "bg-blue-200 text-blue-900 ring-2 ring-blue-300"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${filterForm.type.includes(item.lookupType)
+                            ? "bg-blue-200 text-blue-900 ring-2 ring-blue-300"
+                            : "bg-blue-100 text-blue-800"
+                            }`}
                         >
                           {item.lookupType}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            item.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {item.isActive ? "Active" : "Inactive"}
                         </span>
