@@ -351,7 +351,8 @@ const StationViewModal = ({ isOpen, onClose, station, onEdit }) => {
           </div>
 
           {/* Modal Footer */}
-          <div className="flex justify-end p-6 border-t border-gray-200">
+          <div className="sticky bottom-0 left-0 right-0 flex justify-end p-6 border-t border-gray-200 bg-white">
+            {" "}
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"

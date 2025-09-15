@@ -24,6 +24,8 @@ const RoleModal = ({ isOpen, onClose, onSave, editingRole, loading }) => {
     "roles",
     "lookup",
     "Audit",
+    "insert-asset",
+    "assign-asset",
   ];
 
   const permissionFields = [
