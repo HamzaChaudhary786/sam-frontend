@@ -10,14 +10,14 @@
 export function getUserAccessibleResources(userData) {
   console.log('🔍 DEBUG: Starting getUserAccessibleResources');
   console.log('📝 Input userData:', userData);
-  
+
   if (!userData?.roles) {
     console.log('❌ No roles found');
     return new Set();
   }
-  
+
   const accessibleResources = new Set();
-  
+
   const userType = userData.userType;
 
   // if (userType === "admin") {
@@ -38,7 +38,7 @@ export function getUserAccessibleResources(userData) {
 
   userData.roles.forEach(role => {
     console.log('🏷️ Processing role:', role.name);
-    
+
     if (role.accessRequirement) {
       role.accessRequirement.forEach(access => {
         console.log('📄 Checking access for:', access.resourceName);
@@ -50,14 +50,14 @@ export function getUserAccessibleResources(userData) {
           canApprove: access.canApprove,
           canPrint: access.canPrint
         });
-        
+
         // Check if user has any permission
         const hasAnyPermission = Object.entries(access)
           .filter(([key]) => key.startsWith('can'))
           .some(([, value]) => value === true);
-          
+
         console.log('✅ Has any permission:', hasAnyPermission);
-        
+
         if (hasAnyPermission) {
           const resourceName = access.resourceName.toLowerCase();
           console.log('✨ Adding resource:', resourceName);
@@ -66,7 +66,7 @@ export function getUserAccessibleResources(userData) {
       });
     }
   });
-  
+
   console.log('🎉 Final accessible resources:', Array.from(accessibleResources));
   return accessibleResources;
 }
@@ -84,11 +84,11 @@ export function hasResourceAccess(userData, resourceName) {
  * Get specific permission for a resource
  */
 export function hasPermission(userData, resourceName, permission) {
- 
+
   if (userData?.userType === 'admin') return true;
 
   if (!userData?.roles) return false;
-  
+
   for (const role of userData.roles) {
     if (role.accessRequirement) {
       for (const access of role.accessRequirement) {
@@ -112,11 +112,14 @@ export function getUserData() {
 // Resource constants
 export const RESOURCES = {
   EMPLOYEE: 'employee',
-  STATION: 'station', 
+  STATION: 'station',
   ASSET: 'asset',
   AUDIT: 'audit',
   LOOKUP: 'lookup',
-  USER: 'users' // Note: your DB uses 'users'
+  USER: 'users', // Note: your DB uses 'users'
+  INSERT_ASSET: 'insert-asset',
+  ASSIGN_ASSET: 'assign-asset'
+
 };
 
 // Permission constants

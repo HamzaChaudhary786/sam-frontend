@@ -441,6 +441,45 @@ const EmployeeGridContainer = () => {
     return item?.name || valueId;
   };
 
+  // Build a single-line summary of all assigned assets for an employee
+  const formatAssignedAssets = (employee) => {
+    try {
+      const assigned = Array.isArray(employee?.assignedAssets)
+        ? employee.assignedAssets
+        : Array.isArray(employee?.assets)
+        ? employee.assets
+        : [];
+
+      if (!assigned || assigned.length === 0) return "";
+
+      const parts = assigned
+        .map((entry) => {
+          const rawAsset = Array.isArray(entry?.asset)
+            ? entry.asset?.[0]
+            : entry?.asset || entry; // fallback if structure differs
+
+          if (!rawAsset) return null;
+
+          const name = rawAsset.name || rawAsset.assetName || "";
+          // const type = rawAsset.type || rawAsset.assetType || "";
+          // const number = rawAsset.assetNumber || rawAsset.number || rawAsset.code || "";
+
+          const labelParts = [];
+          if (name) labelParts.push(name);
+          // if (type) labelParts.push(`(${type})`);
+          // if (number) labelParts.push(`- ${number}`);
+          const label = labelParts.join(" ").trim();
+
+          return label || null;
+        })
+        .filter(Boolean);
+
+      return parts.join(" | ");
+    } catch (e) {
+      return "";
+    }
+  };
+
   const exportCSV = () => {
     try {
       const headers = [
@@ -491,6 +530,7 @@ const EmployeeGridContainer = () => {
         (e.address && e.address.muhala) || "",
         getEnumName("tehsil", e.address?.tehsil),
         getEnumName("district", e.address?.line2),
+        formatAssignedAssets(e),
       ]);
 
       const csvContent = [headers, ...rows]
@@ -566,6 +606,7 @@ const EmployeeGridContainer = () => {
             (e.address && e.address.muhala) || "",
             getEnumName("tehsil", e.address?.tehsil),
             getEnumName("district", e.address?.line2),
+            formatAssignedAssets(e),
           ];
           return `<tr>${row
             .map((c) => `<td>${String(c ?? "").replace(/</g, "&lt;")}</td>`)
