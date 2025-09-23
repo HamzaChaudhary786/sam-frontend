@@ -4,6 +4,15 @@ import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
+const getToken = () => localStorage.getItem('authToken');
+
+// Helper function to get headers with token
+const getAuthHeaders = () => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+
 const BASE_URL = `${BACKEND_URL}/group`;
 
 export const groupApi = {
@@ -12,6 +21,7 @@ export const groupApi = {
     try {
       const response = await axios.post(BASE_URL, groupData, {
         headers: {
+          ...getAuthHeaders,
           'Content-Type': 'application/json',
         },
         withCredentials: true,

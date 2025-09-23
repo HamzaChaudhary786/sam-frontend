@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { BACKEND_URL } from '../../../constants/api.js'; 
+import { BACKEND_URL } from '../../../constants/api.js';
 const API_URL = BACKEND_URL;
 
 // Helper function to get token from localStorage
@@ -15,20 +15,20 @@ const getAuthHeaders = () => {
 // Get stations from backend with full details
 export const getStationsWithDetails = async () => {
   try {
-    const response = await axios.get(`${API_URL}/stations`, {
+    const response = await axios.get(`${API_URL}/stations/allStationsWithoutPage`, {
       headers: getAuthHeaders()
     });
-    
+
     // Return both enum format and full station details
     const stationsEnum = {};
     const stationsDetails = {};
-    
+
     if (response.data.stations && Array.isArray(response.data.stations)) {
       response.data.stations.forEach(station => {
         // For dropdown enum
         const formattedName = `${station.name} ( Tehsil: ${station.tehsil}) (District: ${station.district})`;
         stationsEnum[station._id] = formattedName;
-        
+
         // For address auto-fill
         stationsDetails[station._id] = {
           id: station._id,
@@ -43,18 +43,18 @@ export const getStationsWithDetails = async () => {
         };
       });
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       data: {
         enum: stationsEnum,
         details: stationsDetails
       }
     };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Failed to fetch stations' 
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to fetch stations'
     };
   }
 };
