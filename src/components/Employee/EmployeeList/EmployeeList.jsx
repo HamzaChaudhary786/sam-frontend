@@ -26,7 +26,7 @@ const EmployeeList = ({
 }) => {
   const {
     employees,
-    loading,
+    loading: tableLoading,
     error,
     removeEmployee,
     updateFilters,
@@ -156,7 +156,6 @@ const EmployeeList = ({
     setSelectedEmployeesForStatus([]);
   };
   function handleMultiAsset(selectedEmployeeObjects) {
-
     setSelectedEmployeesForAsset(selectedEmployeeObjects);
     setIsMultiAssetModalOpen(true);
   }
@@ -179,7 +178,7 @@ const EmployeeList = ({
     employees: safeEmployees,
     isAdmin,
     removeEmployee,
-    loading,
+    loading: tableLoading,
     onMultiPosting: handleMultiPosting, // Add this line!
     onMultiDeduction: handleMultiDeduction, // Add this line!
     onMultiAchievement: handleMultiAchievement, // ✅ Add this line!
@@ -292,8 +291,8 @@ const EmployeeList = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-        ? 1
-        : 0;
+      ? 1
+      : 0;
   };
 
   // Image navigation functions
@@ -330,7 +329,6 @@ const EmployeeList = ({
     }
 
     try {
-
       // The hook function expects just the string ID and returns a result object
       const result = await removeEmployee(id.trim());
 
@@ -422,14 +420,13 @@ const EmployeeList = ({
     changePageSize(pageSize);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
+  // if (loading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-64">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className={compactView ? "p-0" : "p-3 sm:p-6 lg:p-0"}>
@@ -464,13 +461,13 @@ const EmployeeList = ({
                     access.canAdd === true
                 )
               ) && (
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
-                    onClick={handleAddEmployee}
-                  >
-                    Add Employee
-                  </button>
-                )}
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
+                  onClick={handleAddEmployee}
+                >
+                  Add Employee
+                </button>
+              )}
               {permissions?.hasStationAccess && (
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium flex items-center justify-center text-sm"
@@ -536,486 +533,499 @@ const EmployeeList = ({
 
       {/* Employee Table/Cards - Responsive */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Desktop Table View - Only for screens 1200px+ */}
-        <div className="hidden xl:block">
-          <div className="w-full">
-            <table className="w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-gray-50">
-                <tr>
-
-                  {!compactView && (
-                    <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
-                      {multiSelect.renderSelectAllCheckbox()}
-                    </th>
-                  )}
-                  <th
-                    className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8"
-                  >
-                    N0.
-                  </th>
-
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[30%]">
-                    Employee
-                  </th>
-                  <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[18%]">
-                    Info
-                  </th>
-                  <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[17%]">
-                    Assets
-                  </th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[28%]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {safeEmployees.map((employee, index) => {
-                  const currentImageIndex = imageIndexes[employee._id] || 0;
-                  const totalImages = getImageCount(employee);
-                  const currentImage = getEmployeeImage(
-                    employee,
-                    currentImageIndex
-                  );
-                  const isStationIncharge =
-                    employee.stations?.stationIncharge?.some(
-                      (incharge) => incharge.employee === employee._id
-                    );
-                  const isMallkhanaIncharge = employee.assignedAssets?.some(
-                    (asset) => asset.asset[0]?.mallkhana !== null
-                  );
-                  const hasAward = employee.assignedAwards?.some(
-                    (award) => award.isMonitor === true
-                  );
-                  // const hasDisciplinary = employee.disciplinaryActions?.some(
-                  //   (dis) => dis.isDisciplinaryAction === true
-                  // );
-                  const disciplinaryObjects =
-                    employee?.disciplinaryActions?.filter(
-                      (dis) => dis.isDisciplinaryAction === true
-                    ) || [];
-
-
-
-
-                  return (
-                    <tr
-                      key={employee._id}
-                      className={`hover:bg-gray-50 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                        }`}
-                    >
-
+        {tableLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <>
+            <div className="hidden xl:block">
+              <div className="w-full">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
+                  <thead className="bg-gray-50">
+                    <tr>
                       {!compactView && (
-                        <td className="px-1 py-2">
-                          {multiSelect.renderEmployeeCheckbox(employee)}
-
-                        </td>
+                        <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
+                          {multiSelect.renderSelectAllCheckbox()}
+                        </th>
                       )}
-                      <td className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8"
-                      >
-                        {index}
-                      </td>
+                      <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
+                        N0.
+                      </th>
 
-                      {/* Employee Info Column - Ultra Compact */}
-                      <td className="px-2 py-2">
-                        <div className="flex items-center gap-1">
-                          <div className="h-6 w-6 flex-shrink-0 relative">
-                            <img
-                              className="w-6 h-6 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                              src={currentImage}
-                              alt={`${employee.firstName} ${employee.lastName}`}
-                              onClick={() =>
-                                setImageModal({ image: currentImage, employee })
-                              }
-                            />
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[30%]">
+                        Employee
+                      </th>
+                      <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[18%]">
+                        Info
+                      </th>
+                      <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[17%]">
+                        Assets
+                      </th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-[28%]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {safeEmployees.map((employee, index) => {
+                      const currentImageIndex = imageIndexes[employee._id] || 0;
+                      const totalImages = getImageCount(employee);
+                      const currentImage = getEmployeeImage(
+                        employee,
+                        currentImageIndex
+                      );
+                      const isStationIncharge =
+                        employee.stations?.stationIncharge?.some(
+                          (incharge) => incharge.employee === employee._id
+                        );
+                      const isMallkhanaIncharge = employee.assignedAssets?.some(
+                        (asset) => asset.asset[0]?.mallkhana !== null
+                      );
+                      const hasAward = employee.assignedAwards?.some(
+                        (award) => award.isMonitor === true
+                      );
+                      // const hasDisciplinary = employee.disciplinaryActions?.some(
+                      //   (dis) => dis.isDisciplinaryAction === true
+                      // );
+                      const disciplinaryObjects =
+                        employee?.disciplinaryActions?.filter(
+                          (dis) => dis.isDisciplinaryAction === true
+                        ) || [];
 
-                            {/* Navigation arrows for multiple images */}
-                            {totalImages > 1 && (
-                              <>
-                                <button
+                      return (
+                        <tr
+                          key={employee._id}
+                          className={`hover:bg-gray-50 ${
+                            multiSelect.isSelected(employee._id)
+                              ? "bg-blue-50"
+                              : ""
+                          }`}
+                        >
+                          {!compactView && (
+                            <td className="px-1 py-2">
+                              {multiSelect.renderEmployeeCheckbox(employee)}
+                            </td>
+                          )}
+                          <td className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-tight w-8">
+                            {index}
+                          </td>
+
+                          {/* Employee Info Column - Ultra Compact */}
+                          <td className="px-2 py-2">
+                            <div className="flex items-center gap-1">
+                              <div className="h-6 w-6 flex-shrink-0 relative">
+                                <img
+                                  className="w-6 h-6 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                  src={currentImage}
+                                  alt={`${employee.firstName} ${employee.lastName}`}
                                   onClick={() =>
-                                    handlePrevImage(employee._id, totalImages)
+                                    setImageModal({
+                                      image: currentImage,
+                                      employee,
+                                    })
                                   }
-                                  className="absolute -left-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
+                                />
+
+                                {/* Navigation arrows for multiple images */}
+                                {totalImages > 1 && (
+                                  <>
+                                    <button
+                                      onClick={() =>
+                                        handlePrevImage(
+                                          employee._id,
+                                          totalImages
+                                        )
+                                      }
+                                      className="absolute -left-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
+                                    >
+                                      ‹
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleNextImage(
+                                          employee._id,
+                                          totalImages
+                                        )
+                                      }
+                                      className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
+                                    >
+                                      ›
+                                    </button>
+                                    <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-0.5 rounded-full text-[6px]">
+                                      {currentImageIndex + 1}/{totalImages}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div
+                                  className="text-xs font-medium text-gray-900 truncate"
+                                  onClick={() => handleView(employee)}
                                 >
-                                  ‹
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleNextImage(employee._id, totalImages)
-                                  }
-                                  className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 bg-white rounded-full text-[8px] shadow-sm hover:bg-gray-100 transition-colors w-3 h-3 flex items-center justify-center"
-                                >
-                                  ›
-                                </button>
-                                <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-0.5 rounded-full text-[6px]">
-                                  {currentImageIndex + 1}/{totalImages}
+                                  {employee.firstName} {employee.lastName}
                                 </div>
-                              </>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
+                                <div className="text-xs font-medium text-gray-700 truncate">
+                                  {employee.fatherFirstName}
+                                </div>
+                                <div className="text-[10px] text-gray-500 truncate">
+                                  {employee.personalNumber || employee.pnumber}
+                                </div>
+                                <div className="text-[10px] text-gray-500 truncate">
+                                  {getDesignationName(employee.designation)}
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {isStationIncharge && (
+                                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                                      Station Incharge
+                                    </span>
+                                  )}
+                                  {isMallkhanaIncharge && (
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                                      Mallkhana Incharge
+                                    </span>
+                                  )}
+                                  {hasAward && (
+                                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                      Award
+                                    </span>
+                                  )}
+                                  {disciplinaryObjects.length > 0 &&
+                                    disciplinaryObjects[0]?.description && (
+                                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                                        {disciplinaryObjects[0].description}
+                                      </span>
+                                    )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Information Column - Ultra Compact */}
+                          <td className="px-1 py-2">
                             <div
-                              className="text-xs font-medium text-gray-900 truncate"
-                              onClick={() => handleView(employee)}
+                              className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${
+                                employee.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : employee.status === "retired"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : employee.status === "terminated"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
                             >
-                              {employee.firstName} {employee.lastName}
+                              {employee.status}
                             </div>
-                            <div className="text-xs font-medium text-gray-700 truncate">
+                            <div className="text-xs text-gray-500 truncate">
+                              {employee.mobileNumber}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {employee.address?.tehsil || "N/A"}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {employee.serviceType || "N/A"}
+                            </div>
+                          </td>
+
+                          {/* Assets Column - Ultra Compact */}
+                          <td className="px-1 py-2">
+                            <div className="text-xs text-gray-900">
+                              <div className="break-words line-clamp-2 overflow-hidden">
+                                employee asset
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Employee Actions Column - Ultra Compact Grid */}
+                          <td className="px-2 py-2">
+                            <div className="grid grid-cols-3 gap-0.5 text-[10px]">
+                              <button
+                                onClick={() => handleView(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                              >
+                                View
+                              </button>
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                      "employee" && access.canEdit === true
+                                )
+                              ) && (
+                                <button
+                                  onClick={() => handleEdit(employee)}
+                                  className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                                >
+                                  Edit
+                                </button>
+                              )}
+                              {permissions?.userData?.roles?.some((role) =>
+                                role.accessRequirement?.some(
+                                  (access) =>
+                                    access.resourceName.toLowerCase() ===
+                                      "employee" && access.canDelete === true
+                                )
+                              ) && (
+                                <button
+                                  onClick={() => handleDelete(employee._id)}
+                                  className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                                >
+                                  Delete
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleAssets(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
+                              >
+                                Assets
+                              </button>
+                              <button
+                                onClick={() => handlePosting(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
+                              >
+                                Posting
+                              </button>
+                              <button
+                                onClick={() => handleStatus(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
+                              >
+                                History
+                              </button>
+
+                              <button
+                                onClick={() => handleAchievements(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition col-span-1"
+                              >
+                                Awards
+                              </button>
+                              <button
+                                onClick={() => handleDeductions(employee)}
+                                className="px-1 py-0.5 text-[10px] rounded bg-pink-100 text-pink-700 hover:bg-pink-200 transition col-span-2"
+                              >
+                                Deduction
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile/Tablet Card View - For screens under 1200px */}
+            <div className="xl:hidden">
+              {safeEmployees.map((employee) => {
+                const currentImageIndex = imageIndexes[employee._id] || 0;
+                const totalImages = getImageCount(employee);
+                const currentImage = getEmployeeImage(
+                  employee,
+                  currentImageIndex
+                );
+
+                return (
+                  <div
+                    key={employee._id}
+                    className={`border-b border-gray-200 p-4 ${
+                      multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      {/* Using the component's render function */}
+                      {!compactView &&
+                        multiSelect.renderEmployeeCheckbox(employee)}
+                      <div className="flex-shrink-0 relative">
+                        <img
+                          className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          src={currentImage}
+                          alt={`${employee.firstName} ${employee.lastName}`}
+                          onClick={() =>
+                            setImageModal({ image: currentImage, employee })
+                          }
+                        />
+
+                        {/* Navigation arrows for mobile */}
+                        {totalImages > 1 && (
+                          <>
+                            <button
+                              onClick={() =>
+                                handlePrevImage(employee._id, totalImages)
+                              }
+                              className="absolute -left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
+                              style={{ fontSize: "10px" }}
+                            >
+                              ‹
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleNextImage(employee._id, totalImages)
+                              }
+                              className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
+                              style={{ fontSize: "10px" }}
+                            >
+                              ›
+                            </button>
+                            <div
+                              className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
+                              style={{ fontSize: "8px" }}
+                            >
+                              {currentImageIndex + 1}/{totalImages}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3
+                            className="text-sm font-medium text-gray-900 truncate"
+                            onClick={() => handleView(employee)}
+                          >
+                            {employee.firstName}
+                            <h3 className="text-sm font-medium text-gray-900 truncate">
                               {employee.fatherFirstName}
-                            </div>
-                            <div className="text-[10px] text-gray-500 truncate">
-                              {employee.personalNumber || employee.pnumber}
-                            </div>
-                            <div className="text-[10px] text-gray-500 truncate">
-                              {getDesignationName(employee.designation)}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {isStationIncharge && (
-                                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                                  Station Incharge
-                                </span>
-                              )}
-                              {isMallkhanaIncharge && (
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
-                                  Mallkhana Incharge
-                                </span>
-                              )}
-                              {hasAward && (
-                                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
-                                  Award
-                                </span>
-                              )}
-                              {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
-                                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
-                                  {disciplinaryObjects[0].description}
-                                </span>
-                              )}
-
-                            </div>
-                          </div>
-
-                        </div>
-                      </td>
-
-                      {/* Information Column - Ultra Compact */}
-                      <td className="px-1 py-2">
-                        <div
-                          className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded mb-0.5 ${employee.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : employee.status === "retired"
-                              ? "bg-blue-100 text-blue-800"
-                              : employee.status === "terminated"
+                            </h3>
+                          </h3>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              employee.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : employee.status === "retired"
+                                ? "bg-blue-100 text-blue-800"
+                                : employee.status === "terminated"
                                 ? "bg-red-100 text-red-800"
                                 : "bg-gray-100 text-gray-800"
                             }`}
-                        >
-                          {employee.status}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {employee.mobileNumber}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {employee.address?.tehsil || "N/A"}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {employee.serviceType || "N/A"}
-                        </div>
-                      </td>
-
-                      {/* Assets Column - Ultra Compact */}
-                      <td className="px-1 py-2">
-                        <div className="text-xs text-gray-900">
-
-                          <div className="break-words line-clamp-2 overflow-hidden">
-                            employee asset
-                          </div>
-
-                        </div>
-                      </td>
-
-                      {/* Employee Actions Column - Ultra Compact Grid */}
-                      <td className="px-2 py-2">
-                        <div className="grid grid-cols-3 gap-0.5 text-[10px]">
-                          <button
-                            onClick={() => handleView(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
                           >
-                            View
-                          </button>
-                          {permissions?.userData?.roles?.some((role) =>
-                            role.accessRequirement?.some(
-                              (access) =>
-                                access.resourceName.toLowerCase() ===
-                                "employee" && access.canEdit === true
-                            )
-                          ) && (
+                            {employee.status}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 space-y-1">
+                          <p className="text-xs text-gray-500">
+                            {employee.personalNumber || employee.pnumber} |{" "}
+                            {employee.srnumber}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            CNIC: {employee.cnic}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {employee.mobileNumber}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {employee.address?.line1 || "N/A"},{" "}
+                            {employee.address?.city || "N/A"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {getDesignationName(employee.designation)} - Grade:{" "}
+                            {getGradeName(employee.grade)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Service: {employee.serviceType || "N/A"} - Cast:{" "}
+                            {employee.cast?.name || "N/A"}
+                          </p>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          <span className="font-medium">Assets: </span>
+
+                          <span>Employee asset</span>
+                        </div>
+
+                        {/* Mobile Action Buttons - Stacked vertically in columns */}
+                        <div className="mt-3">
+                          {/* Primary Actions Row */}
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button
+                              onClick={() => handleView(employee)}
+                              className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-center"
+                            >
+                              View
+                            </button>
+
+                            {permissions?.userData?.roles?.some((role) =>
+                              role.accessRequirement?.some(
+                                (access) =>
+                                  access.resourceName.toLowerCase() ===
+                                    "employee" && access.canEdit === true
+                              )
+                            ) && (
                               <button
                                 onClick={() => handleEdit(employee)}
-                                className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
                               >
                                 Edit
                               </button>
                             )}
-                          {permissions?.userData?.roles?.some((role) =>
-                            role.accessRequirement?.some(
-                              (access) =>
-                                access.resourceName.toLowerCase() ===
-                                "employee" && access.canDelete === true
-                            )
-                          ) && (
+                          </div>
+
+                          {/* Secondary Actions Row */}
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button
+                              onClick={() => handleAssets(employee)}
+                              className="px-3 py-1 text-xs bg-cyan-100 text-cyan-700 rounded-md hover:bg-cyan-200 text-center"
+                            >
+                              Assets
+                            </button>
+                            <button
+                              onClick={() => handlePosting(employee)}
+                              className="px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 text-center"
+                            >
+                              Posting
+                            </button>
+                          </div>
+
+                          {/* Third Actions Row */}
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button
+                              onClick={() => handleStatus(employee)}
+                              className="px-3 py-1 text-xs bg-teal-100 text-teal-700 rounded-md hover:bg-teal-200 text-center"
+                            >
+                              History
+                            </button>
+                            <button
+                              onClick={() => handleAchievements(employee)}
+                              className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 text-center"
+                            >
+                              Achievements
+                            </button>
+                          </div>
+
+                          {/* Fourth Actions Row */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => handleDeductions(employee)}
+                              className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-md hover:bg-pink-200 text-center"
+                            >
+                              Deductions
+                            </button>
+
+                            {permissions?.userData?.roles?.some((role) =>
+                              role.accessRequirement?.some(
+                                (access) =>
+                                  access.resourceName.toLowerCase() ===
+                                    "employee" && access.canDelete === true
+                              )
+                            ) && (
                               <button
                                 onClick={() => handleDelete(employee._id)}
-                                className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+                                className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
                               >
                                 Delete
                               </button>
                             )}
-
-                          <button
-                            onClick={() => handleAssets(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
-                          >
-                            Assets
-                          </button>
-                          <button
-                            onClick={() => handlePosting(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
-                          >
-                            Posting
-                          </button>
-                          <button
-                            onClick={() => handleStatus(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
-                          >
-                            History
-                          </button>
-
-                          <button
-                            onClick={() => handleAchievements(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition col-span-1"
-                          >
-                            Awards
-                          </button>
-                          <button
-                            onClick={() => handleDeductions(employee)}
-                            className="px-1 py-0.5 text-[10px] rounded bg-pink-100 text-pink-700 hover:bg-pink-200 transition col-span-2"
-                          >
-                            Deduction
-                          </button>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Mobile/Tablet Card View - For screens under 1200px */}
-        <div className="xl:hidden">
-          {safeEmployees.map((employee) => {
-            const currentImageIndex = imageIndexes[employee._id] || 0;
-            const totalImages = getImageCount(employee);
-            const currentImage = getEmployeeImage(employee, currentImageIndex);
-
-            return (
-              <div
-                key={employee._id}
-                className={`border-b border-gray-200 p-4 ${multiSelect.isSelected(employee._id) ? "bg-blue-50" : ""
-                  }`}
-              >
-                <div className="flex items-start space-x-3">
-                  {/* Using the component's render function */}
-                  {!compactView && multiSelect.renderEmployeeCheckbox(employee)}
-                  <div className="flex-shrink-0 relative">
-                    <img
-                      className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                      src={currentImage}
-                      alt={`${employee.firstName} ${employee.lastName}`}
-                      onClick={() =>
-                        setImageModal({ image: currentImage, employee })
-                      }
-                    />
-
-                    {/* Navigation arrows for mobile */}
-                    {totalImages > 1 && (
-                      <>
-                        <button
-                          onClick={() =>
-                            handlePrevImage(employee._id, totalImages)
-                          }
-                          className="absolute -left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
-                          style={{ fontSize: "10px" }}
-                        >
-                          ‹
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleNextImage(employee._id, totalImages)
-                          }
-                          className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
-                          style={{ fontSize: "10px" }}
-                        >
-                          ›
-                        </button>
-                        <div
-                          className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-1 rounded-full"
-                          style={{ fontSize: "8px" }}
-                        >
-                          {currentImageIndex + 1}/{totalImages}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3
-                        className="text-sm font-medium text-gray-900 truncate"
-                        onClick={() => handleView(employee)}
-                      >
-                        {employee.firstName}
-                        <h3 className="text-sm font-medium text-gray-900 truncate">
-                          {employee.fatherFirstName}
-                        </h3>
-                      </h3>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : employee.status === "retired"
-                            ? "bg-blue-100 text-blue-800"
-                            : employee.status === "terminated"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                      >
-                        {employee.status}
-                      </span>
-                    </div>
-
-                    <div className="mt-1 space-y-1">
-                      <p className="text-xs text-gray-500">
-                        {employee.personalNumber || employee.pnumber} |{" "}
-                        {employee.srnumber}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        CNIC: {employee.cnic}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {employee.mobileNumber}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {employee.address?.line1 || "N/A"},{" "}
-                        {employee.address?.city || "N/A"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {getDesignationName(employee.designation)} - Grade:{" "}
-                        {getGradeName(employee.grade)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Service: {employee.serviceType || "N/A"} - Cast:{" "}
-                        {employee.cast?.name || "N/A"}
-                      </p>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      <span className="font-medium">Assets: </span>
-
-                      <span>Employee asset</span>
-
-                    </div>
-
-                    {/* Mobile Action Buttons - Stacked vertically in columns */}
-                    <div className="mt-3">
-                      {/* Primary Actions Row */}
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        <button
-                          onClick={() => handleView(employee)}
-                          className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-center"
-                        >
-                          View
-                        </button>
-
-                        {permissions?.userData?.roles?.some((role) =>
-                          role.accessRequirement?.some(
-                            (access) =>
-                              access.resourceName.toLowerCase() ===
-                              "employee" && access.canEdit === true
-                          )
-                        ) && (
-                            <button
-                              onClick={() => handleEdit(employee)}
-                              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-center"
-                            >
-                              Edit
-                            </button>
-                          )}
-                      </div>
-
-                      {/* Secondary Actions Row */}
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        <button
-                          onClick={() => handleAssets(employee)}
-                          className="px-3 py-1 text-xs bg-cyan-100 text-cyan-700 rounded-md hover:bg-cyan-200 text-center"
-                        >
-                          Assets
-                        </button>
-                        <button
-                          onClick={() => handlePosting(employee)}
-                          className="px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 text-center"
-                        >
-                          Posting
-                        </button>
-                      </div>
-
-                      {/* Third Actions Row */}
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        <button
-                          onClick={() => handleStatus(employee)}
-                          className="px-3 py-1 text-xs bg-teal-100 text-teal-700 rounded-md hover:bg-teal-200 text-center"
-                        >
-                          History
-                        </button>
-                        <button
-                          onClick={() => handleAchievements(employee)}
-                          className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 text-center"
-                        >
-                          Achievements
-                        </button>
-                      </div>
-
-                      {/* Fourth Actions Row */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => handleDeductions(employee)}
-                          className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-md hover:bg-pink-200 text-center"
-                        >
-                          Deductions
-                        </button>
-
-                        {permissions?.userData?.roles?.some((role) =>
-                          role.accessRequirement?.some(
-                            (access) =>
-                              access.resourceName.toLowerCase() ===
-                              "employee" && access.canDelete === true
-                          )
-                        ) && (
-                            <button
-                              onClick={() => handleDelete(employee._id)}
-                              className=" px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-center"
-                            >
-                              Delete
-                            </button>
-                          )}
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
-        {safeEmployees.length === 0 && !loading && (
+        {safeEmployees.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">No employees found</p>
           </div>
@@ -1066,7 +1076,6 @@ const EmployeeList = ({
             pageSizeOptions={[500, 10, 20, 50, 100, 200, 5]}
           />
         </div>
-
       ) : (
         // Simplified pagination for embedded view
         safeEmployees.length > 0 && (
