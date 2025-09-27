@@ -11,6 +11,7 @@ import MultiSalaryDeductionForm from "../../Employee/Multisalarydeductin.jsx";
 import MultiAchievementForm from "../../Employee/MultiAchievement.jsx";
 import MultiStatusAssignmentForm from "../../Employee/MultiStatus.jsx";
 import MultiAssetAssignmentForm from "../../Employee/MultiAsset.jsx";
+import moment from "moment";
 
 import { toast } from "react-toastify";
 import { usePermissions } from "../../../hook/usePermission.js";
@@ -87,20 +88,19 @@ const EmployeeGridTable = ({
         if (res?.success) {
           setTrainingEnum(res.data || {});
         }
-      } catch (_) { }
+      } catch (_) {}
     })();
   }, []);
 
   // View Modal state
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editData, setEditData] = useState({});
 
   const navigate = useNavigate();
 
   // Safety check for employees
   const safeEmployees = Array.isArray(employees) ? employees : [];
-
-  
 
   function handleMultiPosting(selectedEmployeeObjects) {
     alert(`Multi-posting for ${selectedEmployeeObjects.length} employees!`); // Temporary for testing
@@ -243,8 +243,8 @@ const EmployeeGridTable = ({
     return Array.isArray(employee.profileUrl)
       ? employee.profileUrl.length
       : employee.profileUrl
-        ? 1
-        : 0;
+      ? 1
+      : 0;
   };
 
   const getNestedValue = (employee, fieldPath, editingData) => {
@@ -343,14 +343,27 @@ const EmployeeGridTable = ({
     if (filters.serialNumber && filters.serialNumber.length > 0)
       backendFilters.serialNumber = filters.serialNumber;
 
-    if (filters.fromDOB && filters.fromDOB.trim() !== '')
+    if (filters.fromDOB && filters.fromDOB.trim() !== "")
       backendFilters.fromDOB = filters.fromDOB;
-    if (filters.toDOB && filters.toDOB.trim() !== '')
+    if (filters.toDOB && filters.toDOB.trim() !== "")
       backendFilters.toDOB = filters.toDOB;
 
     updateFilters(backendFilters);
   };
 
+  const handleEdit = async (data) => {
+    setEditData(data);
+    navigate("/employee", {
+      state: {
+        isEdit: true,
+        editData: data,
+      },
+    });
+  };
+  const handleView = (employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
   const handleClearFilters = () => {
     clearFilters();
   };
@@ -376,10 +389,10 @@ const EmployeeGridTable = ({
     navigate("/statusassignment", { state: { employee } });
   };
 
-  const handleView = (employee) => {
-    setSelectedEmployee(employee);
-    setIsViewModalOpen(true);
-  };
+  // const handleView = (employee) => {
+  //   setSelectedEmployee(employee);
+  //   setIsViewModalOpen(true);
+  // };
 
   const handleCloseViewModal = () => {
     setIsViewModalOpen(false);
@@ -513,7 +526,9 @@ const EmployeeGridTable = ({
             name={fieldKey}
             value={currentArray}
             onChange={(e) => {
-              const next = Array.isArray(e?.target?.value) ? e.target.value : [];
+              const next = Array.isArray(e?.target?.value)
+                ? e.target.value
+                : [];
               onCellChange(fieldKey, next);
             }}
             enumObject={trainingEnum}
@@ -563,8 +578,9 @@ const EmployeeGridTable = ({
 
           return (
             <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[value] || statusClasses.default
-                }`}
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                statusClasses[value] || statusClasses.default
+              }`}
             >
               {displayName}
             </span>
@@ -612,16 +628,17 @@ const EmployeeGridTable = ({
       currentValue = employee[fieldKey];
     }
 
-    const cellClasses = `p-1 rounded min-h-6 flex items-center ${isAdmin && isEditable
-      ? "cursor-pointer hover:bg-gray-100"
-      : "cursor-default"
-      }`;
+    const cellClasses = `p-1 rounded min-h-6 flex items-center ${
+      isAdmin && isEditable
+        ? "cursor-pointer hover:bg-gray-100"
+        : "cursor-default"
+    }`;
 
     const titleText = !isAdmin
       ? "Read-only"
       : !isEditable
-        ? "Click Edit button to enable editing"
-        : "Double-click to edit";
+      ? "Click Edit button to enable editing"
+      : "Double-click to edit";
 
     return (
       <>
@@ -801,13 +818,13 @@ const EmployeeGridTable = ({
   );
 
   // Show loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-64">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
 
   // Show error state
   if (error) {
@@ -870,153 +887,168 @@ const EmployeeGridTable = ({
         </div>
       )}
 
-      <div class="overflow-x-auto rounded-t-xl">
-        <table class="min-w-full text-left text-sm text-gray-500 border border-gray-200">
-          <thead class="bg-[#ede8e8] text-[#000] h-12">
-            <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              {/* <th class="px-4 py-2 border border-gray-200 ">Photo</th> */}
-              <th class="px-4 py-2 border border-gray-200">
-                <div className="flex flex-col items-center gap-1 mt-5">
-                  <span className="text-xs">Photo</span>
-                  {renderSelectAllCheckbox()}
-                </div>
-              </th>
-              <th class="px-4 py-2 border border-gray-200">Actions</th>
-              <th class="px-4 py-2 border border-gray-200">Name</th>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto rounded-t-xl scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 mb-16">
+          <table className="min-w-[2800px] text-left text-sm text-gray-500 border border-gray-200 ">
+            <thead className="bg-[#ede8e8] text-[#000] h-12">
+              <tr className="text-left text-xs font-medium uppercase tracking-wider">
+                {/* <th className="px-4 py-2 border border-gray-200 ">Photo</th> */}
+                <th className="px-4 py-2 border border-gray-200">
+                  <div className="flex flex-col items-center gap-1 mt-5">
+                    <span className="text-xs">Photo</span>
+                    {renderSelectAllCheckbox()}
+                  </div>
+                </th>
+                <th className="px-4 py-2 border border-gray-200">Actions</th>
+                <th className="px-4 py-2 border border-gray-200">Name</th>
 
-              <th class="px-4 py-2 border border-gray-200">Status</th>
+                <th className="px-4 py-2 border border-gray-200">Status</th>
 
-              <th class="px-4 py-2 border border-gray-200 row-span-2">
-                Personal #
-              </th>
+                <th className="px-4 py-2 border border-gray-200 row-span-2">
+                  Personal #
+                </th>
 
-              <th class="px-4 py-2 border border-gray-200">Station</th>
+                <th className="px-4 py-2 border border-gray-200">Station</th>
 
-              <th class="px-4 py-2 border border-gray-200">Rank</th>
+                <th className="px-4 py-2 border border-gray-200">Rank</th>
 
-              <th class="px-4 py-2 border border-gray-200">Cast</th>
+                <th className="px-4 py-2 border border-gray-200">Cast</th>
 
-              <th class="px-4 py-2 border border-gray-200 row-span-2">
-                Address
-              </th>
+                <th className="px-4 py-2 border border-gray-200 row-span-2">
+                  Address
+                </th>
 
-              <th class="px-4 py-2 border border-gray-200">Tehsil</th>
+                <th className="px-4 py-2 border border-gray-200">Tehsil</th>
 
-              <th class="px-4 py-2 border border-gray-200"></th>
+                <th className="px-4 py-2 border border-gray-200"></th>
 
-              <th colSpan={7} class="px-4 py-2 border border-gray-200">
-                Employee's
-              </th>
-            </tr>
-            <tr class="text-left text-xs font-medium uppercase tracking-wider">
-              <th class="px-4 py-2 border border-gray-200"></th>
-              <th class="px-4 py-2 border border-gray-200"></th>
-              <th class="px-4 py-2 border border-gray-200">Father's Name</th>
-              <th class="px-4 py-2 border border-gray-200">Grade</th>
-              <th class="px-4 py-2 border border-gray-200">CNIC</th>
-              <th class="px-4 py-2 border border-gray-200">Mobile</th>
+                <th colSpan={7} className="px-4 py-2 border border-gray-200">
+                  Employee's
+                </th>
+              </tr>
+              <tr className="text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-4 py-2 border border-gray-200"></th>
+                <th className="px-4 py-2 border border-gray-200"></th>
+                <th className="px-4 py-2 border border-gray-200">
+                  Father's Name
+                </th>
+                <th className="px-4 py-2 border border-gray-200">Grade</th>
+                <th className="px-4 py-2 border border-gray-200">CNIC</th>
+                <th className="px-4 py-2 border border-gray-200">Mobile</th>
 
-              <th class="px-4 py-2 border border-gray-200">Date of Birth</th>
+                <th className="px-4 py-2 border border-gray-200">
+                  Date of Birth
+                </th>
 
-              <th class="px-4 py-2 border border-gray-200">Designation</th>
-              <th class="px-4 py-2 border border-gray-200">Mohalla</th>
+                <th className="px-4 py-2 border border-gray-200">
+                  Designation
+                </th>
+                <th className="px-4 py-2 border border-gray-200">Mohalla</th>
 
-              <th class="px-4 py-2 border border-gray-200">District</th>
+                <th className="px-4 py-2 border border-gray-200">District</th>
 
-              <th class="px-4 py-2 border border-gray-200">Service Type</th>
+                <th className="px-4 py-2 border border-gray-200">
+                  Service Type
+                </th>
 
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Trainings
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Assets
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Awards
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Deductions
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Posting
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Disciplinary
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                History
-              </th>
-              <th class="px-4 py-2 border border-gray-200 text-center">
-                {" "}
-                Functions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Employee Rows - Updated with checkboxes */}
-            {safeEmployees?.map((employee) => {
-              const isEditing = editingCell?.rowId === employee._id;
-              const isEditable = editableEmployees.has(employee._id);
-              const isStationIncharge =
-                employee.stations?.stationIncharge?.some(
-                  (incharge) => incharge.employee === employee._id
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Trainings
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Assets
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Awards
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Deductions
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Posting
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  Disciplinary
+                </th>
+                <th className="px-4 py-2 border border-gray-200 text-center">
+                  History
+                </th>
+                <th
+                  rowSpan={2}
+                  className="px-4 py-2 border border-gray-200 text-center"
+                >
+                  Functions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Employee Rows - Updated with checkboxes */}
+              {safeEmployees?.map((employee, index) => {
+                const isEditing = editingCell?.rowId === employee._id;
+                const isEditable = editableEmployees.has(employee._id);
+                const isStationIncharge =
+                  employee.stations?.stationIncharge?.some(
+                    (incharge) => incharge.employee === employee._id
+                  );
+                const isMallkhanaIncharge = employee.assignedAssets?.some(
+                  (asset) => asset.asset[0]?.mallkhana !== null
                 );
-              const isMallkhanaIncharge = employee.assignedAssets?.some(
-                (asset) => asset.asset[0]?.mallkhana !== null
-              );
-              const hasAward = employee.assignedAwards?.some(
-                (award) => award.isMonitor === true
-              );
-              const disciplinaryObjects =
-                employee?.disciplinaryActions?.filter(
-                  (dis) => dis.isDisciplinaryAction === true
-                ) || [];
+                const hasAward = employee.assignedAwards?.some(
+                  (award) => award.isMonitor === true
+                );
+                const disciplinaryObjects =
+                  employee?.disciplinaryActions?.filter(
+                    (dis) => dis.isDisciplinaryAction === true
+                  ) || [];
 
-
-              return (
-                <>
-                  {/* {renderCell(employee, "address.line1", "textarea")}
-                  {renderCell(employee, "address.muhala", "input")} */}
-
-                  <tr
-                    key={employee._id}
-                    className={`text-left text-xs font-medium uppercase tracking-wider ${isSelected(employee._id)
-                      ? "bg-blue-50 ring-1 ring-blue-300"
-                      : "bg-white hover:bg-gray-50"
+                return (
+                  <>
+                    <tr
+                      key={employee._id}
+                      className={`text-left text-xs font-medium uppercase tracking-wider ${
+                        isSelected(employee._id)
+                          ? "bg-blue-50 ring-1 ring-blue-300"
+                          : "bg-white hover:bg-gray-50"
                       }`}
-                  >
-                    <td rowSpan={2} className="border border-gray-200 mx-2">
+                    >
+                      <td rowSpan={2} className="border border-gray-200 mx-2">
+                        <div className="p-3 text-lg font-semibold">
+                          <div className="p-3 text-lg font-semibold">
+                            {pagination?.currentPage && pagination?.limit
+                              ? (pagination.currentPage - 1) *
+                                  pagination.limit +
+                                index +
+                                1
+                              : index + 1}
+                          </div>
+                        </div>
+                        <div className="border border-gray-200 items-center justify-center p-1">
+                          {renderEmployeeCheckbox(employee)}
+                          {renderImageCell(employee)}
+                        </div>
+                      </td>
 
-                      <div className="border border-gray-200 items-center justify-center p-1">
-                        {renderEmployeeCheckbox(employee)}
-                        {renderImageCell(employee)}
-                      </div>
-                    </td>
-
-                    <td rowSpan={2} className="border border-gray-200">
-                      {/* Vertical action buttons - spans 2 rows */}
-                      <div className=" flex flex-col items-stretch gap-1 py-1">
-                        {(isAdmin ||
-                          permissions?.userData?.roles?.some((role) =>
-                            role.accessRequirement?.some(
-                              (access) =>
-                                access.resourceName.toLowerCase() ===
-                                "employee" && access.canEdit === true
-                            )
-                          )) && (
+                      <td rowSpan={2} className="border border-gray-200">
+                        {/* Vertical action buttons - spans 2 rows */}
+                        <div className=" flex flex-col items-stretch gap-1 py-1">
+                          {(isAdmin ||
+                            permissions?.userData?.roles?.some((role) =>
+                              role.accessRequirement?.some(
+                                (access) =>
+                                  access.resourceName.toLowerCase() ===
+                                    "employee" && access.canEdit === true
+                              )
+                            )) && (
                             <button
                               onClick={() => toggleEditMode(employee._id)}
-                              className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${editableEmployees.has(employee._id)
-                                ? "bg-orange-600 text-white hover:bg-orange-700"
-                                : "bg-blue-600 text-white hover:bg-blue-700"
-                                }`}
+                              className={`px-1.5 py-0.5 text-[12px] rounded transform origin-left scale-x-[0.7] ${
+                                editableEmployees.has(employee._id)
+                                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                                  : "bg-blue-600 text-white hover:bg-blue-700"
+                              }`}
                               title={
                                 editableEmployees.has(employee._id)
                                   ? "Disable editing"
@@ -1028,220 +1060,344 @@ const EmployeeGridTable = ({
                                 : "Edit"}
                             </button>
                           )}
-                        {/* <button
-                  onClick={() => handleDelete(employee?._id)}
-                  className="px-1.5 py-0.5 text-[12px] rounded bg-red-600 text-white hover:bg-red-700 transform origin-left scale-x-[0.7]"
-                >
-                  Delete
-                </button> */}
-                        {!isEditing && (
+
+                          {!isEditing && (
+                            <button
+                              onClick={() => handleView(employee)}
+                              className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                            >
+                              View
+                            </button>
+                          )}
+                          {isEditing && (
+                            <>
+                              <button
+                                onClick={() => onSaveCell(employee)}
+                                className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => handleCancelEditing(employee)}
+                                className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "firstName", "input")}
+                        <div className="flex flex-wrap gap-1">
+                          {isStationIncharge && (
+                            <div className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded">
+                              <p>S.Incharge</p>
+                            </div>
+                          )}
+                          {isMallkhanaIncharge && (
+                            <div className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded">
+                              <p>M.Incharge</p>
+                            </div>
+                          )}
+                          {hasAward && (
+                            <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
+                              Award
+                            </span>
+                          )}
+
+                          {disciplinaryObjects.length > 0 &&
+                            disciplinaryObjects[0]?.description && (
+                              <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
+                                {disciplinaryObjects[0].description}
+                              </span>
+                            )}
+                        </div>
+                      </td>
+
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "status", "select", "statuses")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "personalNumber", "input")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "stations", "select", "stations")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "rank", "select", "ranks")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "cast", "select", "casts")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "address.line1", "textarea")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(
+                          employee,
+                          "address.tehsil",
+                          "select",
+                          "tehsil"
+                        )}
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="x-4 py-2 border border-gray-200"
+                      >
+                        {renderCell(employee, "serviceType", "serviceType")}
+                      </td>
+
+                      <td
+                        rowSpan={2}
+                        className="x-4 py-2 border border-gray-200"
+                      >
+                        {renderCell(employee, "training", "training")}
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="x-4 py-2 border border-gray-200"
+                      >
+                        <div>
+                          {employee?.assignedAssets?.map((item) => (
+                            <div key={item._id} className="flex flex-row">
+                              {item.asset?.map((itm) => (
+                                <div
+                                  key={itm._id}
+                                  className="text-xs text-gray-500 truncate"
+                                >
+                                  {itm.weaponNumber || itm.registerNumber}
+
+                                  <span className="text-xs mt-0.5">
+                                    {itm.name} {itm.category}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="x-4 py-2 border border-gray-200"
+                      >
+                        <div className="flex flex-row">
+                          {employee?.assignedAwards?.map((itm) => (
+                            <span key={itm._id} className="text-xs mt-0.5">
+                              {itm.achievementType} {itm.amount}{" "}
+                              {formatDate(itm.date)}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="x-4 py-2 border border-gray-200"
+                      >
+                        <div className="flex flex-row">
+                          {employee?.assignedDeduction?.map((itm) => (
+                            <span key={itm._id} className="text-xs mt-0.5">
+                              {itm.deductionType} {itm.amount}{" "}
+                              {formatDate(itm.date)}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="px-2 py-1 border border-gray-200 w-full"
+                      >
+                        <div className="flex flex-col w-full">
+                          {employee?.postings?.map((itm) => (
+                            <>
+                              <div
+                                key={itm._id}
+                                className="text-[10px] text-gray-700 bg-gray-50 w-48 rounded px-1"
+                              >
+                                {itm.currentStation?.name || "N/A"} {" from "}
+                                {itm.fromDate
+                                  ? new Date(itm.fromDate).toLocaleDateString()
+                                  : "N/A"}
+                              </div>
+                            </>
+                          ))}
+                        </div>
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="px-2 py-1 border border-gray-200 w-full"
+                      >
+                        <div className="flex flex-col w-full">
+                          {employee?.disciplinaryActions?.map((itm, idx) => (
+                            <div
+                              key={idx} // Use index as key since disciplinaryActions may not have _id
+                              className="text-[10px] text-gray-700 bg-gray-50 w-48 rounded px-1"
+                            >
+                              {itm.description || "N/A"}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td
+                        rowSpan={2}
+                        className="px-2 py-1 border border-gray-200 w-full"
+                      >
+                        <div className="flex flex-col gap-1 w-full ">
+                          {employee?.statusHistory?.map((itm) => (
+                            <div
+                              key={itm._id}
+                              className="text-[8px] flex flex-row text-gray-700 border-b border-gray-100 pb-1 last:border-0 w-80 gap-x-2"
+                            >
+                              <div className="text-gray-600">
+                                {itm.changedFields?.map((field, idx) => (
+                                  <span key={idx}>
+                                    {field.currentStatus.toFieldValue} {" , "}
+                                  </span>
+                                )) || "No changes"}
+                              </div>
+                              <div className="mt-0.5">From</div>
+
+                              <div className="text-gray-500 text-[10px] mt-0.5">
+                                {itm?.approvalDate
+                                  ? moment(itm.approvalDate).format(
+                                      "DD-MMM-YYYY hh:mm A"
+                                    )
+                                  : "No date"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="px-2 py-2 w-80">
+                        <div className="grid grid-cols-3 gap-0.5 text-[10px] w-80">
                           <button
                             onClick={() => handleView(employee)}
-                            className="px-1.5 py-0.5 text-[12px] rounded bg-gray-700 text-white hover:bg-gray-800 transform origin-left scale-x-[0.7]"
+                            className="px-1 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
                           >
                             View
                           </button>
-                        )}
-                        {/* Removed horizontal action row; actions shown vertically next to checkbox */}
-                        {isEditing && (
-                          <>
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canEdit === true
+                            )
+                          ) && (
                             <button
-                              onClick={() => onSaveCell(employee)}
-                              className="px-1.5 py-0.5 text-[12px] rounded bg-green-700 text-white hover:bg-green-800 transform origin-left scale-x-[0.7]"
+                              onClick={() => handleEdit(employee)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
                             >
-                              Save
+                              Edit
                             </button>
+                          )}
+                          {permissions?.userData?.roles?.some((role) =>
+                            role.accessRequirement?.some(
+                              (access) =>
+                                access.resourceName.toLowerCase() ===
+                                  "employee" && access.canDelete === true
+                            )
+                          ) && (
                             <button
-                              onClick={() => handleCancelEditing(employee)}
-                              className="px-1.5 py-0.5 text-[12px] rounded bg-purple-700 text-white hover:bg-purple-800 transform origin-left scale-x-[0.7]"
+                              onClick={() => handleDelete(employee._id)}
+                              className="px-1 py-0.5 text-[10px] rounded bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
                             >
-                              Cancel
+                              Delete
                             </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+                          )}
 
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "firstName", "input")}
-                      <div className="flex flex-wrap gap-1">
-                        {isStationIncharge && (
-                          <div
-                            className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded"
-
+                          <button
+                            onClick={() => handleAssets(employee)}
+                            className="px-1 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition"
                           >
-                            <p>
-                              S.Incharge
-                            </p>
-                          </div>
-                        )}
-                        {isMallkhanaIncharge && (
-                          <div
-                            className="bg-blue-100 text-blue-800 w-fit text-[8px]  px-2 py-1 rounded"
-
+                            Assets
+                          </button>
+                          <button
+                            onClick={() => handlePosting(employee)}
+                            className="px-1 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
                           >
-                            <p>
-                              M.Incharge
-                            </p>
-                          </div>
-                        )}
-                        {hasAward && (
-                          <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
-                            Award
-                          </span>
-                        )}
+                            Posting
+                          </button>
+                          <button
+                            onClick={() => handleStatus(employee)}
+                            className="px-1 py-0.5 text-[10px] rounded bg-teal-100 text-teal-700 hover:bg-teal-200 transition"
+                          >
+                            History
+                          </button>
 
-                        {disciplinaryObjects.length > 0 && disciplinaryObjects[0]?.description && (
-                          <span className="bg-yellow-100 text-yellow-800 w-fit text-[8px] px-2 py-1 rounded">
-                            {disciplinaryObjects[0].description}
-                          </span>
-                        )}
+                          <button
+                            onClick={() => handleAchievements(employee)}
+                            className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition col-span-1"
+                          >
+                            Awards
+                          </button>
+                          <button
+                            onClick={() => handleDeductions(employee)}
+                            className="px-1 py-0.5 text-[10px] rounded bg-pink-100 text-pink-700 hover:bg-pink-200 transition col-span-2"
+                          >
+                            Deduction
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
 
-                      </div>
-                    </td>
-
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "status", "select", "statuses")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "personalNumber", "input")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "stations", "select", "stations")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "rank", "select", "ranks")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "cast", "select", "casts")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "address.line1", "textarea")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(
-                        employee,
-                        "address.tehsil",
-                        "select",
-                        "tehsil"
-                      )}
-                    </td>
-                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "serviceType", "serviceType")}
-                    </td>
-
-                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "training", "training")}
-                    </td>
-                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      <div>
-                        {employee?.assignedAssets?.map((item) => (
-                          <div key={item._id} className="flex flex-row">
-                            {item.asset?.map((itm) => (
-                              <div key={itm._id} className="text-xs text-gray-500 truncate">
-                                {itm.weaponNumber ||
-                                  itm.registerNumber}
-
-                                <span className="text-xs mt-0.5">
-                                  {itm.name} {itm.category}
-                                </span>
-                              </div>
-
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      <div className="flex flex-row">
-                        {employee?.assignedAwards?.map((itm) => (
-                          <span key={itm._id} className="text-xs mt-0.5">
-                            {itm.achievementType} {itm.amount} {formatDate(itm.date)}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td rowSpan={2} className="x-4 py-2 border border-gray-200">
-                      <div className="flex flex-row">
-                        {employee?.assignedDeduction?.map((itm) => (
-                          <span key={itm._id} className="text-xs mt-0.5">
-                            {itm.deductionType} {itm.amount} {formatDate(itm.date)}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td rowSpan={2} className="px-2 py-1 border border-gray-200 w-full">
-                      <div className="flex flex-col w-full">
-                        {employee?.postings?.map((itm) => (
-                          <>
-
-                            <div
-                              key={itm._id}
-                              className="text-[10px] text-gray-700 bg-gray-50 w-48 rounded px-1"
-                            >
-
-                              {itm.currentStation?.name || 'N/A'} {" from "}
-                              {itm.fromDate ? new Date(itm.fromDate).toLocaleDateString() : 'N/A'}
-
-
-                            </div>
-
-
-                          </>
-                        ))}
-                      </div>
-                    </td>
-
-                  </tr>
-
-                  <tr
-                    className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${isSelected(employee._id)
-                      ? "bg-blue-50 ring-1 ring-blue-300"
-                      : "bg-white hover:bg-gray-50"
+                    <tr
+                      className={`text-left text-xs font-medium uppercase tracking-wider border-b-2 border-black pb-2 pt-2 ${
+                        isSelected(employee._id)
+                          ? "bg-blue-50 ring-1 ring-blue-300"
+                          : "bg-white hover:bg-gray-50"
                       }`}
-                  >
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "fatherFirstName", "input")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "grade", "select", "grades")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "cnic", "input")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "mobileNumber", "input")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(employee, "dateOfBirth", "date")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(
-                        employee,
-                        "designation",
-                        "select",
-                        "designations"
-                      )}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {" "}
-                      {renderCell(employee, "address.muhala", "input")}
-                    </td>
-                    <td className="x-4 py-2 border border-gray-200">
-                      {renderCell(
-                        employee,
-                        "address.line2",
-                        "select",
-                        "district"
-                      )}
-                    </td>
-                  </tr>
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    >
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "fatherFirstName", "input")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "grade", "select", "grades")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "cnic", "input")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "mobileNumber", "input")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(employee, "dateOfBirth", "date")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(
+                          employee,
+                          "designation",
+                          "select",
+                          "designations"
+                        )}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {" "}
+                        {renderCell(employee, "address.muhala", "input")}
+                      </td>
+                      <td className="x-4 py-2 border border-gray-200">
+                        {renderCell(
+                          employee,
+                          "address.line2",
+                          "select",
+                          "district"
+                        )}
+                      </td>
+                    </tr>
+                  </>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <EmployeeViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        employee={selectedEmployee}
+        onEdit={handleEdit} // Add this line
+      />
 
       {/* Grid Section - Updated with checkboxes */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -1259,8 +1415,6 @@ const EmployeeGridTable = ({
           </div>
         )}
       </div>
-
-
 
       <MultiStationAssignmentForm
         selectedEmployees={selectedEmployeesForPosting}

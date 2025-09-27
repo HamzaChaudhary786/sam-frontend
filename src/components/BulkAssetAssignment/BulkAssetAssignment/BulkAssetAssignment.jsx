@@ -338,7 +338,6 @@ const BulkAssetAssignment = () => {
         limit: 25,
       });
 
-
       if (result.success) {
         const stations = result?.data?.result || result.data || [];
 
@@ -422,26 +421,83 @@ const BulkAssetAssignment = () => {
   const validateForm = () => {
     const errors = [];
 
+    // Validate Mallkhana selection
     if (!headerData.mallkhana) {
       errors.push("Mallkhana selection is required");
     }
 
+    // Validate each assignment row
     assignmentRows.forEach((row, index) => {
-      if (!row.asset && !row.employee && !row.station) {
-        //continue
-      } else {
-        if (!row.asset) {
-          errors.push(`Row ${index + 1}: Asset is required`);
-        }
-        if (!row.employee && !row.station) {
+      // Skip validation for completely empty rows
+      if (
+        !row.asset &&
+        !row.employee &&
+        !row.station &&
+        !row.outQuantity &&
+        !row.remarks
+      ) {
+        return;
+      }
+
+      // Asset is required if any other field in the row is filled
+      if (
+        !row.asset &&
+        (row.employee || row.station || row.outQuantity || row.remarks)
+      ) {
+        errors.push(`Row ${index + 1}: Asset is required`);
+      }
+
+      // At least one of Employee or Station must be selected if asset is present
+      if (row.asset && !row.employee && !row.station) {
+        errors.push(
+          `Row ${
+            index + 1
+          }: At least one of Employee or Station must be selected`
+        );
+      }
+
+      // Assignment date is required if asset is selected
+      if (row.asset && !row.assignmentDate) {
+        errors.push(`Row ${index + 1}: Assignment date is required`);
+      }
+
+      // Validate available quantity and outQuantity if asset is selected
+      if (row.asset) {
+        const availableQuantity = Number(row.asset.availableQuantity);
+        if (availableQuantity <= 0) {
           errors.push(
-            `Row ${
-              index + 1
-            }: At least one of Employee or Station must be selected`
+            `Row ${index + 1}: Cannot assign asset "${
+              row.asset.name
+            }" with zero or negative available quantity (${availableQuantity})`
           );
         }
-        if (!row.assignmentDate) {
-          errors.push(`Row ${index + 1}: Assignment date is required`);
+
+        // Validate outQuantity against availableQuantity
+        if (row.outQuantity !== null && row.outQuantity !== "") {
+          const outQuantity = Number(row.outQuantity);
+          if (outQuantity <= 0) {
+            errors.push(
+              `Row ${index + 1}: Issue quantity must be greater than zero`
+            );
+          } else if (outQuantity > availableQuantity) {
+            errors.push(
+              `Row ${
+                index + 1
+              }: Issue quantity (${outQuantity}) cannot exceed available quantity (${availableQuantity}) for asset "${
+                row.asset.name
+              }"`
+            );
+          }
+        } else if (
+          row.asset.category === "round" ||
+          row.asset.category === "vehicle"
+        ) {
+          // outQuantity is required for certain asset categories
+          errors.push(
+            `Row ${index + 1}: Issue quantity is required for asset "${
+              row.asset.name
+            }"`
+          );
         }
       }
     });
@@ -830,11 +886,13 @@ const BulkAssetAssignment = () => {
                                   }}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-900 truncate">
+                                  <div className="font-medium text-gray-900 whitespace-normal break-words">
                                     {employee.firstName} {employee.lastName}
                                   </div>
-                                  <div className="text-xs text-gray-500 truncate">
-                                    {employee.personalNumber ||
+                                  <div className="text-xs text-gray-500 whitespace-normal break-words">
+                                    {employee.fatherFirstName ||
+                                      employee.personalNumber ||
+                                      employee.grade ||
                                       employee.rank ||
                                       employee.pnumber}{" "}
                                     | {employee.cnic}
@@ -887,17 +945,15 @@ const BulkAssetAssignment = () => {
                             Type: {row.asset.type || "N/A"}
                             <br />
                             Category: {row.asset.category || "N/A"}
-
-                            {!(row.asset.weaponNumber ||
-                            row.asset.registerNumber) && (
+                            {!(
+                              row.asset.weaponNumber || row.asset.registerNumber
+                            ) && (
                               <>
-
-                            <br />
-                            availible Quantity:
-                            {row?.asset?.availableQuantity || "N/A"}
-                            </>
-                          )}
-
+                                <br />
+                                availible Quantity:
+                                {row?.asset?.availableQuantity || "N/A"}
+                              </>
+                            )}
                           </div>
                           {(row.asset.weaponNumber ||
                             row.asset.registerNumber) && (

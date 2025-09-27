@@ -821,6 +821,9 @@ const StationList = () => {
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    N0.
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Station Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -841,10 +844,11 @@ const StationList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {safeStations.map((station) => (
+                {safeStations.map((station, index) => (
                   <React.Fragment key={station._id}>
                     {/* 🆕 Station Row - Your existing station row */}
                     <tr className="hover:bg-gray-50">
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
@@ -922,6 +926,9 @@ const StationList = () => {
                             </svg>
                           </div>
                         )}
+                      </td>
+                      <td className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">

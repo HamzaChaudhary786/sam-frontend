@@ -37,6 +37,7 @@ import { GlobalStationViewProvider } from "./components/Station/GlobalStationVie
 import { GlobalEmployeeViewProvider } from "./components/Employee/GlobalEmployeeView.jsx"; // 🆕 Add this
 import BulkAssetAssignment from "./components/BulkAssetAssignment/BulkAssetAssignment/BulkAssetAssignment.jsx";
 import { usePermissions } from "./hook/usePermission.js";
+import BulkAssetTransfer from "./components/BulkAssetTransfer/BulkAssetTransfer/BulkAssetTransfer.jsx";
 
 // Authentication utility functions
 const isAuthenticated = () => {
@@ -306,6 +307,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <BulkAssetAssignment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bulk-asset-transfer"
+          element={
+            <ProtectedRoute>
+              <BulkAssetTransfer />
             </ProtectedRoute>
           }
         />

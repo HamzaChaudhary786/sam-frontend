@@ -27,6 +27,7 @@ const SalaryDeductionForm = ({
     month: "",
     year: new Date().getFullYear(),
     deductionReason: "",
+    numberOfDays: "",
     amount: "",
     isApproved: false,
     approvalComment: "",
@@ -108,6 +109,7 @@ const SalaryDeductionForm = ({
       month: "",
       year: new Date().getFullYear(),
       deductionReason: "",
+      numberOfDays: "",
       amount: "",
       isApproved: false,
       approvalComment: "",
@@ -135,6 +137,7 @@ const SalaryDeductionForm = ({
         month: formData.month,
         year: parseInt(formData.year),
         deductionReason: formData.deductionReason,
+        numberOfDays: parseFloat(formData.numberOfDays) || 0,
         amount: parseFloat(formData.amount) || 0,
         // Only include approval fields when editing and user is admin
         ...(editingDeduction &&
@@ -197,6 +200,7 @@ const SalaryDeductionForm = ({
         month: editingDeduction.month || "",
         year: editingDeduction.year || new Date().getFullYear(),
         deductionReason: editingDeduction.deductionReason || "",
+        numberOfDays: editingDeduction.numberOfDays || "",
         amount: editingDeduction.amount || "",
         isApproved: editingDeduction.isApproved || false,
         approvalComment: editingDeduction.approvalComment || "",
@@ -299,7 +303,6 @@ const SalaryDeductionForm = ({
                 name="month"
                 value={formData.month}
                 onChange={handleChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
               >
                 <option value="">Select month</option>
@@ -319,7 +322,6 @@ const SalaryDeductionForm = ({
                 name="year"
                 value={formData.year}
                 onChange={handleChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
               >
                 {years.map((year) => (
@@ -329,6 +331,22 @@ const SalaryDeductionForm = ({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Number Of Days *
+            </label>
+            <input
+              type="number"
+              name="numberOfDays"
+              value={formData.numberOfDays}
+              onChange={handleChange}
+              placeholder="0"
+              min="0"
+              step="0.01"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
+            />
           </div>
 
           {/* Amount */}
@@ -344,7 +362,6 @@ const SalaryDeductionForm = ({
               placeholder="0"
               min="0"
               step="0.01"
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
             />
           </div>
@@ -360,7 +377,6 @@ const SalaryDeductionForm = ({
               onChange={handleChange}
               placeholder="Enter detailed reason for this deduction..."
               rows={3}
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors resize-vertical"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -575,12 +591,8 @@ const SalaryDeductionForm = ({
               type="submit"
               disabled={
                 isSubmitting ||
-                isLoadingDeductionTypes ||
-                !formData.deductionType ||
-                !formData.month ||
-                !formData.amount ||
-                !formData.deductionReason ||
-                (editingDeduction && isAdmin && !formData.approvalComment) // Only require approval comment when editing as admin
+                isLoadingDeductionTypes || 
+                (editingDeduction && isAdmin ) // Only require approval comment when editing as admin
               }
               className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
             >

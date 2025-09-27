@@ -22,6 +22,14 @@ export const getAssets = async (filters = {}) => {
     if (filters.status) queryParams.append("status", filters.status);
     if (filters.purchaseDate)
       queryParams.append("purchaseDate", filters.purchaseDate);
+    if (filters.serialNumber) {
+      if (Array.isArray(filters.serialNumber)) {
+        // append multiple values (e.g. serialNumber=SN1&serialNumber=SN2)
+        filters.serialNumber.forEach(sn => queryParams.append("serialNumber", sn));
+      } else {
+        queryParams.append("serialNumber", filters.serialNumber);
+      }
+    }
 
     if (filters.page) queryParams.append("page", filters.page);
     if (filters.limit) queryParams.append("limit", filters.limit);

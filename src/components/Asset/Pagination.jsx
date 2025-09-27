@@ -1,10 +1,10 @@
 import React from "react";
 
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  onPageChange, 
-  pageSize = 500, 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  pageSize = 500,
   onPageSizeChange,
   totalItems = 0
 }) => {
@@ -21,7 +21,7 @@ const Pagination = ({
   // For single page, show simple info with page size selector
   if (totalPages === 1) {
     return (
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+      <div className="fixed bottom-0 inset-x-0 flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-white shadow-md border-t z-50">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">Show</span>
           <select
@@ -38,7 +38,7 @@ const Pagination = ({
         <span className="text-sm text-gray-600">
           Showing {startItem} to {endItem} of {totalItems} results
         </span>
-      </div>
+      </div >
     );
   }
 
@@ -46,7 +46,7 @@ const Pagination = ({
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5; // Show max 5 page numbers
-    
+
     if (totalPages <= maxVisible) {
       // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
@@ -79,7 +79,7 @@ const Pagination = ({
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -120,16 +120,15 @@ const Pagination = ({
               </span>
             );
           }
-          
+
           return (
             <button
               key={page}
               onClick={() => onPageChange(page)}
-              className={`px-3 py-2 border rounded-md transition-colors text-sm ${
-                currentPage === page
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-gray-100 hover:bg-gray-200 border-gray-300"
-              }`}
+              className={`px-3 py-2 border rounded-md transition-colors text-sm ${currentPage === page
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-gray-100 hover:bg-gray-200 border-gray-300"
+                }`}
             >
               {page}
             </button>

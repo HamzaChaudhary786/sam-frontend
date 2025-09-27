@@ -322,7 +322,7 @@ const AssetsList = () => {
       />
 
       {/* Assets Table/Cards - Responsive */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden pb-12">
         {/* Desktop Table View - Only for screens 1200px+ */}
         <div className="hidden xl:block">
           <div className="overflow-x-auto">
@@ -336,6 +336,9 @@ const AssetsList = () => {
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    N0.
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Asset Info
@@ -352,7 +355,7 @@ const AssetsList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {safeAssets.map((asset) => (
+                {safeAssets.map((asset, index) => (
                   <tr key={asset._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
@@ -361,6 +364,9 @@ const AssetsList = () => {
                         onChange={() => handleSelectAsset(asset._id)}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
+                    </td>
+                    <td className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {(currentPage - 1) * pageSize + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col items-start space-y-2">

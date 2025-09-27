@@ -161,6 +161,153 @@ const DrillStationPage = ({
     });
   };
 
+
+  const checkAssetAvailability = (requiredAssets, stationAssetsList, employeeList) => {
+    if (!requiredAssets || requiredAssets.length === 0) {
+      return { totalAvailable: 0, totalRequired: 0 };
+    }
+
+    let totalAvailable = 0;
+    let totalRequired = 0;
+
+    requiredAssets.forEach(requirement => {
+      totalRequired += requirement.quantity;
+
+      let availableQuantity = 0;
+      const requiredAssetName = requirement.assets?.name;
+      const requiredAssetType = requirement.assets?.type;
+      const requiredAssetCategory = requirement.assets?.category;
+
+      // Check in station assets
+      if (stationAssetsList && stationAssetsList.length > 0) {
+        stationAssetsList.forEach(stationAsset => {
+          // Enhanced matching: name OR category OR type match
+          const nameMatch = stationAsset.name === requiredAssetName;
+          const typeMatch = stationAsset.type === requiredAssetType;
+          const categoryMatch = stationAsset.category === requiredAssetCategory;
+          const typeCategoryMatch = stationAsset.category === requiredAssetType;
+          const nameTypeMatch = stationAsset.type === requiredAssetName;
+          const nameCategoryMatch = stationAsset.category === requiredAssetName;
+
+          // Match if any of these conditions are true
+          if (nameMatch || categoryMatch || typeMatch || typeCategoryMatch || nameTypeMatch || nameCategoryMatch) {
+            if (stationAsset.status === 'Active') {
+              availableQuantity += 1;
+            }
+          }
+        });
+      }
+
+      // Check in employee assets
+      if (employeeList && employeeList.length > 0) {
+        employeeList.forEach(employee => {
+          if (employee.assets && employee.assets.length > 0) {
+            employee.assets.forEach(asset => {
+              // Enhanced matching: name OR category OR type match
+              const nameMatch = asset.name === requiredAssetName;
+              const typeMatch = asset.type === requiredAssetType;
+              const categoryMatch = asset.category === requiredAssetCategory;
+              const typeCategoryMatch = asset.category === requiredAssetType;
+              const nameTypeMatch = asset.type === requiredAssetName;
+              const nameCategoryMatch = asset.category === requiredAssetName;
+
+              // Match if any of these conditions are true
+              if (nameMatch || categoryMatch || typeMatch || typeCategoryMatch || nameTypeMatch || nameCategoryMatch) {
+                if (asset.status === 'Active') {
+                  const quantity = parseInt(asset.availableQuantity || asset.inQuantity || 1);
+                  availableQuantity += quantity;
+                }
+              }
+            });
+          }
+        });
+      }
+
+      totalAvailable += availableQuantity;
+    });
+
+    return { totalAvailable, totalRequired };
+  };
+
+  const getAssetFulfillmentDetails = (requiredAssets, stationAssetsList, employeeList) => {
+    if (!requiredAssets || requiredAssets.length === 0) {
+      return [];
+    }
+
+    return requiredAssets.map(requirement => {
+      let availableInStation = 0;
+      let availableWithEmployees = 0;
+      let assetName = 'Unknown Asset';
+      let assetType = 'Unknown Type';
+
+      const requiredAssetName = requirement.assets?.name;
+      const requiredAssetType = requirement.assets?.type;
+      const requiredAssetCategory = requirement.assets?.category;
+
+      // Get asset name and type from requirement object
+      if (requiredAssetName) {
+        assetName = requiredAssetName;
+        assetType = requiredAssetType || assetType;
+      }
+
+      // Check in station assets - enhanced flexible matching
+      if (stationAssetsList && stationAssetsList.length > 0) {
+        stationAssetsList.forEach(stationAsset => {
+          const nameMatch = stationAsset.name === requiredAssetName;
+          const typeMatch = stationAsset.type === requiredAssetType;
+          const categoryMatch = stationAsset.category === requiredAssetCategory;
+          const typeCategoryMatch = stationAsset.category === requiredAssetType;
+          const nameTypeMatch = stationAsset.type === requiredAssetName;
+          const nameCategoryMatch = stationAsset.category === requiredAssetName;
+
+          if (nameMatch || categoryMatch || typeMatch || typeCategoryMatch || nameTypeMatch || nameCategoryMatch) {
+            if (stationAsset.status === 'Active') {
+              availableInStation += 1;
+            }
+          }
+        });
+      }
+
+      // Check in employee assets - enhanced flexible matching
+      if (employeeList && employeeList.length > 0) {
+        employeeList.forEach(employee => {
+          if (employee.assets && employee.assets.length > 0) {
+            employee.assets.forEach(asset => {
+              const nameMatch = asset.name === requiredAssetName;
+              const typeMatch = asset.type === requiredAssetType;
+              const categoryMatch = asset.category === requiredAssetCategory;
+              const typeCategoryMatch = asset.category === requiredAssetType;
+              const nameTypeMatch = asset.type === requiredAssetName;
+              const nameCategoryMatch = asset.category === requiredAssetName;
+
+              if (nameMatch || categoryMatch || typeMatch || typeCategoryMatch || nameTypeMatch || nameCategoryMatch) {
+                if (asset.status === 'Active') {
+                  const quantity = parseInt(asset.availableQuantity || asset.inQuantity || 1);
+                  availableWithEmployees += quantity;
+                }
+              }
+            });
+          }
+        });
+      }
+
+      const totalAvailable = availableInStation + availableWithEmployees;
+      const isFulfilled = totalAvailable >= requirement.quantity;
+
+      return {
+        assetName,
+        assetType,
+        required: requirement.quantity,
+        totalAvailable,
+        availableInStation,
+        availableWithEmployees,
+        isFulfilled,
+        shortage: Math.max(0, requirement.quantity - totalAvailable)
+      };
+    });
+  };
+
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -304,6 +451,7 @@ const DrillStationPage = ({
       )}
 
       {/* Minimum Requirements Section */}
+
       {minimumRequirements && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -332,8 +480,8 @@ const DrillStationPage = ({
                   </span>
                   <span
                     className={`text-sm font-semibold ${minimumRequirements.staff.shortage > 0
-                      ? "text-red-600"
-                      : "text-green-600"
+                        ? "text-red-600"
+                        : "text-green-600"
                       }`}
                   >
                     {minimumRequirements.staff.shortage > 0
@@ -368,8 +516,8 @@ const DrillStationPage = ({
                 </div>
                 <div
                   className={`p-4 rounded-lg ${minimumRequirements.staff.shortage > 0
-                    ? "bg-red-50"
-                    : "bg-green-50"
+                      ? "bg-red-50"
+                      : "bg-green-50"
                     }`}
                 >
                   <div className="flex items-center">
@@ -386,8 +534,8 @@ const DrillStationPage = ({
                       </p>
                       <p
                         className={`text-xl font-bold ${minimumRequirements.staff.shortage > 0
-                          ? "text-red-600"
-                          : "text-green-600"
+                            ? "text-red-600"
+                            : "text-green-600"
                           }`}
                       >
                         {minimumRequirements.staff.shortage > 0
@@ -441,15 +589,23 @@ const DrillStationPage = ({
                 </h4>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">
-                    Current:{" "}
+                    Available:{" "}
                     <span className="font-semibold">
-                      {minimumRequirements.assets.current}
+                      {checkAssetAvailability(
+                        minimumRequirements.assets.required,
+                        stationAssetsList,
+                        employeeList
+                      ).totalAvailable}
                     </span>
                   </span>
                   <span className="text-sm text-gray-600">
                     Required:{" "}
                     <span className="font-semibold">
-                      {minimumRequirements.assets.required?.length || 0}
+                      {checkAssetAvailability(
+                        minimumRequirements.assets.required,
+                        stationAssetsList,
+                        employeeList
+                      ).totalRequired}
                     </span>
                   </span>
                 </div>
@@ -460,9 +616,13 @@ const DrillStationPage = ({
                   <div className="flex items-center">
                     <Package className="h-6 w-6 text-blue-600 mr-2" />
                     <div>
-                      <p className="text-sm text-gray-600">Current Assets</p>
+                      <p className="text-sm text-gray-600">Available Assets</p>
                       <p className="text-xl font-bold text-blue-600">
-                        {minimumRequirements.assets.current}
+                        {checkAssetAvailability(
+                          minimumRequirements.assets.required,
+                          stationAssetsList,
+                          employeeList
+                        ).totalAvailable}
                       </p>
                     </div>
                   </div>
@@ -473,7 +633,11 @@ const DrillStationPage = ({
                     <div>
                       <p className="text-sm text-gray-600">Required Assets</p>
                       <p className="text-xl font-bold text-orange-600">
-                        {minimumRequirements.assets.required?.length || 0}
+                        {checkAssetAvailability(
+                          minimumRequirements.assets.required,
+                          stationAssetsList,
+                          employeeList
+                        ).totalRequired}
                       </p>
                     </div>
                   </div>
@@ -485,36 +649,81 @@ const DrillStationPage = ({
                 minimumRequirements.assets.required.length > 0 && (
                   <div className="mt-4">
                     <h5 className="font-medium text-gray-900 mb-2">
-                      Required Assets
+                      Asset Requirements Status
                     </h5>
                     <div className="space-y-2">
-                      {minimumRequirements.assets.required.map(
-                        (asset, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-center p-3 bg-gray-50 rounded"
-                          >
-                            <div className="flex items-center">
-                              <Package className="h-4 w-4 text-gray-600 mr-2" />
+                      {getAssetFulfillmentDetails(
+                        minimumRequirements.assets.required,
+                        stationAssetsList,
+                        employeeList
+                      ).map((asset, index) => (
+                        <div
+                          key={index}
+                          className={`flex justify-between items-center p-3 rounded ${asset.isFulfilled
+                              ? 'bg-green-50 border-l-4 border-green-500'
+                              : 'bg-red-50 border-l-4 border-red-500'
+                            }`}
+                        >
+                          <div className="flex items-center">
+                            {asset.isFulfilled ? (
+                              <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-red-600 mr-2" />
+                            )}
+                            <div>
                               <span className="text-sm font-medium text-gray-900">
-                                {asset.assets?.name}
+                                {asset.assetName}
                               </span>
                               <span className="text-xs text-gray-500 ml-2">
-                                ({asset.assets?.type})
+                                ({asset.assetType})
                               </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600">
-                                Quantity:
-                              </span>
-                              <span className="font-semibold text-gray-900">
-                                {asset.quantity}
-                              </span>
-                              <AlertTriangle className="h-4 w-4 text-orange-500" />
+                              <div className="text-xs text-gray-400 mt-1">
+                                Enhanced matching: Name, Type, or Category
+                              </div>
                             </div>
                           </div>
-                        )
-                      )}
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-gray-600">Required:</span>
+                                <span className="font-semibold text-gray-900">
+                                  {asset.required}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-gray-600">Available:</span>
+                                <span className={`font-semibold ${asset.isFulfilled ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                  {asset.totalAvailable}
+                                </span>
+                              </div>
+                              {asset.availableInStation > 0 && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Station: {asset.availableInStation}
+                                </div>
+                              )}
+                              {asset.availableWithEmployees > 0 && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  Employees: {asset.availableWithEmployees}
+                                </div>
+                              )}
+                              {!asset.isFulfilled && (
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <span className="text-sm text-red-600">Shortage:</span>
+                                  <span className="font-semibold text-red-600">
+                                    {asset.shortage}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {asset.isFulfilled ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

@@ -410,6 +410,9 @@ const StationList = () => {
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    N0.
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Maal Khana Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -427,7 +430,7 @@ const StationList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {safeStations.map((station) => (
+                {safeStations.map((station, index) => (
                   <tr key={station._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
@@ -437,23 +440,26 @@ const StationList = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </td>
+                    <td className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col items-start space-y-2">
                         {/* Show main image if available */}
                         {station.stationImageUrl &&
-                        station.stationImageUrl.length > 0 ? (
+                          station.stationImageUrl.length > 0 ? (
                           <div className="relative">
                             <img
                               src={
                                 station.stationImageUrl[
-                                  imageIndexes[station._id] ?? 0
+                                imageIndexes[station._id] ?? 0
                                 ]
                               }
                               alt="Station"
                               onClick={() =>
                                 setImageModal(
                                   station.stationImageUrl[
-                                    imageIndexes[station._id] ?? 0
+                                  imageIndexes[station._id] ?? 0
                                   ]
                                 )
                               }
@@ -595,19 +601,19 @@ const StationList = () => {
                 <div className="flex-shrink-0 relative">
                   {/* Station Image */}
                   {station.stationImageUrl &&
-                  station.stationImageUrl.length > 0 ? (
+                    station.stationImageUrl.length > 0 ? (
                     <div className="relative">
                       <img
                         src={
                           station.stationImageUrl[
-                            imageIndexes[station._id] ?? 0
+                          imageIndexes[station._id] ?? 0
                           ]
                         }
                         alt="Station"
                         onClick={() =>
                           setImageModal(
                             station.stationImageUrl[
-                              imageIndexes[station._id] ?? 0
+                            imageIndexes[station._id] ?? 0
                             ]
                           )
                         }

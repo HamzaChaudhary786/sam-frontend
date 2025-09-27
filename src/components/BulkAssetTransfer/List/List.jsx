@@ -478,7 +478,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   const handleApprove = async (assignment) => {
     if (!isAdmin) {
       toast.error(
-        "Access denied: Only administrators can approve asset assignments"
+        "Access denied: Only administrators can approve asset transfer"
       );
       return;
     }
@@ -505,7 +505,7 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
   const handleDelete = async (assignment) => {
     if (!isAdmin) {
       toast.error(
-        "Access denied: Only administrators can delete asset assignments"
+        "Access denied: Only administrators can delete asset transfer"
       );
       return;
     }
@@ -702,10 +702,10 @@ const AssetAssignmentsList = ({ onModalStateChange }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Asset Assignments
+            Asset Transfer
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            View and manage all asset assignments to employees and stations.
+            View and manage all asset transfer to employees and stations.
           </p>
           {!isAdmin && (
             <p className="text-xs text-orange-600 mt-1">

@@ -68,7 +68,7 @@ const Pagination = ({
   const itemRange = getItemRange();
 
   return (
-    <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 py-4 ${className}`}>
+    <div className={`fixed bottom-0 inset-x-0  flex flex-col sm:flex-row justify-between items-center gap-4 bg-white py-4 shadow-md border-t z-50 ${className}`}>
       {/* Items per page selector */}
       {showItemsPerPage && onItemsPerPageChange && (
         <div className="flex items-center space-x-2">
