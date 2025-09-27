@@ -32,16 +32,18 @@ import {
 import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../../../constants/api";
 
-const TopLevelDrillPage = ({
-  onBack,
-  onDrillDistrict
-}) => {
+const TopLevelDrillPage = ({ onBack, onDrillDistrict }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const getToken = () => localStorage.getItem("authToken");
 
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
   useEffect(() => {
     fetchTopLevelData();
   }, []);
@@ -51,28 +53,29 @@ const TopLevelDrillPage = ({
     setError(null);
 
     try {
-      console.log('Fetching top level data');
+      console.log("Fetching top level data");
 
       const topLevelURL = `${BACKEND_URL}/stations/top-level-drill-up?page=1&limit=10`;
-      console.log('Calling top-level-drill-up API:', topLevelURL);
+      console.log("Calling top-level-drill-up API:", topLevelURL);
 
-      const topLevelResponse = await fetch(
-        topLevelURL,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const topLevelResponse = await fetch(topLevelURL, {
+        method: "GET",
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      });
 
       if (topLevelResponse.ok) {
         const topLevelResult = await topLevelResponse.json();
-        console.log('Top-level-drill-up response:', topLevelResult);
+        console.log("Top-level-drill-up response:", topLevelResult);
         setData(topLevelResult);
       } else {
-        console.error('Top-level-drill-up API failed:', topLevelResponse.status, topLevelResponse.statusText);
+        console.error(
+          "Top-level-drill-up API failed:",
+          topLevelResponse.status,
+          topLevelResponse.statusText
+        );
         throw new Error("Failed to fetch top level data");
       }
     } catch (err) {
@@ -84,13 +87,13 @@ const TopLevelDrillPage = ({
   };
 
   const getDistrictData = () => {
-    console.log('Getting district data from:', data);
+    console.log("Getting district data from:", data);
     return data?.districts || [];
   };
 
   const getSummaryData = () => {
-    console.log('Getting summary data from:', data);
-    
+    console.log("Getting summary data from:", data);
+
     if (data?.overallInfo) {
       return {
         totalDistricts: data.overallInfo.totalDistricts,
@@ -98,17 +101,19 @@ const TopLevelDrillPage = ({
         totalStations: data.overallInfo.totalStations,
         totalEmployees: data.overallInfo.totalEmployees,
         totalAssets: data.overallInfo.totalAssets,
-        activeStations: data.overallInfo.totalStations - (data.overallInfo.totalStationsNotMeetingReq || 0),
+        activeStations:
+          data.overallInfo.totalStations -
+          (data.overallInfo.totalStationsNotMeetingReq || 0),
         totalFacilities: data.overallInfo.totalFacilities,
         totalDesignations: data.overallInfo.totalDesignations,
         totalGrades: data.overallInfo.totalGrades,
         totalRanks: data.overallInfo.totalRanks,
         totalServiceTypes: data.overallInfo.totalServiceTypes,
-        totalCasts: data.overallInfo.totalCasts
+        totalCasts: data.overallInfo.totalCasts,
       };
     }
 
-    console.log('No summary data found, returning defaults');
+    console.log("No summary data found, returning defaults");
     return {
       totalDistricts: 0,
       totalTehsils: 0,
@@ -121,7 +126,7 @@ const TopLevelDrillPage = ({
       totalGrades: 0,
       totalRanks: 0,
       totalServiceTypes: 0,
-      totalCasts: 0
+      totalCasts: 0,
     };
   };
 
@@ -134,7 +139,9 @@ const TopLevelDrillPage = ({
   };
 
   const handleDistrictSelect = (selectedDistrictName) => {
-    setSelectedDistrict(selectedDistrict === selectedDistrictName ? null : selectedDistrictName);
+    setSelectedDistrict(
+      selectedDistrict === selectedDistrictName ? null : selectedDistrictName
+    );
   };
 
   const renderOverviewTab = () => {
@@ -148,7 +155,9 @@ const TopLevelDrillPage = ({
         <div className="bg-white rounded-lg shadow-sm p-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Home className="h-4 w-4" />
-            <span className="font-medium text-gray-900">System Overview: All Districts</span>
+            <span className="font-medium text-gray-900">
+              System Overview: All Districts
+            </span>
           </div>
         </div>
 
@@ -231,11 +240,10 @@ const TopLevelDrillPage = ({
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {facilities.map((facility) => (
-                <div
-                  key={facility._id}
-                  className="p-4 bg-gray-50 rounded-lg"
-                >
-                  <h4 className="font-semibold text-gray-900 mb-2">{facility._id}</h4>
+                <div key={facility._id} className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    {facility._id}
+                  </h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Total Count:</span>
@@ -262,27 +270,39 @@ const TopLevelDrillPage = ({
                   className="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleDistrictSelect(districtItem.district)}
                 >
-                  <h4 className="font-semibold text-gray-900 mb-2">{districtItem.district}</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    {districtItem.district}
+                  </h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Stations:</span>
-                      <span className="font-medium">{`${districtItem.totalStations || 0} / ${summary.totalStations}`}</span>
+                      <span className="font-medium">{`${
+                        districtItem.totalStations || 0
+                      } / ${summary.totalStations}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tehsils:</span>
-                      <span className="font-medium">{`${districtItem.totalTehsils || 0} / ${summary.totalTehsils}`}</span>
+                      <span className="font-medium">{`${
+                        districtItem.totalTehsils || 0
+                      } / ${summary.totalTehsils}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Employees:</span>
-                      <span className="font-medium">{`${districtItem.totalEmployees || 0} / ${summary.totalEmployees}`}</span>
+                      <span className="font-medium">{`${
+                        districtItem.totalEmployees || 0
+                      } / ${summary.totalEmployees}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Assets:</span>
-                      <span className="font-medium">{`${districtItem.totalAssets || 0} / ${summary.totalAssets}`}</span>
+                      <span className="font-medium">{`${
+                        districtItem.totalAssets || 0
+                      } / ${summary.totalAssets}`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Non-compliant:</span>
-                      <span className="font-medium text-red-600">{districtItem.stationsNotMeetingRequirements || 0}</span>
+                      <span className="font-medium text-red-600">
+                        {districtItem.stationsNotMeetingRequirements || 0}
+                      </span>
                     </div>
                   </div>
                   <button
@@ -290,7 +310,6 @@ const TopLevelDrillPage = ({
                       e.stopPropagation();
                       onDrillDistrict && onDrillDistrict(districtItem.district);
                     }}
-                    
                     className="mt-2 text-xs text-blue-600 hover:text-blue-800"
                   >
                     Drill Down →
@@ -306,27 +325,43 @@ const TopLevelDrillPage = ({
                   Details for District: {selectedDistrict}
                 </h3>
                 {(() => {
-                  const selectedDistrictData = districtData.find(d => d.district === selectedDistrict);
+                  const selectedDistrictData = districtData.find(
+                    (d) => d.district === selectedDistrict
+                  );
                   if (!selectedDistrictData) return null;
-                  
+
                   return (
                     <div className="space-y-4">
                       {/* District Summary Cards */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
-                          <p className="text-lg font-bold text-blue-600">{selectedDistrictData.totalStations}</p>
-                          <p className="text-sm text-gray-600">Total Stations</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {selectedDistrictData.totalStations}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Total Stations
+                          </p>
                         </div>
                         <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <p className="text-lg font-bold text-green-600">{selectedDistrictData.totalEmployees}</p>
-                          <p className="text-sm text-gray-600">Total Employees</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {selectedDistrictData.totalEmployees}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Total Employees
+                          </p>
                         </div>
                         <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <p className="text-lg font-bold text-purple-600">{selectedDistrictData.totalAssets}</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            {selectedDistrictData.totalAssets}
+                          </p>
                           <p className="text-sm text-gray-600">Total Assets</p>
                         </div>
                         <div className="text-center p-3 bg-red-50 rounded-lg">
-                          <p className="text-lg font-bold text-red-600">{selectedDistrictData.stationsNotMeetingRequirements}</p>
+                          <p className="text-lg font-bold text-red-600">
+                            {
+                              selectedDistrictData.stationsNotMeetingRequirements
+                            }
+                          </p>
                           <p className="text-sm text-gray-600">Non-compliant</p>
                         </div>
                       </div>
@@ -334,44 +369,68 @@ const TopLevelDrillPage = ({
                       {/* District Facilities */}
                       {selectedDistrictData.summaries?.facilities && (
                         <div>
-                          <h5 className="text-md font-semibold text-gray-900 mb-2">District Facilities</h5>
+                          <h5 className="text-md font-semibold text-gray-900 mb-2">
+                            District Facilities
+                          </h5>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {selectedDistrictData.summaries.facilities.map((facility) => (
-                              <div key={facility._id} className="p-2 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-600">{facility._id}: {facility.count}</p>
-                              </div>
-                            ))}
+                            {selectedDistrictData.summaries.facilities.map(
+                              (facility) => (
+                                <div
+                                  key={facility._id}
+                                  className="p-2 bg-gray-50 rounded-lg"
+                                >
+                                  <p className="text-sm text-gray-600">
+                                    {facility._id}: {facility.count}
+                                  </p>
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
                       )}
 
                       {/* Non-compliant Stations Details */}
-                      {selectedDistrictData.stationsNotMeetingReqDetails?.length > 0 && (
+                      {selectedDistrictData.stationsNotMeetingReqDetails
+                        ?.length > 0 && (
                         <div className="bg-red-50 rounded-lg p-4">
                           <h4 className="text-md font-semibold text-gray-900 mb-2 flex items-center">
                             <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
                             Stations Not Meeting Requirements
                           </h4>
                           <div className="space-y-2">
-                            {selectedDistrictData.stationsNotMeetingReqDetails.map((station) => (
-                              <div key={station.stationId} className="p-3 bg-white rounded-lg">
-                                <h5 className="font-semibold text-gray-900">{station.stationName}</h5>
-                                <div className="mt-1 space-y-1">
-                                  {station.missingRequirements.map((req, index) => (
-                                    <div key={index} className="text-sm">
-                                      <p className="text-gray-600">
-                                        {req.type === 'staff' ? 'Staff Shortage' : 
-                                         req.type === 'asset' ? 'Asset Shortage' : 'Facility Missing'}:
-                                        <span className="ml-1 font-medium">
-                                          {req.type === 'facility' ? req.required : 
-                                           `Required: ${req.required}, Available: ${req.available}`}
-                                        </span>
-                                      </p>
-                                    </div>
-                                  ))}
+                            {selectedDistrictData.stationsNotMeetingReqDetails.map(
+                              (station) => (
+                                <div
+                                  key={station.stationId}
+                                  className="p-3 bg-white rounded-lg"
+                                >
+                                  <h5 className="font-semibold text-gray-900">
+                                    {station.stationName}
+                                  </h5>
+                                  <div className="mt-1 space-y-1">
+                                    {station.missingRequirements.map(
+                                      (req, index) => (
+                                        <div key={index} className="text-sm">
+                                          <p className="text-gray-600">
+                                            {req.type === "staff"
+                                              ? "Staff Shortage"
+                                              : req.type === "asset"
+                                              ? "Asset Shortage"
+                                              : "Facility Missing"}
+                                            :
+                                            <span className="ml-1 font-medium">
+                                              {req.type === "facility"
+                                                ? req.required
+                                                : `Required: ${req.required}, Available: ${req.available}`}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </div>
                         </div>
                       )}
@@ -400,22 +459,38 @@ const TopLevelDrillPage = ({
               Employee by Designation
             </h3>
             <div className="space-y-3">
-              {Object.entries(statistics.employeeStats.byDesignation).map(([designation, count]) => (
-                <div key={designation} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 capitalize">{designation || 'Unknown'}</span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{
-                          width: `${(count / Math.max(...Object.values(statistics.employeeStats.byDesignation), 1)) * 100}%`,
-                        }}
-                      ></div>
+              {Object.entries(statistics.employeeStats.byDesignation).map(
+                ([designation, count]) => (
+                  <div
+                    key={designation}
+                    className="flex justify-between items-center"
+                  >
+                    <span className="text-sm text-gray-600 capitalize">
+                      {designation || "Unknown"}
+                    </span>
+                    <div className="flex items-center">
+                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{
+                            width: `${
+                              (count /
+                                Math.max(
+                                  ...Object.values(
+                                    statistics.employeeStats.byDesignation
+                                  ),
+                                  1
+                                )) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalDesignations}`}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalDesignations}`}</span>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
         )}
@@ -428,22 +503,38 @@ const TopLevelDrillPage = ({
               Employee by Grade
             </h3>
             <div className="space-y-3">
-              {Object.entries(statistics.employeeStats.byGrade).map(([grade, count]) => (
-                <div key={grade} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{grade || 'Unknown'}</span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{
-                          width: `${(count / Math.max(...Object.values(statistics.employeeStats.byGrade), 1)) * 100}%`,
-                        }}
-                      ></div>
+              {Object.entries(statistics.employeeStats.byGrade).map(
+                ([grade, count]) => (
+                  <div
+                    key={grade}
+                    className="flex justify-between items-center"
+                  >
+                    <span className="text-sm text-gray-600">
+                      {grade || "Unknown"}
+                    </span>
+                    <div className="flex items-center">
+                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          className="bg-purple-600 h-2 rounded-full"
+                          style={{
+                            width: `${
+                              (count /
+                                Math.max(
+                                  ...Object.values(
+                                    statistics.employeeStats.byGrade
+                                  ),
+                                  1
+                                )) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalGrades}`}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalGrades}`}</span>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
         )}
@@ -456,22 +547,35 @@ const TopLevelDrillPage = ({
               Employee by Rank
             </h3>
             <div className="space-y-3">
-              {Object.entries(statistics.employeeStats.byRank).map(([rank, count]) => (
-                <div key={rank} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{rank || 'Unknown'}</span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{
-                          width: `${(count / Math.max(...Object.values(statistics.employeeStats.byRank), 1)) * 100}%`,
-                        }}
-                      ></div>
+              {Object.entries(statistics.employeeStats.byRank).map(
+                ([rank, count]) => (
+                  <div key={rank} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      {rank || "Unknown"}
+                    </span>
+                    <div className="flex items-center">
+                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{
+                            width: `${
+                              (count /
+                                Math.max(
+                                  ...Object.values(
+                                    statistics.employeeStats.byRank
+                                  ),
+                                  1
+                                )) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalRanks}`}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalRanks}`}</span>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
         )}
@@ -486,11 +590,15 @@ const TopLevelDrillPage = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">{statistics.assetStats.stationAssets}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {statistics.assetStats.stationAssets}
+                  </p>
                   <p className="text-sm text-gray-600">Station Assets</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">{statistics.assetStats.employeeAssets}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {statistics.assetStats.employeeAssets}
+                  </p>
                   <p className="text-sm text-gray-600">Employee Assets</p>
                 </div>
               </div>
@@ -506,15 +614,22 @@ const TopLevelDrillPage = ({
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-600">System Occupancy Rate</span>
+              <span className="text-sm text-gray-600">
+                System Occupancy Rate
+              </span>
               <span className="font-semibold text-gray-900">
                 {summary.totalStations > 0
-                  ? Math.round((summary.activeStations / summary.totalStations) * 100)
-                  : 0}%
+                  ? Math.round(
+                      (summary.activeStations / summary.totalStations) * 100
+                    )
+                  : 0}
+                %
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-600">Avg Employees per Station</span>
+              <span className="text-sm text-gray-600">
+                Avg Employees per Station
+              </span>
               <span className="font-semibold text-gray-900">
                 {summary.totalStations > 0
                   ? (summary.totalEmployees / summary.totalStations).toFixed(1)
@@ -530,8 +645,12 @@ const TopLevelDrillPage = ({
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-600">Stations Not Meeting Requirements</span>
-              <span className="font-semibold text-red-600">{statistics.summary?.stationsNotMeetingRequirements || 0}</span>
+              <span className="text-sm text-gray-600">
+                Stations Not Meeting Requirements
+              </span>
+              <span className="font-semibold text-red-600">
+                {statistics.summary?.stationsNotMeetingRequirements || 0}
+              </span>
             </div>
           </div>
         </div>
@@ -544,22 +663,36 @@ const TopLevelDrillPage = ({
               Facility Distribution
             </h3>
             <div className="space-y-3">
-              {Object.entries(statistics.facilities).map(([facility, count]) => (
-                <div key={facility} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 capitalize">{facility || 'Unknown'}</span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{
-                          width: `${(count / Math.max(...Object.values(statistics.facilities), 1)) * 100}%`,
-                        }}
-                      ></div>
+              {Object.entries(statistics.facilities).map(
+                ([facility, count]) => (
+                  <div
+                    key={facility}
+                    className="flex justify-between items-center"
+                  >
+                    <span className="text-sm text-gray-600 capitalize">
+                      {facility || "Unknown"}
+                    </span>
+                    <div className="flex items-center">
+                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{
+                            width: `${
+                              (count /
+                                Math.max(
+                                  ...Object.values(statistics.facilities),
+                                  1
+                                )) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalFacilities}`}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{`${count} / ${summary.totalFacilities}`}</span>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
         )}
@@ -689,23 +822,33 @@ const TopLevelDrillPage = ({
                       <p className="text-lg font-bold text-gray-900">
                         {districtItem.stationsNotMeetingRequirements}
                       </p>
-                      <p className="text-sm text-gray-600">Non-compliant Stations</p>
+                      <p className="text-sm text-gray-600">
+                        Non-compliant Stations
+                      </p>
                     </div>
                   </div>
-                  
+
                   {/* District Facilities */}
-                  {districtItem.summaries?.facilities && districtItem.summaries.facilities.length > 0 && (
-                    <div className="mt-4">
-                      <h5 className="text-md font-semibold text-gray-900 mb-2">District Facilities</h5>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {districtItem.summaries.facilities.map((facility) => (
-                          <div key={facility._id} className="p-2 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-600">{facility._id}: {facility.count}</p>
-                          </div>
-                        ))}
+                  {districtItem.summaries?.facilities &&
+                    districtItem.summaries.facilities.length > 0 && (
+                      <div className="mt-4">
+                        <h5 className="text-md font-semibold text-gray-900 mb-2">
+                          District Facilities
+                        </h5>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {districtItem.summaries.facilities.map((facility) => (
+                            <div
+                              key={facility._id}
+                              className="p-2 bg-gray-50 rounded-lg"
+                            >
+                              <p className="text-sm text-gray-600">
+                                {facility._id}: {facility.count}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               )}
             </div>
@@ -784,7 +927,9 @@ const TopLevelDrillPage = ({
                 System Overview - All Districts
               </h1>
               <p className="text-sm text-gray-600">
-                {summary.totalDistricts} districts • {summary.totalTehsils} tehsils • {summary.totalStations} stations • {summary.totalEmployees} personnel
+                {summary.totalDistricts} districts • {summary.totalTehsils}{" "}
+                tehsils • {summary.totalStations} stations •{" "}
+                {summary.totalEmployees} personnel
               </p>
             </div>
           </div>
@@ -838,11 +983,13 @@ const TopLevelDrillPage = ({
             </span>
             <span className="flex items-center">
               <Building className="h-4 w-4 mr-1" />
-              Total stations: <strong className="ml-1">{summary.totalStations}</strong>
+              Total stations:{" "}
+              <strong className="ml-1">{summary.totalStations}</strong>
             </span>
             <span className="flex items-center">
               <Users className="h-4 w-4 mr-1" />
-              Total employees: <strong className="ml-1">{summary.totalEmployees}</strong>
+              Total employees:{" "}
+              <strong className="ml-1">{summary.totalEmployees}</strong>
             </span>
           </div>
           <div className="flex items-center space-x-4">
