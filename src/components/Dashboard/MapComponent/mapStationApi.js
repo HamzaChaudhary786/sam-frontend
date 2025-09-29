@@ -1,17 +1,21 @@
+import axios from "axios";
 import { BACKEND_URL } from "../../../constants/api";
-
-// stationApi.js
 
 export const getFixLocationData = async () => {
     try {
-        const response = await fetch(`${BACKEND_URL}/stations/fixLocationData`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        return data;
+        const token = localStorage.getItem("authToken"); // Get token from localStorage or cookie
+
+        const response = await axios.get(`${BACKEND_URL}/stations/fixLocationData`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            timeout: 10000, // Optional: set timeout for safety
+        });
+
+        return response.data;
     } catch (error) {
-        console.error('API call error:', error);
+        console.error("API call error:", error.response?.data || error.message);
         return null;
     }
 };

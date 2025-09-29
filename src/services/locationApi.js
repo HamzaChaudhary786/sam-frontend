@@ -66,43 +66,37 @@ export const locationAPI = {
 
 // External APIs (using separate axios instance without credentials)
 export const externalAPI = {
-    // Search locations using Nominatim
-    searchLocation: async (query) => {
-        try {
-            // Use the external axios instance instead of the main one
-            const response = await externalApi.get(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
-                {
-                    headers: {
-                        'User-Agent': 'YourMapApp/1.0' // Nominatim requires a User-Agent
-                    }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Location search error:', error);
-            throw new Error('Failed to search location. Please try again.');
-        }
-    },
-
-    // Reverse geocoding (get address from coordinates)
-    reverseGeocode: async (lat, lng) => {
-        try {
-            const response = await externalApi.get(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-                {
-                    headers: {
-                        'User-Agent': 'YourMapApp/1.0'
-                    }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Reverse geocoding error:', error);
-            // Return a fallback object instead of throwing
-            return { display_name: 'Unknown Location' };
-        }
+  searchLocation: async (query) => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/external/search-location/${encodeURIComponent(query)}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Accept: "application/json",
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Search location error:", error);
+      throw error;
     }
+  },
+
+  reverseGeocode: async (lat, lng) => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/external/reverse-geocode/${lat}/${lng}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Accept: "application/json",
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Reverse geocode error:", error);
+      throw error;
+    }
+  },
 };
 
 export default api;

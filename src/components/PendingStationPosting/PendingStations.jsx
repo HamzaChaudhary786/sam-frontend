@@ -13,6 +13,11 @@ import StationViewModal from "../Station/ViewStation/ViewStation.jsx";
 import EmployeeViewModal from "../Employee/ViewEmployee/ViewEmployee.jsx";
 import StationModal from "../Station/AddStation/AddStation.jsx";
 import { useStations } from "../Station/StationHook.js";
+import EmpSuggestions from "../../commonComponents/EmpSuggestions.jsx";
+import { MultiTextInput } from "../Employee/MultiTextInput.jsx";
+import { getEmployeesWithoutPagination } from "../Employee/EmployeeApi.js"; // Import the new API function
+import { getAllStationsWithoutPage } from "../Station/StationApi.js";
+import { MultiTextInputField } from "../../commonComponents/MultiInputTextField.jsx";
 
 const PendingStationApprovals = ({ onEdit }) => {
   const [pendingAssignments, setPendingAssignments] = useState([]);
@@ -28,15 +33,44 @@ const PendingStationApprovals = ({ onEdit }) => {
   const [isStationModalOpen, setIsStationModalOpen] = useState(false);
   const [isStationEditMode, setIsStationEditMode] = useState(false);
   const [stationEditData, setStationEditData] = useState(null);
+  const [stationSearchField, setStationSearchField] = useState(''); // tracks which field is being searched
+  const [historyStationSearchField, setHistoryStationSearchField] = useState('');
+
+
+  // State for suggestions
+  const [employeeSuggestions, setEmployeeSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [historyEmployeeSuggestions, setHistoryEmployeeSuggestions] = useState([]);
+  const [showHistorySuggestions, setShowHistorySuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState({
+    pending: false,
+    history: false,
+  });
+  const [stationSuggestions, setStationSuggestions] = useState([]);
+  const [historyStationSuggestions, setHistoryStationSuggestions] = useState([]);
+  const [isStationSearching, setIsStationSearching] = useState({
+    fromStation: false,
+    toStation: false,
+    historyFromStation: false,
+    historyToStation: false,
+  });
 
   // Separate table filter and states
-  const [activeTab, setActiveTab] = useState("pending"); // 'pending' or 'history'
+  const [activeTab, setActiveTab] = useState("pending");
   const [postingHistory, setPostingHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  const [filters, setFilters] = useState({
+    employeeName: [],
+    fromStation: [], // Changed to array
+    toStation: [], // Changed to array
+    date: "",
+  });
+
   const [historyFilters, setHistoryFilters] = useState({
-    employeeName: "",
-    fromStation: "",
-    toStation: "",
+    employeeName: [],
+    fromStation: [], // Changed to array
+    toStation: [], // Changed to array
     date: "",
     isApproved: "",
   });
@@ -48,19 +82,214 @@ const PendingStationApprovals = ({ onEdit }) => {
     hasPrev: false,
   });
 
-  // Filter state for pending approvals
-  const [filters, setFilters] = useState({
-    employeeName: "",
-    fromStation: "",
-    toStation: "",
-    date: "",
-  });
-
   // Selection state for bulk actions
   const [selectedAssignments, setSelectedAssignments] = useState(new Set());
   const { createStation, modifyStation } = useStations();
 
   const navigate = useNavigate();
+
+  // Function to fetch employee suggestions using getEmployeesWithoutPagination
+  const fetchEmployeeSuggestions = async (query, isHistory = false) => {
+    if (!query.trim() || query.length < 2) {
+      isHistory ? setHistoryEmployeeSuggestions([]) : setEmployeeSuggestions([]);
+      setIsSearching((prev) => ({ ...prev, [isHistory ? "history" : "pending"]: false }));
+      return;
+    }
+
+    setIsSearching((prev) => ({ ...prev, [isHistory ? "history" : "pending"]: true }));
+
+    try {
+      console.log('Fetching suggestions for query:', query); // Debug log
+      const response = await getEmployeesWithoutPagination({ name: query });
+
+      console.log('API Response:', response); // Debug log
+
+      if (response.success && response.data) {
+        // Handle different response structures
+        let employeeData = [];
+
+        if (Array.isArray(response.data)) {
+          employeeData = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          employeeData = response.data.data;
+        } else if (response.data.employees && Array.isArray(response.data.employees)) {
+          employeeData = response.data.employees;
+        }
+
+        console.log('Employee data extracted:', employeeData); // Debug log
+
+        const formatted = employeeData.map((emp) => {
+          const firstName = (emp.firstName || "").trim();
+          const lastName = (emp.lastName || "").trim();
+          const fullName = `${firstName} ${lastName}`.trim() || firstName || lastName;
+
+          return {
+            _id: emp._id,
+            firstName: firstName,
+            lastName: lastName,
+            fullName: fullName,
+            fatherFirstName: (emp.fatherFirstName || "").trim(),
+            rank: (emp.rank || "").trim(),
+            grade: (emp.grade || "").trim(),
+            cnic: (emp.cnic || "").trim(),
+            personalNumber: (emp.personalNumber || "").trim(),
+          };
+        }).filter(emp => emp.fullName); // Filter out employees without names
+
+        console.log('Formatted suggestions:', formatted); // Debug log
+
+        isHistory
+          ? setHistoryEmployeeSuggestions(formatted)
+          : setEmployeeSuggestions(formatted);
+      } else {
+        console.log('No valid data in response:', response);
+        isHistory ? setHistoryEmployeeSuggestions([]) : setEmployeeSuggestions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching employee suggestions:", error);
+      isHistory ? setHistoryEmployeeSuggestions([]) : setEmployeeSuggestions([]);
+    } finally {
+      setIsSearching((prev) => ({ ...prev, [isHistory ? "history" : "pending"]: false }));
+    }
+  }
+
+  const fetchStationSuggestions = async (query, stationType, isHistory = false) => {
+    if (!query.trim() || query.length < 2) {
+      if (isHistory) {
+        setHistoryStationSuggestions([]);
+      } else {
+        setStationSuggestions([]);
+      }
+      setIsStationSearching(prev => ({
+        ...prev,
+        [isHistory ? `history${stationType.charAt(0).toUpperCase() + stationType.slice(1)}` : stationType]: false
+      }));
+      return;
+    }
+
+    setIsStationSearching(prev => ({
+      ...prev,
+      [isHistory ? `history${stationType.charAt(0).toUpperCase() + stationType.slice(1)}` : stationType]: true
+    }));
+
+    try {
+      console.log('Fetching station suggestions for query:', query);
+      const response = await getAllStationsWithoutPage({ name: query });
+
+      console.log('Station API Response:', response);
+
+      if (response.success && response.data.result) {
+        let stationData = [];
+
+        if (Array.isArray(response.data.result)) {
+          stationData = response.data.result;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          stationData = response.data.data;
+        } else if (response.data.stations && Array.isArray(response.data.stations)) {
+          stationData = response.data.stations;
+        }
+
+        console.log('Station data extracted:', stationData);
+
+        const formatted = stationData.map((station) => ({
+          _id: station._id,
+          name: station.name || "",
+          location: station.location || "",
+          type: station.type || "",
+          code: station.code || ""
+        })).filter(station => station.name);
+
+        console.log('Formatted station suggestions:', formatted);
+
+        if (isHistory) {
+          setHistoryStationSuggestions(formatted);
+        } else {
+          setStationSuggestions(formatted);
+        }
+      } else {
+        console.log('No valid station data in response:', response);
+        if (isHistory) {
+          setHistoryStationSuggestions([]);
+        } else {
+          setStationSuggestions([]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching station suggestions:", error);
+      if (isHistory) {
+        setHistoryStationSuggestions([]);
+      } else {
+        setStationSuggestions([]);
+      }
+    } finally {
+      setIsStationSearching(prev => ({
+        ...prev,
+        [isHistory ? `history${stationType.charAt(0).toUpperCase() + stationType.slice(1)}` : stationType]: false
+      }));
+    }
+  }
+  // Handle filter change for MultiTextInput
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "employeeName" && value.length > 0) {
+      fetchEmployeeSuggestions(value[value.length - 1]);
+      setShowSuggestions(true);
+    } else if (name === "employeeName" && value.length === 0) {
+      setShowSuggestions(false);
+      setEmployeeSuggestions([]);
+    }
+
+    // Handle station suggestions
+    if ((name === "fromStation" || name === "toStation") && Array.isArray(value) && value.length > 0) {
+      fetchStationSuggestions(value[value.length - 1], name, false);
+    }
+  };
+
+  // Handle history filter change for MultiTextInput
+  const handleHistoryFilterChange = (e) => {
+    const { name, value } = e.target;
+    setHistoryFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "employeeName" && value.length > 0) {
+      fetchEmployeeSuggestions(value[value.length - 1], true);
+      setShowHistorySuggestions(true);
+    } else if (name === "employeeName" && value.length === 0) {
+      setShowHistorySuggestions(false);
+      setHistoryEmployeeSuggestions([]);
+    }
+
+    // Handle station suggestions for history
+    if ((name === "fromStation" || name === "toStation") && Array.isArray(value) && value.length > 0) {
+      fetchStationSuggestions(value[value.length - 1], name, true);
+    }
+  };
+  // Handle suggestion selection
+  const handleSuggestionSelect = (employee, isHistory = false) => {
+    const employeeName = employee.fullName || `${employee.firstName} ${employee.lastName}`.trim();
+    if (isHistory) {
+      setHistoryFilters((prev) => ({
+        ...prev,
+        employeeName: [...new Set([...prev.employeeName, employeeName])], // Avoid duplicates
+      }));
+      setShowHistorySuggestions(false);
+      setHistoryEmployeeSuggestions([]);
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        employeeName: [...new Set([...prev.employeeName, employeeName])], // Avoid duplicates
+      }));
+      setShowSuggestions(false);
+      setEmployeeSuggestions([]);
+    }
+  };
 
   // Fixed function to fetch posting history with proper filtering
   const fetchPostingHistory = async (page = 1) => {
@@ -70,12 +299,12 @@ const PendingStationApprovals = ({ onEdit }) => {
       // Build query parameters
       const queryParams = new URLSearchParams({
         page: page.toString(),
-        limit: "10",
+        limit: "400",
         sortBy: "createdAt",
         sortOrder: "desc",
       });
 
-      // Add filters if they exist - Note: The API expects different parameter names
+      // Add filters if they exist
       if (historyFilters.date) {
         queryParams.append("startDate", historyFilters.date);
         queryParams.append("endDate", historyFilters.date);
@@ -91,34 +320,36 @@ const PendingStationApprovals = ({ onEdit }) => {
 
       if (result.success) {
         let historyData = result.data || [];
-        
+
         // Apply client-side filtering for fields not supported by API
-        if (historyFilters.employeeName) {
+        if (historyFilters.employeeName.length > 0) {
           historyData = historyData.filter((record) => {
             const firstName = record.employee?.firstName || "";
             const lastName = record.employee?.lastName || "";
             const fullName = `${firstName} ${lastName}`.trim();
-            return fullName
-              .toLowerCase()
-              .includes(historyFilters.employeeName.toLowerCase());
+            return historyFilters.employeeName.some((name) =>
+              fullName.toLowerCase().includes(name.toLowerCase())
+            );
           });
         }
 
-        if (historyFilters.fromStation) {
+        // Fixed: Handle fromStation as array
+        if (historyFilters.fromStation.length > 0) {
           historyData = historyData.filter((record) => {
             const fromStation = record.lastStation?.name || "";
-            return fromStation
-              .toLowerCase()
-              .includes(historyFilters.fromStation.toLowerCase());
+            return historyFilters.fromStation.some((stationName) =>
+              fromStation.toLowerCase().includes(stationName.toLowerCase())
+            );
           });
         }
 
-        if (historyFilters.toStation) {
+        // Fixed: Handle toStation as array  
+        if (historyFilters.toStation.length > 0) {
           historyData = historyData.filter((record) => {
             const toStation = record.currentStation?.name || "";
-            return toStation
-              .toLowerCase()
-              .includes(historyFilters.toStation.toLowerCase());
+            return historyFilters.toStation.some((stationName) =>
+              toStation.toLowerCase().includes(stationName.toLowerCase())
+            );
           });
         }
 
@@ -137,29 +368,28 @@ const PendingStationApprovals = ({ onEdit }) => {
     }
   };
 
-  // Handle history filter changes
-  const handleHistoryFilterChange = (e) => {
-    const { name, value } = e.target;
-    setHistoryFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   // Clear history filters
   const clearHistoryFilters = () => {
     setHistoryFilters({
-      employeeName: "",
-      fromStation: "",
-      toStation: "",
+      employeeName: [],
+      fromStation: [],
+      toStation: [],
       date: "",
       isApproved: "",
     });
+    setShowHistorySuggestions(false);
+    setHistoryEmployeeSuggestions([]);
+    setHistoryStationSuggestions([]);
   };
-
   // Check if history filters are active
   const hasActiveHistoryFilters = () => {
-    return Object.values(historyFilters).some((value) => value !== "");
+    return (
+      historyFilters.employeeName.length > 0 ||
+      historyFilters.fromStation.length > 0 ||
+      historyFilters.toStation.length > 0 ||
+      historyFilters.date !== "" ||
+      historyFilters.isApproved !== ""
+    );
   };
 
   // Fetch pending approvals
@@ -198,6 +428,24 @@ const PendingStationApprovals = ({ onEdit }) => {
     }
   };
 
+  const handleStationSuggestionSelect = (station, stationType, isHistory = false) => {
+    const stationName = station.name || station;
+
+    if (isHistory) {
+      setHistoryFilters((prev) => ({
+        ...prev,
+        [stationType]: [...new Set([...prev[stationType], stationName])],
+      }));
+      setHistoryStationSuggestions([]);
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        [stationType]: [...new Set([...prev[stationType], stationName])],
+      }));
+      setStationSuggestions([]);
+    }
+  };
+
   // Apply filters for pending approvals
   const applyFilters = () => {
     if (!Array.isArray(pendingAssignments)) {
@@ -208,14 +456,14 @@ const PendingStationApprovals = ({ onEdit }) => {
     let filtered = [...pendingAssignments];
 
     // Employee name filter
-    if (filters.employeeName) {
+    if (filters.employeeName.length > 0) {
       filtered = filtered.filter((assignment) => {
         const firstName = assignment.employee?.firstName || "";
         const lastName = assignment.employee?.lastName || "";
         const fullName = `${firstName} ${lastName}`.trim();
-        return fullName
-          .toLowerCase()
-          .includes(filters.employeeName.toLowerCase());
+        return filters.employeeName.some((name) =>
+          fullName.toLowerCase().includes(name.toLowerCase())
+        );
       });
     }
 
@@ -224,63 +472,61 @@ const PendingStationApprovals = ({ onEdit }) => {
       filtered = filtered.filter((assignment) => {
         const assignmentDate = new Date(assignment.createdAt)
           .toISOString()
-          .split("T")[0]; // format YYYY-MM-DD
+          .split("T")[0];
         return assignmentDate === filters.date;
       });
     }
 
-    // From station filter - Fixed to handle both array and object structures
-    if (filters.fromStation) {
+    // From station filter - updated to handle arrays
+    if (filters.fromStation.length > 0) {
       filtered = filtered.filter((assignment) => {
         const fromStation = Array.isArray(assignment.lastStation)
           ? assignment.lastStation?.[0]?.name || ""
           : assignment.lastStation?.name || "";
-
-        return fromStation
-          .toLowerCase()
-          .includes(filters.fromStation.toLowerCase());
+        return filters.fromStation.some((name) =>
+          fromStation.toLowerCase().includes(name.toLowerCase())
+        );
       });
     }
 
-    // To station filter - Fixed to handle both array and object structures
-    if (filters.toStation) {
+    // To station filter - updated to handle arrays
+    if (filters.toStation.length > 0) {
       filtered = filtered.filter((assignment) => {
         const toStation = Array.isArray(assignment.currentStation)
           ? assignment.currentStation?.[0]?.name || ""
           : assignment.currentStation?.name || "";
-
-        return toStation
-          .toLowerCase()
-          .includes(filters.toStation.toLowerCase());
+        return filters.toStation.some((name) =>
+          toStation.toLowerCase().includes(name.toLowerCase())
+        );
       });
     }
 
     setFilteredAssignments(filtered);
   };
 
-  // Handle filter changes for pending approvals
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   // Clear filters for pending approvals
   const clearFilters = () => {
     setFilters({
-      employeeName: "",
-      fromStation: "",
-      toStation: "",
+      employeeName: [],
+      fromStation: [],
+      toStation: [],
       date: "",
     });
+    setShowSuggestions(false);
+    setEmployeeSuggestions([]);
+    setStationSuggestions([]);
   };
 
   // Check if filters are active for pending approvals
   const hasActiveFilters = () => {
-    return Object.values(filters).some((value) => value !== "");
+    return (
+      filters.employeeName.length > 0 ||
+      filters.fromStation.length > 0 ||
+      filters.toStation.length > 0 ||
+      filters.date !== ""
+    );
   };
+
 
   // Approve assignment
   const handleApprove = async (assignment) => {
@@ -569,11 +815,10 @@ const PendingStationApprovals = ({ onEdit }) => {
         <nav className="-mb-px flex space-x-8 px-6">
           <button
             onClick={() => setActiveTab("pending")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "pending"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "pending"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Pending Approvals
             {pendingAssignments.length > 0 && (
@@ -584,11 +829,10 @@ const PendingStationApprovals = ({ onEdit }) => {
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "history"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "history"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Posting History
           </button>
@@ -607,46 +851,64 @@ const PendingStationApprovals = ({ onEdit }) => {
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Employee Name
-                </label>
-                <input
-                  type="text"
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="relative">
+                <MultiTextInputField
+                  label="Employee Name"
                   name="employeeName"
-                  value={filters.employeeName}
-                  onChange={handleFilterChange}
-                  placeholder="Search by name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  value={historyFilters.employeeName}
+                  onChange={handleHistoryFilterChange}
+                  placeholder="Type employee name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchEmployeeSuggestions(query, true)}
+                  suggestions={historyEmployeeSuggestions}
+                  isSearching={isSearching.history}
+                  searchPlaceholder="Type to search employee names..."
+                  emptyMessage="No employee names found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(employee) => handleSuggestionSelect(employee, true)}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  From Station
-                </label>
-                <input
-                  type="text"
+              <div className="relative">
+                <MultiTextInput
+                  label="From Station"
                   name="fromStation"
                   value={filters.fromStation}
                   onChange={handleFilterChange}
-                  placeholder="Search from station..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type station name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchStationSuggestions(query, 'fromStation', false)}
+                  suggestions={stationSuggestions.map(station => station.name)}
+                  isSearching={isStationSearching.fromStation}
+                  searchPlaceholder="Type to search station names..."
+                  emptyMessage="No stations found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(stationName) => handleStationSuggestionSelect({ name: stationName }, 'fromStation', false)}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  To Station
-                </label>
-                <input
-                  type="text"
+              <div className="relative">
+                <MultiTextInput
+                  label="To Station"
                   name="toStation"
                   value={filters.toStation}
                   onChange={handleFilterChange}
-                  placeholder="Search to station..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type station name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchStationSuggestions(query, 'toStation', false)}
+                  suggestions={stationSuggestions.map(station => station.name)}
+                  isSearching={isStationSearching.toStation}
+                  searchPlaceholder="Type to search station names..."
+                  emptyMessage="No stations found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(stationName) => handleStationSuggestionSelect({ name: stationName }, 'toStation', false)}
                 />
               </div>
 
@@ -657,10 +919,26 @@ const PendingStationApprovals = ({ onEdit }) => {
                 <input
                   type="date"
                   name="date"
-                  value={filters.date || ""}
-                  onChange={handleFilterChange}
+                  value={historyFilters.date || ""}
+                  onChange={handleHistoryFilterChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  name="isApproved"
+                  value={historyFilters.isApproved}
+                  onChange={handleHistoryFilterChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="">All Status</option>
+                  <option value="true">Approved</option>
+                  <option value="false">Rejected</option>
+                </select>
               </div>
             </div>
 
@@ -821,7 +1099,7 @@ const PendingStationApprovals = ({ onEdit }) => {
                       const fromStation = Array.isArray(assignment.lastStation)
                         ? assignment.lastStation?.[0]
                         : assignment.lastStation;
-                      
+
                       const toStation = Array.isArray(assignment.currentStation)
                         ? assignment.currentStation?.[0]
                         : assignment.currentStation;
@@ -1055,45 +1333,63 @@ const PendingStationApprovals = ({ onEdit }) => {
 
             {/* History Filters */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Employee Name
-                </label>
-                <input
-                  type="text"
+              <div className="relative">
+                <MultiTextInputField
+                  label="Employee Name"
                   name="employeeName"
                   value={historyFilters.employeeName}
                   onChange={handleHistoryFilterChange}
-                  placeholder="Search by name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type employee name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchEmployeeSuggestions(query, true)}
+                  suggestions={historyEmployeeSuggestions}
+                  isSearching={isSearching.history}
+                  searchPlaceholder="Type to search employee names..."
+                  emptyMessage="No employee names found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(employee) => handleSuggestionSelect(employee, true)}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  From Station
-                </label>
-                <input
-                  type="text"
+              <div className="relative">
+                <MultiTextInput
+                  label="From Station"
                   name="fromStation"
                   value={historyFilters.fromStation}
                   onChange={handleHistoryFilterChange}
-                  placeholder="Search from station..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type station name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchStationSuggestions(query, 'fromStation', true)}
+                  suggestions={historyStationSuggestions.map(station => station.name)}
+                  isSearching={isStationSearching.historyFromStation}
+                  searchPlaceholder="Type to search station names..."
+                  emptyMessage="No stations found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(stationName) => handleStationSuggestionSelect({ name: stationName }, 'fromStation', true)}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  To Station
-                </label>
-                <input
-                  type="text"
+              <div className="relative">
+                <MultiTextInput
+                  label="To Station"
                   name="toStation"
                   value={historyFilters.toStation}
                   onChange={handleHistoryFilterChange}
-                  placeholder="Search to station..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type station name..."
+                  minLength={2}
+                  maxLength={50}
+                  enableSuggestions={true}
+                  onSearch={(query) => fetchStationSuggestions(query, 'toStation', true)}
+                  suggestions={historyStationSuggestions.map(station => station.name)}
+                  isSearching={isStationSearching.historyToStation}
+                  searchPlaceholder="Type to search station names..."
+                  emptyMessage="No stations found"
+                  minSearchLength={2}
+                  onSuggestionSelect={(stationName) => handleStationSuggestionSelect({ name: stationName }, 'toStation', true)}
                 />
               </div>
 
@@ -1192,8 +1488,7 @@ const PendingStationApprovals = ({ onEdit }) => {
                           `${firstName} ${lastName}`.trim() ||
                           "Unknown Employee";
                         const approverName = record.isApprovedBy
-                          ? `${record.isApprovedBy.firstName || ""} ${
-                              record.isApprovedBy.lastName || ""
+                          ? `${record.isApprovedBy.firstName || ""} ${record.isApprovedBy.lastName || ""
                             }`.trim()
                           : "";
 
@@ -1284,19 +1579,18 @@ const PendingStationApprovals = ({ onEdit }) => {
 
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span
-                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  record.isApproved === true
-                                    ? "bg-green-100 text-green-800"
-                                    : record.isApproved === false
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${record.isApproved === true
+                                  ? "bg-green-100 text-green-800"
+                                  : record.isApproved === false
                                     ? "bg-red-100 text-red-800"
                                     : "bg-yellow-100 text-yellow-800"
-                                }`}
+                                  }`}
                               >
                                 {record.isApproved === true
                                   ? "Approved"
                                   : record.isApproved === false
-                                  ? "Rejected"
-                                  : "Pending"}
+                                    ? "Rejected"
+                                    : "Pending"}
                               </span>
                             </td>
 
@@ -1325,45 +1619,45 @@ const PendingStationApprovals = ({ onEdit }) => {
 
                 {/* Pagination */}
                 {historyPagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                  <div
+                    className="sticky bottom-0 left-0 z-50 bg-white border-t border-gray-200
+               flex items-center justify-between px-4 py-3 shadow-sm"
+                  >
                     <div className="text-sm text-gray-700">
                       Showing page {historyPagination.currentPage} of{" "}
                       {historyPagination.totalPages}
                     </div>
+
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() =>
-                          fetchPostingHistory(historyPagination.currentPage - 1)
-                        }
+                        onClick={() => fetchPostingHistory(historyPagination.currentPage - 1)}
                         disabled={!historyPagination.hasPrev}
-                        className={`px-3 py-2 text-sm rounded-md ${
-                          historyPagination.hasPrev
+                        className={`px-3 py-2 text-sm rounded-md ${historyPagination.hasPrev
                             ? "bg-blue-600 text-white hover:bg-blue-700"
                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                          }`}
                       >
                         Previous
                       </button>
+
                       <span className="text-sm text-gray-600">
-                        {historyPagination.currentPage} /{" "}
-                        {historyPagination.totalPages}
+                        {historyPagination.currentPage} / {historyPagination.totalPages}
                       </span>
+
                       <button
-                        onClick={() =>
-                          fetchPostingHistory(historyPagination.currentPage + 1)
-                        }
+                        onClick={() => fetchPostingHistory(historyPagination.currentPage + 1)}
                         disabled={!historyPagination.hasNext}
-                        className={`px-3 py-2 text-sm rounded-md ${
-                          historyPagination.hasNext
+                        className={`px-3 py-2 text-sm rounded-md ${historyPagination.hasNext
                             ? "bg-blue-600 text-white hover:bg-blue-700"
                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                          }`}
                       >
                         Next
                       </button>
                     </div>
                   </div>
                 )}
+
               </>
             )}
           </div>
@@ -1398,8 +1692,6 @@ const PendingStationApprovals = ({ onEdit }) => {
 };
 
 export default PendingStationApprovals;
-
-
 
 
 
@@ -1990,7 +2282,7 @@ export default PendingStationApprovals;
 //               name="date"
 //               value={filters.date || ""}
 //               onChange={handleFilterChange}
-//               className="w-full px-3 py-2 border border-gray-300 rounded-md 
+//               className="w-full px-3 py-2 border border-gray-300 rounded-md
 //                focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
 //             />
 //           </div>

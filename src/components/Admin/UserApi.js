@@ -4,6 +4,15 @@ import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
+const getToken = () => localStorage.getItem('authToken');
+
+// Helper function to get headers with token
+const getAuthHeaders = () => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+
 const BASE_URL = `${BACKEND_URL}/user`;
 
 export const userApi = {
@@ -12,6 +21,7 @@ export const userApi = {
     try {
       const response = await axios.post(BASE_URL, userData, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -39,13 +49,14 @@ export const userApi = {
     try {
       const { page = 1, limit = 10, userType } = params;
       let url = `${BASE_URL}?page=${page}&limit=${limit}`;
-      
+
       if (userType) {
         url += `&userType=${userType}`;
       }
-      
+
       const response = await axios.get(url, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -74,6 +85,7 @@ export const userApi = {
       const { page = 1, limit = 10 } = params;
       const response = await axios.get(`${BASE_URL}?page=${page}&limit=${limit}&userType=${userType}`, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -101,6 +113,7 @@ export const userApi = {
     try {
       const response = await axios.get(`${BASE_URL}/${id}`, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -129,9 +142,10 @@ export const userApi = {
         const { password, ...updateData } = userData;
         userData = updateData;
       }
-      
+
       const response = await axios.put(`${BASE_URL}/${id}`, userData, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -157,6 +171,7 @@ export const userApi = {
     try {
       const response = await axios.delete(`${BASE_URL}/${id}`, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,

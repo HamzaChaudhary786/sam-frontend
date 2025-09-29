@@ -3,6 +3,13 @@ import axios from 'axios';
 import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
+const getToken = () => localStorage.getItem('authToken');
+
+// Helper function to get headers with token
+const getAuthHeaders = () => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const BASE_URL = `${BACKEND_URL}/roles`;
 
@@ -12,6 +19,7 @@ export const roleApi = {
     try {
       const response = await axios.post(`${BASE_URL}/roles`, roleData, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -37,6 +45,7 @@ export const roleApi = {
     try {
       const response = await axios.get(`${BASE_URL}/roles`, {
         headers: {
+            ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -62,6 +71,7 @@ export const roleApi = {
     try {
       const response = await axios.get(`${BASE_URL}/roles/${id}`, {
         headers: {
+            ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -87,6 +97,7 @@ export const roleApi = {
     try {
       const response = await axios.put(`${BASE_URL}/roles/${id}`, roleData, {
         headers: {
+            ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -112,6 +123,7 @@ export const roleApi = {
     try {
       const response = await axios.delete(`${BASE_URL}/roles/${id}`, {
         headers: {
+            ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
