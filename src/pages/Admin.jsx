@@ -257,7 +257,7 @@ const AdminManagementPage = () => {
               </button>
             </div>
 
-            {roles.length === 0 ? (
+            {roles?.length === 0 ? (
               <div className="text-center py-12">
                 <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">No roles created yet</p>
@@ -270,7 +270,9 @@ const AdminManagementPage = () => {
               </div>
             ) : (
               <div className="grid gap-6">
-                {roles.map((role) => (
+                {console.log(roles,"my roles")
+                }
+                {roles?.map((role) => (
                   <div
                     key={role._id}
                     className="bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow"

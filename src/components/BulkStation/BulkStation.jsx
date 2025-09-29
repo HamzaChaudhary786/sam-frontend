@@ -13,6 +13,7 @@ import StationViewModal from "../Station/ViewStation/ViewStation.jsx";
 import EmployeeViewModal from "../Employee/ViewEmployee/ViewEmployee.jsx";
 import StationModal from "../Station/AddStation/AddStation.jsx";
 import { useStations } from "../Station/StationHook.js";
+import EmpSuggestions from "../../commonComponents/EmpSuggestions.jsx";
 
 const BulkStationAssignment = () => {
   const navigate = useNavigate();
@@ -604,15 +605,9 @@ const BulkStationAssignment = () => {
                                   disabled={saving}
                                   className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center"
                                 >
-                                  <img
-                                    className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                                    src={getEmployeeImage(employee)}
-                                    alt={`${employee.firstName} ${employee.lastName}`}
-                                    onError={(e) => {
-                                      e.target.src = "/default-avatar.png";
-                                    }}
-                                  />
-                                  <div className="flex-1 min-w-0">
+                                  <EmpSuggestions emp={employee} />
+
+                                  {/* <div className="flex-1 min-w-0">
                                     <div className="font-medium text-gray-900 truncate">
                                       {employee.firstName}
                                     </div>
@@ -622,9 +617,9 @@ const BulkStationAssignment = () => {
                                     <div className="text-xs text-gray-500 truncate">
                                       {employee.personalNumber ||
                                         employee.pnumber}{" "}
-                                      | {employee.cnic}
+                                      | {employee.cnic} hahaha
                                     </div>
-                                  </div>
+                                  </div> */}
                                 </button>
                               )
                             )}
