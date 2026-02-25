@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStations } from "../StationHook.js";
 import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
+import CommonStationView from '../../../commonComponents/CommonStationView.jsx'
 import DrillStation from "../DrillStation/DrillStation.jsx";
 import DrillTehsilPage from "../DrillTehsil/DrillTehsil.jsx";
 import Pagination from "../Pagination/Pagination.jsx";
@@ -1539,7 +1540,7 @@ const StationList = () => {
 
 
       {/* View Station Modal */}
-      <StationViewModal
+      <CommonStationView
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         station={selectedStation}

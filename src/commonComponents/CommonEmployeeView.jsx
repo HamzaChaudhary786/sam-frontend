@@ -1,0 +1,746 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { getDesignationsWithEnum } from "../components/Employee/AddEmployee/Designation.js";
+import { getGradesWithEnum } from "../components/Employee/AddEmployee/Grades.js";
+import { BACKEND_URL } from "../constants/api.js";
+
+const EmployeeViewModal = ({ isOpen, onClose, employee, onEdit, station }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [designationEnum, setDesignationEnum] = useState([]);
+  const [gradeEnum, setGradeEnum] = useState([]);
+  const [activeTab, setActiveTab] = useState("employeeView");
+  const [assignmentHistory, setAssignmentHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch dropdown options for designations and grades
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [desigRes, gradeRes] = await Promise.all([
+          getDesignationsWithEnum(),
+          getGradesWithEnum(),
+        ]);
+
+        console.log("Modal - Designation response:", desigRes);
+        console.log("Modal - Grade response:", gradeRes);
+
+        if (desigRes.success && desigRes.data) {
+          const designationArray = Object.entries(desigRes.data).map(
+            ([_id, name]) => ({
+              _id,
+              name,
+            })
+          );
+          setDesignationEnum(designationArray);
+          console.log("Modal - Set designations array:", designationArray);
+        }
+
+        if (gradeRes.success && gradeRes.data) {
+          const gradeArray = Object.entries(gradeRes.data).map(
+            ([_id, name]) => ({
+              _id,
+              name,
+            })
+          );
+          setGradeEnum(gradeArray);
+          console.log("Modal - Set grades array:", gradeArray);
+        }
+      } catch (error) {
+        console.error("Modal - Error fetching options:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchOptions();
+    }
+  }, [isOpen]);
+
+  // Fetch assignment history
+  useEffect(() => {
+    if (isOpen && employee?._id && activeTab === "assignmentHistory") {
+      const fetchAssignmentHistory = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(
+            `${BACKEND_URL}/station-history/employee/${employee._id}`
+          );
+          console.log(response, "my response data");
+          setAssignmentHistory(response?.data?.data || []);
+          setError(null);
+        } catch (err) {
+          setError("Failed to load assignment history.");
+          setAssignmentHistory([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAssignmentHistory();
+    }
+  }, [isOpen, activeTab, employee]);
+
+  // Helper function to get designation name by ID
+  const getDesignationName = (designationId) => {
+    if (typeof designationId === "object" && designationId?.name) {
+      return designationId.name;
+    }
+    if (designationEnum && Array.isArray(designationEnum)) {
+      const designation = designationEnum.find((d) => d._id === designationId);
+      return designation?.name || designationId || "N/A";
+    }
+    return designationId || "N/A";
+  };
+
+  // Helper function to get grade name by ID
+  const getGradeName = (gradeId) => {
+    if (typeof gradeId === "object" && gradeId?.name) {
+      return gradeId.name;
+    }
+    if (gradeEnum && Array.isArray(gradeEnum)) {
+      const grade = gradeEnum.find((g) => g._id === gradeId);
+      return grade?.name || gradeId || "N/A";
+    }
+    return gradeId || "N/A";
+  };
+
+  if (!isOpen || !employee) return null;
+
+  const profileImages = Array.isArray(employee.profileUrl)
+    ? employee.profileUrl
+    : employee.profileUrl
+      ? [employee.profileUrl]
+      : [];
+
+  const currentImage =
+    profileImages[currentImageIndex] || "/default-avatar.png";
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? profileImages.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === profileImages.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const openImageModal = () => {
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+  };
+
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit(employee);
+      onClose();
+    }
+  };
+
+  const isStationIncharge = employee.stations?.stationIncharge?.some(
+    (incharge) => incharge.employee === employee._id
+  );
+  const isMallkhanaIncharge = employee.assignedAssets?.some(
+    (asset) => asset.asset[0]?.mallkhana !== null
+  );
+  const hasAward = employee.assignedAwards?.some(
+    (award) => award.isMonitor === true
+  );
+  const disciplinaryObjects =
+    employee?.disciplinaryActions?.filter(
+      (dis) => dis.isDisciplinaryAction === true
+    ) || [];
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">
+              Employee Details - {employee.firstName} {employee.lastName}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+              <button
+                onClick={() => setActiveTab("employeeView")}
+                className={`${activeTab === "employeeView"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Employee View
+              </button>
+              <button
+                onClick={() => setActiveTab("assignmentHistory")}
+                className={`${activeTab === "assignmentHistory"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Assignment History
+              </button>
+            </nav>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-6">
+            {activeTab === "employeeView" && (
+              <>
+                {/* Employee Photo and Basic Info */}
+                <div className="flex items-center space-x-6">
+                  <div className="flex-shrink-0 relative">
+                    <img
+                      src={currentImage}
+                      alt={`${employee.firstName} ${employee.lastName}`}
+                      className="h-32 w-32 rounded-full object-cover border-4 border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={openImageModal}
+                    />
+                    {profileImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={handlePrevImage}
+                          className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={handleNextImage}
+                          className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </button>
+                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
+                          {currentImageIndex + 1} of {profileImages.length}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {employee.firstName} {employee.lastName}
+                    </h3>
+                    <p className="text-lg text-gray-600 mt-1">
+                      {getDesignationName(employee.designation)}
+                    </p>
+                    <div className="mt-2">
+                      <span
+                        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${employee.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : employee.status === "retired"
+                              ? "bg-blue-100 text-blue-800"
+                              : employee.status === "terminated"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                          }`}
+                      >
+                        {employee.status?.charAt(0).toUpperCase() +
+                          employee.status?.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <hr className="w-full border-t pt-6" />
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-bold italic my-3">Tags</h1>
+                  <div className="flex flex-row gap-x-3 flex-wrap">
+                    {isStationIncharge && (
+                      <span className="bg-blue-100 text-blue-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                        Station Incharge
+                      </span>
+                    )}
+                    {isMallkhanaIncharge && (
+                      <span className="bg-green-100 text-green-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                        Mallkhana Incharge
+                      </span>
+                    )}
+                    {hasAward && (
+                      <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                        Award
+                      </span>
+                    )}
+                    {disciplinaryObjects.length > 0 &&
+                      disciplinaryObjects[0]?.description && (
+                        <span className="bg-yellow-100 text-yellow-800 w-fit text-xs font-medium px-2 py-1 rounded">
+                          {disciplinaryObjects[0].description}
+                        </span>
+                      )}
+                  </div>
+                </div>
+
+                {/* Personal Information */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Personal Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Personal Number
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.personalNumber || employee.pnumber || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        CNIC
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.cnic || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Mobile Number
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.mobileNumber || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Date of Birth
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.dateOfBirth
+                          ? new Date(employee.dateOfBirth).toLocaleDateString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Age
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.age || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Cast
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.cast?.name || employee.cast || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Father's Name
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.fatherFirstName && employee.fatherLastName
+                          ? `${employee.fatherFirstName} ${employee.fatherLastName}`
+                          : employee.fatherFirstName ||
+                          employee.fatherLastName ||
+                          "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Professional Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Designation
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {getDesignationName(employee.designation)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Grade
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {getGradeName(employee.grade)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Service Type
+                      </label>
+                      <p className="text-sm text-gray-900 capitalize">
+                        {employee.serviceType || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.status?.charAt(0).toUpperCase() +
+                          employee.status?.slice(1) || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Station Address */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Station Address
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Station Name
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.stations?.name || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Address Line 1
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.stations?.address?.line1 || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Address Line 2
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.stations?.address?.line2 || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        City
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.stations?.address?.city || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal Address */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Personal Address
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Address Line 1
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.address?.line1 || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Address Line 2
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.address?.line2 || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Muhala
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.address?.muhala || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Tehsil
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {employee.address?.tehsil || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assigned Assets */}
+                {employee.assets && employee.assets.length > 0 && (
+                  <div className="border-t pt-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      Assigned Assets
+                    </h4>
+                    <div className="space-y-4">
+                      {employee.assets.map((asset, index) => (
+                        <div
+                          key={index}
+                          className={`rounded-lg p-4 ${asset.asset?.type === "weapons"
+                              ? "bg-red-50 border border-red-200"
+                              : "bg-blue-50 border border-blue-200"
+                            }`}
+                        >
+                          <div className="flex items-center mb-3">
+                            {asset.asset?.type === "weapons" ? (
+                              <svg
+                                className="h-5 w-5 text-red-600 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="h-5 w-5 text-blue-600 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                                />
+                              </svg>
+                            )}
+                            <h5
+                              className={`font-semibold ${asset.asset?.type === "weapons"
+                                  ? "text-red-800"
+                                  : "text-blue-800"
+                                }`}
+                            >
+                              {asset.asset?.name || "Unknown Asset"} (
+                              {asset.asset?.type || "Unknown Type"})
+                            </h5>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === "assignmentHistory" && (
+              <div className="border-t pt-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                  Assignment History
+                </h4>
+                {loading ? (
+                  <p className="text-gray-600">Loading assignment history...</p>
+                ) : error ? (
+                  <p className="text-red-600">{error}</p>
+                ) : assignmentHistory.length === 0 ? (
+                  <p className="text-gray-600">No assignment history available.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Employee
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Assignment Date
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Current Station
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Last Station
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Status
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Approval Comment
+                          </th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Remarks
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assignmentHistory?.map((assignment, index) => (
+                          <tr
+                            key={index}
+                            className="border-t border-gray-200"
+                          >
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.employee?.firstName || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.fromDate
+                                ? new Date(assignment.fromDate).toLocaleDateString()
+                                : "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.currentStation?.name || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.lastStation?.name || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.isApproved
+                                ? "Approved"
+                                : assignment.isRejected
+                                  ? "Rejected"
+                                  : "Pending"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.approvalComment || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {assignment.remarks || "N/A"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="sticky bottom-0 z-[9999] flex justify-end p-6 border-t border-gray-200 bg-white">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              Close
+            </button>
+            {onEdit && activeTab === "employeeView" && (
+              <button
+                onClick={handleEditClick}
+                className="px-4 py-2 bg-blue-600 text-white ml-2 rounded-md hover:bg-blue-700"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Full Size Image Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[60]">
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img
+              src={currentImage}
+              alt={`${employee.firstName} ${employee.lastName} - Full Size`}
+              className="max-w-full max-h-full object-contain"
+            />
+            {profileImages.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full">
+                  {currentImageIndex + 1} of {profileImages.length}
+                </div>
+              </>
+            )}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default EmployeeViewModal;
