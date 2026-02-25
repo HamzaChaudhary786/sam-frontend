@@ -6,6 +6,17 @@ axios.defaults.withCredentials = true;
 
 const BASE_URL = `${BACKEND_URL}/employee`;
 
+const getToken = () => localStorage.getItem('authToken');
+
+// Helper function to get headers with token
+const getAuthHeaders = () => {
+  const token = getToken();
+  console.log(token, "my tokennnnnnnnnnnnn");
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+
 export const employeeApi = {
   // Get all employees with pagination
   getAll: async (params = {}) => {
@@ -14,6 +25,7 @@ export const employeeApi = {
       const response = await axios.get(`${BASE_URL}?page=${page}&limit=${limit}`, {
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         withCredentials: true,
       });

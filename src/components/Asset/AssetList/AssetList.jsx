@@ -7,7 +7,7 @@ import { useLookupOptions } from "../../../services/LookUp.js";
 import Pagination from "../Pagination.jsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import CommonAssetView from "../../../commonComponents/CommonAssetView.jsx"
 const AssetsList = () => {
   const {
     assets,
@@ -664,7 +664,7 @@ const AssetsList = () => {
       />
 
       {/* View Asset Modal */}
-      <AssetViewModal
+      <CommonAssetView
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         asset={selectedAsset}

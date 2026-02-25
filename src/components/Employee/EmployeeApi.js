@@ -10,6 +10,8 @@ const getToken = () => localStorage.getItem('authToken');
 // Helper function to get headers with token
 const getAuthHeaders = () => {
   const token = getToken();
+  console.log(token , "my tokennnnnnnnnnnnn");
+  
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
