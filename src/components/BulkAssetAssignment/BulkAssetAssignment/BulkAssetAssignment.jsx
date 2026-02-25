@@ -18,6 +18,7 @@ import EmployeeViewModal from "../../Employee/ViewEmployee/ViewEmployee.jsx";
 import StationViewModal from "../../Station/ViewStation/ViewStation.jsx";
 import StationModal from "../../Station/AddStation/AddStation.jsx";
 import { useStations } from "../../Station/StationHook.js";
+import EmpSuggestions from "../../../commonComponents/EmpSuggestions.jsx";
 
 const BulkAssetAssignment = () => {
   const navigate = useNavigate();
@@ -877,15 +878,8 @@ const BulkAssetAssignment = () => {
                                 disabled={loading}
                                 className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center border-b border-gray-100 last:border-b-0"
                               >
-                                <img
-                                  className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                                  src={getEmployeeImage(employee)}
-                                  alt={`${employee.firstName} ${employee.lastName}`}
-                                  onError={(e) => {
-                                    e.target.src = "/default-avatar.png";
-                                  }}
-                                />
-                                <div className="flex-1 min-w-0">
+                                <EmpSuggestions emp={employee}/>
+                                {/* <div className="flex-1 min-w-0">
                                   <div className="font-medium text-gray-900 whitespace-normal break-words">
                                     {employee.firstName} {employee.lastName}
                                   </div>
@@ -897,7 +891,7 @@ const BulkAssetAssignment = () => {
                                       employee.pnumber}{" "}
                                     | {employee.cnic}
                                   </div>
-                                </div>
+                                </div> */}
                               </button>
                             ))}
                           </div>

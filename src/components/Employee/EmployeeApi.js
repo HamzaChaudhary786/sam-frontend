@@ -10,6 +10,8 @@ const getToken = () => localStorage.getItem('authToken');
 // Helper function to get headers with token
 const getAuthHeaders = () => {
   const token = getToken();
+  console.log(token , "my tokennnnnnnnnnnnn");
+  
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -74,6 +76,7 @@ export const getEmployeesWithoutPagination = async (filters = {}) => {
     if (filters.name) queryParams.append('name', filters.name);
     if (filters.address) queryParams.append('address', filters.address);
     if (filters.personalNumber) queryParams.append('personalNumber', filters.personalNumber);
+    if (filters.serialNumber) queryParams.append('serialNumber', filters.serialNumber);
     if (filters.cnic) queryParams.append('cnic', filters.cnic);
     if (filters.designation) queryParams.append('designation', filters.designation);
     if (filters.status) queryParams.append('status', filters.status);

@@ -91,3 +91,11 @@
   background-color: #9ca3af; /* gray-400 */
   border-radius: 9999px;
 }
+
+
+.sticky-scrollbar {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 30;
+}

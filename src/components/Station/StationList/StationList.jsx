@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStations } from "../StationHook.js";
 import StationModal from "../AddStation/AddStation.jsx";
 import StationViewModal from "../ViewStation/ViewStation.jsx";
+import CommonStationView from '../../../commonComponents/CommonStationView.jsx'
 import DrillStation from "../DrillStation/DrillStation.jsx";
 import DrillTehsilPage from "../DrillTehsil/DrillTehsil.jsx";
 import Pagination from "../Pagination/Pagination.jsx";
@@ -15,6 +16,7 @@ import { toast } from "react-toastify";
 import { getEmployees } from "../../Employee/EmployeeApi.js";
 import { getAllAssetAssignments } from "../../AssetAssignment/AssetApi.js";
 import ClickableStationName from "../ClickableStationView.jsx"; // Adjust path as needed
+import SyncHorizontalScroll from "../../../commonComponents/SyncHorizontalScroll.jsx";
 
 const StationList = () => {
   const {
@@ -805,11 +807,12 @@ const StationList = () => {
       )}
 
       {/* Station Table/Cards - Responsive */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg">
         {/* Desktop Table View - Only for screens 1200px+ */}
-        <div className="hidden xl:block">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+        <div className="hidden xl:block relative overflow-visible">
+
+          <SyncHorizontalScroll contentWidth={1800}>
+            <table className=" divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
@@ -928,7 +931,7 @@ const StationList = () => {
                         )}
                       </td>
                       <td className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         {(currentPage - 1) * itemsPerPage + index + 1}
+                        {(currentPage - 1) * itemsPerPage + index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start space-y-2">
@@ -1284,7 +1287,8 @@ const StationList = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          </SyncHorizontalScroll>
+
         </div>
 
         {/* Mobile/Tablet Card View - For screens under 1200px */}
@@ -1536,7 +1540,7 @@ const StationList = () => {
 
 
       {/* View Station Modal */}
-      <StationViewModal
+      <CommonStationView
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         station={selectedStation}

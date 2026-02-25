@@ -26,7 +26,9 @@ export const useAdminData = () => {
     try {
       const result = await roleApi.getAll();
       if (result.success) {
-        setRoles(result.data || []);
+        console.log(result?.data, "hahahahahhahahahahhahahahahahahhahaha");
+
+        setRoles(result?.data?.roles || result?.data || []);
       } else {
         toast.error('Failed to fetch roles: ' + result.error);
       }
@@ -43,7 +45,7 @@ export const useAdminData = () => {
     try {
       const result = await groupApi.getAll();
       if (result.success) {
-        setGroups(result.data || []);
+        setGroups(result?.data?.groups || result?.data || []);
       } else {
         toast.error('Failed to fetch groups: ' + result.error);
       }
@@ -59,7 +61,7 @@ export const useAdminData = () => {
     try {
       const { page = 1, limit = 10, userType } = params;
       const result = await userApi.getAll({ page, limit, userType });
-      
+
       if (result.success) {
         setUsers(result.data || []);
         if (result.pagination) {

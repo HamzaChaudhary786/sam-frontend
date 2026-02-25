@@ -4,6 +4,8 @@ import { BACKEND_URL } from '../../constants/api';
 
 axios.defaults.withCredentials = true;
 
+
+
 const getToken = () => localStorage.getItem('authToken');
 
 // Helper function to get headers with token
@@ -21,7 +23,7 @@ export const groupApi = {
     try {
       const response = await axios.post(BASE_URL, groupData, {
         headers: {
-          ...getAuthHeaders,
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -72,6 +74,7 @@ export const groupApi = {
     try {
       const response = await axios.get(`${BASE_URL}/${id}`, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -97,6 +100,7 @@ export const groupApi = {
     try {
       const response = await axios.put(`${BASE_URL}/${id}`, groupData, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,
@@ -122,6 +126,7 @@ export const groupApi = {
     try {
       const response = await axios.delete(`${BASE_URL}/${id}`, {
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         withCredentials: true,

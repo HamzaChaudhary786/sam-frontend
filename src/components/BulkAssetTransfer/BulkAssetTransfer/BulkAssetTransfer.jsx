@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BulkAssetHeader from "../Header/Header.jsx";
 import BulkAssetFilters from "../../BulkAsset/Filter/Filter.jsx";
+import CommonSationView from ".././../../commonComponents/CommonStationView.jsx";
+import CommonEmployeeView from "../../../commonComponents/CommonEmployeeView.jsx";
+import CommonAssetView from "../../../commonComponents/CommonAssetView.jsx"
 import {
   getEmployees,
   getEmployeesWithoutPagination,
@@ -46,6 +49,7 @@ const BulkAssetTransfer = () => {
       outQuantity: null,
       assignmentDate: new Date().toISOString().split("T")[0],
       remarks: "",
+      targetType: "", // Add targetType to store per-row target selection
     }));
   });
 
@@ -60,26 +64,23 @@ const BulkAssetTransfer = () => {
   });
   const [employeeAssets, setEmployeeAssets] = useState([]);
   const [stationAssets, setStationAssets] = useState([]);
-
-  const [target, setTarget] = useState("");
-
   const [isEmployeeViewModalOpen, setIsEmployeeViewModalOpen] = useState(false);
   const [selectedEmployeeForView, setSelectedEmployeeForView] = useState(null);
   const [isStationViewModalOpen, setIsStationViewModalOpen] = useState(false);
   const [selectedStationForView, setSelectedStationForView] = useState(null);
   const [isStationModalOpen, setIsStationModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isStationEditMode, setIsStationEditMode] = useState(false);
   const [stationEditData, setStationEditData] = useState(null);
   const { createStation, modifyStation } = useStations();
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [maalkhanaOptions, setMaalkhanaOptions] = useState([]);
   const [loadingMaalkhana, setLoadingMaalkhana] = useState(false);
-  // Loading states for search
   const [isSearching, setIsSearching] = useState({});
   const [mallkhanaAssets, setMallkhanaAssets] = useState([]);
   const [anyModalOpen, setAnyModalOpen] = useState(false);
   const [apiError, setApiError] = useState(null);
-
+  const [selectedAsset, setSelectedAsset] = useState(null);
   // Helper function to get token
   const getToken = () => localStorage.getItem("authToken");
   const getAuthHeaders = () => {
@@ -98,6 +99,7 @@ const BulkAssetTransfer = () => {
     }
     return employee.profileUrl || "/default-avatar.png";
   };
+
   // Add modal handlers
   const handleEmployeeView = (employee) => {
     setSelectedEmployeeForView(employee);
@@ -144,10 +146,8 @@ const BulkAssetTransfer = () => {
   useEffect(() => {
     if (headerData.mallkhana?._id) {
       fetchMallkhanaAssets(headerData.mallkhana._id);
-      // Clear other asset arrays when mallkhana is selected
       setEmployeeAssets([]);
       setStationAssets([]);
-      // Clear other selections for exclusivity
       setHeaderData((prev) => ({ ...prev, station: null, employee: null }));
       setAssignmentRows((prev) =>
         prev.map((row) => ({ ...row, station: null, employee: null }))
@@ -161,17 +161,14 @@ const BulkAssetTransfer = () => {
   useEffect(() => {
     if (headerData.employee?._id) {
       fetchEmployeeAssets(headerData.employee._id);
-      // Clear other asset arrays when employee is selected
       setMallkhanaAssets([]);
       setStationAssets([]);
-      // Clear asset selections when employee changes
       setAssignmentRows((prev) =>
         prev.map((row) => ({
           ...row,
           asset: null,
         }))
       );
-      // Clear asset search results
       setSearchResults((prev) => ({
         ...prev,
         assets: {},
@@ -185,17 +182,14 @@ const BulkAssetTransfer = () => {
   useEffect(() => {
     if (headerData.station?._id) {
       fetchStationAssets(headerData.station._id);
-      // Clear other asset arrays when station is selected
       setMallkhanaAssets([]);
       setEmployeeAssets([]);
-      // Clear asset selections when station changes
       setAssignmentRows((prev) =>
         prev.map((row) => ({
           ...row,
           asset: null,
         }))
       );
-      // Clear asset search results
       setSearchResults((prev) => ({
         ...prev,
         assets: {},
@@ -208,18 +202,14 @@ const BulkAssetTransfer = () => {
   const fetchMallkhanaAssets = async (mallkhanaId) => {
     try {
       setLoading(true);
-
       const response = await axios.get(
         `${BACKEND_URL}/asset-batch/get-mallkhana-assets/${mallkhanaId}`,
         { headers: getAuthHeaders() }
       );
 
       if (response.data && response.data.success) {
-        // Handle the actual response structure based on your API
         let assets = [];
-
         if (response.data.data && Array.isArray(response.data.data)) {
-          // If data is an array, extract assets from each item
           response.data.data.forEach((item) => {
             if (item.asset && Array.isArray(item.asset)) {
               assets = assets.concat(item.asset);
@@ -230,12 +220,9 @@ const BulkAssetTransfer = () => {
           response.data.data.asset &&
           Array.isArray(response.data.data.asset)
         ) {
-          // If there's a single data object with asset array
           assets = response.data.data.asset;
         }
-
         setMallkhanaAssets(assets);
-
         if (assets.length === 0) {
           toast.info("No assets found in selected Mallkhana");
         } else {
@@ -253,19 +240,16 @@ const BulkAssetTransfer = () => {
       setLoading(false);
     }
   };
+
   const fetchEmployeeAssets = async (employeeId) => {
     try {
       setLoading(true);
-
-      // Import getAllAssetAssignments from your AssetApi
       const { getAllAssetAssignments } = await import(
         "../../AssetAssignment/AssetApi.js"
       );
-
       const response = await getAllAssetAssignments({ employee: employeeId });
 
       if (response.success && response.data) {
-        // Filter only active assignments
         const activeAssignments = response.data.filter(
           (assignment) =>
             assignment.isApproved &&
@@ -273,17 +257,13 @@ const BulkAssetTransfer = () => {
             !assignment.consumedDate &&
             !assignment.returnedDate
         );
-
-        // Extract assets from assignments
         let assets = [];
         activeAssignments.forEach((assignment) => {
           if (assignment.asset && Array.isArray(assignment.asset)) {
             assets = assets.concat(assignment.asset);
           }
         });
-
         setEmployeeAssets(assets);
-
         if (assets.length === 0) {
           toast.info("No assets found for selected Employee");
         } else {
@@ -305,16 +285,12 @@ const BulkAssetTransfer = () => {
   const fetchStationAssets = async (stationId) => {
     try {
       setLoading(true);
-
-      // Import getStationAssetAssignments from your StationAssetApi
       const { getStationAssetAssignments } = await import(
         "../../StationAssetAssignment/StationAssetApi.js"
       );
-
       const response = await getStationAssetAssignments(stationId);
 
       if (response.success && response.data) {
-        // Filter only active assignments
         const activeAssignments = response.data.filter(
           (assignment) =>
             assignment.isApproved &&
@@ -322,17 +298,13 @@ const BulkAssetTransfer = () => {
             !assignment.consumedDate &&
             !assignment.returnedDate
         );
-
-        // Extract assets from assignments
         let assets = [];
         activeAssignments.forEach((assignment) => {
           if (assignment.asset && Array.isArray(assignment.asset)) {
             assets = assets.concat(assignment.asset);
           }
         });
-
         setStationAssets(assets);
-
         if (assets.length === 0) {
           toast.info("No assets found for selected Station");
         } else {
@@ -359,8 +331,6 @@ const BulkAssetTransfer = () => {
     }));
   };
 
-  // Filter handlers
-
   // Transfer row handlers
   const handleAssignmentChange = (rowId, field, value) => {
     setAssignmentRows((prev) =>
@@ -377,6 +347,7 @@ const BulkAssetTransfer = () => {
       outQuantity: null,
       assignmentDate: new Date().toISOString().split("T")[0],
       remarks: "",
+      targetType: "",
     };
     setAssignmentRows((prev) => [...prev, newRow]);
   };
@@ -391,10 +362,8 @@ const BulkAssetTransfer = () => {
 
   // Search assets within mallkhana
   const searchAssets = (query, rowId) => {
-    // Determine which asset array to search based on what's selected in header
     let assetsToSearch = [];
     let sourceMessage = "";
-
     if (headerData.mallkhana?._id) {
       assetsToSearch = mallkhanaAssets;
       sourceMessage = "Please select a Mallkhana first";
@@ -492,7 +461,6 @@ const BulkAssetTransfer = () => {
 
       if (result.success) {
         const stations = result?.data?.result || result.data || [];
-
         const filteredStations = stations.filter(
           (station) =>
             station.name &&
@@ -528,17 +496,15 @@ const BulkAssetTransfer = () => {
   };
 
   const selectEmployee = (employee, rowId) => {
-    // Prevent selecting the same as current employee in header
     if (headerData.employee?._id && employee?._id === headerData.employee._id) {
       toast.warn("Target employee cannot be the same as current employee");
       return;
     }
     setSelectedEmployee(employee);
-    // Enforce exclusivity at row: selecting employee clears station and mallkhana field
     setAssignmentRows((prev) =>
       prev.map((row) =>
         row.id === rowId
-          ? { ...row, employee, station: null, mallkhana: null }
+          ? { ...row, employee, station: null, targetMallkhana: null }
           : row
       )
     );
@@ -550,16 +516,14 @@ const BulkAssetTransfer = () => {
   };
 
   const selectStation = (station, rowId) => {
-    // Prevent selecting the same as current station in header
     if (headerData.station?._id && station?._id === headerData.station._id) {
       toast.warn("Target station cannot be the same as current station");
       return;
     }
-    // Enforce exclusivity at row: selecting station clears employee and mallkhana field
     setAssignmentRows((prev) =>
       prev.map((row) =>
         row.id === rowId
-          ? { ...row, station, employee: null, mallkhana: null }
+          ? { ...row, station, employee: null, targetMallkhana: null }
           : row
       )
     );
@@ -571,7 +535,6 @@ const BulkAssetTransfer = () => {
   };
 
   const selectMallkhana = (mallkhana, rowId) => {
-    // Prevent selecting the same as source mallkhana
     if (
       headerData.mallkhana?._id &&
       mallkhana?._id === headerData.mallkhana._id
@@ -579,17 +542,15 @@ const BulkAssetTransfer = () => {
       toast.warn("Target mallkhana cannot be the same as source mallkhana");
       return;
     }
-
-    // Enforce exclusivity at row: selecting mallkhana clears employee and station
     setAssignmentRows((prev) =>
       prev.map((row) =>
         row.id === rowId
           ? {
-              ...row,
-              targetMallkhana: mallkhana,
-              employee: null,
-              station: null,
-            }
+            ...row,
+            targetMallkhana: mallkhana,
+            employee: null,
+            station: null,
+          }
           : row
       )
     );
@@ -617,41 +578,29 @@ const BulkAssetTransfer = () => {
   // Validation
   const validateForm = () => {
     const errors = [];
-
-    // At least one of Mallkhana, Station, or Employee must be selected in header as source
     if (!headerData.mallkhana && !headerData.station && !headerData.employee) {
       errors.push(
         "At least one of Mallkhana, Station, or Employee is required as source"
       );
     }
 
-    // Validate each assignment row
     assignmentRows.forEach((row, index) => {
-      // Skip completely empty rows
       if (!row.asset && !row.employee && !row.station && !row.targetMallkhana) {
         // skip empty row
       } else {
-        // Asset is required if row has any other data
         if (!row.asset) {
           errors.push(`Row ${index + 1}: Asset is required`);
         }
-
-        // Check for at least one target selection per row
         const hasAnySelectionInRow = !!(
           row.employee ||
           row.station ||
           row.targetMallkhana
         );
-
         if (!hasAnySelectionInRow) {
           errors.push(
-            `Row ${
-              index + 1
-            }: At least one of Target Mallkhana, Employee, or Station must be selected`
+            `Row ${index + 1}: At least one of Target Mallkhana, Employee, or Station must be selected`
           );
         }
-
-        // Prevent same source and target mallkhana
         if (
           headerData.mallkhana?._id &&
           row.targetMallkhana?._id === headerData.mallkhana._id
@@ -660,8 +609,6 @@ const BulkAssetTransfer = () => {
             `Row ${index + 1}: Target mallkhana cannot equal source mallkhana`
           );
         }
-
-        // Prevent same current vs target for station
         if (
           headerData.station?._id &&
           row.station?._id === headerData.station._id
@@ -670,8 +617,6 @@ const BulkAssetTransfer = () => {
             `Row ${index + 1}: Target station cannot equal current station`
           );
         }
-
-        // Prevent same current vs target for employee
         if (
           headerData.employee?._id &&
           row.employee?._id === headerData.employee._id
@@ -680,25 +625,17 @@ const BulkAssetTransfer = () => {
             `Row ${index + 1}: Target employee cannot equal current employee`
           );
         }
-
-        // Assignment date is required
         if (!row.assignmentDate) {
           errors.push(`Row ${index + 1}: Transfer date is required`);
         }
-
-        // Validate quantity if asset is selected
         if (row.asset && row.outQuantity) {
           const availableQuantity = Number(row.asset.availableQuantity) || 0;
           const requestedQuantity = Number(row.outQuantity) || 0;
-
           if (requestedQuantity > availableQuantity) {
             errors.push(
-              `Row ${
-                index + 1
-              }: Issue quantity (${requestedQuantity}) cannot exceed available quantity (${availableQuantity})`
+              `Row ${index + 1}: Issue quantity (${requestedQuantity}) cannot exceed available quantity (${availableQuantity})`
             );
           }
-
           if (requestedQuantity <= 0) {
             errors.push(
               `Row ${index + 1}: Issue quantity must be greater than 0`
@@ -708,7 +645,6 @@ const BulkAssetTransfer = () => {
       }
     });
 
-    // Check if at least one non-empty row exists
     const hasNonEmptyRows = assignmentRows.some(
       (row) => row.asset || row.employee || row.station || row.targetMallkhana
     );
@@ -721,8 +657,6 @@ const BulkAssetTransfer = () => {
   };
 
   // Save all assignments
-  // Replace the entire handleSaveAll function with this:
-
   const handleSaveAll = async () => {
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
@@ -735,7 +669,6 @@ const BulkAssetTransfer = () => {
     setLoading(true);
 
     try {
-      // Prepare Transfer data according to your backend structure
       const assignments = assignmentRows.map((row) => ({
         asset: row.asset._id,
         employee: row.employee?._id || null,
@@ -747,6 +680,7 @@ const BulkAssetTransfer = () => {
         outQuantity: row.outQuantity || null,
         assignmentDate: row.assignmentDate,
         remarks: row.remarks || "",
+        targetType: row.targetType || "",
       }));
 
       const assignmentData = {
@@ -762,7 +696,6 @@ const BulkAssetTransfer = () => {
         station: headerData.station,
       };
 
-      // Make the actual API call to your backend
       const response = await axios.post(
         `${BACKEND_URL}/asset-batch/bulk-station-employee-assignments`,
         assignmentData,
@@ -779,14 +712,13 @@ const BulkAssetTransfer = () => {
           `Successfully created ${assignments.length} asset transfer!`
         );
 
-        // Show success message and navigate
         setTimeout(() => {
           if (
             window.confirm(
               "Assets transfer successfully! Would you like to create more assignments?"
             )
           ) {
-            // Reset form
+            // ✅ Reset form to create new assignments, stay on same page
             setHeaderData({
               receiveDate: new Date().toISOString().split("T")[0],
               referenceNumber: "",
@@ -807,6 +739,7 @@ const BulkAssetTransfer = () => {
                 outQuantity: null,
                 assignmentDate: new Date().toISOString().split("T")[0],
                 remarks: "",
+                targetType: "",
               },
             ]);
             setSearchResults({ assets: {}, employees: {}, stations: {} });
@@ -816,15 +749,11 @@ const BulkAssetTransfer = () => {
             setMallkhanaAssets([]);
             setEmployeeAssets([]);
             setStationAssets([]);
-          } else {
-            navigate("/asset-assignments"); // Navigate to the assignments list page
           }
         }, 1500);
       } else {
         toast.error(
-          `Failed to create asset transfer: ${
-            response.data?.message || "Unknown error"
-          }`
+          `Failed to create asset transfer: ${response.data?.message || "Unknown error"}`
         );
       }
     } catch (error) {
@@ -838,6 +767,7 @@ const BulkAssetTransfer = () => {
       setLoading(false);
     }
   };
+
 
   // Cancel all changes
   const handleCancelAll = () => {
@@ -861,13 +791,10 @@ const BulkAssetTransfer = () => {
     try {
       console.log("Fetching maalkhana options...");
       const result = await getMaalkhanaOptions();
-
       console.log("API Result:", result);
 
       if (result.success) {
         let stations = [];
-
-        // Handle different response structures
         if (Array.isArray(result.data)) {
           stations = result.data;
         } else if (result.data && Array.isArray(result.data.stations)) {
@@ -877,7 +804,6 @@ const BulkAssetTransfer = () => {
           result.data.data &&
           Array.isArray(result.data.data.stations)
         ) {
-          // Sometimes APIs nest data deeper
           stations = result.data.data.stations;
         } else {
           console.warn("Unexpected data structure:", result.data);
@@ -891,7 +817,6 @@ const BulkAssetTransfer = () => {
           setApiError("No stations available");
         }
 
-        // Transform data to match EnumSelect format
         const options = stations.map((item) => ({
           value: item._id,
           label: item.name,
@@ -934,7 +859,6 @@ const BulkAssetTransfer = () => {
     });
   };
 
-  // Target Maalkhana change handler (target selection in table header)
   const handleTargetMaalkhanaChange = (e) => {
     const selectedOption = maalkhanaOptions.find(
       (option) => option.value === e.target.value
@@ -951,6 +875,14 @@ const BulkAssetTransfer = () => {
       name: selectedOption?.label || "",
     });
   };
+
+  const handleEditClick = () => { };
+
+  const handleAssetView = (asset) => {
+    setSelectedAsset(asset);
+    setIsViewModalOpen(true);
+
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -1005,53 +937,11 @@ const BulkAssetTransfer = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   <div className="flex items-center gap-6 px-2 py-2">
-                    {/* Mallkhana */}
-                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
-                      <input
-                        type="radio"
-                        name="target"
-                        value="mallkhana"
-                        checked={target === "mallkhana"}
-                        onChange={(e) => setTarget(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        Mallkhana
-                      </span>
-                    </label>
-
-                    {/* Station */}
-                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
-                      <input
-                        type="radio"
-                        name="target"
-                        value="station"
-                        checked={target === "station"}
-                        onChange={(e) => setTarget(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        Station
-                      </span>
-                    </label>
-
-                    {/* Employee */}
-                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
-                      <input
-                        type="radio"
-                        name="target"
-                        value="employee"
-                        checked={target === "employee"}
-                        onChange={(e) => setTarget(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        Employee
-                      </span>
-                    </label>
+                    <span className="text-sm font-medium text-gray-700">
+                      Target
+                    </span>
                   </div>
                 </th>
-
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Current Assignment
                 </th>
@@ -1061,7 +951,6 @@ const BulkAssetTransfer = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Issue Quantity
                 </th>
-
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Transfer Date
                 </th>
@@ -1078,286 +967,368 @@ const BulkAssetTransfer = () => {
                 <tr key={row.id} className="hover:bg-gray-50">
                   {/* Station Column */}
                   <td className="px-6 py-4 relative">
-                    {target === "mallkhana" && (
-                      <div>
-                        <EnumSelect
-                          label="Target Maalkhana"
-                          name={`targetMallkhana_${row.id}`}
-                          value={row.targetMallkhana?._id || ""}
+                    <div className="flex items-center gap-6 px-2 py-2">
+                      {/* Mallkhana */}
+                      <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
+                        <input
+                          type="radio"
+                          name={`target_${row.id}`} // Unique name per row
+                          value="mallkhana"
+                          checked={row.targetType === "mallkhana"}
                           onChange={(e) => {
-                            const selectedOption = maalkhanaOptions.find(
-                              (option) => option.value === e.target.value
-                            );
-                            if (
-                              headerData.mallkhana?._id &&
-                              headerData.mallkhana._id === e.target.value
-                            ) {
-                              toast.warn(
-                                "Source Mallkhana and Target Mallkhana cannot be the same"
-                              );
-                              return;
-                            }
-                            selectMallkhana(
-                              {
-                                _id: e.target.value,
-                                name: selectedOption?.label || "",
-                              },
-                              row.id
+                            setAssignmentRows((prev) =>
+                              prev.map((r) =>
+                                r.id === row.id
+                                  ? {
+                                    ...r,
+                                    targetType: e.target.value,
+                                    employee: null,
+                                    station: null,
+                                    targetMallkhana: null,
+                                  }
+                                  : r
+                              )
                             );
                           }}
-                          enumObject={maalkhanaEnum}
-                          required={true}
-                          disabled={loading || loadingMaalkhana}
-                          placeholder={
-                            loadingMaalkhana
-                              ? "Loading..."
-                              : apiError
-                              ? "Error loading options"
-                              : maalkhanaOptions.length === 0
-                              ? "No options available"
-                              : "Select Target Maalkhana..."
-                          }
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                         />
-                      </div>
-                    )}
+                        <span className="text-sm font-medium text-gray-700">
+                          Mallkhana
+                        </span>
+                      </label>
 
-                    {target === "station" && (
-                      <div>
-                        {row.station ? (
-                          <div className="flex items-center">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-900 truncate">
-                                <span
-                                  onClick={() => handleStationView(row.station)}
-                                  className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
-                                >
-                                  {row.station.name}
-                                </span>
+                      {/* Station */}
+                      <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
+                        <input
+                          type="radio"
+                          name={`target_${row.id}`} // Unique name per row
+                          value="station"
+                          checked={row.targetType === "station"}
+                          onChange={(e) => {
+                            setAssignmentRows((prev) =>
+                              prev.map((r) =>
+                                r.id === row.id
+                                  ? {
+                                    ...r,
+                                    targetType: e.target.value,
+                                    employee: null,
+                                    station: null,
+                                    targetMallkhana: null,
+                                  }
+                                  : r
+                              )
+                            );
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          Station
+                        </span>
+                      </label>
+
+                      {/* Employee */}
+                      <label className="flex items-center gap-2 cursor-pointer hover:text-gray-800">
+                        <input
+                          type="radio"
+                          name={`target_${row.id}`} // Unique name per row
+                          value="employee"
+                          checked={row.targetType === "employee"}
+                          onChange={(e) => {
+                            setAssignmentRows((prev) =>
+                              prev.map((r) =>
+                                r.id === row.id
+                                  ? {
+                                    ...r,
+                                    targetType: e.target.value,
+                                    employee: null,
+                                    station: null,
+                                    targetMallkhana: null,
+                                  }
+                                  : r
+                              )
+                            );
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          Employee
+                        </span>
+                      </label>
+                    </div>
+
+                    <div>
+                      {row.targetType === "mallkhana" && (
+                        <div>
+                          <EnumSelect
+                            label=""
+                            name={`targetMallkhana_${row.id}`}
+                            value={row.targetMallkhana?._id || ""}
+                            onChange={(e) => {
+                              const selectedOption = maalkhanaOptions.find(
+                                (option) => option.value === e.target.value
+                              );
+                              if (
+                                headerData.mallkhana?._id &&
+                                headerData.mallkhana._id === e.target.value
+                              ) {
+                                toast.warn(
+                                  "Source Mallkhana and Target Mallkhana cannot be the same"
+                                );
+                                return;
+                              }
+                              selectMallkhana(
+                                {
+                                  _id: e.target.value,
+                                  name: selectedOption?.label || "",
+                                },
+                                row.id
+                              );
+                            }}
+                            enumObject={maalkhanaEnum}
+                            required={true}
+                            disabled={loading || loadingMaalkhana}
+                            placeholder={
+                              loadingMaalkhana
+                                ? "Loading..."
+                                : apiError
+                                  ? "Error loading options"
+                                  : maalkhanaOptions.length === 0
+                                    ? "No options available"
+                                    : "Select Target Maalkhana..."
+                            }
+                          />
+                        </div>
+                      )}
+
+                      {row.targetType === "station" && (
+                        <div>
+                          {row.station ? (
+                            <div className="flex items-center">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">
+                                  <span
+                                    onClick={() => handleStationView(row.station)}
+                                    className="text-gray-900 hover:text-blue-600 cursor-pointer hover:underline"
+                                  >
+                                    {row.station.name}
+                                  </span>
+                                </div>
+                                {row.station.district && (
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {row.station.district}
+                                  </div>
+                                )}
                               </div>
-                              {row.station.district && (
-                                <div className="text-xs text-gray-500 truncate">
-                                  {row.station.district}
+                              <button
+                                onClick={() => clearStation(row.id)}
+                                disabled={loading}
+                                className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
+                                title="Clear selection"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Search station... (optional)"
+                                disabled={loading}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[200px]"
+                                value={stationSearch[row.id] || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setStationSearch((prev) => ({
+                                    ...prev,
+                                    [row.id]: value,
+                                  }));
+                                  searchStations(value, row.id);
+                                }}
+                              />
+                              {isSearching[`station_${row.id}`] && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                </div>
+                              )}
+
+                              {searchResults.stations[row.id]?.length > 0 && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                  {searchResults.stations[row.id].map(
+                                    (station) => (
+                                      <button
+                                        key={station._id}
+                                        onClick={() =>
+                                          selectStation(station, row.id)
+                                        }
+                                        disabled={loading}
+                                        className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
+                                      >
+                                        <div className="font-medium text-gray-900 truncate">
+                                          {station.name}
+                                        </div>
+                                        {station.district && (
+                                          <div className="text-xs text-gray-500 truncate">
+                                            {station.district}
+                                          </div>
+                                        )}
+                                      </button>
+                                    )
+                                  )}
                                 </div>
                               )}
                             </div>
-                            <button
-                              onClick={() => clearStation(row.id)}
-                              disabled={loading}
-                              className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
-                              title="Clear selection"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                          )}
+                        </div>
+                      )}
+
+                      {row.targetType === "employee" && (
+                        <div>
+                          {row.employee ? (
+                            <div className="flex items-center">
+                              <img
+                                className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                                src={getEmployeeImage(row?.employee)}
+                                alt={`${row.employee.firstName} ${row.employee.lastName}`}
+                                onError={(e) => {
+                                  e.target.src = "/default-avatar.png";
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">
+                                  <div
+                                    onClick={() =>
+                                      handleEmployeeView(row.employee)
+                                    }
+                                    className="text-gray-900 text-sm hover:text-blue-600 cursor-pointer hover:underline"
+                                  >
+                                    {row.employee.firstName}
+                                  </div>
+                                  <div className="text-xs">
+                                    {row.employee.fatherFirstName}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {row.employee.personalNumber ||
+                                    row.employee.pnumber ||
+                                    row.employee.rank}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => clearEmployee(row.id)}
+                                disabled={loading}
+                                className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
+                                title="Clear selection"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="relative">
-                            <input
-                              type="text"
-                              placeholder="Search station... (optional)"
-                              disabled={loading}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[200px]"
-                              value={stationSearch[row.id] || ""}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setStationSearch((prev) => ({
-                                  ...prev,
-                                  [row.id]: value,
-                                }));
-                                searchStations(value, row.id);
-                              }}
-                            />
-                            {isSearching[`station_${row.id}`] && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              </div>
-                            )}
-
-                            {searchResults.stations[row.id]?.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                {searchResults.stations[row.id].map(
-                                  (station) => (
-                                    <button
-                                      key={station._id}
-                                      onClick={() =>
-                                        selectStation(station, row.id)
-                                      }
-                                      disabled={loading}
-                                      className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
-                                    >
-                                      <div className="font-medium text-gray-900 truncate">
-                                        {station.name}
-                                      </div>
-                                      {station.district && (
-                                        <div className="text-xs text-gray-500 truncate">
-                                          {station.district}
-                                        </div>
-                                      )}
-                                    </button>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {target === "employee" && (
-                      <div>
-                        {row.employee ? (
-                          <div className="flex items-center">
-                            <img
-                              className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                              src={getEmployeeImage(row?.employee)}
-                              alt={`${row.employee.firstName} ${row.employee.lastName}`}
-                              onError={(e) => {
-                                e.target.src = "/default-avatar.png";
-                              }}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-900 truncate">
-                                <div
-                                  onClick={() =>
-                                    handleEmployeeView(row.employee)
-                                  }
-                                  className="text-gray-900 text-sm hover:text-blue-600 cursor-pointer hover:underline"
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
                                 >
-                                  {row.employee.firstName}
-                                </div>
-                                <div className="text-xs">
-                                  {row.employee.fatherFirstName}
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500 truncate">
-                                {row.employee.personalNumber ||
-                                  row.employee.pnumber ||
-                                  row.employee.rank}
-                              </div>
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
                             </div>
-                            <button
-                              onClick={() => clearEmployee(row.id)}
-                              disabled={loading}
-                              className="text-xs text-red-600 hover:text-red-800 ml-2 flex-shrink-0 disabled:opacity-50"
-                              title="Clear selection"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="relative">
-                            <input
-                              type="text"
-                              placeholder="Search employee... (optional)"
-                              disabled={loading}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
-                              value={employeeSearch[row.id] || ""}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setEmployeeSearch((prev) => ({
-                                  ...prev,
-                                  [row.id]: value,
-                                }));
-                                searchEmployees(value, row.id);
-                              }}
-                            />
-                            {isSearching[`employee_${row.id}`] && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              </div>
-                            )}
+                          ) : (
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Search employee... (optional)"
+                                disabled={loading}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 min-w-[250px]"
+                                value={employeeSearch[row.id] || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setEmployeeSearch((prev) => ({
+                                    ...prev,
+                                    [row.id]: value,
+                                  }));
+                                  searchEmployees(value, row.id);
+                                }}
+                              />
+                              {isSearching[`employee_${row.id}`] && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                </div>
+                              )}
 
-                            {searchResults.employees[row.id]?.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                {searchResults.employees[row.id].map(
-                                  (employee) => (
-                                    <button
-                                      key={employee._id}
-                                      onClick={() =>
-                                        selectEmployee(employee, row.id)
-                                      }
-                                      disabled={loading}
-                                      className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center border-b border-gray-100 last:border-b-0"
-                                    >
-                                      <img
-                                        className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
-                                        src={getEmployeeImage(employee)}
-                                        alt={`${employee.firstName} ${employee.lastName}`}
-                                        onError={(e) => {
-                                          e.target.src = "/default-avatar.png";
-                                        }}
-                                      />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-gray-900 truncate">
-                                          {employee.firstName}{" "}
-                                          {employee.lastName}
+                              {searchResults.employees[row.id]?.length > 0 && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                  {searchResults.employees[row.id].map(
+                                    (employee) => (
+                                      <button
+                                        key={employee._id}
+                                        onClick={() =>
+                                          selectEmployee(employee, row.id)
+                                        }
+                                        disabled={loading}
+                                        className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 flex items-center border-b border-gray-100 last:border-b-0"
+                                      >
+                                        <img
+                                          className="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0"
+                                          src={getEmployeeImage(employee)}
+                                          alt={`${employee.firstName} ${employee.lastName}`}
+                                          onError={(e) => {
+                                            e.target.src = "/default-avatar.png";
+                                          }}
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium text-gray-900 truncate">
+                                            {employee.firstName}{" "}
+                                            {employee.lastName}
+                                          </div>
+                                          <div className="text-xs text-gray-500 truncate">
+                                            {employee.personalNumber ||
+                                              employee.rank ||
+                                              employee.pnumber}{" "}
+                                            | {employee.cnic}
+                                          </div>
                                         </div>
-                                        <div className="text-xs text-gray-500 truncate">
-                                          {employee.personalNumber ||
-                                            employee.rank ||
-                                            employee.pnumber}{" "}
-                                          | {employee.cnic}
-                                        </div>
-                                      </div>
-                                    </button>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td>
-                    <div className="text-xs mt-0.5">
-                      Employee:
-                      {row?.employee?.assignedAssets?.map((item) => (
-                        <div key={item._id} className="flex flex-row">
-                          {item.asset?.map((itm) => (
-                            <span key={itm._id} className="text-xs mt-0.5">
-                              {itm.name}
-                            </span>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="text-xs mt-0.5">
-                      Stations:
-                      {row?.station?.stationAssets?.map((item) => (
-                        <div key={item._id} className="flex flex-row">
-                          {item.asset?.map((itm) => (
-                            <span key={itm._id} className="text-xs mt-0.5">
-                              {itm.name}
-                            </span>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
+                    {row.employee && (
+                      <button
+                        onClick={() => handleEmployeeView(row.employee)}
+                        className="text-blue-600 underline hover:text-blue-800"
+                      >
+                        View Employee Assignment
+                      </button>
+                    )}
+                    {row.station && (
+                      <button
+                        onClick={() => handleStationView(row.station)}
+                        className="ml-2 text-green-600 underline hover:text-green-800"
+                      >
+                        View Station Assignment
+                      </button>
+                    )}
                   </td>
                   {/* Asset Column */}
                   <td className="px-6 py-4 relative">
@@ -1371,23 +1342,25 @@ const BulkAssetTransfer = () => {
                             Type: {row.asset.type || "N/A"}
                             <br />
                             Category: {row.asset.category || "N/A"}
+
                             {!(
                               row.asset.weaponNumber || row.asset.registerNumber
                             ) && (
-                              <>
-                                <br />
-                                availible Quantity:
-                                {row?.asset?.availableQuantity || "N/A"}
-                              </>
-                            )}
+                                <>
+                                  <br />
+                                  Available Quantity: {row?.asset?.availableQuantity || "N/A"}
+                                </>
+                              )}
                           </div>
                           {(row.asset.weaponNumber ||
                             row.asset.registerNumber) && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {row.asset.weaponNumber ||
-                                row.asset.registerNumber}
-                            </div>
-                          )}
+                              <div className="text-xs text-gray-500 truncate">
+                                {row.asset.weaponNumber || row.asset.registerNumber}
+                              </div>
+                            )}
+                          <button className="bg-blue-500 hover:bg-blue-600 text-sm text-white py-0.5 px-1 rounded mt-2"
+                            onClick={() => handleAssetView(row.asset)}>View</button>
+
                         </div>
                         <button
                           onClick={() => clearAsset(row.id)}
@@ -1416,8 +1389,8 @@ const BulkAssetTransfer = () => {
                           type="text"
                           placeholder={
                             !headerData.mallkhana &&
-                            !headerData.employee &&
-                            !headerData.station
+                              !headerData.employee &&
+                              !headerData.station
                               ? "Select Mallkhana, Employee, or Station first..."
                               : "Search asset..."
                           }
@@ -1438,39 +1411,33 @@ const BulkAssetTransfer = () => {
                             searchAssets(value, row.id);
                           }}
                         />
-
                         {searchResults.assets[row.id]?.length > 0 && (
                           <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                             {searchResults.assets[row.id].map((asset) => (
-                              <>
-                                <button
-                                  key={asset._id}
-                                  onClick={() => selectAsset(asset, row.id)}
-                                  disabled={loading}
-                                  className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
-                                >
-                                  <div className="font-medium text-gray-900 truncate">
-                                    {asset.name || "Unnamed Asset"}
-                                  </div>
-                                  <div className="text-xs text-gray-500 truncate">
-                                    {asset.type} - {asset.category}{" "}
-                                    {asset?.weaponNumber && (
-                                      <>-{asset?.weaponNumber}</>
-                                    )}
-                                    {asset?.availableQuantity && (
-                                      <>-{asset?.availableQuantity}</>
-                                    )}
-                                  </div>
-
-                                  {(asset.weaponNumber ||
-                                    asset.registerNumber) && (
-                                    <div className="text-xs text-gray-400 truncate">
-                                      {asset.weaponNumber ||
-                                        asset.registerNumber}
-                                    </div>
+                              <button
+                                key={asset._id}
+                                onClick={() => selectAsset(asset, row.id)}
+                                disabled={loading}
+                                className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm disabled:opacity-50 border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900 truncate">
+                                  {asset.name || "Unnamed Asset"}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {asset.type} - {asset.category}{" "}
+                                  {asset?.weaponNumber && (
+                                    <>-{asset?.weaponNumber}</>
                                   )}
-                                </button>
-                              </>
+                                  {asset?.availableQuantity && (
+                                    <>-{asset?.availableQuantity}</>
+                                  )}
+                                </div>
+                                {(asset.weaponNumber || asset.registerNumber) && (
+                                  <div className="text-xs text-gray-400 truncate">
+                                    {asset.weaponNumber || asset.registerNumber}
+                                  </div>
+                                )}
+                              </button>
                             ))}
                           </div>
                         )}
@@ -1491,7 +1458,6 @@ const BulkAssetTransfer = () => {
                             "Issue quantity should be less than available quantity"
                           );
                         }
-
                         handleAssignmentChange(
                           row.id,
                           "outQuantity",
@@ -1502,7 +1468,6 @@ const BulkAssetTransfer = () => {
                       placeholder="issue quantity.."
                     />
                   </td>
-
                   {/* Transfer Date */}
                   <td className="px-6 py-4">
                     <input
@@ -1519,7 +1484,6 @@ const BulkAssetTransfer = () => {
                       className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
                     />
                   </td>
-
                   {/* Remarks */}
                   <td className="px-6 py-4">
                     <textarea
@@ -1537,7 +1501,6 @@ const BulkAssetTransfer = () => {
                       rows="2"
                     />
                   </td>
-
                   {/* Actions */}
                   <td className="px-6 py-4">
                     <button
@@ -1567,41 +1530,37 @@ const BulkAssetTransfer = () => {
           </table>
         </div>
 
-        {/* Info Message */}
         {/* Info Messages */}
-        {!headerData.mallkhana &&
-          !headerData.employee &&
-          !headerData.station && (
-            <div className="p-4 bg-yellow-50 border-t border-yellow-200">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-yellow-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Select source first
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>
-                      Please select a Mallkhana, Employee, or Station in the
-                      header section above to load available assets for
-                      assignment.
-                    </p>
-                  </div>
+        {!headerData.mallkhana && !headerData.employee && !headerData.station && (
+          <div className="p-4 bg-yellow-50 border-t border-yellow-200">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-yellow-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Select source first
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    Please select a Mallkhana, Employee, or Station in the header
+                    section above to load available assets for assignment.
+                  </p>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         {headerData.employee && employeeAssets.length === 0 && !loading && (
           <div className="p-4 bg-blue-50 border-t border-blue-200">
@@ -1657,8 +1616,8 @@ const BulkAssetTransfer = () => {
                 </h3>
                 <div className="mt-2 text-sm text-blue-700">
                   <p>
-                    The selected Station "{headerData.station.name}" does not
-                    have any assets assigned.
+                    The selected Station "{headerData.station.name}" does not have
+                    any assets assigned.
                   </p>
                 </div>
               </div>
@@ -1684,9 +1643,7 @@ const BulkAssetTransfer = () => {
             disabled={
               loading ||
               assignmentRows.length === 0 ||
-              (!headerData.mallkhana &&
-                !headerData.station &&
-                !headerData.employee)
+              (!headerData.mallkhana && !headerData.station && !headerData.employee)
             }
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-md font-medium flex items-center transition-colors"
           >
@@ -1716,19 +1673,26 @@ const BulkAssetTransfer = () => {
           </button>
         </div>
       )}
-      {/* Add these modals before the closing div */}
-      <EmployeeViewModal
+
+      <CommonEmployeeView
         isOpen={isEmployeeViewModalOpen}
         onClose={handleCloseEmployeeViewModal}
         employee={selectedEmployeeForView}
         onEdit={handleEmployeeEdit}
       />
 
-      <StationViewModal
+      <CommonSationView
         isOpen={isStationViewModalOpen}
         onClose={handleCloseStationViewModal}
         station={selectedStationForView}
         onEdit={handleStationEdit}
+      />
+
+      <CommonAssetView
+        isOpen={isViewModalOpen}
+        onClose={handleCloseStationViewModal}
+        asset={selectedAsset}
+
       />
 
       <StationModal
